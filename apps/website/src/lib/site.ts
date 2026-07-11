@@ -1,9 +1,8 @@
 /**
- * Central place for site-wide URLs. GITHUB_USER is patched to the real
- * account when the repos are created; the public repo (cardo-app) hosts
+ * Central place for site-wide URLs. The public repo (cardo-app) hosts
  * releases, the forum (GitHub Discussions) and this website via Pages.
  */
-export const GITHUB_USER = 'GITHUB_USER';
+export const GITHUB_USER = 'hollatzleif';
 export const PUBLIC_REPO_URL = `https://github.com/${GITHUB_USER}/cardo-app`;
 export const RELEASES_URL = `${PUBLIC_REPO_URL}/releases`;
 export const LATEST_RELEASE_URL = `${PUBLIC_REPO_URL}/releases/latest`;

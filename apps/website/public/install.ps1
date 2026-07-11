@@ -4,7 +4,7 @@
 # "More info" → "Run anyway". Certificates come once donations cover them.
 $ErrorActionPreference = 'Stop'
 
-$repo = 'GITHUB_USER/cardo-app'
+$repo = 'hollatzleif/cardo-app'
 $api = "https://api.github.com/repos/$repo/releases/latest"
 
 Write-Host '→ Looking up the latest Cardo release…'

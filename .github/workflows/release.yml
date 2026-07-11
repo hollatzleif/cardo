@@ -1,13 +1,13 @@
 # Release pipeline: runs on a version tag (v1.0.0, v1.1.0, …).
 # Builds signed installers for macOS/Windows/Linux and publishes them as a
-# release on the PUBLIC repo (GITHUB_USER/cardo-app) incl. latest.json for
+# release on the PUBLIC repo (hollatzleif/cardo-app) incl. latest.json for
 # the auto-updater.
 #
 # Required repo secrets:
 #   TAURI_SIGNING_PRIVATE_KEY          – minisign private key (updater signature)
 #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD – its password (empty string if none)
 #   RELEASE_TOKEN                      – fine-grained PAT with "contents: write"
-#                                        on GITHUB_USER/cardo-app (cross-repo publish)
+#                                        on hollatzleif/cardo-app (cross-repo publish)
 #
 # Budget note: macOS counts 10x in private repos. The universal build
 # (~20 min ≙ 200 min quota) covers Apple Silicon AND Intel in one job.
@@ -64,7 +64,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
-          owner: GITHUB_USER
+          owner: hollatzleif
           repo: cardo-app
           tagName: ${{ github.ref_name }}
           releaseName: 'Cardo ${{ github.ref_name }}'

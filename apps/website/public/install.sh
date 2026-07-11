@@ -6,7 +6,7 @@
 # does not block the unsigned build.
 set -eu
 
-REPO="GITHUB_USER/cardo-app"
+REPO="hollatzleif/cardo-app"
 API="https://api.github.com/repos/$REPO/releases/latest"
 
 say() { printf '%s\n' "$*"; }
