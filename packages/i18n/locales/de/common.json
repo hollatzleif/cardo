@@ -94,6 +94,10 @@
       "active": "Aktiv",
       "inactive": "Inaktiv",
       "privacyAll": "Alle Datenschutz-Stufen"
+    },
+    "privacyBadge": {
+      "green": "Lokal",
+      "yellow": "Internet"
     }
   },
   "profile": {

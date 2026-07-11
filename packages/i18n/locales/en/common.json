@@ -94,6 +94,10 @@
       "active": "Active",
       "inactive": "Inactive",
       "privacyAll": "All privacy levels"
+    },
+    "privacyBadge": {
+      "green": "Local",
+      "yellow": "Internet"
     }
   },
   "profile": {

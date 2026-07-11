@@ -44,8 +44,8 @@ export function ToolMarket() {
   ];
   const privacyOptions: Array<{ id: PrivacyFilter; label: string }> = [
     { id: 'all', label: t('market.filter.privacyAll') },
-    { id: 'green', label: t('market.privacy.green') },
-    { id: 'yellow', label: t('market.privacy.yellow') },
+    { id: 'green', label: t('market.privacyBadge.green') },
+    { id: 'yellow', label: t('market.privacyBadge.yellow') },
   ];
 
   return (
@@ -100,11 +100,14 @@ export function ToolMarket() {
             const active = activeToolIds.includes(id);
             return (
               <div key={id} className="c-card market-page__item">
-                <div className="market-page__item-head">
+                <div
+                  className="market-page__item-head"
+                  title={t(`market.privacy.${tool.manifest.privacy.level}`)}
+                >
                   <strong>{t(tool.manifest.nameKey)}</strong>
                   <PrivacyBadge
                     level={tool.manifest.privacy.level}
-                    label={t(`market.privacy.${tool.manifest.privacy.level}`)}
+                    label={t(`market.privacyBadge.${tool.manifest.privacy.level}`)}
                   />
                 </div>
                 <p className="c-muted market-page__item-desc">

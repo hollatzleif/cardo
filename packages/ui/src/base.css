@@ -115,7 +115,7 @@ textarea {
   max-height: 70vh;
   overflow-y: auto;
   overflow-x: hidden;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* ── Misc ── */

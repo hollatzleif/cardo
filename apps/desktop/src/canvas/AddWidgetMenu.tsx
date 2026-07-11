@@ -50,11 +50,14 @@ export function AddWidgetMenu({ onClose }: { onClose(): void }) {
                   onClose();
                 }}
               >
-                <span className="add-widget__card-head">
+                <span
+                  className="add-widget__card-head"
+                  title={t(`market.privacy.${tool.manifest.privacy.level}`)}
+                >
                   <span className="add-widget__name">{t(tool.manifest.nameKey)}</span>
                   <PrivacyBadge
                     level={tool.manifest.privacy.level}
-                    label={t(`market.privacy.${tool.manifest.privacy.level}`)}
+                    label={t(`market.privacyBadge.${tool.manifest.privacy.level}`)}
                   />
                 </span>
                 <span className="c-muted add-widget__desc">
