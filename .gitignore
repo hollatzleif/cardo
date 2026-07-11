@@ -8,3 +8,4 @@ coverage/
 .astro/
 .wrangler/
 apps/desktop/src-tauri/gen/
+tsconfig.tsbuildinfo

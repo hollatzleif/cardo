@@ -3,13 +3,9 @@ import Base from '../layouts/Base.astro';
 import Barometer from '../components/Barometer.astro';
 import barometer from '../data/barometer.json';
 
-// PLACEHOLDERS – replace before going live:
-// - PayPal: real PayPal.me link or hosted button URL
-// - IBAN: the real account details
-// - GitHub Sponsors: real sponsors profile URL
-const paypalUrl = 'https://paypal.me/PLACEHOLDER';
-const iban = 'DE00 0000 0000 0000 0000 00';
-const sponsorsUrl = 'https://github.com/sponsors/PLACEHOLDER';
+// Donations are intentionally NOT live yet (decision 2026-07-11): the page
+// only shows the concept. Once PayPal/IBAN/Sponsors accounts exist, replace
+// the "coming soon" chips below with real links.
 ---
 
 <Base title="Donate" description="Cardo is free. Voluntary donations cover the year's running costs – shown transparently as a percentage, never as amounts.">
@@ -35,20 +31,23 @@ const sponsorsUrl = 'https://github.com/sponsors/PLACEHOLDER';
     <div class="card">
       <h3>PayPal</h3>
       <p>One-off or recurring, whatever suits you.</p>
-      <p><a class="btn" href={paypalUrl} rel="noopener">Donate via PayPal</a></p>
+      <p><span class="soon">Coming soon</span></p>
     </div>
     <div class="card">
       <h3>Bank transfer</h3>
       <p>No fees, works from any European bank account.</p>
-      <p><code class="iban">{iban}</code></p>
-      <p class="muted">Reference: “Cardo donation”</p>
+      <p><span class="soon">Coming soon</span></p>
     </div>
     <div class="card">
       <h3>GitHub Sponsors</h3>
       <p>If you're on GitHub anyway.</p>
-      <p><a class="btn btn--ghost" href={sponsorsUrl} rel="noopener">Sponsor on GitHub</a></p>
+      <p><span class="soon">Coming soon</span></p>
     </div>
   </section>
+  <p class="muted">
+    Donation options aren't set up yet – Cardo is brand new. Until they are, the best support
+    is simple: use Cardo and tell us in the forum what works and what doesn't.
+  </p>
 
   <section class="card" style="margin-top:2rem">
     <h3>The honest fine print</h3>
@@ -63,9 +62,9 @@ const sponsorsUrl = 'https://github.com/sponsors/PLACEHOLDER';
   <style>
     .ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
     .ways h3 { margin-top: 0; }
-    .iban {
-      display: inline-block; background: var(--surface-1); border-radius: 8px;
-      padding: 0.35rem 0.7rem; letter-spacing: 0.04em;
+    .soon {
+      display: inline-block; background: var(--surface-1); color: var(--text-muted);
+      border-radius: 8px; padding: 0.35rem 0.9rem; font-weight: 700; font-size: 0.9rem;
     }
   </style>
 </Base>

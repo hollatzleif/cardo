@@ -1,8 +1,11 @@
 import { defineConfig } from 'astro/config';
 
-// Static output; the forum API lives in Cloudflare Pages Functions (functions/).
+// Static site, served via GitHub Pages of the public repo (cardo-app).
+// GITHUB_USER is patched to the real account name; with a custom domain
+// later, set site to the domain and base to '/'.
 export default defineConfig({
   output: 'static',
-  site: 'https://cardo.app',
+  site: 'https://GITHUB_USER.github.io',
+  base: '/cardo-app',
   server: { port: 4321 },
 });

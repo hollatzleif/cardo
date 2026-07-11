@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Button } from '@cardo/ui';
 import { themes } from '@cardo/themes';
@@ -6,6 +6,85 @@ import { supportedLanguages } from '@cardo/i18n';
 import { useAppStore } from '../state/appStore';
 import { DiagnosePanel } from './DiagnosePanel';
 import { ProfileModal } from '../profile/ProfileModal';
+import {
+  checkForUpdates,
+  getUpdateMode,
+  getUpdateStatus,
+  installPendingUpdate,
+  onUpdateStatus,
+  relaunchApp,
+  setUpdateMode,
+  type UpdateMode,
+  type UpdateStatus,
+} from '../host/updates';
+
+function UpdatesSection() {
+  const { t } = useTranslation();
+  const [mode, setMode] = useState<UpdateMode>('auto');
+  const [status, setStatus] = useState<UpdateStatus>(getUpdateStatus());
+
+  useEffect(() => {
+    void getUpdateMode().then(setMode);
+    return onUpdateStatus(setStatus);
+  }, []);
+
+  const statusText: Record<UpdateStatus['state'], string> = {
+    idle: '',
+    checking: t('settings.updateChecking'),
+    available: t('settings.updateAvailableTitle', { version: status.version }),
+    downloading: t('settings.updateDownloading', { version: status.version }),
+    installed: t('settings.updateInstalledTitle', { version: status.version }),
+    upToDate: t('settings.updateUpToDate'),
+    error: t('settings.updateError'),
+  };
+
+  return (
+    <div className="settings__row settings__row--block">
+      <span>{t('settings.updates')}</span>
+      <label className="settings__radio">
+        <input
+          type="radio"
+          name="update-mode"
+          checked={mode === 'auto'}
+          onChange={() => {
+            setMode('auto');
+            void setUpdateMode('auto');
+          }}
+        />
+        {t('settings.updatesAuto')}
+      </label>
+      <label className="settings__radio">
+        <input
+          type="radio"
+          name="update-mode"
+          checked={mode === 'notify'}
+          onChange={() => {
+            setMode('notify');
+            void setUpdateMode('notify');
+          }}
+        />
+        {t('settings.updatesNotify')}
+      </label>
+      <div className="settings__help-actions">
+        <Button onClick={() => void checkForUpdates({ background: false })}>
+          {t('settings.updateCheckNow')}
+        </Button>
+        {status.state === 'available' && (
+          <Button variant="primary" onClick={() => void installPendingUpdate()}>
+            {t('settings.updateInstall')}
+          </Button>
+        )}
+        {status.state === 'installed' && (
+          <Button variant="primary" onClick={() => void relaunchApp()}>
+            {t('settings.updateRestart')}
+          </Button>
+        )}
+      </div>
+      {statusText[status.state] && <p className="c-muted">{statusText[status.state]}</p>}
+      <p className="c-muted">{t('settings.updatesTransparency')}</p>
+    </div>
+  );
+}
 
 const ACCENT_TOKENS = [
   'accent-1',
@@ -112,6 +191,8 @@ export function SettingsModal({ onClose }: { onClose(): void }) {
               </div>
               <p className="c-muted">{t('onboarding.restartHint')}</p>
             </div>
+
+            <UpdatesSection />
 
             <div className="settings__row settings__row--block">
               <span>{t('settings.accentOverride')}</span>

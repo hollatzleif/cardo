@@ -102,7 +102,7 @@ pub fn notes_list(state: tauri::State<'_, NotesState>) -> CmdResult<Vec<NoteMeta
             .unwrap_or(0);
         notes.push(NoteMeta { name, modified_ms, size: meta.len() });
     }
-    notes.sort_by(|a, b| b.modified_ms.cmp(&a.modified_ms));
+    notes.sort_by_key(|n| std::cmp::Reverse(n.modified_ms));
     Ok(notes)
 }
 

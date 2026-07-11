@@ -1,0 +1,65 @@
+# Checks on every push/PR. Runs ONLY on Linux – macOS minutes count 10x
+# in a private repo, so macOS is reserved for release builds.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (eslint + stylelint + token guard)
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Consistency checks (i18n, themes, manifests)
+        run: |
+          pnpm check:i18n
+          pnpm check:themes
+          pnpm check:manifests
+
+      - name: Website build
+        run: pnpm --filter @cardo/website build
+
+  rust:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo test
+        run: cargo test --workspace
+
+      - name: cargo clippy
+        run: cargo clippy --workspace -- -D warnings

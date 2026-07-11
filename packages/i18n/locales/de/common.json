@@ -38,7 +38,18 @@
     "updatesAuto": "Updates automatisch im Hintergrund installieren",
     "updatesNotify": "Nur über Updates benachrichtigen",
     "updatesTransparency": "Für die Update-Prüfung kontaktiert Cardo regelmäßig den Update-Server. Übertragen wird ausschließlich die Versionsnummer der App.",
-    "help": "Hilfe"
+    "help": "Hilfe",
+    "updateChecking": "Suche nach Updates…",
+    "updateDownloading": "Version {{version}} wird im Hintergrund geladen…",
+    "updateUpToDate": "Du bist auf dem neuesten Stand.",
+    "updateError": "Update-Server nicht erreichbar. Cardo funktioniert ganz normal weiter.",
+    "updateCheckNow": "Jetzt prüfen",
+    "updateInstall": "Update installieren",
+    "updateRestart": "Jetzt neu starten",
+    "updateAvailableTitle": "Update {{version}} verfügbar",
+    "updateAvailableBody": "Installiere es unter Einstellungen → Updates, wann immer du willst.",
+    "updateInstalledTitle": "Update {{version}} installiert",
+    "updateInstalledBody": "Die Neuerungen greifen beim nächsten Start von Cardo."
   },
   "diagnose": {
     "start": "Selbsttest starten",

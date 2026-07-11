@@ -1,0 +1,116 @@
+---
+import Base from '../../layouts/Base.astro';
+import { FORUM_URL, withBase } from '../../lib/site';
+---
+
+<Base title="Tutorial" description="From first start to your personal dashboard: a friendly step-by-step tour through Cardo.">
+  <h1>Your first dashboard, step by step</h1>
+  <p class="muted">
+    Ten minutes from a blank canvas to a board that fits your life. No prior knowledge needed –
+    and nothing you do here leaves your device.
+  </p>
+
+  <section class="card step">
+    <h2>1 · First start: say hi</h2>
+    <p>
+      When Cardo opens for the first time it asks for your <strong>name</strong> (everything else
+      is optional). This is a purely local profile – it exists so Cardo can greet you, not so
+      anyone can reach you. There is no account and no sign-up.
+    </p>
+    <p>
+      Right after that, the built-in <strong>interactive tour</strong> starts and highlights the
+      real buttons on screen. You can skip it at any point and restart it later under
+      <em>Settings → Help → Restart tour</em>.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>2 · Edit mode: shape your board</h2>
+    <p>
+      Press <kbd>Cmd/Ctrl + E</kbd> (or the button in the top bar) to unlock the canvas. Now you
+      can <strong>drag widgets around, resize them</strong> at the edges, and remove them with
+      the ✕ in their toolbar. Press <kbd>Cmd/Ctrl + E</kbd> again to lock everything in place.
+    </p>
+    <p>
+      In edit mode a <strong>“+ Add widget”</strong> button appears – it lists every active tool.
+      Add a To-Do list and a clock to start; you can always rearrange later.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>3 · Pages: one board per life area</h2>
+    <p>
+      The tabs in the top bar are <strong>dashboard pages</strong> – for example “Work”,
+      “Private”, “Focus”. In edit mode, create a new page with <em>+</em>, rename one with a
+      double-click, and delete it with the ✕ on the active tab.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>4 · The tool market</h2>
+    <p>
+      Open <strong>⊞ Tools</strong> in the top bar. Every tool ships with Cardo and runs locally –
+      “activating” just switches it on. The <strong>privacy traffic light</strong> shows for each
+      tool what it does with your data: <span style="color:var(--success)">green</span> = fully
+      local, <span style="color:var(--warning)">yellow</span> = contacts the internet, always with
+      a plain-language explanation of what exactly would be sent.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>5 · The command palette: everything, one keystroke away</h2>
+    <p>
+      Press <kbd>Cmd/Ctrl + K</kbd> anywhere. Type what you want – “create task”, “start timer”,
+      “set alarm” – hit Enter, done. Every tool registers its actions here, so you rarely need
+      the mouse.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>6 · The tools in one minute</h2>
+    <ul>
+      <li><strong>To-Do</strong> – tasks with lists, priorities and due dates. Overdue turns red.</li>
+      <li><strong>Notes</strong> – Markdown notes stored as real <code>.md</code> files in a folder you choose. Your files, forever.</li>
+      <li><strong>Calendar</strong> – your own appointments with reminders shortly before they start.</li>
+      <li><strong>Pomodoro</strong> – focus sessions with breaks; lengths, cycles and sound are all yours to change.</li>
+      <li><strong>Workclock</strong> – one button: start when you begin, stop when you rest. Cardo sums up your day.</li>
+      <li><strong>Statistics</strong> – completed tasks, work time and pomodoros per day, week or month.</li>
+      <li><strong>Alarm & Countdown</strong> – wake-up calls with a chime, and “how many days until…?” at a glance.</li>
+      <li><strong>Quick capture</strong> – <kbd>Cmd/Ctrl + Shift + Space</kbd> from anywhere: thought in, sort it later, send it to To-Do with one click.</li>
+      <li><strong>Daily routine</strong> – your morning checklist, fresh every day.</li>
+    </ul>
+  </section>
+
+  <section class="card step">
+    <h2>7 · Make it yours: themes</h2>
+    <p>
+      <em>Settings → Theme</em> offers ten looks from beloved community palettes (Catppuccin,
+      Nord, Gruvbox, Tokyo Night …). Pick an accent color override if you like – your choices
+      survive theme switches.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>8 · Trust, but verify: the self-test</h2>
+    <p>
+      <em>Settings → Diagnostics → “Run self-test”</em> checks the whole app live – database,
+      every active tool, every command, themes, translations – against a scratch database
+      (your real data is never touched) and gives you a report you can export. If anything ever
+      feels off, run this first and share the report in the <a href={FORUM_URL} rel="noopener">forum</a>.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>Questions?</h2>
+    <p>
+      The <a href={withBase('/docs')}>docs</a> answer the most common ones (where is my data?
+      is it really free?). For everything else, the <a href={FORUM_URL} rel="noopener">forum</a>
+      is open – no account on Cardo's side needed, just a GitHub login.
+    </p>
+  </section>
+
+  <style>
+    .step { margin-top: 1.25rem; }
+    .step h2 { margin-top: 0; }
+  </style>
+</Base>

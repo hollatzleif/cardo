@@ -2,12 +2,13 @@
 import Base from '../layouts/Base.astro';
 import CopyBlock from '../components/CopyBlock.astro';
 
-// PLACEHOLDER: replace USER with the real GitHub org/user once public releases exist.
-const releasesUrl = 'https://github.com/USER/cardo/releases';
-// PLACEHOLDER: get.cardo.app is not registered yet – swap in the real domain
-// once the install scripts are hosted there.
-const installSh = 'curl -fsSL https://get.cardo.app/install.sh | sh';
-const installPs = 'irm https://get.cardo.app/install.ps1 | iex';
+import { GITHUB_USER, RELEASES_URL, withBase } from '../lib/site';
+
+const releasesUrl = RELEASES_URL;
+// Both install scripts are hosted on this site (GitHub Pages) – no custom
+// domain needed. Swap for get.<domain> once one exists.
+const installSh = `curl -fsSL https://${GITHUB_USER}.github.io/cardo-app/install.sh | sh`;
+const installPs = `irm https://${GITHUB_USER}.github.io/cardo-app/install.ps1 | iex`;
 ---
 
 <Base title="Download" description="Download Cardo for macOS, Windows or Linux – free, no account, no strings attached.">
@@ -80,7 +81,7 @@ const installPs = 'irm https://get.cardo.app/install.ps1 | iex';
     <h3>After installing</h3>
     <p>
       Open Cardo and you're done – no database to set up, no account to create. If you want a
-      quick tour of your first dashboard, head over to the <a href="/docs">docs</a>.
+      quick tour of your first dashboard, head over to the <a href={withBase('/docs')}>docs</a>.
     </p>
   </section>
 

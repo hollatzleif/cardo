@@ -7,15 +7,17 @@ const {
   title,
   description = 'Cardo – your pivot point. A freely arrangeable dashboard that gathers everything in one calm place. Local-first, free, no account.',
 } = Astro.props;
+import { FORUM_URL, PUBLIC_REPO_URL, withBase } from '../lib/site';
+
 const nav = [
-  { href: '/', label: 'Home' },
-  { href: '/download', label: 'Download' },
-  { href: '/donate', label: 'Donate' },
-  { href: '/docs', label: 'Docs' },
+  { href: withBase('/'), label: 'Home' },
+  { href: withBase('/download'), label: 'Download' },
+  { href: withBase('/docs'), label: 'Docs' },
+  { href: withBase('/docs/tutorial'), label: 'Tutorial' },
+  { href: FORUM_URL, label: 'Forum', external: true },
+  { href: withBase('/donate'), label: 'Donate' },
 ];
 const current = Astro.url.pathname;
-// PLACEHOLDER: replace USER with the real GitHub org/user once the repo has public releases.
-const githubUrl = 'https://github.com/USER/cardo';
 ---
 
 <!doctype html>
@@ -28,10 +30,14 @@ const githubUrl = 'https://github.com/USER/cardo';
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="/">⊕ Cardo</a>
+      <a class="brand" href={withBase('/')}>⊕ Cardo</a>
       <nav>
         {nav.map((item) => (
-          <a href={item.href} class={current === item.href || current === item.href + '/' || (item.href !== '/' && current.startsWith(item.href)) ? 'active' : ''}>{item.label}</a>
+          <a
+            href={item.href}
+            rel={item.external ? 'noopener' : undefined}
+            class={!item.external && (current === item.href || current === item.href + '/') ? 'active' : ''}
+          >{item.label}{item.external ? ' ↗' : ''}</a>
         ))}
       </nav>
     </header>
@@ -44,9 +50,10 @@ const githubUrl = 'https://github.com/USER/cardo';
         this website sets no cookies either.
       </p>
       <p>
-        <a href={githubUrl} rel="noopener">GitHub</a> ·
+        <a href={PUBLIC_REPO_URL} rel="noopener">GitHub</a> ·
+        <a href={FORUM_URL} rel="noopener">Forum</a> ·
         {/* PLACEHOLDER: imprint page does not exist yet – add /imprint before going live. */}
-        <a href="/imprint">Imprint</a>
+        <a href={withBase('/imprint')}>Imprint</a>
       </p>
     </footer>
     <style is:global>

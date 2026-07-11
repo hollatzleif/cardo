@@ -1,0 +1,36 @@
+# Deploys apps/website to GitHub Pages of the PUBLIC repo
+# (GITHUB_USER/cardo-app, branch gh-pages) on every website change.
+# Needs the same RELEASE_TOKEN secret as release.yml (cross-repo push).
+name: Deploy website
+
+on:
+  push:
+    branches: [main]
+    paths: ['apps/website/**', '.github/workflows/deploy-website.yml']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build website
+        run: pnpm --filter @cardo/website build
+
+      - name: Publish to cardo-app gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.RELEASE_TOKEN }}
+          external_repository: GITHUB_USER/cardo-app
+          publish_branch: gh-pages
+          publish_dir: apps/website/dist

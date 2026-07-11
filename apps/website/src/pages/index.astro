@@ -2,10 +2,11 @@
 import Base from '../layouts/Base.astro';
 import CopyBlock from '../components/CopyBlock.astro';
 import Barometer from '../components/Barometer.astro';
+import { GITHUB_USER, withBase } from '../lib/site';
 
-// PLACEHOLDER: get.cardo.app is not registered yet – swap in the real domain
-// once the install script is hosted.
-const installSh = 'curl -fsSL https://get.cardo.app/install.sh | sh';
+// The install script is hosted on this very site (GitHub Pages), so the
+// one-liner works without a custom domain. Swap for get.<domain> later.
+const installSh = `curl -fsSL https://${GITHUB_USER}.github.io/cardo-app/install.sh | sh`;
 ---
 
 <Base title="Your pivot point">
@@ -21,9 +22,9 @@ const installSh = 'curl -fsSL https://get.cardo.app/install.sh | sh';
       <CopyBlock command={installSh} label="Install (macOS / Linux)" />
     </div>
     <p>
-      <a class="btn" href="/download#macos">macOS (.dmg)</a>
-      <a class="btn" href="/download#windows">Windows (.msi)</a>
-      <a class="btn" href="/download#linux">Linux (.AppImage)</a>
+      <a class="btn" href={withBase('/download#macos')}>macOS (.dmg)</a>
+      <a class="btn" href={withBase('/download#windows')}>Windows (.msi)</a>
+      <a class="btn" href={withBase('/download#linux')}>Linux (.AppImage)</a>
     </p>
     <p><span class="badge">● 100 % local</span> <span class="muted">Your data never leaves your device. No account, no forced cloud, no tracking.</span></p>
   </section>
@@ -67,7 +68,7 @@ const installSh = 'curl -fsSL https://get.cardo.app/install.sh | sh';
       (domain, server, certificates) for the current year:
     </p>
     <Barometer />
-    <p><a class="btn btn--ghost" href="/donate">Go to the donation page</a></p>
+    <p><a class="btn btn--ghost" href={withBase('/donate')}>Go to the donation page</a></p>
   </section>
 
   <style>

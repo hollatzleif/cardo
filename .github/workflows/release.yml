@@ -1,0 +1,75 @@
+# Release pipeline: runs on a version tag (v1.0.0, v1.1.0, …).
+# Builds signed installers for macOS/Windows/Linux and publishes them as a
+# release on the PUBLIC repo (GITHUB_USER/cardo-app) incl. latest.json for
+# the auto-updater.
+#
+# Required repo secrets:
+#   TAURI_SIGNING_PRIVATE_KEY          – minisign private key (updater signature)
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD – its password (empty string if none)
+#   RELEASE_TOKEN                      – fine-grained PAT with "contents: write"
+#                                        on GITHUB_USER/cardo-app (cross-repo publish)
+#
+# Budget note: macOS counts 10x in private repos. The universal build
+# (~20 min ≙ 200 min quota) covers Apple Silicon AND Intel in one job.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+          - platform: ubuntu-24.04
+            args: ''
+          - platform: windows-latest
+            args: ''
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Tauri system dependencies (Linux)
+        if: matrix.platform == 'ubuntu-24.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and publish
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          owner: GITHUB_USER
+          repo: cardo-app
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Cardo ${{ github.ref_name }}'
+          releaseBody: 'See the assets below to download and install. Full notes: CHANGELOG.md in the app repo.'
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.args }}

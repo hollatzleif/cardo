@@ -416,3 +416,10 @@
 .tour__progress {
   margin-right: auto;
 }
+
+/* ── Update settings ── */
+.settings__radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

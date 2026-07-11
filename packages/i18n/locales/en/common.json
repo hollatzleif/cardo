@@ -38,7 +38,18 @@
     "updatesAuto": "Install updates automatically in the background",
     "updatesNotify": "Only notify me about updates",
     "updatesTransparency": "To check for updates, Cardo periodically contacts the update server. The only thing transmitted is the app's version number.",
-    "help": "Help"
+    "help": "Help",
+    "updateChecking": "Checking for updates…",
+    "updateDownloading": "Downloading version {{version}} in the background…",
+    "updateUpToDate": "You are on the latest version.",
+    "updateError": "Could not reach the update server. Cardo keeps working normally.",
+    "updateCheckNow": "Check now",
+    "updateInstall": "Install update",
+    "updateRestart": "Restart now",
+    "updateAvailableTitle": "Update {{version}} available",
+    "updateAvailableBody": "Install it from Settings → Updates whenever you like.",
+    "updateInstalledTitle": "Update {{version}} installed",
+    "updateInstalledBody": "What's new takes effect the next time Cardo starts."
   },
   "diagnose": {
     "start": "Run self-test",
