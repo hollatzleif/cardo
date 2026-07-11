@@ -409,7 +409,7 @@ dependencies = [
 
 [[package]]
 name = "cardo-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "serde",
@@ -423,7 +423,7 @@ dependencies = [
 
 [[package]]
 name = "cardo-desktop"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cardo-core",
  "serde",
