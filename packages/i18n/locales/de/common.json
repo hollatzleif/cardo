@@ -85,7 +85,16 @@
       "green": "Arbeitet komplett offline – deine Daten verlassen dieses Gerät nie.",
       "yellow": "Kontaktiert das Internet. Tippe für Details, was genau übertragen wird."
     },
-    "subtitle": "Alle Tools werden mit Cardo ausgeliefert und laufen lokal. Aktivieren schaltet sie nur ein – die Datenschutz-Ampel sagt dir vorher, ob etwas dein Gerät verlassen würde."
+    "subtitle": "Alle Tools werden mit Cardo ausgeliefert und laufen lokal. Aktivieren schaltet sie nur ein – die Datenschutz-Ampel sagt dir vorher, ob etwas dein Gerät verlassen würde.",
+    "back": "Zurück zum Dashboard",
+    "search": "Tools durchsuchen…",
+    "noResults": "Keine Tools passen zu deiner Suche oder deinen Filtern.",
+    "filter": {
+      "all": "Alle",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "privacyAll": "Alle Datenschutz-Stufen"
+    }
   },
   "profile": {
     "title": "Dein Profil",
@@ -556,5 +565,67 @@
     "tokyo-night": "Tokyo Night",
     "solarized-light": "Solarized Hell",
     "rose-pine": "Rosé Pine"
+  },
+  "design": {
+    "title": "Design",
+    "close": "Schließen",
+    "typography": {
+      "title": "Typografie",
+      "preset": "Schriftstil",
+      "presetOption": {
+        "system": "System",
+        "humanist": "Humanistisch",
+        "serif": "Serifen",
+        "rounded": "Abgerundet",
+        "monospace": "Monospace"
+      },
+      "customFont": "Eigene Schriftart",
+      "customFontPlaceholder": "z. B. Georgia (überschreibt die Vorlage)",
+      "fontSize": "Schriftgröße"
+    },
+    "colors": {
+      "title": "Farben",
+      "accent": "Akzent",
+      "canvas": "Hintergrund (Canvas)",
+      "widget": "Widget-Hintergrund",
+      "text": "Text",
+      "border": "Rahmen",
+      "resetColor": "Diese Farbe auf den Theme-Standard zurücksetzen"
+    },
+    "background": {
+      "title": "Hintergrundbild",
+      "choose": "Bild wählen…",
+      "remove": "Bild entfernen",
+      "tooLarge": "Dieses Bild ist größer als 4 MB. Bitte wähl ein kleineres.",
+      "fit": "Anpassung",
+      "fitOption": {
+        "cover": "Füllen (cover)",
+        "contain": "Einpassen (contain)",
+        "tile": "Kacheln"
+      },
+      "dim": "Abdunkeln",
+      "blur": "Weichzeichnen"
+    },
+    "widgets": {
+      "title": "Widgets",
+      "radius": "Eckenradius",
+      "transparency": "Transparenz",
+      "shadow": "Schlagschatten",
+      "border": "Rahmen"
+    },
+    "layout": {
+      "title": "Layout",
+      "density": "Dichte",
+      "densityOption": {
+        "compact": "Kompakt",
+        "normal": "Normal",
+        "airy": "Luftig"
+      }
+    },
+    "reset": {
+      "title": "Zurücksetzen",
+      "all": "Alles zurücksetzen",
+      "hint": "Entfernt alle persönlichen Design-Anpassungen und kehrt zu den Theme-Standards zurück. Deine Theme-Auswahl bleibt erhalten."
+    }
   }
 }

@@ -1,0 +1,182 @@
+/* Design customization: drawer UI + global consumers of design overrides.
+   Colors exclusively via semantic tokens / color-mix – no literals. */
+
+/* ── Global: background image layer (activated via data attrs on <html>) ── */
+html[data-design-bg='on'] .app {
+  position: relative;
+  isolation: isolate;
+}
+html[data-design-bg='on'] .app::before {
+  content: '';
+  position: absolute;
+  inset: calc(-2 * var(--design-bg-blur, 0px));
+  z-index: -1;
+  background-image: var(--canvas-bg-image);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(var(--design-bg-blur, 0px));
+  pointer-events: none;
+}
+html[data-design-bg-fit='contain'] .app::before {
+  background-size: contain;
+}
+html[data-design-bg-fit='tile'] .app::before {
+  background-size: auto;
+  background-repeat: repeat;
+}
+/* Dim overlay keeps widgets readable on busy images. */
+html[data-design-bg='on'] .app::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--palette-base) var(--design-bg-dim, 0%), transparent);
+  pointer-events: none;
+}
+
+/* ── Global: widget border toggle ── */
+html[data-design-widget-border='off'] .c-card {
+  border-color: transparent;
+}
+
+/* ── Drawer ── */
+.design-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1500;
+  width: min(340px, 92vw);
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--bg-widget);
+  border-left: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-widget);
+  overflow-wrap: anywhere;
+}
+.design-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.design-panel__title {
+  margin: 0;
+}
+
+/* ── Sections ── */
+.design-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  min-width: 0;
+}
+.design-section__title {
+  margin: 0;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+/* ── Rows & controls ── */
+.design-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.design-row--inline {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.design-row__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 0.92em;
+}
+.design-row__value {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+.design-slider {
+  width: 100%;
+  accent-color: var(--accent);
+  margin: 0;
+}
+.design-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: 0.92em;
+}
+.design-check input {
+  accent-color: var(--accent);
+}
+
+/* ── Color rows ── */
+.design-color-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.design-color-row .design-row__label {
+  flex: 1;
+  min-width: 0;
+}
+.design-color-input {
+  width: 44px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-canvas);
+  cursor: pointer;
+  flex: none;
+}
+.design-color-reset {
+  padding: 0 var(--space-2);
+  flex: none;
+}
+
+/* ── Background image ── */
+.design-file-button {
+  position: relative;
+  overflow: hidden;
+}
+.design-file-input {
+  display: none;
+}
+.design-bg-preview {
+  width: 100%;
+  height: 72px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background-size: cover;
+  background-position: center;
+}
+.design-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.9em;
+}
+.design-hint {
+  margin: 0;
+  font-size: 0.9em;
+}

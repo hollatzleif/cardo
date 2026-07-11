@@ -113,7 +113,9 @@ textarea {
   box-shadow: var(--shadow-widget);
   width: min(560px, 90vw);
   max-height: 70vh;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
 }
 
 /* ── Misc ── */

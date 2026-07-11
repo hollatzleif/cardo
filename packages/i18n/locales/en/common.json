@@ -85,7 +85,16 @@
       "green": "Works fully offline – your data never leaves this device.",
       "yellow": "Contacts the internet. Tap for details on what exactly is transmitted."
     },
-    "subtitle": "All tools ship with Cardo and run locally. Activating just switches them on – the privacy light tells you before anything would ever leave your device."
+    "subtitle": "All tools ship with Cardo and run locally. Activating just switches them on – the privacy light tells you before anything would ever leave your device.",
+    "back": "Back to dashboard",
+    "search": "Search tools…",
+    "noResults": "No tools match your search or filters.",
+    "filter": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "privacyAll": "All privacy levels"
+    }
   },
   "profile": {
     "title": "Your profile",
@@ -556,5 +565,67 @@
     "tokyo-night": "Tokyo Night",
     "solarized-light": "Solarized Light",
     "rose-pine": "Rosé Pine"
+  },
+  "design": {
+    "title": "Design",
+    "close": "Close",
+    "typography": {
+      "title": "Typography",
+      "preset": "Font style",
+      "presetOption": {
+        "system": "System",
+        "humanist": "Humanist",
+        "serif": "Serif",
+        "rounded": "Rounded",
+        "monospace": "Monospace"
+      },
+      "customFont": "Custom font",
+      "customFontPlaceholder": "e.g. Georgia (overrides the preset)",
+      "fontSize": "Font size"
+    },
+    "colors": {
+      "title": "Colors",
+      "accent": "Accent",
+      "canvas": "Canvas background",
+      "widget": "Widget background",
+      "text": "Text",
+      "border": "Borders",
+      "resetColor": "Reset this color to the theme default"
+    },
+    "background": {
+      "title": "Background image",
+      "choose": "Choose image…",
+      "remove": "Remove image",
+      "tooLarge": "This image is larger than 4 MB. Please pick a smaller one.",
+      "fit": "Fit",
+      "fitOption": {
+        "cover": "Fill (cover)",
+        "contain": "Fit (contain)",
+        "tile": "Tile"
+      },
+      "dim": "Dim",
+      "blur": "Blur"
+    },
+    "widgets": {
+      "title": "Widgets",
+      "radius": "Corner radius",
+      "transparency": "Transparency",
+      "shadow": "Drop shadow",
+      "border": "Border"
+    },
+    "layout": {
+      "title": "Layout",
+      "density": "Density",
+      "densityOption": {
+        "compact": "Compact",
+        "normal": "Normal",
+        "airy": "Airy"
+      }
+    },
+    "reset": {
+      "title": "Reset",
+      "all": "Reset all",
+      "hint": "Removes all personal design tweaks and returns to the theme defaults. Your theme choice stays."
+    }
   }
 }

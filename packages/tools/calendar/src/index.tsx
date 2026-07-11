@@ -412,7 +412,10 @@ export function createTool(): CardoTool {
             const c = ctx;
             if (!c) return { ok: false, messageKey: 'tool.calendar.msg.notFound' };
             const event = await c.storage.get<EventDoc>(id);
-            if (!event) return { ok: false, messageKey: 'tool.calendar.msg.notFound' };
+            // A vanished event is a normal outcome (deleted before the
+            // reminder fired), not a command failure – ok:true keeps the
+            // diagnose command check honest.
+            if (!event) return { ok: true, messageKey: 'tool.calendar.msg.notFound' };
             await c.notifications.notify({
               titleKey: 'tool.calendar.notification.title',
               bodyKey: 'tool.calendar.notification.body',

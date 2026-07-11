@@ -3,6 +3,7 @@ import i18next from 'i18next';
 import { applyTheme } from '@cardo/ui';
 import { defaultThemeId } from '@cardo/themes';
 import { getHost } from '../host';
+import { loadAndApplyStoredDesign } from '../design/design';
 
 export interface WidgetInstance {
   instanceId: string;
@@ -40,6 +41,7 @@ interface AppState {
   paletteOpen: boolean;
   settingsOpen: boolean;
   marketOpen: boolean;
+  designOpen: boolean;
   themeId: string;
   accentToken?: string;
   pages: Page[];
@@ -54,6 +56,7 @@ interface AppState {
   setPaletteOpen(open: boolean): void;
   setSettingsOpen(open: boolean): void;
   setMarketOpen(open: boolean): void;
+  setDesignOpen(open: boolean): void;
   setToolActive(toolId: string, active: boolean): Promise<void>;
   saveProfile(profile: Profile): Promise<void>;
   startTour(): void;
@@ -94,6 +97,7 @@ export const useAppStore = create<AppState>((set, get) => {
     paletteOpen: false,
     settingsOpen: false,
     marketOpen: false,
+    designOpen: false,
     themeId: defaultThemeId,
     accentToken: undefined,
     pages: [],
@@ -110,6 +114,8 @@ export const useAppStore = create<AppState>((set, get) => {
       const themeId = themeDoc?.themeId ?? defaultThemeId;
       const accentToken = themeDoc?.accentToken;
       applyTheme(themeId, { accentToken });
+      // Layer 3: user design overrides go on top of the fresh palette.
+      await loadAndApplyStoredDesign();
 
       const rawPages = (await backend.query('core.layout', { orderBy: 'order' })) as Array<
         Record<string, unknown>
@@ -185,6 +191,9 @@ export const useAppStore = create<AppState>((set, get) => {
     setMarketOpen(marketOpen) {
       set({ marketOpen });
     },
+    setDesignOpen(designOpen) {
+      set({ designOpen });
+    },
 
     async setToolActive(toolId, active) {
       const { registry, backend } = getHost();
@@ -219,6 +228,7 @@ export const useAppStore = create<AppState>((set, get) => {
     async setTheme(themeId) {
       set({ themeId });
       applyTheme(themeId, { accentToken: get().accentToken });
+      await loadAndApplyStoredDesign();
       await persistTheme();
       getHost().services.events.emit('core:theme-changed', { themeId });
     },
@@ -226,6 +236,7 @@ export const useAppStore = create<AppState>((set, get) => {
     async setAccent(accentToken) {
       set({ accentToken });
       applyTheme(get().themeId, { accentToken });
+      await loadAndApplyStoredDesign();
       await persistTheme();
     },
 

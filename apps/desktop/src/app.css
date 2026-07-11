@@ -101,6 +101,9 @@
   flex: 1;
   min-height: 0;
   padding: var(--space-2);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 .react-grid-item.react-grid-placeholder {
   background: var(--accent);
@@ -312,40 +315,99 @@
   max-width: 340px;
 }
 
-/* ── Tool market ── */
-.market {
-  min-width: 480px;
-  max-width: 560px;
-  max-height: 70vh;
+/* ── Tool market (full page) ── */
+.market-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
+  min-width: 0;
 }
-.market__list {
+.market-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.market-page__header h2 {
+  margin: 0 0 var(--space-1);
+}
+.market-page__controls {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  overflow-y: auto;
 }
-.market__item {
+.market-page__search {
+  max-width: 420px;
+  width: 100%;
+}
+.market-page__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+.market-page__chip {
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
+}
+.market-page__chip--active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.market-page__filter-sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border-subtle);
+  margin: 0 var(--space-2);
+}
+.market-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+.market-page__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  min-width: 0;
+}
+.market-page__item > * {
+  overflow-wrap: anywhere;
+}
+.market-page__item-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
-.market__item-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+.market-page__item-desc {
+  margin: 0;
 }
-.market__item-title {
+.market-page__item-privacy {
+  margin: 0;
+  font-size: 0.85em;
+}
+.market-page__item-actions {
+  margin-top: auto;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
 }
-.market__item-privacy {
-  font-size: 0.85em;
+.market-page__active-badge {
+  color: var(--success);
+  font-size: 0.9em;
+}
+.market-page__empty {
+  text-align: center;
+  padding: var(--space-6);
 }
 
 /* ── Profile ── */
@@ -400,12 +462,18 @@
 }
 .tour__card {
   position: absolute;
-  width: 340px;
+  width: min(340px, calc(100vw - 2 * var(--space-4)));
+  max-height: min(60vh, calc(100vh - 2 * var(--space-4)));
+  overflow-y: auto;
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   z-index: 1;
+  overflow-wrap: anywhere;
+}
+.tour__card p {
+  margin: 0;
 }
 .tour__controls {
   display: flex;

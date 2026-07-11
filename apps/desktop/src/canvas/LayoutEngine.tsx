@@ -55,7 +55,7 @@ export function LayoutEngine({ widgets, editing, onPositionsChange, renderWidget
       isDraggable={editing}
       isResizable={editing}
       compactType="vertical"
-      draggableCancel=".widget-body"
+      draggableCancel=".widget-body, .widget-frame__remove"
       onLayoutChange={(next: Layout[]) => {
         if (!editing) return;
         const updates = next

@@ -57,7 +57,9 @@ export function createTool(): CardoTool {
   async function checkItem(itemId: string): Promise<CommandResult> {
     if (!ctx) return { ok: false, messageKey: 'tool.routine.command.itemMissing' };
     const item = await ctx.storage.get<ItemDoc>(`item:${itemId}`);
-    if (!item) return { ok: false, messageKey: 'tool.routine.command.itemMissing' };
+    // Unknown/deleted item is a normal outcome, not a command failure
+    // (diagnose executes this with a probe id).
+    if (!item) return { ok: true, messageKey: 'tool.routine.command.itemMissing' };
 
     const date = localDateKey(new Date());
     const day = await getDay(date);

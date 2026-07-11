@@ -8,6 +8,7 @@ import { SettingsModal } from './settings/SettingsModal';
 import { ToolMarket } from './market/ToolMarket';
 import { ProfileModal } from './profile/ProfileModal';
 import { Tour } from './onboarding/Tour';
+import { DesignPanel } from './design/DesignPanel';
 
 function greetingKey(hour: number): string {
   if (hour < 11) return 'profile.greetingMorning';
@@ -37,6 +38,8 @@ export function App() {
   const removePage = useAppStore((s) => s.removePage);
   const marketOpen = useAppStore((s) => s.marketOpen);
   const setMarketOpen = useAppStore((s) => s.setMarketOpen);
+  const designOpen = useAppStore((s) => s.designOpen);
+  const setDesignOpen = useAppStore((s) => s.setDesignOpen);
   const profile = useAppStore((s) => s.profile);
   const onboardingDone = useAppStore((s) => s.onboardingDone);
   const tourActive = useAppStore((s) => s.tourActive);
@@ -155,11 +158,21 @@ export function App() {
           >
             {editing ? t('canvas.editMode') : t('canvas.viewMode')}
           </button>
+          {editing && (
+            <button
+              className={`c-btn c-btn--ghost${designOpen ? ' topbar__page--active' : ''}`}
+              title={t('design.title')}
+              data-tour-anchor="ui:design-button"
+              onClick={() => setDesignOpen(!designOpen)}
+            >
+              🎨 {t('design.title')}
+            </button>
+          )}
           <button
-            className="c-btn c-btn--ghost"
+            className={`c-btn c-btn--ghost${marketOpen ? ' topbar__page--active' : ''}`}
             title={t('market.title')}
             data-tour-anchor="ui:market-button"
-            onClick={() => setMarketOpen(true)}
+            onClick={() => setMarketOpen(!marketOpen)}
           >
             ⊞ {t('market.title')}
           </button>
@@ -175,12 +188,12 @@ export function App() {
       </header>
 
       <main className="app__canvas">
-        <Canvas />
+        {marketOpen ? <ToolMarket /> : <Canvas />}
       </main>
 
       {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
-      {marketOpen && <ToolMarket onClose={() => setMarketOpen(false)} />}
+      {designOpen && editing && <DesignPanel onClose={() => setDesignOpen(false)} />}
       {needsProfile && (
         <ProfileModal
           onDone={() => {

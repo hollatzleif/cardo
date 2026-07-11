@@ -271,8 +271,10 @@ export function createTool(): CardoTool {
             const c = ctx;
             if (!c) return { ok: false, messageKey: 'tool.alarm.msg.notFound' };
             const alarm = await c.storage.get<AlarmDoc>(id);
+            // Deleted/disabled before it rang – a normal outcome, not a
+            // command failure (diagnose executes this with a probe id).
             if (!alarm || !alarm.enabled) {
-              return { ok: false, messageKey: 'tool.alarm.msg.notFound' };
+              return { ok: true, messageKey: 'tool.alarm.msg.notFound' };
             }
             await c.notifications.notify({
               titleKey: 'tool.alarm.notification.title',
