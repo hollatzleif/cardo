@@ -1,0 +1,44 @@
+---
+// A one-line command with a copy-to-clipboard button. No external deps.
+interface Props {
+  command: string;
+  label?: string;
+}
+const { command, label } = Astro.props;
+---
+
+<div class="copy-block">
+  {label && <span class="copy-block__label">{label}</span>}
+  <div class="copy-block__row">
+    <pre class="copy-block__pre"><code>{command}</code></pre>
+    <button class="copy-block__btn" type="button" data-copy={command} aria-label="Copy command to clipboard">Copy</button>
+  </div>
+</div>
+
+<script>
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('.copy-block__btn')) {
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.copy ?? '');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      } catch {
+        // Clipboard API unavailable (e.g. non-secure context) – leave the text selectable.
+      }
+    });
+  }
+</script>
+
+<style>
+  .copy-block { margin: 0.75rem 0; text-align: left; }
+  .copy-block__label {
+    display: block; font-size: 0.8rem; color: var(--text-muted);
+    margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .copy-block__row { display: flex; align-items: stretch; gap: 0.5rem; }
+  .copy-block__pre { flex: 1; margin: 0; white-space: pre; }
+  .copy-block__btn {
+    flex: none; background: var(--accent); color: var(--base); border: none;
+    border-radius: 10px; padding: 0 1rem; font-weight: 700; cursor: pointer; font-size: 0.9rem;
+  }
+</style>

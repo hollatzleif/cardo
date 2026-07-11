@@ -1,0 +1,71 @@
+---
+import Base from '../layouts/Base.astro';
+import Barometer from '../components/Barometer.astro';
+import barometer from '../data/barometer.json';
+
+// PLACEHOLDERS – replace before going live:
+// - PayPal: real PayPal.me link or hosted button URL
+// - IBAN: the real account details
+// - GitHub Sponsors: real sponsors profile URL
+const paypalUrl = 'https://paypal.me/PLACEHOLDER';
+const iban = 'DE00 0000 0000 0000 0000 00';
+const sponsorsUrl = 'https://github.com/sponsors/PLACEHOLDER';
+---
+
+<Base title="Donate" description="Cardo is free. Voluntary donations cover the year's running costs – shown transparently as a percentage, never as amounts.">
+  <h1>Support Cardo</h1>
+  <p class="muted">
+    Cardo is free and will stay free. No paywall, no premium tier, no “pro” version. If Cardo
+    gives you a calmer place, and you want to give something back – this is where you can.
+  </p>
+
+  <section class="card" style="margin-top:1.5rem">
+    <h2>Why donations?</h2>
+    <p>
+      Even a local-first app has a few real-world bills: the domain, signing certificates
+      (Apple charges 99 €/year), a small server for the optional sync feature, and a couple of
+      infrastructure tools. Donations exist to cover exactly these costs – nothing more is asked for.
+    </p>
+    <h3>Where we stand for {barometer.year}</h3>
+    <Barometer />
+    <p class="muted">{barometer.note}</p>
+  </section>
+
+  <section class="ways">
+    <div class="card">
+      <h3>PayPal</h3>
+      <p>One-off or recurring, whatever suits you.</p>
+      <p><a class="btn" href={paypalUrl} rel="noopener">Donate via PayPal</a></p>
+    </div>
+    <div class="card">
+      <h3>Bank transfer</h3>
+      <p>No fees, works from any European bank account.</p>
+      <p><code class="iban">{iban}</code></p>
+      <p class="muted">Reference: “Cardo donation”</p>
+    </div>
+    <div class="card">
+      <h3>GitHub Sponsors</h3>
+      <p>If you're on GitHub anyway.</p>
+      <p><a class="btn btn--ghost" href={sponsorsUrl} rel="noopener">Sponsor on GitHub</a></p>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:2rem">
+    <h3>The honest fine print</h3>
+    <p>
+      We publish only the percentage of costs covered – never absolute amounts, and never who
+      donated. Once 100 % is reached, the barometer disappears and we say so openly: from that
+      point on, further donations go personally to the developer. Nobody should ever feel
+      pressured – Cardo works exactly the same whether you donate or not.
+    </p>
+  </section>
+
+  <style>
+    .ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .ways h3 { margin-top: 0; }
+    .iban {
+      display: inline-block; background: var(--surface-1); border-radius: 8px;
+      padding: 0.35rem 0.7rem; letter-spacing: 0.04em;
+    }
+  </style>
+</Base>

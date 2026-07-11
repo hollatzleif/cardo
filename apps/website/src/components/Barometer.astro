@@ -1,0 +1,43 @@
+---
+// Donation barometer. Reads src/data/barometer.json and shows ONLY a percentage –
+// never absolute amounts (product decision). At >= 100 % the bar is replaced by a
+// thank-you note explaining that further donations go personally to the developer.
+import barometer from '../data/barometer.json';
+const percent = Math.max(0, Math.min(100, barometer.coveredPercent));
+const funded = barometer.coveredPercent >= 100;
+---
+
+{funded ? (
+  <p class="barometer-done">
+    We received enough donations to cover this year's running costs – from now on,
+    further donations go personally to the developer. Thank you! 💙
+  </p>
+) : (
+  <>
+    <div
+      class="barometer"
+      role="progressbar"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow={percent}
+      aria-label={`Running costs covered: ${percent}%`}
+    >
+      <div class="barometer__fill" style={`width:${percent}%`}></div>
+    </div>
+    <p class="muted">
+      {percent} % of this year's running costs are covered.
+    </p>
+  </>
+)}
+
+<style>
+  .barometer {
+    height: 14px; border-radius: 999px; background: var(--surface-1);
+    overflow: hidden; margin: 0.75rem 0 0.25rem;
+  }
+  .barometer__fill { height: 100%; background: var(--success); border-radius: 999px; }
+  .barometer-done {
+    border: 1px solid var(--success); border-radius: var(--radius);
+    padding: 0.75rem 1rem; color: var(--success);
+  }
+</style>

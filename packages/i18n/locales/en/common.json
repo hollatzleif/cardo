@@ -1,0 +1,549 @@
+{
+  "app": {
+    "name": "Cardo",
+    "tagline": "Your pivot point. Everything in one place – arranged your way."
+  },
+  "canvas": {
+    "viewMode": "View mode",
+    "editMode": "Edit mode",
+    "toggleEdit": "Toggle edit mode",
+    "addWidget": "Add widget",
+    "removeWidget": "Remove widget",
+    "widgetSettings": "Widget settings",
+    "page": "Page",
+    "addPage": "Add page",
+    "renamePage": "Rename page",
+    "deletePage": "Delete page",
+    "deletePageConfirm": "Delete this page? The widgets on it will be removed from the layout (your data stays safe).",
+    "emptyHint": "This dashboard is empty. Press {{shortcut}} to enter edit mode and add your first widget.",
+    "defaultPageName": "Home"
+  },
+  "palette": {
+    "placeholder": "Type a command or search…",
+    "noResults": "No matching commands",
+    "run": "Run",
+    "cancel": "Cancel"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "language": "Language",
+    "theme": "Theme",
+    "themeHint": "Colors adapt instantly. Your personal accent overrides survive theme changes.",
+    "accentOverride": "Accent color override",
+    "resetOverrides": "Reset personal color overrides",
+    "diagnostics": "Diagnostics",
+    "about": "About",
+    "updates": "Updates",
+    "updatesAuto": "Install updates automatically in the background",
+    "updatesNotify": "Only notify me about updates",
+    "updatesTransparency": "To check for updates, Cardo periodically contacts the update server. The only thing transmitted is the app's version number.",
+    "help": "Help"
+  },
+  "diagnose": {
+    "start": "Run self-test",
+    "running": "Self-test running…",
+    "exportReport": "Export report",
+    "reportTitle": "Cardo self-test report",
+    "status": {
+      "pass": "OK",
+      "warn": "Warning",
+      "fail": "Failed"
+    },
+    "summary": "{{passed}} passed · {{warnings}} warnings · {{failed}} failed",
+    "scratchNote": "All checks run against a disposable test database. Your real data is never touched.",
+    "check": {
+      "dbReadWrite": "Database readable and writable",
+      "dbQuery": "Database queries work",
+      "changeLog": "Change log records every write",
+      "migrations": "Database schema is up to date",
+      "toolPing": "Tool \"{{tool}}\" responds",
+      "toolCommands": "Commands of \"{{tool}}\" executable",
+      "toolSelfTest": "Self-test \"{{test}}\" of \"{{tool}}\"",
+      "themes": "All themes complete (no missing tokens)",
+      "i18n": "Translations complete (EN/DE)",
+      "storagePath": "App data folder writable"
+    }
+  },
+  "market": {
+    "title": "Tool market",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "active": "Active",
+    "privacy": {
+      "green": "Works fully offline – your data never leaves this device.",
+      "yellow": "Contacts the internet. Tap for details on what exactly is transmitted."
+    },
+    "subtitle": "All tools ship with Cardo and run locally. Activating just switches them on – the privacy light tells you before anything would ever leave your device."
+  },
+  "profile": {
+    "title": "Your profile",
+    "name": "Name",
+    "nameRequired": "Please tell us your name – it stays on this device.",
+    "email": "Email (optional)",
+    "birthday": "Birthday (optional)",
+    "country": "Country (optional)",
+    "localNote": "These details stay on your device. No account, no cloud.",
+    "greetingMorning": "Good morning, {{name}}",
+    "greetingDay": "Hello, {{name}}",
+    "greetingEvening": "Good evening, {{name}}",
+    "edit": "Edit profile"
+  },
+  "onboarding": {
+    "skip": "Skip tour",
+    "next": "Next",
+    "back": "Back",
+    "done": "Done",
+    "restartHint": "You can restart this tour any time in Settings → Help.",
+    "restart": "Restart tour",
+    "step": {
+      "welcome": {
+        "title": "Welcome to Cardo!",
+        "body": "Cardo is your pivot point: one calm place where you collect and arrange everything – exactly the way you want. This short tour shows you around. You can skip it at any time."
+      },
+      "edit": {
+        "title": "Edit mode",
+        "body": "This button (or Cmd/Ctrl+E) unlocks the canvas: move widgets, resize them, add new ones and create more dashboard pages."
+      },
+      "settings": {
+        "title": "Settings & self-test",
+        "body": "Themes, language, your profile – and the \"Run self-test\" button that checks the whole app and gives you a report."
+      },
+      "market": {
+        "title": "The tool market",
+        "body": "Switch tools on and off here. The privacy light shows for every tool what stays local (green) and what would contact the internet (yellow) – explained in plain language."
+      },
+      "palette": {
+        "title": "The command palette",
+        "body": "Press Cmd/Ctrl+K anywhere to search and run any command – create a task, start the timer, everything is one keystroke away."
+      },
+      "privacy": {
+        "title": "Your data stays yours",
+        "body": "Cardo works 100% offline. No account, no cloud, no telemetry. Everything lives in one local database and in plain files you own."
+      }
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "close": "Close",
+    "ok": "OK",
+    "search": "Search",
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "retry": "Retry"
+  },
+  "tool": {
+    "clock": {
+      "name": "Clock",
+      "description": "A simple clock widget – the first proof that widgets work.",
+      "privacy": "Works fully offline.",
+      "test": {
+        "render": "Clock renders",
+        "time": "Clock reports a valid time"
+      },
+      "command": {
+        "showTime": "Show current time"
+      },
+      "tour": {
+        "title": "This is a widget",
+        "body": "Every tool lives in a widget like this. In edit mode you can move and resize it."
+      }
+    },
+    "counter": {
+      "name": "Counter",
+      "description": "Counts clicks and remembers them – the first proof that storage works.",
+      "privacy": "Works fully offline.",
+      "test": {
+        "storage": "Counter persists its value",
+        "commands": "Counter commands work"
+      },
+      "command": {
+        "increment": "Increment counter",
+        "reset": "Reset counter"
+      },
+      "tour": {
+        "title": "Widgets remember",
+        "body": "This counter survives restarts. Everything you do in Cardo is stored locally on your device."
+      }
+    },
+    "alarm": {
+      "name": "Alarm clock",
+      "description": "Set alarms that notify you and play a chime – fully local.",
+      "privacy": "Works fully offline. Alarm times and messages never leave this device.",
+      "empty": "No alarms yet. Add one below.",
+      "messagePlaceholder": "What should I remind you of?",
+      "defaultMessage": "Wake up!",
+      "add": "Add",
+      "delete": "Delete alarm",
+      "toggle": "Enable or disable alarm",
+      "command": {
+        "set": "Set an alarm",
+        "ring": "Ring an alarm"
+      },
+      "notification": {
+        "title": "Alarm: {{message}}",
+        "body": "It is {{time}}."
+      },
+      "msg": {
+        "created": "Alarm set.",
+        "rang": "Alarm rang.",
+        "notFound": "This alarm no longer exists or is disabled.",
+        "failed": "The alarm could not be triggered."
+      },
+      "test": {
+        "storageRoundtrip": "Alarms can be stored and removed",
+        "nextOccurrence": "Next alarm time is computed correctly"
+      },
+      "tour": {
+        "title": "Your alarms",
+        "body": "Add an alarm with a time and a message. Cardo notifies you and plays a chime – everything stays on your device."
+      }
+    },
+    "countdown": {
+      "name": "Countdown",
+      "description": "Counts the days until your important events.",
+      "privacy": "Works fully offline. Your events never leave this device.",
+      "empty": "No countdowns yet. Add an event below.",
+      "titlePlaceholder": "What are you waiting for?",
+      "add": "Add",
+      "delete": "Delete countdown",
+      "day": "day to go",
+      "days": "days to go",
+      "today": "today!",
+      "done": "Done",
+      "command": {
+        "create": "Create a countdown"
+      },
+      "msg": {
+        "created": "Countdown created."
+      },
+      "test": {
+        "storageRoundtrip": "Countdowns can be stored and removed",
+        "daysCalc": "Remaining days are computed correctly"
+      },
+      "tour": {
+        "title": "Your countdowns",
+        "body": "Add an event with a date and Cardo shows you how many days are left – updated daily, fully local."
+      }
+    },
+    "calendar": {
+      "name": "Calendar",
+      "description": "Your own appointments with reminders – fully local, at a glance.",
+      "privacy": "Works fully offline. Your appointments never leave this device.",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "today": "Today",
+      "empty": "No appointments on this day.",
+      "allDay": "All day",
+      "titlePlaceholder": "New appointment…",
+      "time": "Time",
+      "add": "Add",
+      "delete": "Delete appointment",
+      "notification": {
+        "title": "Upcoming appointment",
+        "body": "{{title}} at {{time}}"
+      },
+      "command": {
+        "create": "Create appointment",
+        "remind": "Show appointment reminder"
+      },
+      "msg": {
+        "created": "Appointment created",
+        "notFound": "Appointment not found",
+        "failed": "That didn't work"
+      },
+      "test": {
+        "eventRoundtrip": "Appointments persist and delete cleanly",
+        "monthGrid": "Month grid is computed correctly",
+        "reminderTime": "Reminder times are computed correctly"
+      },
+      "tour": {
+        "title": "Your calendar",
+        "body": "Click a day to see its appointments and add new ones. Appointments with a time remind you shortly before they start."
+      }
+    },
+    "notes": {
+      "name": "Notes",
+      "description": "Markdown notes as real .md files – edit, preview, keep forever.",
+      "privacy": "Works fully offline. Your notes are plain Markdown (.md) files in a folder you own – readable with any editor, no lock-in.",
+      "test": {
+        "markdownRender": "Markdown renderer works (incl. HTML escaping)",
+        "fileRoundtrip": "Note files can be written, read and deleted"
+      },
+      "command": {
+        "create": "Create note",
+        "open": "Open note"
+      },
+      "tour": {
+        "title": "Your notes, your files",
+        "body": "Every note is a real Markdown file in a folder on your device. Move, back up or open them with any other app – Cardo never locks them in."
+      },
+      "msg": {
+        "noBackend": "File access is not available in this context.",
+        "created": "Note created.",
+        "opened": "Note opened.",
+        "notFound": "No note with that name exists.",
+        "invalidName": "That name can't be used for a note."
+      },
+      "list": {
+        "new": "New note",
+        "namePlaceholder": "Name of the new note…",
+        "empty": "No notes yet. Create your first one.",
+        "rename": "Rename note",
+        "renamePlaceholder": "New name…",
+        "delete": "Delete note \"{{name}}\"",
+        "deleteConfirm": "Delete note \"{{name}}\"? The file will be removed from your notes folder."
+      },
+      "editor": {
+        "edit": "Edit",
+        "preview": "Preview",
+        "empty": "Select a note or create a new one.",
+        "placeholder": "Write in Markdown…"
+      },
+      "pane": {
+        "list": "Notes",
+        "editor": "Editor"
+      },
+      "footer": {
+        "changeFolder": "Change folder",
+        "noFolder": "No folder selected"
+      }
+    },
+    "pomodoro": {
+      "name": "Pomodoro",
+      "description": "A fully customizable Pomodoro timer: focused work sessions, short breaks, and a long break after every set of cycles.",
+      "privacy": "Works fully offline. Your timer state and settings never leave this device.",
+      "start": "Start",
+      "pause": "Pause",
+      "reset": "Reset",
+      "skip": "Skip to next phase",
+      "cycles": "{{done}} of {{total}} work cycles completed",
+      "phase": {
+        "work": "Focus",
+        "shortBreak": "Short break",
+        "longBreak": "Long break"
+      },
+      "notify": {
+        "title": "Pomodoro",
+        "workDone": "Focus session finished – time for a break!",
+        "shortBreakDone": "Break is over – ready for the next focus session?",
+        "longBreakDone": "Long break is over – time to get back to it!"
+      },
+      "settings": {
+        "toggle": "Timer settings",
+        "workMinutes": "Focus (minutes)",
+        "shortBreakMinutes": "Short break (minutes)",
+        "longBreakMinutes": "Long break (minutes)",
+        "cyclesUntilLongBreak": "Cycles until long break",
+        "sound": "Play sound when a phase ends"
+      },
+      "command": {
+        "start": "Start Pomodoro timer",
+        "pause": "Pause Pomodoro timer",
+        "reset": "Reset Pomodoro timer",
+        "skip": "Skip to next Pomodoro phase"
+      },
+      "test": {
+        "statePersists": "Timer state persists across restarts",
+        "phaseAdvance": "Phases advance in the correct order",
+        "settingsRoundtrip": "Settings save and load correctly"
+      },
+      "tour": {
+        "title": "Stay focused",
+        "body": "Start a focus session and Cardo counts down for you. After each session you earn a break – after a full set of cycles, a long one.",
+        "settingsTitle": "Make it yours",
+        "settingsBody": "Tap the gear to adjust session and break lengths, how many cycles lead to a long break, and whether a chime plays."
+      }
+    },
+    "quickcapture": {
+      "name": "Quick capture",
+      "description": "Capture a thought instantly, sort it later – your GTD inbox.",
+      "privacy": "Works fully offline.",
+      "input": {
+        "placeholder": "Capture a thought… (Enter)",
+        "label": "Quick capture input"
+      },
+      "count": {
+        "title": "Items in your inbox"
+      },
+      "empty": "Inbox empty. Whatever crosses your mind – drop it here and sort it later.",
+      "action": {
+        "toTodo": "Send to To-Do",
+        "delete": "Delete"
+      },
+      "command": {
+        "add": "Capture a thought",
+        "focus": "Focus quick capture"
+      },
+      "toast": {
+        "added": "Captured.",
+        "empty": "Nothing to capture – the text is empty."
+      },
+      "test": {
+        "itemRoundtrip": "Inbox item can be added, read and deleted",
+        "addCommand": "Add command stores an item"
+      },
+      "tour": {
+        "title": "Your inbox for everything",
+        "body": "Type a thought and press Enter – it lands here instantly. Later, send it to your To-Do list with one click or delete it. A global shortcut brings this input up from anywhere."
+      }
+    },
+    "routine": {
+      "name": "Daily routine",
+      "description": "Your daily checklist – starts fresh every morning, all data stays on this device.",
+      "privacy": "Works fully offline.",
+      "widget": {
+        "allDone": "All done – great job today!",
+        "empty": "No routine items yet. Add your first one below.",
+        "addPlaceholder": "New routine item…",
+        "add": "Add",
+        "remove": "Remove item"
+      },
+      "command": {
+        "addItem": "Add routine item",
+        "check": "Check off routine item",
+        "resetToday": "Reset today's routine",
+        "itemMissing": "This routine item doesn't exist."
+      },
+      "test": {
+        "itemRoundtrip": "Routine items can be stored and deleted",
+        "dayState": "Daily check state is stored per day",
+        "dateKey": "Local date key is computed correctly"
+      },
+      "tour": {
+        "title": "Your daily routine",
+        "body": "Check off your routine here every day. At midnight the list starts fresh – and everything stays on this device."
+      }
+    },
+    "stats": {
+      "name": "Statistics",
+      "description": "Your productivity at a glance: completed tasks, work time and pomodoros per day, week or month.",
+      "privacy": "Works fully offline.",
+      "window": {
+        "label": "Time range",
+        "day": "Day",
+        "week": "Week",
+        "month": "Month"
+      },
+      "metric": {
+        "tasks": "Tasks completed",
+        "work": "Work time",
+        "pomodoros": "Pomodoros"
+      },
+      "empty": "Nothing tracked in this range yet. Complete a task, run the work clock or finish a pomodoro – your numbers will show up here.",
+      "chart": {
+        "title": "Tasks completed per day",
+        "bar": "{{date}}: {{count}} tasks completed"
+      },
+      "command": {
+        "summary": "Show statistics summary"
+      },
+      "test": {
+        "aggregateRoundtrip": "Day aggregates persist",
+        "eventCount": "Events are counted correctly",
+        "rangeKeys": "Time ranges are computed correctly"
+      },
+      "tour": {
+        "title": "Your numbers",
+        "body": "See what you've accomplished: tasks, work time and pomodoros – per day, week or month. Everything is counted locally on this device."
+      }
+    },
+    "todo": {
+      "name": "To-Do",
+      "description": "Tasks with lists, priorities, categories and due dates – fully local.",
+      "privacy": "Works fully offline.",
+      "list": {
+        "inbox": "Inbox",
+        "add": "New list",
+        "rename": "Rename list",
+        "namePlaceholder": "List name… (Enter to create, Esc to cancel)",
+        "renamePlaceholder": "New list name… (Enter to save, Esc to cancel)"
+      },
+      "addPlaceholder": "Add a task… (Enter)",
+      "priorityLabel": "Priority",
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "toggleTask": "Toggle task \"{{title}}\"",
+      "deleteTask": "Delete task \"{{title}}\"",
+      "completedHeading": "Completed ({{count}})",
+      "clearCompleted": "Clear completed",
+      "empty": "Nothing to do here – add a task above.",
+      "command": {
+        "create": "Create task",
+        "complete": "Complete task",
+        "delete": "Delete task"
+      },
+      "msg": {
+        "created": "Task created",
+        "completed": "Task completed",
+        "deleted": "Task deleted",
+        "notFound": "That task no longer exists",
+        "invalidDue": "Invalid due date – use yyyy-mm-dd"
+      },
+      "test": {
+        "createRoundtrip": "Tasks can be created, read back and deleted",
+        "completeFlow": "Completing a task records the completion time",
+        "queryByList": "Tasks can be filtered by list"
+      },
+      "tour": {
+        "intro": {
+          "title": "Your tasks, your lists",
+          "body": "Type a task and press Enter to add it. The colored dot shows its priority, and overdue due dates turn red."
+        },
+        "manage": {
+          "title": "Organize with lists",
+          "body": "Switch lists with the tabs, create new ones with \"+\" and rename the active one. Completed tasks collect at the bottom until you clear them."
+        }
+      }
+    },
+    "workclock": {
+      "name": "Workclock",
+      "description": "Tracks your productive time per day – start, stop, done.",
+      "privacy": "Works fully offline. Your times never leave this device.",
+      "state": {
+        "running": "Running",
+        "paused": "Paused"
+      },
+      "action": {
+        "start": "Start",
+        "stop": "Stop"
+      },
+      "week": "This week: {{duration}}",
+      "command": {
+        "start": "Start workclock",
+        "stop": "Stop workclock",
+        "toggle": "Start/stop workclock"
+      },
+      "msg": {
+        "notRunning": "The workclock is not running.",
+        "alreadyRunning": "The workclock is already running."
+      },
+      "test": {
+        "dayRoundtrip": "Day document persists",
+        "startStop": "Start/stop accumulates time",
+        "format": "Duration formatting is correct"
+      },
+      "tour": {
+        "title": "Your workclock",
+        "body": "Hit start when you begin working and stop when you take a break. Cardo adds up your productive time per day – everything stays on your device."
+      }
+    }
+  },
+  "theme": {
+    "catppuccin-latte": "Catppuccin Latte",
+    "catppuccin-mocha": "Catppuccin Mocha",
+    "nord": "Nord",
+    "dracula": "Dracula",
+    "github-light": "GitHub Light",
+    "gruvbox-dark": "Gruvbox Dark",
+    "gruvbox-light": "Gruvbox Light",
+    "tokyo-night": "Tokyo Night",
+    "solarized-light": "Solarized Light",
+    "rose-pine": "Rosé Pine"
+  }
+}

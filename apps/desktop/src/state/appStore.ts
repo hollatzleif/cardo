@@ -1,0 +1,312 @@
+import { create } from 'zustand';
+import i18next from 'i18next';
+import { applyTheme } from '@cardo/ui';
+import { defaultThemeId } from '@cardo/themes';
+import { getHost } from '../host';
+
+export interface WidgetInstance {
+  instanceId: string;
+  toolId: string;
+  widgetId: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  accentToken?: string;
+}
+
+export interface Page {
+  id: string;
+  name: string;
+  order: number;
+  widgets: WidgetInstance[];
+}
+
+interface ThemeDoc extends Record<string, unknown> {
+  themeId: string;
+  accentToken?: string;
+}
+
+export interface Profile {
+  name: string;
+  email?: string;
+  birthday?: string;
+  country?: string;
+}
+
+interface AppState {
+  ready: boolean;
+  editing: boolean;
+  paletteOpen: boolean;
+  settingsOpen: boolean;
+  marketOpen: boolean;
+  themeId: string;
+  accentToken?: string;
+  pages: Page[];
+  currentPageId: string;
+  activeToolIds: string[];
+  profile: Profile | null;
+  onboardingDone: boolean;
+  tourActive: boolean;
+
+  init(): Promise<void>;
+  setEditing(editing: boolean): void;
+  setPaletteOpen(open: boolean): void;
+  setSettingsOpen(open: boolean): void;
+  setMarketOpen(open: boolean): void;
+  setToolActive(toolId: string, active: boolean): Promise<void>;
+  saveProfile(profile: Profile): Promise<void>;
+  startTour(): void;
+  endTour(): Promise<void>;
+  setTheme(themeId: string): Promise<void>;
+  setAccent(token: string | undefined): Promise<void>;
+  setLanguage(lang: string): Promise<void>;
+  selectPage(id: string): void;
+  addPage(): Promise<void>;
+  renamePage(id: string, name: string): Promise<void>;
+  removePage(id: string): Promise<void>;
+  addWidget(toolId: string, widgetId: string, size: { w: number; h: number }): Promise<void>;
+  removeWidget(instanceId: string): Promise<void>;
+  updateWidgetPositions(
+    updates: Array<{ instanceId: string; x: number; y: number; w: number; h: number }>,
+  ): Promise<void>;
+}
+
+function pageDoc(page: Page): Record<string, unknown> {
+  // The id is stored IN the doc as well: query() returns doc bodies only.
+  return { id: page.id, name: page.name, order: page.order, widgets: page.widgets };
+}
+
+export const useAppStore = create<AppState>((set, get) => {
+  async function persistPage(page: Page): Promise<void> {
+    await getHost().backend.set('core.layout', page.id, pageDoc(page));
+  }
+
+  async function persistTheme(): Promise<void> {
+    const { themeId, accentToken } = get();
+    const doc: ThemeDoc = { themeId, ...(accentToken ? { accentToken } : {}) };
+    await getHost().backend.set('core.theme', 'current', doc);
+  }
+
+  return {
+    ready: false,
+    editing: false,
+    paletteOpen: false,
+    settingsOpen: false,
+    marketOpen: false,
+    themeId: defaultThemeId,
+    accentToken: undefined,
+    pages: [],
+    currentPageId: '',
+    activeToolIds: [],
+    profile: null,
+    onboardingDone: false,
+    tourActive: false,
+
+    async init() {
+      const { backend } = getHost();
+
+      const themeDoc = (await backend.get('core.theme', 'current')) as ThemeDoc | null;
+      const themeId = themeDoc?.themeId ?? defaultThemeId;
+      const accentToken = themeDoc?.accentToken;
+      applyTheme(themeId, { accentToken });
+
+      const rawPages = (await backend.query('core.layout', { orderBy: 'order' })) as Array<
+        Record<string, unknown>
+      >;
+      let pages: Page[];
+      if (rawPages.length === 0) {
+        const first: Page = {
+          id: `page-${crypto.randomUUID()}`,
+          name: i18next.t('canvas.defaultPageName'),
+          order: 0,
+          widgets: [],
+        };
+        await backend.set('core.layout', first.id, pageDoc(first));
+        pages = [first];
+      } else {
+        // query() returns doc data without ids – reread each doc keyed by a stored id field.
+        pages = rawPages
+          .map((doc) => doc as unknown as Page & { id?: string })
+          .filter((d): d is Page => typeof d.id === 'string')
+          .sort((a, b) => a.order - b.order);
+        if (pages.length === 0) {
+          // Legacy/invalid docs: start fresh.
+          const first: Page = {
+            id: `page-${crypto.randomUUID()}`,
+            name: i18next.t('canvas.defaultPageName'),
+            order: 0,
+            widgets: [],
+          };
+          await backend.set('core.layout', first.id, pageDoc(first));
+          pages = [first];
+        }
+      }
+
+      const profileDoc = (await backend.get('core.settings', 'core.profile')) as {
+        value?: Profile;
+      } | null;
+      const onboardingDoc = (await backend.get('core.settings', 'core.onboarding')) as {
+        value?: { done?: boolean };
+      } | null;
+      const activeDoc = (await backend.get('core.settings', 'core.activeTools')) as {
+        value?: string[];
+      } | null;
+      const { registry } = getHost();
+      const activeToolIds =
+        activeDoc?.value ??
+        registry
+          .list()
+          .filter((t) => t.active)
+          .map((t) => t.tool.manifest.id);
+
+      set({
+        ready: true,
+        themeId,
+        accentToken,
+        pages,
+        currentPageId: pages[0]!.id,
+        activeToolIds,
+        profile: profileDoc?.value?.name ? profileDoc.value : null,
+        onboardingDone: onboardingDoc?.value?.done ?? false,
+      });
+    },
+
+    setEditing(editing) {
+      set({ editing });
+      getHost().services.events.emit('core:edit-mode-changed', { editing });
+    },
+    setPaletteOpen(paletteOpen) {
+      set({ paletteOpen });
+    },
+    setSettingsOpen(settingsOpen) {
+      set({ settingsOpen });
+    },
+    setMarketOpen(marketOpen) {
+      set({ marketOpen });
+    },
+
+    async setToolActive(toolId, active) {
+      const { registry, backend } = getHost();
+      if (active) await registry.activate(toolId);
+      else await registry.deactivate(toolId);
+      const ids = new Set(get().activeToolIds);
+      if (active) ids.add(toolId);
+      else ids.delete(toolId);
+      const activeToolIds = [...ids];
+      set({ activeToolIds });
+      await backend.set('core.settings', 'core.activeTools', { value: activeToolIds });
+    },
+
+    async saveProfile(profile) {
+      set({ profile });
+      await getHost().backend.set('core.settings', 'core.profile', {
+        value: profile as unknown as Record<string, unknown>,
+      });
+    },
+
+    startTour() {
+      set({ tourActive: true });
+    },
+
+    async endTour() {
+      set({ tourActive: false, onboardingDone: true });
+      await getHost().backend.set('core.settings', 'core.onboarding', {
+        value: { done: true },
+      });
+    },
+
+    async setTheme(themeId) {
+      set({ themeId });
+      applyTheme(themeId, { accentToken: get().accentToken });
+      await persistTheme();
+      getHost().services.events.emit('core:theme-changed', { themeId });
+    },
+
+    async setAccent(accentToken) {
+      set({ accentToken });
+      applyTheme(get().themeId, { accentToken });
+      await persistTheme();
+    },
+
+    async setLanguage(lang) {
+      await i18next.changeLanguage(lang);
+      await getHost().backend.set('core.settings', 'core.language', { value: lang });
+      getHost().services.events.emit('core:language-changed', { language: lang });
+    },
+
+    selectPage(id) {
+      set({ currentPageId: id });
+    },
+
+    async addPage() {
+      const pages = get().pages;
+      const page: Page = {
+        id: `page-${crypto.randomUUID()}`,
+        name: `${i18next.t('canvas.page')} ${pages.length + 1}`,
+        order: pages.length,
+        widgets: [],
+      };
+      await persistPage(page);
+      set({ pages: [...pages, page], currentPageId: page.id });
+    },
+
+    async renamePage(id, name) {
+      const pages = get().pages.map((p) => (p.id === id ? { ...p, name } : p));
+      set({ pages });
+      const page = pages.find((p) => p.id === id);
+      if (page) await persistPage(page);
+    },
+
+    async removePage(id) {
+      const remaining = get().pages.filter((p) => p.id !== id);
+      if (remaining.length === 0) return; // never delete the last page
+      await getHost().backend.delete('core.layout', id);
+      set({
+        pages: remaining,
+        currentPageId:
+          get().currentPageId === id ? remaining[0]!.id : get().currentPageId,
+      });
+    },
+
+    async addWidget(toolId, widgetId, size) {
+      const { pages, currentPageId } = get();
+      const page = pages.find((p) => p.id === currentPageId);
+      if (!page) return;
+      const widget: WidgetInstance = {
+        instanceId: `w-${crypto.randomUUID()}`,
+        toolId,
+        widgetId,
+        x: 0,
+        y: 1000, // grid compaction pulls it to the lowest free spot
+        ...size,
+      };
+      const updated = { ...page, widgets: [...page.widgets, widget] };
+      set({ pages: pages.map((p) => (p.id === page.id ? updated : p)) });
+      await persistPage(updated);
+    },
+
+    async removeWidget(instanceId) {
+      const { pages, currentPageId } = get();
+      const page = pages.find((p) => p.id === currentPageId);
+      if (!page) return;
+      const updated = { ...page, widgets: page.widgets.filter((w) => w.instanceId !== instanceId) };
+      set({ pages: pages.map((p) => (p.id === page.id ? updated : p)) });
+      await persistPage(updated);
+    },
+
+    async updateWidgetPositions(updates) {
+      const { pages, currentPageId } = get();
+      const page = pages.find((p) => p.id === currentPageId);
+      if (!page) return;
+      const byId = new Map(updates.map((u) => [u.instanceId, u]));
+      const widgets = page.widgets.map((w) => {
+        const u = byId.get(w.instanceId);
+        return u ? { ...w, x: u.x, y: u.y, w: u.w, h: u.h } : w;
+      });
+      const updated = { ...page, widgets };
+      set({ pages: pages.map((p) => (p.id === page.id ? updated : p)) });
+      await persistPage(updated);
+    },
+  };
+});

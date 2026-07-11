@@ -1,0 +1,30 @@
+{
+  "id": "routine",
+  "nameKey": "tool.routine.name",
+  "descriptionKey": "tool.routine.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.routine.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 4, "h": 5 },
+      "minSize": { "w": 3, "h": 3 },
+      "variants": []
+    }
+  ],
+  "commands": ["routine.add-item", "routine.check", "routine.reset-today"],
+  "selfTests": [
+    { "id": "item-roundtrip", "titleKey": "tool.routine.test.itemRoundtrip" },
+    { "id": "day-state", "titleKey": "tool.routine.test.dayState" },
+    { "id": "date-key", "titleKey": "tool.routine.test.dateKey" }
+  ],
+  "tourSteps": [
+    { "anchor": "widget:routine:main", "titleKey": "tool.routine.tour.title", "bodyKey": "tool.routine.tour.body" }
+  ]
+}

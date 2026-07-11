@@ -1,0 +1,26 @@
+{
+  "id": "solarized-light",
+  "nameKey": "theme.solarized-light",
+  "appearance": "light",
+  "license": { "spdx": "MIT", "source": "https://github.com/altercation/solarized" },
+  "palette": {
+    "base": "#fdf6e3",
+    "surface-0": "#eee8d5",
+    "surface-1": "#ddd6c1",
+    "surface-2": "#ccc4ae",
+    "text": "#586e75",
+    "text-muted": "#839496",
+    "accent-1": "#268bd2",
+    "accent-2": "#2aa198",
+    "accent-3": "#859900",
+    "accent-4": "#b58900",
+    "accent-5": "#cb4b16",
+    "accent-6": "#dc322f",
+    "accent-7": "#d33682",
+    "accent-8": "#6c71c4",
+    "success": "#859900",
+    "warning": "#b58900",
+    "danger": "#dc322f",
+    "info": "#268bd2"
+  }
+}

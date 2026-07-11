@@ -1,0 +1,29 @@
+{
+  "id": "countdown",
+  "nameKey": "tool.countdown.name",
+  "descriptionKey": "tool.countdown.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.countdown.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 3, "h": 3 },
+      "minSize": { "w": 2, "h": 2 },
+      "variants": []
+    }
+  ],
+  "commands": ["countdown.create"],
+  "selfTests": [
+    { "id": "storage-roundtrip", "titleKey": "tool.countdown.test.storageRoundtrip" },
+    { "id": "days-calc", "titleKey": "tool.countdown.test.daysCalc" }
+  ],
+  "tourSteps": [
+    { "anchor": "widget:countdown:main", "titleKey": "tool.countdown.tour.title", "bodyKey": "tool.countdown.tour.body" }
+  ]
+}

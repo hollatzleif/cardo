@@ -1,0 +1,86 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="Docs" description="Getting started with Cardo: install, build your first dashboard, keyboard shortcuts, self-test – plus honest answers to common questions.">
+  <h1>Docs</h1>
+  <p class="muted">
+    Everything you need to get from “installed” to “this is my place now”. Short on purpose –
+    Cardo is meant to explain itself.
+  </p>
+
+  <section class="card" style="margin-top:1.5rem">
+    <h2>Getting started</h2>
+    <ol class="steps">
+      <li>
+        <strong>Install Cardo.</strong> Grab it from the <a href="/download">download page</a> –
+        one command or one installer, no setup, no account.
+      </li>
+      <li>
+        <strong>Build your first dashboard.</strong> Cardo opens on a blank canvas. Press
+        <kbd>Cmd/Ctrl</kbd> + <kbd>E</kbd> to enter <em>edit mode</em>, then add widgets and
+        place, move and resize them until it feels right. Multiple pages (work, home, focus)
+        are yours to create.
+      </li>
+      <li>
+        <strong>Learn the palette.</strong> <kbd>Cmd/Ctrl</kbd> + <kbd>K</kbd> opens the command
+        palette – the fastest way to add widgets, switch pages or change the theme without
+        hunting through menus.
+      </li>
+      <li>
+        <strong>Let Cardo check itself.</strong> In the settings you'll find a
+        <em>self-test</em> button. One click, and Cardo tests itself end to end and shows you a
+        readable report. Run it whenever something feels off.
+      </li>
+    </ol>
+  </section>
+
+  <section class="card" style="margin-top:1.5rem">
+    <h2>FAQ</h2>
+
+    <details>
+      <summary>Where is my data?</summary>
+      <p>
+        On your device, and nowhere else. Cardo stores everything in a local SQLite database,
+        and your notes live as plain files in your notes folder – readable without Cardo, and
+        yours to back up however you like. Nothing is uploaded, ever, unless a tool's
+        transparency light is yellow and tells you exactly what it sends and where.
+      </p>
+    </details>
+
+    <details>
+      <summary>Is it really free?</summary>
+      <p>
+        Yes. Free download, all features included, no trial, no ads. Cardo is funded by
+        voluntary <a href="/donate">donations</a> that cover the year's running costs – shown
+        transparently as a percentage. Donating changes nothing about what the app can do.
+      </p>
+    </details>
+
+    <details>
+      <summary>When does sync come?</summary>
+      <p>
+        Sync between your devices is planned as an optional later feature. It will be key-based:
+        you generate a key, your data is end-to-end encrypted with it, and the server can never
+        read anything. It's off by default – if you never turn it on, Cardo stays 100 % offline,
+        exactly as it is today.
+      </p>
+    </details>
+
+    <details>
+      <summary>What does the traffic light on a tool mean?</summary>
+      <p>
+        Green: the tool works fully local, nothing leaves your device. Yellow: the tool contacts
+        the internet – and it tells you in plain language what it sends, where it goes, and why,
+        before anything happens. There is no hidden third state.
+      </p>
+    </details>
+  </section>
+
+  <style>
+    .steps li { margin-bottom: 0.75rem; }
+    details { margin-top: 0.75rem; }
+    summary { cursor: pointer; font-weight: 600; }
+    details p { margin: 0.5rem 0 0.75rem; }
+  </style>
+</Base>

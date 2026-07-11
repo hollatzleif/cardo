@@ -1,0 +1,29 @@
+{
+  "id": "notes",
+  "nameKey": "tool.notes.name",
+  "descriptionKey": "tool.notes.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": ["file-read", "file-write"],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.notes.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 8, "h": 8 },
+      "minSize": { "w": 4, "h": 4 },
+      "variants": []
+    }
+  ],
+  "commands": ["notes.create", "notes.open"],
+  "selfTests": [
+    { "id": "markdown-render", "titleKey": "tool.notes.test.markdownRender" },
+    { "id": "file-roundtrip", "titleKey": "tool.notes.test.fileRoundtrip" }
+  ],
+  "tourSteps": [
+    { "anchor": "widget:notes:main", "titleKey": "tool.notes.tour.title", "bodyKey": "tool.notes.tour.body" }
+  ]
+}

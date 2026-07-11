@@ -1,0 +1,73 @@
+/*
+ * Cardo design tokens – THE single place where colors are defined.
+ *
+ * Layer 1 (primitive --palette-*): injected at runtime by the theme engine
+ *   from a theme JSON. The fallbacks below equal the default theme
+ *   (Catppuccin Mocha) so the app never renders unstyled.
+ * Layer 2 (semantic): everything below :root maps primitives to meaning.
+ *   UI and tools consume ONLY these semantic tokens.
+ * Layer 3 (user overrides): set inline on <html> or a widget container by
+ *   the theme engine – they win by CSS specificity and survive theme changes.
+ */
+
+:root {
+  /* Layer 1 – primitive palette (fallback = Catppuccin Mocha) */
+  --palette-base: #1e1e2e;
+  --palette-surface-0: #313244;
+  --palette-surface-1: #45475a;
+  --palette-surface-2: #585b70;
+  --palette-text: #cdd6f4;
+  --palette-text-muted: #a6adc8;
+  --palette-accent-1: #89b4fa;
+  --palette-accent-2: #cba6f7;
+  --palette-accent-3: #94e2d5;
+  --palette-accent-4: #fab387;
+  --palette-accent-5: #f5c2e7;
+  --palette-accent-6: #a6e3a1;
+  --palette-accent-7: #f9e2af;
+  --palette-accent-8: #b4befe;
+  --palette-success: #a6e3a1;
+  --palette-warning: #f9e2af;
+  --palette-danger: #f38ba8;
+  --palette-info: #89dceb;
+
+  /* Layer 2 – semantic tokens (the ONLY API for UI and tools) */
+  --bg-canvas: var(--palette-base);
+  --bg-widget: var(--palette-surface-0);
+  --bg-widget-hover: var(--palette-surface-1);
+  --bg-raised: var(--palette-surface-1);
+  --text-primary: var(--palette-text);
+  --text-muted: var(--palette-text-muted);
+  --border-subtle: var(--palette-surface-2);
+  --accent: var(--palette-accent-1);
+  --accent-text: var(--palette-base);
+  --success: var(--palette-success);
+  --warning: var(--palette-warning);
+  --danger: var(--palette-danger);
+  --info: var(--palette-info);
+  --chart-1: var(--palette-accent-1);
+  --chart-2: var(--palette-accent-2);
+  --chart-3: var(--palette-accent-3);
+  --chart-4: var(--palette-accent-4);
+  --chart-5: var(--palette-accent-5);
+  --chart-6: var(--palette-accent-6);
+  --chart-7: var(--palette-accent-7);
+  --chart-8: var(--palette-accent-8);
+
+  /* Non-color tokens */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-widget: 0 2px 8px 0 color-mix(in srgb, var(--palette-base) 60%, transparent);
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, monospace;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+}

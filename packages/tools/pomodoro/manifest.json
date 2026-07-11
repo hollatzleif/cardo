@@ -1,0 +1,39 @@
+{
+  "id": "pomodoro",
+  "nameKey": "tool.pomodoro.name",
+  "descriptionKey": "tool.pomodoro.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": ["notifications", "audio"],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.pomodoro.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 4, "h": 5 },
+      "minSize": { "w": 3, "h": 3 },
+      "variants": []
+    }
+  ],
+  "commands": ["pomodoro.start", "pomodoro.pause", "pomodoro.reset", "pomodoro.skip"],
+  "selfTests": [
+    { "id": "state-persists", "titleKey": "tool.pomodoro.test.statePersists" },
+    { "id": "phase-advance", "titleKey": "tool.pomodoro.test.phaseAdvance" },
+    { "id": "settings-roundtrip", "titleKey": "tool.pomodoro.test.settingsRoundtrip" }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:pomodoro:main",
+      "titleKey": "tool.pomodoro.tour.title",
+      "bodyKey": "tool.pomodoro.tour.body"
+    },
+    {
+      "anchor": "widget:pomodoro:main",
+      "titleKey": "tool.pomodoro.tour.settingsTitle",
+      "bodyKey": "tool.pomodoro.tour.settingsBody"
+    }
+  ]
+}

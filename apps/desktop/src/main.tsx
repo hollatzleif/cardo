@@ -1,0 +1,47 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import '@cardo/ui/tokens.css';
+import '@cardo/ui/base.css';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+import './app.css';
+import { initHost } from './host';
+import { instantiateTools, liveTools } from './host/tools';
+import { initGlobalShortcuts } from './host/shortcuts';
+import { initI18n } from './i18n';
+import { useAppStore } from './state/appStore';
+import { App } from './App';
+
+async function bootstrap(): Promise<void> {
+  const host = initHost();
+
+  const langDoc = (await host.backend.get('core.settings', 'core.language')) as {
+    value?: string;
+  } | null;
+  await initI18n(langDoc?.value ?? null);
+
+  // Phase 1: all first-party tools are registered; "installing" in the
+  // tool market = activating. Default: everything active (zero setup),
+  // the market persists deactivations.
+  instantiateTools();
+  for (const tool of liveTools.values()) host.registry.register(tool);
+
+  const activeDoc = (await host.backend.get('core.settings', 'core.activeTools')) as {
+    value?: string[];
+  } | null;
+  const active = new Set(activeDoc?.value ?? [...liveTools.keys()]);
+  for (const id of liveTools.keys()) {
+    if (active.has(id)) await host.registry.activate(id);
+  }
+
+  await useAppStore.getState().init();
+  void initGlobalShortcuts(host);
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+void bootstrap();

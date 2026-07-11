@@ -1,0 +1,29 @@
+{
+  "id": "counter",
+  "nameKey": "tool.counter.name",
+  "descriptionKey": "tool.counter.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.counter.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 3, "h": 3 },
+      "minSize": { "w": 2, "h": 2 },
+      "variants": []
+    }
+  ],
+  "commands": ["counter.increment", "counter.reset"],
+  "selfTests": [
+    { "id": "storage", "titleKey": "tool.counter.test.storage" },
+    { "id": "commands", "titleKey": "tool.counter.test.commands" }
+  ],
+  "tourSteps": [
+    { "anchor": "widget:counter:main", "titleKey": "tool.counter.tour.title", "bodyKey": "tool.counter.tour.body" }
+  ]
+}

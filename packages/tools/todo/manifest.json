@@ -1,0 +1,39 @@
+{
+  "id": "todo",
+  "nameKey": "tool.todo.name",
+  "descriptionKey": "tool.todo.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.todo.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 6, "h": 7 },
+      "minSize": { "w": 3, "h": 4 },
+      "variants": []
+    }
+  ],
+  "commands": ["todo.create", "todo.complete", "todo.delete"],
+  "selfTests": [
+    { "id": "create-roundtrip", "titleKey": "tool.todo.test.createRoundtrip" },
+    { "id": "complete-flow", "titleKey": "tool.todo.test.completeFlow" },
+    { "id": "query-by-list", "titleKey": "tool.todo.test.queryByList" }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:todo:main",
+      "titleKey": "tool.todo.tour.intro.title",
+      "bodyKey": "tool.todo.tour.intro.body"
+    },
+    {
+      "anchor": "widget:todo:main",
+      "titleKey": "tool.todo.tour.manage.title",
+      "bodyKey": "tool.todo.tour.manage.body"
+    }
+  ]
+}

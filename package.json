@@ -1,0 +1,35 @@
+{
+  "name": "cardo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Cardo – your pivot point. A local-first, freely arrangeable dashboard.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.11.0",
+  "scripts": {
+    "dev": "pnpm --filter @cardo/desktop dev",
+    "tauri": "pnpm --filter @cardo/desktop tauri",
+    "build": "pnpm -r build",
+    "lint": "eslint . && stylelint \"**/*.css\" --allow-empty-input && bash scripts/token-lint.sh",
+    "test": "vitest run",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:themes": "node scripts/check-themes.mjs",
+    "check:manifests": "node scripts/check-manifests.mjs",
+    "typecheck": "tsc -b"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.14",
+    "react": "^18.3.1",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "prettier": "^3.4.2",
+    "stylelint": "^16.12.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.0",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,82 @@
+---
+import Base from '../layouts/Base.astro';
+import CopyBlock from '../components/CopyBlock.astro';
+import Barometer from '../components/Barometer.astro';
+
+// PLACEHOLDER: get.cardo.app is not registered yet – swap in the real domain
+// once the install script is hosted.
+const installSh = 'curl -fsSL https://get.cardo.app/install.sh | sh';
+---
+
+<Base title="Your pivot point">
+  <section class="hero">
+    <h1>Everything in one place.<br />Arranged the way <em>you</em> want it.</h1>
+    <p class="muted">
+      Cardo is a freely arrangeable dashboard for macOS, Linux and Windows: to-dos, notes,
+      calendar, timers and more – as widgets on your personal board. Built for everyone who
+      feels overwhelmed and needs <strong>one</strong> calm place where everything comes together.
+      Your pivot point.
+    </p>
+    <div class="hero__install">
+      <CopyBlock command={installSh} label="Install (macOS / Linux)" />
+    </div>
+    <p>
+      <a class="btn" href="/download#macos">macOS (.dmg)</a>
+      <a class="btn" href="/download#windows">Windows (.msi)</a>
+      <a class="btn" href="/download#linux">Linux (.AppImage)</a>
+    </p>
+    <p><span class="badge">● 100 % local</span> <span class="muted">Your data never leaves your device. No account, no forced cloud, no tracking.</span></p>
+  </section>
+
+  <section class="features">
+    <div class="card">
+      <h3>🔒 Local-first, for real</h3>
+      <p>Cardo works 100 % offline. Everything lives in an embedded SQLite database on your machine – no server, no account, no telemetry. Zero setup: install, open, done.</p>
+    </div>
+    <div class="card">
+      <h3>🧩 Your dashboard, your rules</h3>
+      <p>Start from a blank canvas. Place, move and resize widgets, keep separate pages for work, home and focus. Cardo adapts to how you think – not the other way around.</p>
+    </div>
+    <div class="card">
+      <h3>🚦 Transparency traffic light</h3>
+      <p>Every tool carries a privacy light: green means it works fully local. Yellow means it contacts the internet – and Cardo tells you in plain language what it sends and where, before anything happens.</p>
+    </div>
+    <div class="card">
+      <h3>🩺 Checks itself</h3>
+      <p>One button in the settings and Cardo runs a full self-test with a readable report. If something is off, you see exactly what – no guessing, no support tickets.</p>
+    </div>
+    <div class="card">
+      <h3>💙 Free, funded by donations</h3>
+      <p>Cardo is free to download and use. If you like it, a voluntary donation helps cover the year's running costs – that's it. No paywalls, no premium tiers.</p>
+    </div>
+  </section>
+
+  <section class="card honest" style="margin-top:2rem">
+    <h3>The honest part</h3>
+    <p>
+      There is no cloud and no account – and that's a feature, not a missing one. Sync between
+      your devices comes later as an optional, end-to-end-encrypted feature based on a key you
+      generate yourself. Until then (and after): your data is yours, on your device.
+    </p>
+  </section>
+
+  <section class="card" style="margin-top:2rem">
+    <h3>Support instead of paying</h3>
+    <p>
+      Cardo is free. If you want to, a donation helps cover the running costs
+      (domain, server, certificates) for the current year:
+    </p>
+    <Barometer />
+    <p><a class="btn btn--ghost" href="/donate">Go to the donation page</a></p>
+  </section>
+
+  <style>
+    .hero { text-align: center; padding: 2.5rem 0 2rem; }
+    .hero h1 { font-size: 2.4rem; margin-bottom: 0.75rem; }
+    .hero em { color: var(--accent); font-style: normal; }
+    .hero p { max-width: 640px; margin: 0.75rem auto; }
+    .hero .btn { margin: 0.4rem; }
+    .hero__install { max-width: 560px; margin: 1.25rem auto 0.5rem; }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 2rem; }
+  </style>
+</Base>

@@ -1,0 +1,33 @@
+{
+  "id": "quickcapture",
+  "nameKey": "tool.quickcapture.name",
+  "descriptionKey": "tool.quickcapture.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": ["global-shortcut"],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.quickcapture.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 4, "h": 5 },
+      "minSize": { "w": 3, "h": 3 },
+      "variants": []
+    }
+  ],
+  "commands": ["quickcapture.add", "quickcapture.focus"],
+  "selfTests": [
+    { "id": "item-roundtrip", "titleKey": "tool.quickcapture.test.itemRoundtrip" },
+    { "id": "add-command", "titleKey": "tool.quickcapture.test.addCommand" }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:quickcapture:main",
+      "titleKey": "tool.quickcapture.tour.title",
+      "bodyKey": "tool.quickcapture.tour.body"
+    }
+  ]
+}

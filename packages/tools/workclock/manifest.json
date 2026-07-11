@@ -1,0 +1,34 @@
+{
+  "id": "workclock",
+  "nameKey": "tool.workclock.name",
+  "descriptionKey": "tool.workclock.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.workclock.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 4, "h": 4 },
+      "minSize": { "w": 2, "h": 2 },
+      "variants": []
+    }
+  ],
+  "commands": ["workclock.start", "workclock.stop", "workclock.toggle"],
+  "selfTests": [
+    { "id": "day-roundtrip", "titleKey": "tool.workclock.test.dayRoundtrip" },
+    { "id": "start-stop", "titleKey": "tool.workclock.test.startStop" },
+    { "id": "format", "titleKey": "tool.workclock.test.format" }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:workclock:main",
+      "titleKey": "tool.workclock.tour.title",
+      "bodyKey": "tool.workclock.tour.body"
+    }
+  ]
+}

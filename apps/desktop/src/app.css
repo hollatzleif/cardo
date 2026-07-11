@@ -1,0 +1,418 @@
+/* App chrome. Colors exclusively via semantic tokens. */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ── Top bar ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-widget);
+}
+.topbar__brand {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+}
+.topbar__pages {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1;
+  overflow-x: auto;
+}
+.topbar__page--active {
+  background: var(--bg-widget-hover);
+  border-color: var(--accent);
+}
+.topbar__page-delete {
+  margin-left: var(--space-2);
+  color: var(--danger);
+}
+.topbar__rename {
+  width: 140px;
+}
+.topbar__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ── Canvas ── */
+.app__canvas {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+.canvas {
+  min-height: 100%;
+  padding: var(--space-3);
+}
+.canvas__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-6);
+}
+.canvas__add-button {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  z-index: 100;
+  box-shadow: var(--shadow-widget);
+}
+
+/* ── Widgets ── */
+.widget-frame {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.widget-frame--editing {
+  border-style: dashed;
+  border-color: var(--accent);
+  cursor: grab;
+}
+.widget-frame__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12px;
+}
+.widget-frame__title {
+  color: var(--text-muted);
+}
+.widget-frame__remove {
+  padding: 0 var(--space-1);
+  color: var(--danger);
+}
+.widget-body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-2);
+}
+.react-grid-item.react-grid-placeholder {
+  background: var(--accent);
+  opacity: 0.2;
+  border-radius: var(--radius-md);
+}
+
+/* ── Command palette ── */
+.palette {
+  padding: var(--space-3);
+}
+.palette__input {
+  font-size: 1.1em;
+}
+.palette__list {
+  margin-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+}
+.palette__item {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+}
+.palette__item--selected {
+  background: var(--bg-widget-hover);
+}
+.palette__id {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+.palette__empty {
+  padding: var(--space-3);
+}
+.palette__params {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.palette__param {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.palette__param > span {
+  min-width: 100px;
+  color: var(--text-muted);
+}
+.palette__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* ── Add-widget menu ── */
+.add-widget-menu {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.add-widget-menu__item {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: left;
+}
+.add-widget-menu__name {
+  font-weight: 600;
+}
+
+/* ── Settings ── */
+.settings {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.settings__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.settings__header h3 {
+  margin: 0;
+}
+.settings__tabs {
+  display: flex;
+  gap: var(--space-1);
+}
+.settings__tab--active {
+  background: var(--bg-widget-hover);
+}
+.settings__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.settings__row--block {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.settings__select {
+  width: auto;
+}
+.settings__themes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-2);
+  width: 100%;
+}
+.settings__theme-swatch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.settings__theme-swatch--active {
+  outline: 2px solid var(--accent);
+}
+.settings__theme-dot,
+.settings__accent-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.settings__accents {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.settings__accent-dot {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-subtle);
+  cursor: pointer;
+}
+.settings__accent-dot--active {
+  outline: 2px solid var(--text-primary);
+}
+.settings__licenses {
+  font-size: 0.9em;
+}
+.settings__license-url {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+/* ── Diagnose ── */
+.diagnose-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.diagnose-panel__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.diagnose-panel__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92em;
+}
+.diagnose-panel__table td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+.diagnose-panel__ms {
+  text-align: right;
+  white-space: nowrap;
+}
+.diagnose-panel__exported {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+/* ── Toasts ── */
+.toasts {
+  position: fixed;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 2000;
+}
+.toast {
+  padding: var(--space-3) var(--space-4);
+  max-width: 340px;
+}
+
+/* ── Tool market ── */
+.market {
+  min-width: 480px;
+  max-width: 560px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.market__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-y: auto;
+}
+.market__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+.market__item-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.market__item-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.market__item-privacy {
+  font-size: 0.85em;
+}
+
+/* ── Profile ── */
+.profile {
+  min-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.profile__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.profile__required {
+  color: var(--danger);
+}
+.profile__error {
+  color: var(--danger);
+  font-size: 0.85em;
+}
+.profile__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.topbar__greeting {
+  margin-left: var(--space-3);
+  white-space: nowrap;
+}
+.settings__help-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ── Onboarding tour ── */
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+}
+.tour__backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg-canvas) 70%, transparent);
+}
+.tour__spotlight {
+  position: absolute;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 9999px color-mix(in srgb, var(--bg-canvas) 70%, transparent);
+  pointer-events: none;
+}
+.tour__card {
+  position: absolute;
+  width: 340px;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 1;
+}
+.tour__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+.tour__progress {
+  margin-right: auto;
+}

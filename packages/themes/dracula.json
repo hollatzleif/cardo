@@ -1,0 +1,26 @@
+{
+  "id": "dracula",
+  "nameKey": "theme.dracula",
+  "appearance": "dark",
+  "license": { "spdx": "MIT", "source": "https://github.com/dracula/dracula-theme" },
+  "palette": {
+    "base": "#282a36",
+    "surface-0": "#343746",
+    "surface-1": "#44475a",
+    "surface-2": "#6272a4",
+    "text": "#f8f8f2",
+    "text-muted": "#9ca3c0",
+    "accent-1": "#bd93f9",
+    "accent-2": "#ff79c6",
+    "accent-3": "#8be9fd",
+    "accent-4": "#ffb86c",
+    "accent-5": "#ff5555",
+    "accent-6": "#50fa7b",
+    "accent-7": "#f1fa8c",
+    "accent-8": "#6272a4",
+    "success": "#50fa7b",
+    "warning": "#f1fa8c",
+    "danger": "#ff5555",
+    "info": "#8be9fd"
+  }
+}

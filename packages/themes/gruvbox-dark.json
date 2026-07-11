@@ -1,0 +1,26 @@
+{
+  "id": "gruvbox-dark",
+  "nameKey": "theme.gruvbox-dark",
+  "appearance": "dark",
+  "license": { "spdx": "MIT", "source": "https://github.com/morhetz/gruvbox" },
+  "palette": {
+    "base": "#282828",
+    "surface-0": "#3c3836",
+    "surface-1": "#504945",
+    "surface-2": "#665c54",
+    "text": "#ebdbb2",
+    "text-muted": "#bdae93",
+    "accent-1": "#83a598",
+    "accent-2": "#8ec07c",
+    "accent-3": "#b8bb26",
+    "accent-4": "#fabd2f",
+    "accent-5": "#fe8019",
+    "accent-6": "#fb4934",
+    "accent-7": "#d3869b",
+    "accent-8": "#458588",
+    "success": "#b8bb26",
+    "warning": "#fabd2f",
+    "danger": "#fb4934",
+    "info": "#83a598"
+  }
+}

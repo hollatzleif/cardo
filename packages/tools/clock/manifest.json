@@ -1,0 +1,29 @@
+{
+  "id": "clock",
+  "nameKey": "tool.clock.name",
+  "descriptionKey": "tool.clock.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.clock.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 4, "h": 3 },
+      "minSize": { "w": 2, "h": 2 },
+      "variants": ["digital"]
+    }
+  ],
+  "commands": ["clock.show-time"],
+  "selfTests": [
+    { "id": "render", "titleKey": "tool.clock.test.render" },
+    { "id": "time", "titleKey": "tool.clock.test.time" }
+  ],
+  "tourSteps": [
+    { "anchor": "widget:clock:main", "titleKey": "tool.clock.tour.title", "bodyKey": "tool.clock.tour.body" }
+  ]
+}

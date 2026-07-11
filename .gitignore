@@ -1,0 +1,10 @@
+node_modules/
+dist/
+target/
+*.local
+.DS_Store
+*.log
+coverage/
+.astro/
+.wrangler/
+apps/desktop/src-tauri/gen/

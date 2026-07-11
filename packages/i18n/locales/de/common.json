@@ -1,0 +1,549 @@
+{
+  "app": {
+    "name": "Cardo",
+    "tagline": "Dein Dreh- und Angelpunkt. Alles an einem Ort – so angeordnet, wie du es willst."
+  },
+  "canvas": {
+    "viewMode": "Ansichtsmodus",
+    "editMode": "Bearbeitungsmodus",
+    "toggleEdit": "Bearbeitungsmodus umschalten",
+    "addWidget": "Widget hinzufügen",
+    "removeWidget": "Widget entfernen",
+    "widgetSettings": "Widget-Einstellungen",
+    "page": "Seite",
+    "addPage": "Seite hinzufügen",
+    "renamePage": "Seite umbenennen",
+    "deletePage": "Seite löschen",
+    "deletePageConfirm": "Diese Seite löschen? Die Widgets darauf werden aus dem Layout entfernt (deine Daten bleiben erhalten).",
+    "emptyHint": "Dieses Dashboard ist leer. Drücke {{shortcut}}, um in den Bearbeitungsmodus zu wechseln und dein erstes Widget hinzuzufügen.",
+    "defaultPageName": "Start"
+  },
+  "palette": {
+    "placeholder": "Befehl eingeben oder suchen…",
+    "noResults": "Keine passenden Befehle",
+    "run": "Ausführen",
+    "cancel": "Abbrechen"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "general": "Allgemein",
+    "language": "Sprache",
+    "theme": "Design",
+    "themeHint": "Farben passen sich sofort an. Deine persönlichen Akzent-Anpassungen überleben jeden Design-Wechsel.",
+    "accentOverride": "Akzentfarbe anpassen",
+    "resetOverrides": "Persönliche Farbanpassungen zurücksetzen",
+    "diagnostics": "Diagnose",
+    "about": "Über",
+    "updates": "Updates",
+    "updatesAuto": "Updates automatisch im Hintergrund installieren",
+    "updatesNotify": "Nur über Updates benachrichtigen",
+    "updatesTransparency": "Für die Update-Prüfung kontaktiert Cardo regelmäßig den Update-Server. Übertragen wird ausschließlich die Versionsnummer der App.",
+    "help": "Hilfe"
+  },
+  "diagnose": {
+    "start": "Selbsttest starten",
+    "running": "Selbsttest läuft…",
+    "exportReport": "Report exportieren",
+    "reportTitle": "Cardo-Selbsttest-Report",
+    "status": {
+      "pass": "OK",
+      "warn": "Warnung",
+      "fail": "Fehlgeschlagen"
+    },
+    "summary": "{{passed}} bestanden · {{warnings}} Warnungen · {{failed}} fehlgeschlagen",
+    "scratchNote": "Alle Prüfungen laufen gegen eine Wegwerf-Testdatenbank. Deine echten Daten bleiben unberührt.",
+    "check": {
+      "dbReadWrite": "Datenbank les- und schreibbar",
+      "dbQuery": "Datenbank-Abfragen funktionieren",
+      "changeLog": "Change-Log protokolliert jede Änderung",
+      "migrations": "Datenbankschema ist aktuell",
+      "toolPing": "Tool „{{tool}}“ antwortet",
+      "toolCommands": "Befehle von „{{tool}}“ ausführbar",
+      "toolSelfTest": "Selbsttest „{{test}}“ von „{{tool}}“",
+      "themes": "Alle Designs vollständig (keine fehlenden Tokens)",
+      "i18n": "Übersetzungen vollständig (EN/DE)",
+      "storagePath": "App-Datenordner beschreibbar"
+    }
+  },
+  "market": {
+    "title": "Tool-Market",
+    "activate": "Aktivieren",
+    "deactivate": "Deaktivieren",
+    "active": "Aktiv",
+    "privacy": {
+      "green": "Arbeitet komplett offline – deine Daten verlassen dieses Gerät nie.",
+      "yellow": "Kontaktiert das Internet. Tippe für Details, was genau übertragen wird."
+    },
+    "subtitle": "Alle Tools werden mit Cardo ausgeliefert und laufen lokal. Aktivieren schaltet sie nur ein – die Datenschutz-Ampel sagt dir vorher, ob etwas dein Gerät verlassen würde."
+  },
+  "profile": {
+    "title": "Dein Profil",
+    "name": "Name",
+    "nameRequired": "Verrate uns deinen Namen – er bleibt auf diesem Gerät.",
+    "email": "E-Mail (optional)",
+    "birthday": "Geburtstag (optional)",
+    "country": "Land (optional)",
+    "localNote": "Diese Angaben bleiben auf deinem Gerät. Kein Account, keine Cloud.",
+    "greetingMorning": "Guten Morgen, {{name}}",
+    "greetingDay": "Hallo, {{name}}",
+    "greetingEvening": "Guten Abend, {{name}}",
+    "edit": "Profil bearbeiten"
+  },
+  "onboarding": {
+    "skip": "Tour überspringen",
+    "next": "Weiter",
+    "back": "Zurück",
+    "done": "Fertig",
+    "restartHint": "Du kannst diese Tour jederzeit unter Einstellungen → Hilfe neu starten.",
+    "restart": "Tour neu starten",
+    "step": {
+      "welcome": {
+        "title": "Willkommen bei Cardo!",
+        "body": "Cardo ist dein Dreh- und Angelpunkt: ein ruhiger Ort, an dem du alles sammelst und anordnest – genau so, wie du es willst. Diese kurze Tour zeigt dir alles. Du kannst sie jederzeit überspringen."
+      },
+      "edit": {
+        "title": "Bearbeitungsmodus",
+        "body": "Dieser Knopf (oder Cmd/Strg+E) schaltet die Arbeitsfläche frei: Widgets verschieben, Größe ändern, neue hinzufügen und weitere Dashboard-Seiten anlegen."
+      },
+      "settings": {
+        "title": "Einstellungen & Selbsttest",
+        "body": "Themes, Sprache, dein Profil – und der Knopf „Selbsttest starten\", der die ganze App prüft und dir einen Report gibt."
+      },
+      "market": {
+        "title": "Der Tool-Market",
+        "body": "Hier schaltest du Tools ein und aus. Die Datenschutz-Ampel zeigt dir bei jedem Tool, was lokal bleibt (grün) und was das Internet kontaktieren würde (gelb) – in Klartext erklärt."
+      },
+      "palette": {
+        "title": "Die Befehlspalette",
+        "body": "Drücke überall Cmd/Strg+K, um jeden Befehl zu suchen und auszuführen – Aufgabe anlegen, Timer starten, alles ist einen Tastendruck entfernt."
+      },
+      "privacy": {
+        "title": "Deine Daten gehören dir",
+        "body": "Cardo arbeitet zu 100 % offline. Kein Konto, keine Cloud, keine Telemetrie. Alles liegt in einer lokalen Datenbank und in Dateien, die dir gehören."
+      }
+    }
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "close": "Schließen",
+    "ok": "OK",
+    "search": "Suchen",
+    "loading": "Lädt…",
+    "error": "Etwas ist schiefgelaufen",
+    "retry": "Erneut versuchen"
+  },
+  "tool": {
+    "clock": {
+      "name": "Uhr",
+      "description": "Ein einfaches Uhr-Widget – der erste Beweis, dass Widgets funktionieren.",
+      "privacy": "Arbeitet komplett offline.",
+      "test": {
+        "render": "Uhr wird angezeigt",
+        "time": "Uhr liefert eine gültige Zeit"
+      },
+      "command": {
+        "showTime": "Aktuelle Zeit anzeigen"
+      },
+      "tour": {
+        "title": "Das ist ein Widget",
+        "body": "Jedes Tool lebt in einem Widget wie diesem. Im Bearbeitungsmodus kannst du es verschieben und in der Größe ändern."
+      }
+    },
+    "counter": {
+      "name": "Zähler",
+      "description": "Zählt Klicks und merkt sie sich – der erste Beweis, dass der Speicher funktioniert.",
+      "privacy": "Arbeitet komplett offline.",
+      "test": {
+        "storage": "Zähler speichert seinen Wert dauerhaft",
+        "commands": "Zähler-Befehle funktionieren"
+      },
+      "command": {
+        "increment": "Zähler erhöhen",
+        "reset": "Zähler zurücksetzen"
+      },
+      "tour": {
+        "title": "Widgets merken sich alles",
+        "body": "Dieser Zähler übersteht Neustarts. Alles, was du in Cardo tust, wird lokal auf deinem Gerät gespeichert."
+      }
+    },
+    "alarm": {
+      "name": "Wecker",
+      "description": "Stelle Wecker, die dich benachrichtigen und einen Klang abspielen – komplett lokal.",
+      "privacy": "Funktioniert komplett offline. Weckzeiten und Nachrichten verlassen nie dieses Gerät.",
+      "empty": "Noch keine Wecker. Füge unten einen hinzu.",
+      "messagePlaceholder": "Woran soll ich dich erinnern?",
+      "defaultMessage": "Aufstehen!",
+      "add": "Hinzufügen",
+      "delete": "Wecker löschen",
+      "toggle": "Wecker aktivieren oder deaktivieren",
+      "command": {
+        "set": "Wecker stellen",
+        "ring": "Wecker klingeln lassen"
+      },
+      "notification": {
+        "title": "Wecker: {{message}}",
+        "body": "Es ist {{time}} Uhr."
+      },
+      "msg": {
+        "created": "Wecker gestellt.",
+        "rang": "Wecker hat geklingelt.",
+        "notFound": "Diesen Wecker gibt es nicht mehr oder er ist deaktiviert.",
+        "failed": "Der Wecker konnte nicht ausgelöst werden."
+      },
+      "test": {
+        "storageRoundtrip": "Wecker lassen sich speichern und löschen",
+        "nextOccurrence": "Nächste Weckzeit wird korrekt berechnet"
+      },
+      "tour": {
+        "title": "Deine Wecker",
+        "body": "Füge einen Wecker mit Uhrzeit und Nachricht hinzu. Cardo benachrichtigt dich und spielt einen Klang – alles bleibt auf deinem Gerät."
+      }
+    },
+    "countdown": {
+      "name": "Countdown",
+      "description": "Zählt die Tage bis zu deinen wichtigen Ereignissen.",
+      "privacy": "Funktioniert komplett offline. Deine Ereignisse verlassen nie dieses Gerät.",
+      "empty": "Noch keine Countdowns. Füge unten ein Ereignis hinzu.",
+      "titlePlaceholder": "Worauf wartest du?",
+      "add": "Hinzufügen",
+      "delete": "Countdown löschen",
+      "day": "Tag noch",
+      "days": "Tage noch",
+      "today": "heute!",
+      "done": "Geschafft",
+      "command": {
+        "create": "Countdown erstellen"
+      },
+      "msg": {
+        "created": "Countdown erstellt."
+      },
+      "test": {
+        "storageRoundtrip": "Countdowns lassen sich speichern und löschen",
+        "daysCalc": "Verbleibende Tage werden korrekt berechnet"
+      },
+      "tour": {
+        "title": "Deine Countdowns",
+        "body": "Füge ein Ereignis mit Datum hinzu und Cardo zeigt dir, wie viele Tage noch bleiben – täglich aktuell, komplett lokal."
+      }
+    },
+    "calendar": {
+      "name": "Kalender",
+      "description": "Deine eigenen Termine mit Erinnerungen – komplett lokal, auf einen Blick.",
+      "privacy": "Funktioniert komplett offline. Deine Termine verlassen dieses Gerät nie.",
+      "prevMonth": "Vorheriger Monat",
+      "nextMonth": "Nächster Monat",
+      "today": "Heute",
+      "empty": "Keine Termine an diesem Tag.",
+      "allDay": "Ganztägig",
+      "titlePlaceholder": "Neuer Termin…",
+      "time": "Uhrzeit",
+      "add": "Hinzufügen",
+      "delete": "Termin löschen",
+      "notification": {
+        "title": "Anstehender Termin",
+        "body": "{{title}} um {{time}}"
+      },
+      "command": {
+        "create": "Termin anlegen",
+        "remind": "Termin-Erinnerung anzeigen"
+      },
+      "msg": {
+        "created": "Termin angelegt",
+        "notFound": "Termin nicht gefunden",
+        "failed": "Das hat nicht geklappt"
+      },
+      "test": {
+        "eventRoundtrip": "Termine werden gespeichert und sauber gelöscht",
+        "monthGrid": "Monatsraster wird korrekt berechnet",
+        "reminderTime": "Erinnerungszeiten werden korrekt berechnet"
+      },
+      "tour": {
+        "title": "Dein Kalender",
+        "body": "Klicke auf einen Tag, um seine Termine zu sehen und neue anzulegen. Termine mit Uhrzeit erinnern dich kurz vor Beginn."
+      }
+    },
+    "notes": {
+      "name": "Notizen",
+      "description": "Markdown-Notizen als echte .md-Dateien – bearbeiten, ansehen, für immer behalten.",
+      "privacy": "Arbeitet komplett offline. Deine Notizen sind einfache Markdown-Dateien (.md) in einem Ordner, der dir gehört – mit jedem Editor lesbar, kein Lock-in.",
+      "test": {
+        "markdownRender": "Markdown-Renderer funktioniert (inkl. HTML-Escaping)",
+        "fileRoundtrip": "Notiz-Dateien lassen sich schreiben, lesen und löschen"
+      },
+      "command": {
+        "create": "Notiz erstellen",
+        "open": "Notiz öffnen"
+      },
+      "tour": {
+        "title": "Deine Notizen, deine Dateien",
+        "body": "Jede Notiz ist eine echte Markdown-Datei in einem Ordner auf deinem Gerät. Du kannst sie verschieben, sichern oder mit jeder anderen App öffnen – Cardo sperrt nichts ein."
+      },
+      "msg": {
+        "noBackend": "Dateizugriff ist in diesem Kontext nicht verfügbar.",
+        "created": "Notiz erstellt.",
+        "opened": "Notiz geöffnet.",
+        "notFound": "Eine Notiz mit diesem Namen gibt es nicht.",
+        "invalidName": "Dieser Name kann nicht für eine Notiz verwendet werden."
+      },
+      "list": {
+        "new": "Neue Notiz",
+        "namePlaceholder": "Name der neuen Notiz…",
+        "empty": "Noch keine Notizen. Leg deine erste an.",
+        "rename": "Notiz umbenennen",
+        "renamePlaceholder": "Neuer Name…",
+        "delete": "Notiz \"{{name}}\" löschen",
+        "deleteConfirm": "Notiz \"{{name}}\" löschen? Die Datei wird aus deinem Notizordner entfernt."
+      },
+      "editor": {
+        "edit": "Bearbeiten",
+        "preview": "Vorschau",
+        "empty": "Wähle eine Notiz aus oder erstelle eine neue.",
+        "placeholder": "Schreib in Markdown…"
+      },
+      "pane": {
+        "list": "Notizen",
+        "editor": "Editor"
+      },
+      "footer": {
+        "changeFolder": "Ordner wechseln",
+        "noFolder": "Kein Ordner ausgewählt"
+      }
+    },
+    "pomodoro": {
+      "name": "Pomodoro",
+      "description": "Ein voll anpassbarer Pomodoro-Timer: fokussierte Arbeitsphasen, kurze Pausen und nach jedem Zyklus-Set eine lange Pause.",
+      "privacy": "Funktioniert komplett offline. Dein Timer-Stand und deine Einstellungen verlassen dieses Gerät nie.",
+      "start": "Start",
+      "pause": "Pause",
+      "reset": "Zurücksetzen",
+      "skip": "Zur nächsten Phase springen",
+      "cycles": "{{done}} von {{total}} Arbeitszyklen geschafft",
+      "phase": {
+        "work": "Fokus",
+        "shortBreak": "Kurze Pause",
+        "longBreak": "Lange Pause"
+      },
+      "notify": {
+        "title": "Pomodoro",
+        "workDone": "Fokusphase geschafft – Zeit für eine Pause!",
+        "shortBreakDone": "Pause vorbei – bereit für die nächste Fokusphase?",
+        "longBreakDone": "Lange Pause vorbei – Zeit, wieder loszulegen!"
+      },
+      "settings": {
+        "toggle": "Timer-Einstellungen",
+        "workMinutes": "Fokus (Minuten)",
+        "shortBreakMinutes": "Kurze Pause (Minuten)",
+        "longBreakMinutes": "Lange Pause (Minuten)",
+        "cyclesUntilLongBreak": "Zyklen bis zur langen Pause",
+        "sound": "Ton abspielen, wenn eine Phase endet"
+      },
+      "command": {
+        "start": "Pomodoro-Timer starten",
+        "pause": "Pomodoro-Timer pausieren",
+        "reset": "Pomodoro-Timer zurücksetzen",
+        "skip": "Zur nächsten Pomodoro-Phase springen"
+      },
+      "test": {
+        "statePersists": "Timer-Stand übersteht Neustarts",
+        "phaseAdvance": "Phasen wechseln in der richtigen Reihenfolge",
+        "settingsRoundtrip": "Einstellungen werden korrekt gespeichert und geladen"
+      },
+      "tour": {
+        "title": "Bleib fokussiert",
+        "body": "Starte eine Fokusphase und Cardo zählt für dich runter. Nach jeder Phase hast du dir eine Pause verdient – nach einem vollen Zyklus-Set eine lange.",
+        "settingsTitle": "Mach ihn zu deinem",
+        "settingsBody": "Tippe auf das Zahnrad, um Fokus- und Pausenlängen anzupassen, festzulegen, wie viele Zyklen zur langen Pause führen, und ob ein Ton erklingt."
+      }
+    },
+    "quickcapture": {
+      "name": "Schnellerfassung",
+      "description": "Halte einen Gedanken sofort fest, sortiere ihn später – deine GTD-Inbox.",
+      "privacy": "Funktioniert komplett offline.",
+      "input": {
+        "placeholder": "Gedanken festhalten… (Enter)",
+        "label": "Schnellerfassungs-Eingabe"
+      },
+      "count": {
+        "title": "Einträge in deiner Inbox"
+      },
+      "empty": "Inbox leer. Was dir durch den Kopf geht – wirf es hier rein und sortiere es später.",
+      "action": {
+        "toTodo": "An To-Do senden",
+        "delete": "Löschen"
+      },
+      "command": {
+        "add": "Gedanken festhalten",
+        "focus": "Schnellerfassung fokussieren"
+      },
+      "toast": {
+        "added": "Festgehalten.",
+        "empty": "Nichts zu erfassen – der Text ist leer."
+      },
+      "test": {
+        "itemRoundtrip": "Inbox-Eintrag lässt sich anlegen, lesen und löschen",
+        "addCommand": "Hinzufügen-Befehl speichert einen Eintrag"
+      },
+      "tour": {
+        "title": "Deine Inbox für alles",
+        "body": "Tippe einen Gedanken und drücke Enter – er landet sofort hier. Später schickst du ihn mit einem Klick an deine To-Do-Liste oder löschst ihn. Ein globales Tastenkürzel holt dieses Eingabefeld von überall hervor."
+      }
+    },
+    "routine": {
+      "name": "Tagesroutine",
+      "description": "Deine tägliche Checkliste – startet jeden Morgen frisch, alle Daten bleiben auf diesem Gerät.",
+      "privacy": "Arbeitet komplett offline.",
+      "widget": {
+        "allDone": "Alles geschafft – stark gemacht heute!",
+        "empty": "Noch keine Routine-Punkte. Füge unten deinen ersten hinzu.",
+        "addPlaceholder": "Neuer Routine-Punkt…",
+        "add": "Hinzufügen",
+        "remove": "Punkt entfernen"
+      },
+      "command": {
+        "addItem": "Routine-Punkt hinzufügen",
+        "check": "Routine-Punkt abhaken",
+        "resetToday": "Heutige Routine zurücksetzen",
+        "itemMissing": "Diesen Routine-Punkt gibt es nicht."
+      },
+      "test": {
+        "itemRoundtrip": "Routine-Punkte lassen sich speichern und löschen",
+        "dayState": "Tagesstatus wird pro Tag gespeichert",
+        "dateKey": "Lokaler Datums-Schlüssel wird korrekt berechnet"
+      },
+      "tour": {
+        "title": "Deine Tagesroutine",
+        "body": "Hake hier jeden Tag deine Routine ab. Um Mitternacht startet die Liste frisch – und alles bleibt auf diesem Gerät."
+      }
+    },
+    "stats": {
+      "name": "Statistiken",
+      "description": "Deine Produktivität auf einen Blick: erledigte Aufgaben, Arbeitszeit und Pomodoros pro Tag, Woche oder Monat.",
+      "privacy": "Funktioniert komplett offline.",
+      "window": {
+        "label": "Zeitraum",
+        "day": "Tag",
+        "week": "Woche",
+        "month": "Monat"
+      },
+      "metric": {
+        "tasks": "Erledigte Aufgaben",
+        "work": "Arbeitszeit",
+        "pomodoros": "Pomodoros"
+      },
+      "empty": "In diesem Zeitraum ist noch nichts erfasst. Erledige eine Aufgabe, starte die Stempeluhr oder beende ein Pomodoro – deine Zahlen erscheinen hier.",
+      "chart": {
+        "title": "Erledigte Aufgaben pro Tag",
+        "bar": "{{date}}: {{count}} Aufgaben erledigt"
+      },
+      "command": {
+        "summary": "Statistik-Zusammenfassung anzeigen"
+      },
+      "test": {
+        "aggregateRoundtrip": "Tages-Aggregate bleiben erhalten",
+        "eventCount": "Ereignisse werden korrekt gezählt",
+        "rangeKeys": "Zeiträume werden korrekt berechnet"
+      },
+      "tour": {
+        "title": "Deine Zahlen",
+        "body": "Hier siehst du, was du geschafft hast: Aufgaben, Arbeitszeit und Pomodoros – pro Tag, Woche oder Monat. Alles wird lokal auf deinem Gerät gezählt."
+      }
+    },
+    "todo": {
+      "name": "To-Do",
+      "description": "Aufgaben mit Listen, Prioritäten, Kategorien und Fälligkeiten – komplett lokal.",
+      "privacy": "Funktioniert komplett offline.",
+      "list": {
+        "inbox": "Eingang",
+        "add": "Neue Liste",
+        "rename": "Liste umbenennen",
+        "namePlaceholder": "Listenname… (Enter erstellt, Esc bricht ab)",
+        "renamePlaceholder": "Neuer Listenname… (Enter speichert, Esc bricht ab)"
+      },
+      "addPlaceholder": "Aufgabe hinzufügen… (Enter)",
+      "priorityLabel": "Priorität",
+      "priority": {
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch"
+      },
+      "toggleTask": "Aufgabe \"{{title}}\" umschalten",
+      "deleteTask": "Aufgabe \"{{title}}\" löschen",
+      "completedHeading": "Erledigt ({{count}})",
+      "clearCompleted": "Erledigte entfernen",
+      "empty": "Hier gibt es nichts zu tun – füge oben eine Aufgabe hinzu.",
+      "command": {
+        "create": "Aufgabe erstellen",
+        "complete": "Aufgabe erledigen",
+        "delete": "Aufgabe löschen"
+      },
+      "msg": {
+        "created": "Aufgabe erstellt",
+        "completed": "Aufgabe erledigt",
+        "deleted": "Aufgabe gelöscht",
+        "notFound": "Diese Aufgabe existiert nicht mehr",
+        "invalidDue": "Ungültiges Fälligkeitsdatum – nutze jjjj-mm-tt"
+      },
+      "test": {
+        "createRoundtrip": "Aufgaben lassen sich erstellen, zurücklesen und löschen",
+        "completeFlow": "Erledigen speichert den Erledigt-Zeitpunkt",
+        "queryByList": "Aufgaben lassen sich nach Liste filtern"
+      },
+      "tour": {
+        "intro": {
+          "title": "Deine Aufgaben, deine Listen",
+          "body": "Tippe eine Aufgabe und drücke Enter, um sie hinzuzufügen. Der farbige Punkt zeigt die Priorität, überfällige Termine werden rot."
+        },
+        "manage": {
+          "title": "Organisiere dich mit Listen",
+          "body": "Wechsle Listen über die Tabs, lege mit \"+\" neue an und benenne die aktive um. Erledigte Aufgaben sammeln sich unten, bis du sie entfernst."
+        }
+      }
+    },
+    "workclock": {
+      "name": "Arbeitsuhr",
+      "description": "Misst deine produktive Zeit pro Tag – Start, Stopp, fertig.",
+      "privacy": "Funktioniert komplett offline. Deine Zeiten verlassen dieses Gerät nie.",
+      "state": {
+        "running": "Läuft",
+        "paused": "Pausiert"
+      },
+      "action": {
+        "start": "Start",
+        "stop": "Stopp"
+      },
+      "week": "Diese Woche: {{duration}}",
+      "command": {
+        "start": "Arbeitsuhr starten",
+        "stop": "Arbeitsuhr stoppen",
+        "toggle": "Arbeitsuhr starten/stoppen"
+      },
+      "msg": {
+        "notRunning": "Die Arbeitsuhr läuft gerade nicht.",
+        "alreadyRunning": "Die Arbeitsuhr läuft bereits."
+      },
+      "test": {
+        "dayRoundtrip": "Tages-Dokument wird gespeichert",
+        "startStop": "Start/Stopp summiert Zeit",
+        "format": "Dauer-Formatierung stimmt"
+      },
+      "tour": {
+        "title": "Deine Arbeitsuhr",
+        "body": "Drück auf Start, wenn du anfängst zu arbeiten, und auf Stopp, wenn du Pause machst. Cardo zählt deine produktive Zeit pro Tag zusammen – alles bleibt auf deinem Gerät."
+      }
+    }
+  },
+  "theme": {
+    "catppuccin-latte": "Catppuccin Latte",
+    "catppuccin-mocha": "Catppuccin Mocha",
+    "nord": "Nord",
+    "dracula": "Dracula",
+    "github-light": "GitHub Light",
+    "gruvbox-dark": "Gruvbox Dunkel",
+    "gruvbox-light": "Gruvbox Hell",
+    "tokyo-night": "Tokyo Night",
+    "solarized-light": "Solarized Hell",
+    "rose-pine": "Rosé Pine"
+  }
+}

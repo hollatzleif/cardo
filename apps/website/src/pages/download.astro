@@ -1,0 +1,94 @@
+---
+import Base from '../layouts/Base.astro';
+import CopyBlock from '../components/CopyBlock.astro';
+
+// PLACEHOLDER: replace USER with the real GitHub org/user once public releases exist.
+const releasesUrl = 'https://github.com/USER/cardo/releases';
+// PLACEHOLDER: get.cardo.app is not registered yet – swap in the real domain
+// once the install scripts are hosted there.
+const installSh = 'curl -fsSL https://get.cardo.app/install.sh | sh';
+const installPs = 'irm https://get.cardo.app/install.ps1 | iex';
+---
+
+<Base title="Download" description="Download Cardo for macOS, Windows or Linux – free, no account, no strings attached.">
+  <h1>Download Cardo</h1>
+  <p class="muted">
+    Free, no account, no strings attached. Pick your platform – or use the one-line install
+    command, which detects your OS and fetches the latest release from GitHub.
+  </p>
+  <p>
+    All installers are published on <a href={releasesUrl} rel="noopener">GitHub Releases</a>,
+    so you can always verify exactly what you are downloading.
+  </p>
+
+  <section id="macos" class="card os-card">
+    <h2>🍎 macOS</h2>
+    <p>Download the <a href={releasesUrl} rel="noopener">.dmg from GitHub Releases</a>, or install from the terminal:</p>
+    <CopyBlock command={installSh} label="Terminal" />
+    <details>
+      <summary>“Cardo can't be opened because it is from an unidentified developer”?</summary>
+      <p>
+        That's expected, and here's the honest reason: Apple charges 99 €/year for a signing
+        certificate, and Cardo is a free, donation-funded app. We'll buy the certificate as soon
+        as donations cover it. Until then, macOS shows this warning for every unsigned app.
+      </p>
+      <ol>
+        <li>Find <strong>Cardo.app</strong> in your <strong>Applications</strong> folder.</li>
+        <li><strong>Right-click</strong> (or Ctrl-click) it and choose <strong>Open</strong>.</li>
+        <li>In the dialog, click <strong>Open</strong> again. macOS remembers your choice – this is only needed once.</li>
+      </ol>
+    </details>
+  </section>
+
+  <section id="windows" class="card os-card">
+    <h2>🪟 Windows</h2>
+    <p>Download the <a href={releasesUrl} rel="noopener">.msi from GitHub Releases</a>, or install from PowerShell:</p>
+    <CopyBlock command={installPs} label="PowerShell" />
+    <details>
+      <summary>Windows SmartScreen says “Windows protected your PC”?</summary>
+      <p>
+        Also expected: Windows shows this for installers without a paid code-signing certificate.
+        Cardo will get one once donations cover the cost – we'd rather be honest about a warning
+        than quietly pass the bill on to you.
+      </p>
+      <ol>
+        <li>In the SmartScreen dialog, click <strong>More info</strong>.</li>
+        <li>Then click <strong>Run anyway</strong>.</li>
+      </ol>
+    </details>
+  </section>
+
+  <section id="linux" class="card os-card">
+    <h2>🐧 Linux</h2>
+    <p>Download the <a href={releasesUrl} rel="noopener">.AppImage or .deb from GitHub Releases</a>, or install from the terminal:</p>
+    <CopyBlock command={installSh} label="Terminal" />
+    <details>
+      <summary>Using the .AppImage directly?</summary>
+      <ol>
+        <li>Make it executable: <code>chmod +x Cardo.AppImage</code></li>
+        <li>Run it: <code>./Cardo.AppImage</code></li>
+      </ol>
+      <p>
+        On Debian/Ubuntu the <code>.deb</code> package integrates with your app menu. The builds
+        are unsigned for the same reason as on macOS and Windows: signing costs money, and Cardo
+        is donation-funded. Certificates come once donations cover them.
+      </p>
+    </details>
+  </section>
+
+  <section class="card" style="margin-top:2rem">
+    <h3>After installing</h3>
+    <p>
+      Open Cardo and you're done – no database to set up, no account to create. If you want a
+      quick tour of your first dashboard, head over to the <a href="/docs">docs</a>.
+    </p>
+  </section>
+
+  <style>
+    .os-card { margin-top: 1.5rem; }
+    .os-card h2 { margin-top: 0; }
+    details { margin-top: 0.75rem; }
+    summary { cursor: pointer; font-weight: 600; }
+    details ol { margin: 0.5rem 0 0.75rem; }
+  </style>
+</Base>

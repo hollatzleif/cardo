@@ -1,0 +1,26 @@
+{
+  "id": "github-light",
+  "nameKey": "theme.github-light",
+  "appearance": "light",
+  "license": { "spdx": "MIT", "source": "https://github.com/primer/primitives" },
+  "palette": {
+    "base": "#ffffff",
+    "surface-0": "#f6f8fa",
+    "surface-1": "#eaeef2",
+    "surface-2": "#d0d7de",
+    "text": "#1f2328",
+    "text-muted": "#656d76",
+    "accent-1": "#0969da",
+    "accent-2": "#8250df",
+    "accent-3": "#1b7c83",
+    "accent-4": "#bc4c00",
+    "accent-5": "#bf3989",
+    "accent-6": "#1a7f37",
+    "accent-7": "#9a6700",
+    "accent-8": "#0550ae",
+    "success": "#1a7f37",
+    "warning": "#9a6700",
+    "danger": "#cf222e",
+    "info": "#0969da"
+  }
+}

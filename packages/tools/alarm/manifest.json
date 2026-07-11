@@ -1,0 +1,29 @@
+{
+  "id": "alarm",
+  "nameKey": "tool.alarm.name",
+  "descriptionKey": "tool.alarm.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": ["notifications", "scheduler", "audio"],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.alarm.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 4, "h": 4 },
+      "minSize": { "w": 3, "h": 3 },
+      "variants": []
+    }
+  ],
+  "commands": ["alarm.set", "alarm.ring"],
+  "selfTests": [
+    { "id": "storage-roundtrip", "titleKey": "tool.alarm.test.storageRoundtrip" },
+    { "id": "next-occurrence", "titleKey": "tool.alarm.test.nextOccurrence" }
+  ],
+  "tourSteps": [
+    { "anchor": "widget:alarm:main", "titleKey": "tool.alarm.tour.title", "bodyKey": "tool.alarm.tour.body" }
+  ]
+}
