@@ -165,21 +165,72 @@
 }
 
 /* ── Add-widget menu ── */
-.add-widget-menu {
+.add-widget {
   padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.add-widget__header {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
-.add-widget-menu__item {
-  display: grid;
-  grid-template-columns: 120px 1fr auto;
-  align-items: center;
-  gap: var(--space-3);
-  text-align: left;
+.add-widget__header h3 {
+  margin: 0;
 }
-.add-widget-menu__name {
+.add-widget__search {
+  width: 100%;
+}
+.add-widget__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--space-2);
+}
+.add-widget__card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  text-align: left;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  min-width: 0;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.add-widget__card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.add-widget__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.add-widget__name {
   font-weight: 600;
+}
+.add-widget__desc {
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
+}
+.add-widget__add {
+  margin-top: auto;
+  align-self: flex-end;
+  color: var(--accent);
+  font-size: 0.88em;
+  font-weight: 600;
+}
+.add-widget__empty {
+  text-align: center;
+  padding: var(--space-5);
 }
 
 /* ── Settings ── */
@@ -490,4 +541,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+/* Widget picker gets a wider modal than the default dialogs. */
+.c-modal:has(.add-widget) {
+  width: min(720px, 92vw);
 }

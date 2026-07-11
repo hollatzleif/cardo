@@ -27,6 +27,10 @@ const current = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} · Cardo</title>
     <meta name="description" content={description} />
+    {/* Same icon as the desktop app, so browser tabs match the dock. */}
+    <link rel="icon" type="image/png" href={withBase('/favicon.png')} />
+    <link rel="icon" type="image/x-icon" href={withBase('/favicon.ico')} sizes="any" />
+    <link rel="apple-touch-icon" href={withBase('/apple-touch-icon.png')} />
   </head>
   <body>
     <header class="site-header">
