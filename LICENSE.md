@@ -1,6 +1,6 @@
 # Cardo License (Source-Available)
 
-Copyright (c) 2026 Heike Wagner-Hollatz. All rights reserved.
+Copyright (c) 2026 Leif Hollatz (LeifHollatz@gmail.com). All rights reserved.
 
 This repository is **source-available, not open source**.
 

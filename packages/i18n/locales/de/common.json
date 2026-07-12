@@ -867,7 +867,7 @@
     }
   },
   "polls": {
-    "intro": "Stimme ab, wohin sich Cardo entwickelt. Umfragen sind Fragen der Entwicklerin – zum Beispiel „Sollen wir Feature X bauen?\".",
+    "intro": "Stimme ab, wohin sich Cardo entwickelt. Umfragen sind Fragen des Entwicklers – zum Beispiel „Sollen wir Feature X bauen?\".",
     "privacyNote": "Beim Laden kontaktiert Cardo hollatzleif.github.io (die Fragen) und einen Cloudflare-Server (die Stimmenzahlen). Beim Abstimmen werden nur Umfrage-ID, deine Wahl und ein anonymer Geräte-Hash gesendet – eine Stimme pro Installation, kein Name, kein Profil. Ohne deinen Klick wird nichts geladen.",
     "load": "Umfragen laden",
     "none": "Gerade keine Umfragen. Schau später wieder vorbei!",
@@ -884,7 +884,7 @@
   },
   "inbox": {
     "title": "Postfach",
-    "optinIntro": "Neuigkeiten von Cardo: Hier landen Ankündigungen und Umfragen der Entwicklerin – zum Beispiel „Sollen wir Feature X bauen?\".",
+    "optinIntro": "Neuigkeiten von Cardo: Hier landen Ankündigungen und Umfragen des Entwicklers – zum Beispiel „Sollen wir Feature X bauen?\".",
     "privacyNote": "Wenn du das aktivierst, prüft Cardo beim Start und einmal pro Stunde cardo-polls.hollatzleif.workers.dev auf Neuigkeiten. Dabei wird nichts über dich gesendet. Beim Abstimmen werden nur Umfrage-ID, deine Wahl und ein anonymer Geräte-Hash übertragen. Du kannst das hier jederzeit wieder ausschalten.",
     "enable": "Postfach aktivieren",
     "disable": "Postfach deaktivieren",
