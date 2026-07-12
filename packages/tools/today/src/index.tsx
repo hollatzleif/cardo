@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { z } from 'zod';
 import type { CardoTool, ToolContext, WidgetProps } from '@cardo/plugin-api';
 import manifest from '../manifest.json';
 import {
@@ -304,27 +303,30 @@ export function createTool(): CardoTool {
         }
         case 'aggregate-with-todo': {
           if (!testCtx.commands.has(PROVIDER_COMMANDS.todo)) {
-            testCtx.commands.register({
-              id: PROVIDER_COMMANDS.todo,
-              titleKey: 'tool.today.test.aggregateWithTodo',
-              params: z.object({}),
-              palette: false,
-              async run() {
-                return {
-                  ok: true,
-                  data: {
-                    open: [
-                      { id: 'probe-due', title: 'Due today', list: 'inbox', overdue: false },
-                      { id: 'probe-overdue', title: 'Overdue', priority: 'high', overdue: true },
-                    ],
-                    dueToday: 1,
-                    overdue: 1,
-                    completedToday: 2,
-                  },
-                };
+            // A tool may NEVER register foreign commands – not even in the
+            // scratch context (the registry rightly throws). Fake the todo
+            // provider via a wrapped ctx instead: pure dependency injection.
+            const fakeTodoData = {
+              open: [
+                { id: 'probe-due', title: 'Due today', list: 'inbox', overdue: false },
+                { id: 'probe-overdue', title: 'Overdue', priority: 'high', overdue: true },
+              ],
+              dueToday: 1,
+              overdue: 1,
+              completedToday: 2,
+            };
+            const fakeCtx = {
+              ...testCtx,
+              commands: {
+                ...testCtx.commands,
+                has: (id: string) => id === PROVIDER_COMMANDS.todo || testCtx.commands.has(id),
+                execute: async (id: string, params: unknown) =>
+                  id === PROVIDER_COMMANDS.todo
+                    ? { ok: true, data: fakeTodoData }
+                    : testCtx.commands.execute(id, params),
               },
-            });
-            const data = await aggregateToday(testCtx);
+            };
+            const data = await aggregateToday(fakeCtx);
             const todo = data.todo;
             const ok =
               todo !== null &&
