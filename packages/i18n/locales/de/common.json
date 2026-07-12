@@ -768,5 +768,13 @@
     "taskLabel": "Aktuelle Aufgabe",
     "pomodoroMissing": "Das Pomodoro-Tool ist nicht aktiv. Aktiviere es im Tool-Markt, um deinen Timer hier zu sehen – der Fokus-Modus funktioniert auch ohne.",
     "exit": "Fokus verlassen (Esc)"
+  },
+  "inbox": {
+    "title": "Postfach",
+    "optinIntro": "Neuigkeiten von Cardo: Hier landen Ankündigungen und Umfragen der Entwicklerin – zum Beispiel „Sollen wir Feature X bauen?\".",
+    "privacyNote": "Wenn du das aktivierst, prüft Cardo beim Start und einmal pro Stunde cardo-polls.hollatzleif.workers.dev auf Neuigkeiten. Dabei wird nichts über dich gesendet. Beim Abstimmen werden nur Umfrage-ID, deine Wahl und ein anonymer Geräte-Hash übertragen. Du kannst das hier jederzeit wieder ausschalten.",
+    "enable": "Postfach aktivieren",
+    "disable": "Postfach deaktivieren",
+    "empty": "Gerade keine Neuigkeiten. Schau später wieder vorbei!"
   }
 }

@@ -768,5 +768,13 @@
     "taskLabel": "Current task",
     "pomodoroMissing": "The Pomodoro tool is not active. Activate it in the tool market to see your timer here – focus mode works without it, too.",
     "exit": "Leave focus (Esc)"
+  },
+  "inbox": {
+    "title": "Inbox",
+    "optinIntro": "News from Cardo: announcements and polls from the developer land here – for example \"Should we build feature X?\".",
+    "privacyNote": "If you enable this, Cardo checks cardo-polls.hollatzleif.workers.dev for news on launch and once per hour. Nothing about you is sent. Voting transmits only the poll ID, your choice and an anonymous device hash. You can switch this off here at any time.",
+    "enable": "Enable inbox",
+    "disable": "Disable inbox",
+    "empty": "No news right now. Check back later!"
   }
 }

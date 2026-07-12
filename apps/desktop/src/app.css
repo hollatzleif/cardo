@@ -640,3 +640,91 @@
   display: flex;
   justify-content: flex-end;
 }
+
+/* ── Inbox (top-left) ── */
+.topbar__inbox {
+  position: relative;
+  padding: var(--space-1) var(--space-2);
+  margin-left: var(--space-2);
+}
+.topbar__inbox-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: 999px;
+  font-size: 0.62em;
+  font-weight: 700;
+  min-width: 15px;
+  height: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+.inbox__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+}
+.inbox__panel {
+  position: fixed;
+  top: 52px;
+  left: var(--space-3);
+  width: min(360px, calc(100vw - 2 * var(--space-3)));
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  z-index: 1600;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-wrap: break-word;
+}
+.inbox__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.inbox__optin,
+.inbox__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.inbox__optin p,
+.inbox__list p {
+  margin: 0;
+}
+.inbox__item {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.inbox__body {
+  white-space: pre-wrap;
+}
+.inbox__date {
+  font-size: 0.8em;
+}
+.inbox__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.inbox__footer {
+  text-align: right;
+  font-size: 0.8em;
+}
+.inbox__disable {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  padding: 0;
+}

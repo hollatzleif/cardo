@@ -11,6 +11,8 @@ import { Tour } from './onboarding/Tour';
 import { TemplatePicker } from './onboarding/TemplatePicker';
 import { DesignPanel } from './design/DesignPanel';
 import { FocusMode } from './focus/FocusMode';
+import { Inbox } from './inbox/Inbox';
+import { getInboxState, onInboxChange } from './inbox/feed';
 
 function greetingKey(hour: number): string {
   if (hour < 11) return 'profile.greetingMorning';
@@ -53,6 +55,13 @@ export function App() {
 
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [inboxUnread, setInboxUnread] = useState(0);
+
+  useEffect(() => {
+    setInboxUnread(getInboxState().unread);
+    return onInboxChange((s) => setInboxUnread(s.unread));
+  }, []);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
@@ -107,6 +116,15 @@ export function App() {
     <div className="app">
       <header className="topbar">
         <span className="topbar__brand">{t('app.name')}</span>
+        <button
+          className="c-btn c-btn--ghost topbar__inbox"
+          title={t('inbox.title')}
+          data-tour-anchor="ui:inbox-button"
+          onClick={() => setInboxOpen(!inboxOpen)}
+        >
+          ✉
+          {inboxUnread > 0 && <span className="topbar__inbox-badge">{inboxUnread}</span>}
+        </button>
         {profile && (
           <span className="c-muted topbar__greeting">
             {t(greetingKey(new Date().getHours()), { name: profile.name })}
@@ -220,6 +238,7 @@ export function App() {
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
       {designOpen && editing && <DesignPanel onClose={() => setDesignOpen(false)} />}
       {focusOpen && <FocusMode onClose={() => setFocusOpen(false)} />}
+      {inboxOpen && <Inbox onClose={() => setInboxOpen(false)} />}
       {needsProfile && (
         <ProfileModal
           onDone={() => {

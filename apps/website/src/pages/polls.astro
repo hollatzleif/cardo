@@ -1,49 +1,22 @@
 ---
 import Base from '../layouts/Base.astro';
-import pollsData from '../../public/polls.json';
 
-// Poll questions/options live in ../../public/polls.json (single source of truth,
-// also read by the desktop app). Vote counts come from the Cloudflare worker
-// and are fetched client-side below.
-const polls = pollsData.polls;
+// Polls and announcements come live from the Cloudflare worker feed
+// (GET /feed) and are rendered client-side below. The old static
+// public/polls.json is deprecated and no longer read.
 ---
 
-<Base title="Polls" description="Community polls for Cardo – vote from within the app, results are public. One anonymous vote per installation.">
-  <h1>Polls</h1>
+<Base title="Polls" description="Community polls and announcements for Cardo – vote from within the app, results are public. One anonymous vote per installation.">
+  <h1>Polls &amp; News</h1>
   <p class="muted">
     Help decide where Cardo goes next. Voting happens inside the app
     (Settings → Polls) – one vote per installation, completely anonymous.
     The results below are public and update live.
   </p>
 
-  <p id="results-status" class="muted results-status" hidden>
-    Results are currently unavailable – please try again later.
-  </p>
+  <p id="feed-status" class="muted feed-status">Loading polls and announcements …</p>
 
-  <section class="polls">
-    {polls.map((poll) => (
-      <article class="card poll" data-poll={poll.id}>
-        <header class="poll-header">
-          <h2>{poll.question.en}</h2>
-          {!poll.open && <span class="closed-badge">Closed</span>}
-        </header>
-        <ul class="options">
-          {poll.options.map((option) => (
-            <li data-option={option.id}>
-              <div class="option-row">
-                <span class="option-label">{option.label.en}</span>
-                <span class="option-stats muted" data-stats>– votes · –%</span>
-              </div>
-              <div class="bar-track">
-                <div class="bar-fill" data-bar style="width: 0%"></div>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <p class="muted total" data-total>Total votes: –</p>
-      </article>
-    ))}
-  </section>
+  <section id="feed" class="feed" aria-live="polite"></section>
 
   <section class="card" style="margin-top:2rem">
     <h3>How voting works</h3>
@@ -54,65 +27,138 @@ const polls = pollsData.polls;
     </p>
   </section>
 
-  <style>
-    .polls { display: grid; gap: 1rem; margin-top: 1.5rem; }
-    .poll-header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
-    .poll-header h2 { margin: 0 0 0.5rem; font-size: 1.2rem; }
-    .closed-badge {
+  {/* is:global because the feed cards are created client-side and would not
+      receive Astro's scoped-style attribute. Selectors are namespaced under .feed. */}
+  <style is:global>
+    .feed { display: grid; gap: 1rem; margin-top: 1.5rem; }
+    .feed-status { margin-top: 1.5rem; }
+    .feed .item-header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+    .feed .item-header h2 { margin: 0 0 0.5rem; font-size: 1.2rem; }
+    .feed .closed-badge {
       display: inline-block; padding: 0.1rem 0.6rem; border-radius: 999px; font-size: 0.8rem;
       border: 1px solid var(--text-muted); color: var(--text-muted); white-space: nowrap;
     }
-    .options { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.9rem; }
-    .option-row { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.95rem; }
-    .option-label { font-weight: 600; }
-    .bar-track {
+    .feed .item-date { font-size: 0.85rem; margin: 0 0 0.25rem; }
+    .feed .announcement-body { margin: 0.5rem 0 0; white-space: pre-line; }
+    .feed .options { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.9rem; }
+    .feed .option-row { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.95rem; }
+    .feed .option-label { font-weight: 600; }
+    .feed .bar-track {
       height: 10px; border-radius: 999px; background: var(--surface-1);
       overflow: hidden; margin-top: 0.3rem;
     }
-    .bar-fill {
+    .feed .bar-fill {
       height: 100%; border-radius: 999px; background: var(--accent);
       transition: width 0.4s ease;
     }
-    .total { margin: 1rem 0 0; font-size: 0.9rem; }
-    .results-status { margin-top: 1rem; }
+    .feed .total { margin: 1rem 0 0; font-size: 0.9rem; }
   </style>
 
   <script>
-    // PLACEHOLDER: replace with the real worker URL after `npx wrangler deploy`
-    // (see server/polls-worker/README.md).
     const WORKER_URL = 'https://cardo-polls.hollatzleif.workers.dev';
 
+    type Localized = { en: string; de: string };
     type PollResult = { total: number; counts: Record<string, number> };
-
-    function render(results: Record<string, PollResult>): void {
-      document.querySelectorAll<HTMLElement>('[data-poll]').forEach((pollEl) => {
-        const result = results[pollEl.dataset.poll ?? ''] ?? { total: 0, counts: {} };
-        pollEl.querySelectorAll<HTMLElement>('[data-option]').forEach((optionEl) => {
-          const count = result.counts[optionEl.dataset.option ?? ''] ?? 0;
-          const percent = result.total > 0 ? Math.round((count / result.total) * 100) : 0;
-          const stats = optionEl.querySelector('[data-stats]');
-          const bar = optionEl.querySelector<HTMLElement>('[data-bar]');
-          if (stats) stats.textContent = `${count} vote${count === 1 ? '' : 's'} · ${percent}%`;
-          if (bar) bar.style.width = `${percent}%`;
-        });
-        const totalEl = pollEl.querySelector('[data-total]');
-        if (totalEl) totalEl.textContent = `Total votes: ${result.total}`;
-      });
+    interface FeedItem {
+      id: string;
+      kind: 'poll' | 'announcement';
+      open: boolean;
+      createdAt: string;
+      payload: {
+        question?: Localized;
+        options?: { id: string; label: Localized }[];
+        title?: Localized;
+        body?: Localized;
+      } | null;
+      results?: PollResult;
     }
 
-    async function loadResults(): Promise<void> {
+    function el<K extends keyof HTMLElementTagNameMap>(
+      tag: K,
+      className?: string,
+      text?: string,
+    ): HTMLElementTagNameMap[K] {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function itemHeader(title: string, open: boolean): HTMLElement {
+      const header = el('header', 'item-header');
+      header.appendChild(el('h2', undefined, title));
+      if (!open) header.appendChild(el('span', 'closed-badge', 'Closed'));
+      return header;
+    }
+
+    function itemDate(createdAt: string): HTMLElement {
+      return el('p', 'muted item-date', (createdAt ?? '').slice(0, 10));
+    }
+
+    function renderAnnouncement(item: FeedItem): HTMLElement {
+      const card = el('article', 'card');
+      card.appendChild(itemHeader(item.payload?.title?.en ?? item.id, item.open));
+      card.appendChild(itemDate(item.createdAt));
+      card.appendChild(el('p', 'announcement-body', item.payload?.body?.en ?? ''));
+      return card;
+    }
+
+    function renderPoll(item: FeedItem): HTMLElement {
+      const card = el('article', 'card');
+      card.appendChild(itemHeader(item.payload?.question?.en ?? item.id, item.open));
+      card.appendChild(itemDate(item.createdAt));
+
+      const results = item.results ?? { total: 0, counts: {} };
+      const list = el('ul', 'options');
+      for (const option of item.payload?.options ?? []) {
+        const count = results.counts[option.id] ?? 0;
+        const percent = results.total > 0 ? Math.round((count / results.total) * 100) : 0;
+
+        const li = el('li');
+        const row = el('div', 'option-row');
+        row.appendChild(el('span', 'option-label', option.label?.en ?? option.id));
+        row.appendChild(
+          el('span', 'option-stats muted', `${count} vote${count === 1 ? '' : 's'} · ${percent}%`),
+        );
+        const track = el('div', 'bar-track');
+        const fill = el('div', 'bar-fill');
+        fill.style.width = `${percent}%`;
+        track.appendChild(fill);
+        li.appendChild(row);
+        li.appendChild(track);
+        list.appendChild(li);
+      }
+      card.appendChild(list);
+      card.appendChild(el('p', 'muted total', `Total votes: ${results.total}`));
+      return card;
+    }
+
+    async function loadFeed(): Promise<void> {
+      const feed = document.getElementById('feed');
+      const status = document.getElementById('feed-status');
+      if (!feed || !status) return;
       try {
-        const response = await fetch(`${WORKER_URL}/results`);
+        const response = await fetch(`${WORKER_URL}/feed`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = (await response.json()) as { polls: Record<string, PollResult> };
-        render(data.polls ?? {});
+        const data = (await response.json()) as { items?: FeedItem[] };
+        const items = Array.isArray(data.items) ? data.items : [];
+
+        feed.replaceChildren();
+        for (const item of items) {
+          if (!item || !item.payload) continue;
+          feed.appendChild(item.kind === 'poll' ? renderPoll(item) : renderAnnouncement(item));
+        }
+        if (feed.childElementCount === 0) {
+          status.textContent = 'No polls or announcements yet – check back soon.';
+        } else {
+          status.hidden = true;
+        }
       } catch {
-        const status = document.getElementById('results-status');
-        if (status) status.hidden = false;
-        render({}); // keep bars at 0 and show "–" as 0
+        status.hidden = false;
+        status.textContent = 'Polls are currently unavailable – please try again later.';
       }
     }
 
-    loadResults();
+    loadFeed();
   </script>
 </Base>

@@ -38,6 +38,8 @@ async function bootstrap(): Promise<void> {
   void initGlobalShortcuts(host);
   // Re-arm persisted schedules; overdue ones (missed while closed) fire now.
   void (host.services.scheduler as { init?: () => Promise<void> }).init?.();
+  // Inbox feed check – only ever runs when the user opted in.
+  void import('./inbox/feed').then((m) => m.initInbox());
   // Background update check ~10s after launch (never blocks startup).
   window.setTimeout(() => {
     void import('./host/updates').then((u) => u.checkForUpdates({ background: true }));

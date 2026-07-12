@@ -1,0 +1,451 @@
+---
+import Base from '../layouts/Base.astro';
+
+// Admin dashboard for the Cardo feed (polls + announcements). Deliberately
+// NOT linked in the navigation – direct URL only. Auth: password login against
+// the worker, session token kept in sessionStorage for this tab only.
+---
+
+<Base title="Admin" description="Cardo feed administration.">
+  <div id="admin">
+    <h1>Admin</h1>
+    <p class="admin-note">
+      Admin only – changes go live immediately in the app inbox and on the polls page.
+    </p>
+
+    <!-- Login -->
+    <section id="login-view" class="card admin-card" hidden>
+      <h2>Login</h2>
+      <form id="login-form">
+        <label for="admin-password">Password</label>
+        <input
+          id="admin-password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+        <p id="login-error" class="form-error" hidden></p>
+        <button class="btn" type="submit">Log in</button>
+      </form>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" hidden>
+      <div class="dash-toolbar">
+        <button id="refresh-btn" class="btn btn--ghost" type="button">Refresh</button>
+        <button id="logout-btn" class="btn btn--ghost" type="button">Log out</button>
+      </div>
+
+      <h2>Items</h2>
+      <p id="items-status" class="muted">Loading …</p>
+      <div id="items-list" class="items-list"></div>
+
+      <h2>New announcement</h2>
+      <form id="announcement-form" class="card admin-card">
+        <div class="field-grid">
+          <div>
+            <label for="ann-title-en">Title (EN)</label>
+            <input id="ann-title-en" required maxlength="500" />
+          </div>
+          <div>
+            <label for="ann-title-de">Title (DE)</label>
+            <input id="ann-title-de" required maxlength="500" />
+          </div>
+          <div>
+            <label for="ann-body-en">Body (EN)</label>
+            <textarea id="ann-body-en" rows="4" required maxlength="4000"></textarea>
+          </div>
+          <div>
+            <label for="ann-body-de">Body (DE)</label>
+            <textarea id="ann-body-de" rows="4" required maxlength="4000"></textarea>
+          </div>
+        </div>
+        <p class="form-error" data-error hidden></p>
+        <button class="btn" type="submit">Publish announcement</button>
+      </form>
+
+      <h2>New poll</h2>
+      <form id="poll-form" class="card admin-card">
+        <div class="field-grid">
+          <div>
+            <label for="poll-question-en">Question (EN)</label>
+            <input id="poll-question-en" required maxlength="500" />
+          </div>
+          <div>
+            <label for="poll-question-de">Question (DE)</label>
+            <input id="poll-question-de" required maxlength="500" />
+          </div>
+        </div>
+        <h3>Options <span class="muted">(2–6, ids are generated from the EN label)</span></h3>
+        <div id="poll-options"></div>
+        <p><button id="add-option-btn" class="btn btn--ghost" type="button">Add option</button></p>
+        <p class="form-error" data-error hidden></p>
+        <button class="btn" type="submit">Publish poll</button>
+      </form>
+    </section>
+  </div>
+
+  {/* is:global because item rows and option rows are created client-side and
+      would not receive Astro's scoped-style attribute. Namespaced under #admin. */}
+  <style is:global>
+    #admin .admin-note {
+      border: 1px solid var(--warning); color: var(--warning);
+      border-radius: var(--radius); padding: 0.6rem 1rem; font-size: 0.95rem;
+    }
+    #admin .admin-card { margin-top: 1rem; max-width: 640px; }
+    #admin label { display: block; font-weight: 600; margin: 0.6rem 0 0.2rem; font-size: 0.9rem; }
+    #admin input, #admin textarea {
+      width: 100%; padding: 0.5rem 0.7rem; border-radius: 8px;
+      border: 1px solid var(--surface-1); background: var(--base); color: var(--text);
+      font: inherit;
+    }
+    #admin .field-grid { display: grid; gap: 0 1rem; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 640px) { #admin .field-grid { grid-template-columns: 1fr; } }
+    #admin form .btn { margin-top: 1rem; }
+    #admin .form-error { color: var(--danger); margin: 0.75rem 0 0; }
+    #admin .dash-toolbar { display: flex; gap: 0.5rem; justify-content: flex-end; margin: 1rem 0; }
+    #admin .items-list { display: grid; gap: 0.75rem; margin-top: 1rem; }
+    #admin .item-row {
+      display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;
+      background: var(--surface-0); border: 1px solid var(--surface-1);
+      border-radius: var(--radius); padding: 0.75rem 1rem;
+    }
+    #admin .item-title { font-weight: 600; flex: 1 1 12rem; }
+    #admin .item-meta { font-size: 0.85rem; }
+    #admin .item-row .btn { margin: 0; padding: 0.3rem 0.8rem; font-size: 0.85rem; }
+    #admin .btn--danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+    #admin .closed-badge {
+      display: inline-block; padding: 0.05rem 0.55rem; border-radius: 999px; font-size: 0.8rem;
+      border: 1px solid var(--text-muted); color: var(--text-muted); white-space: nowrap;
+    }
+    #admin .option-fields {
+      display: grid; gap: 0 1rem; grid-template-columns: 1fr 1fr auto; align-items: end;
+      margin-top: 0.5rem;
+    }
+    @media (max-width: 640px) { #admin .option-fields { grid-template-columns: 1fr; } }
+    #admin .option-fields .btn { margin: 0 0 0.35rem; padding: 0.3rem 0.8rem; font-size: 0.85rem; }
+  </style>
+
+  <script>
+    const WORKER_URL = 'https://cardo-polls.hollatzleif.workers.dev';
+    const TOKEN_KEY = 'cardo-admin-token';
+
+    type Localized = { en: string; de: string };
+    interface FeedItem {
+      id: string;
+      kind: 'poll' | 'announcement';
+      open: boolean;
+      createdAt: string;
+      payload: { question?: Localized; title?: Localized } | null;
+    }
+
+    const $ = <T extends HTMLElement = HTMLElement>(id: string): T =>
+      document.getElementById(id) as T;
+
+    const loginView = $('login-view');
+    const dashboard = $('dashboard');
+
+    function getToken(): string | null {
+      return sessionStorage.getItem(TOKEN_KEY);
+    }
+
+    function showLogin(): void {
+      sessionStorage.removeItem(TOKEN_KEY);
+      loginView.hidden = false;
+      dashboard.hidden = true;
+    }
+
+    function showDashboard(): void {
+      loginView.hidden = true;
+      dashboard.hidden = false;
+      void loadItems();
+    }
+
+    /** Authenticated fetch; on 401 falls back to the login view and throws. */
+    async function adminFetch(path: string, init: RequestInit = {}): Promise<Response> {
+      const response = await fetch(`${WORKER_URL}${path}`, {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken() ?? ''}`,
+          ...(init.headers ?? {}),
+        },
+      });
+      if (response.status === 401) {
+        showLogin();
+        throw new Error('unauthorized');
+      }
+      return response;
+    }
+
+    function slugify(text: string): string {
+      const slug = text
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 32)
+        .replace(/-+$/, '');
+      return slug || 'option';
+    }
+
+    function showFormError(form: HTMLFormElement, message: string | null): void {
+      const box = form.querySelector<HTMLElement>('[data-error]');
+      if (!box) return;
+      box.hidden = !message;
+      box.textContent = message ?? '';
+    }
+
+    /* ------------------------------------------------------------ */
+    /* Login                                                          */
+    /* ------------------------------------------------------------ */
+
+    $('login-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const passwordInput = $<HTMLInputElement>('admin-password');
+      const errorBox = $('login-error');
+      errorBox.hidden = true;
+      try {
+        const response = await fetch(`${WORKER_URL}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: passwordInput.value }),
+        });
+        const data = (await response.json()) as { token?: string; error?: string };
+        if (response.ok && data.token) {
+          sessionStorage.setItem(TOKEN_KEY, data.token);
+          passwordInput.value = '';
+          showDashboard();
+          return;
+        }
+        errorBox.textContent =
+          response.status === 429
+            ? 'Too many attempts – please wait ten minutes.'
+            : response.status === 401
+              ? 'Wrong password.'
+              : `Login failed (${data.error ?? response.status}).`;
+      } catch {
+        errorBox.textContent = 'Login failed – server unreachable.';
+      }
+      errorBox.hidden = false;
+    });
+
+    $('logout-btn').addEventListener('click', showLogin);
+    $('refresh-btn').addEventListener('click', () => void loadItems());
+
+    /* ------------------------------------------------------------ */
+    /* Item list                                                      */
+    /* ------------------------------------------------------------ */
+
+    async function loadItems(): Promise<void> {
+      const list = $('items-list');
+      const status = $('items-status');
+      status.hidden = false;
+      status.textContent = 'Loading …';
+      try {
+        const response = await fetch(`${WORKER_URL}/feed`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = (await response.json()) as { items?: FeedItem[] };
+        const items = Array.isArray(data.items) ? data.items : [];
+        list.replaceChildren(...items.map(renderItemRow));
+        status.hidden = items.length > 0;
+        status.textContent = 'No items yet.';
+      } catch {
+        status.textContent = 'Could not load items – is the worker reachable?';
+      }
+    }
+
+    function renderItemRow(item: FeedItem): HTMLElement {
+      const row = document.createElement('div');
+      row.className = 'item-row';
+
+      const title = document.createElement('span');
+      title.className = 'item-title';
+      title.textContent =
+        item.kind === 'poll'
+          ? (item.payload?.question?.en ?? item.id)
+          : (item.payload?.title?.en ?? item.id);
+
+      const meta = document.createElement('span');
+      meta.className = 'item-meta muted';
+      meta.textContent = `${item.kind} · ${item.id} · ${(item.createdAt ?? '').slice(0, 10)}`;
+
+      row.append(title, meta);
+
+      if (!item.open) {
+        const badge = document.createElement('span');
+        badge.className = 'closed-badge';
+        badge.textContent = 'Closed';
+        row.appendChild(badge);
+      }
+
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'btn btn--ghost';
+      toggle.textContent = item.open ? 'Close' : 'Reopen';
+      toggle.addEventListener('click', async () => {
+        toggle.disabled = true;
+        try {
+          await adminFetch(`/admin/items/${encodeURIComponent(item.id)}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ open: !item.open }),
+          });
+          await loadItems();
+        } catch {
+          toggle.disabled = false;
+        }
+      });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'btn btn--danger';
+      del.textContent = 'Delete';
+      del.addEventListener('click', async () => {
+        if (!confirm(`Delete "${item.id}"? This cannot be undone.`)) return;
+        del.disabled = true;
+        try {
+          await adminFetch(`/admin/items/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
+          await loadItems();
+        } catch {
+          del.disabled = false;
+        }
+      });
+
+      row.append(toggle, del);
+      return row;
+    }
+
+    /* ------------------------------------------------------------ */
+    /* Create: announcement                                           */
+    /* ------------------------------------------------------------ */
+
+    async function createItem(form: HTMLFormElement, body: unknown): Promise<boolean> {
+      try {
+        const response = await adminFetch('/admin/items', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+        if (response.status === 201) {
+          showFormError(form, null);
+          await loadItems();
+          return true;
+        }
+        const data = (await response.json()) as { error?: string };
+        showFormError(form, `Could not create item (${data.error ?? response.status}).`);
+      } catch (err) {
+        if ((err as Error).message !== 'unauthorized') {
+          showFormError(form, 'Could not create item – server unreachable.');
+        }
+      }
+      return false;
+    }
+
+    const announcementForm = $<HTMLFormElement>('announcement-form');
+    announcementForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const ok = await createItem(announcementForm, {
+        kind: 'announcement',
+        payload: {
+          title: {
+            en: $<HTMLInputElement>('ann-title-en').value.trim(),
+            de: $<HTMLInputElement>('ann-title-de').value.trim(),
+          },
+          body: {
+            en: $<HTMLTextAreaElement>('ann-body-en').value.trim(),
+            de: $<HTMLTextAreaElement>('ann-body-de').value.trim(),
+          },
+        },
+      });
+      if (ok) announcementForm.reset();
+    });
+
+    /* ------------------------------------------------------------ */
+    /* Create: poll                                                   */
+    /* ------------------------------------------------------------ */
+
+    const pollForm = $<HTMLFormElement>('poll-form');
+    const optionsBox = $('poll-options');
+    const MIN_OPTIONS = 2;
+    const MAX_OPTIONS = 6;
+
+    function addOptionRow(): void {
+      if (optionsBox.children.length >= MAX_OPTIONS) return;
+      const row = document.createElement('div');
+      row.className = 'option-fields';
+
+      const makeField = (lang: string): HTMLDivElement => {
+        const wrap = document.createElement('div');
+        const label = document.createElement('label');
+        label.textContent = `Label (${lang})`;
+        const input = document.createElement('input');
+        input.required = true;
+        input.maxLength = 200;
+        input.dataset.lang = lang.toLowerCase();
+        wrap.append(label, input);
+        return wrap;
+      };
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'btn btn--ghost';
+      remove.textContent = 'Remove';
+      remove.addEventListener('click', () => {
+        if (optionsBox.children.length > MIN_OPTIONS) row.remove();
+      });
+
+      row.append(makeField('EN'), makeField('DE'), remove);
+      optionsBox.appendChild(row);
+    }
+
+    function resetOptionRows(): void {
+      optionsBox.replaceChildren();
+      addOptionRow();
+      addOptionRow();
+    }
+
+    $('add-option-btn').addEventListener('click', addOptionRow);
+    resetOptionRows();
+
+    pollForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const usedIds = new Set<string>();
+      const options: { id: string; label: Localized }[] = [];
+      for (const row of Array.from(optionsBox.children)) {
+        const en = row.querySelector<HTMLInputElement>('input[data-lang="en"]')?.value.trim() ?? '';
+        const de = row.querySelector<HTMLInputElement>('input[data-lang="de"]')?.value.trim() ?? '';
+        if (!en || !de) {
+          showFormError(pollForm, 'Every option needs an EN and a DE label.');
+          return;
+        }
+        let id = slugify(en);
+        let n = 2;
+        while (usedIds.has(id)) id = `${slugify(en).slice(0, 28)}-${n++}`;
+        usedIds.add(id);
+        options.push({ id, label: { en, de } });
+      }
+      const ok = await createItem(pollForm, {
+        kind: 'poll',
+        payload: {
+          question: {
+            en: $<HTMLInputElement>('poll-question-en').value.trim(),
+            de: $<HTMLInputElement>('poll-question-de').value.trim(),
+          },
+          options,
+        },
+      });
+      if (ok) {
+        pollForm.reset();
+        resetOptionRows();
+      }
+    });
+
+    /* ------------------------------------------------------------ */
+    /* Boot                                                           */
+    /* ------------------------------------------------------------ */
+
+    if (getToken()) showDashboard();
+    else showLogin();
+  </script>
+</Base>
