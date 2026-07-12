@@ -51,6 +51,19 @@ const RULES = [
 // Every entry documents WHY the flagged text is provably not a secret.
 
 const ALLOWLIST = [
+  // The security audit doc DESCRIBES the secret formats – it contains none.
+  {
+    file: 'docs/SECURITY-NOTES.md',
+    rule: 'rsign-secret-key',
+    contains: 'minisign',
+    why: 'audit doc names the rsign header phrase to explain what the scanner blocks',
+  },
+  {
+    file: 'docs/SECURITY-NOTES.md',
+    rule: 'pbkdf2-hash',
+    contains: 'pbkdf2$100000$<salt>$<hash>',
+    why: 'audit doc documents the hash FORMAT with placeholders, no real hash',
+  },
   // The PBKDF2 storage FORMAT is documented, not a real hash.
   {
     file: 'server/polls-worker/README.md',
