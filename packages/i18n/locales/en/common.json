@@ -85,7 +85,43 @@
       "toolSelfTest": "Self-test \"{{test}}\" of \"{{tool}}\"",
       "themes": "All themes complete (no missing tokens)",
       "i18n": "Translations complete (EN/DE)",
-      "storagePath": "App data folder writable"
+      "storagePath": "App data folder writable",
+      "widgetRender": "Widget \"{{widget}}\" of \"{{tool}}\" renders",
+      "commandForms": "All command forms can be built",
+      "tourAnchors": "All tour steps point to existing anchors",
+      "themeRoundtrip": "Every theme applies and restores cleanly",
+      "languageRoundtrip": "Language switch works and switches back",
+      "schedulerRoundtrip": "Scheduler stores and cancels entries",
+      "designDocRoundtrip": "Design settings can be written back",
+      "netUpdateServer": "Update server responds with a valid version",
+      "netWebsite": "Cardo website reachable",
+      "netPollsWorker": "Poll server responds",
+      "netFeed": "Inbox feed responds",
+      "netOpenMeteoGeo": "Weather: place search responds",
+      "netOpenMeteoForecast": "Weather: forecast responds",
+      "netHuggingface": "Model download server responds",
+      "cspAllowlist": "Unknown hosts are blocked (CSP)",
+      "voteAnonymous": "Poll votes are anonymous (hashed device id)",
+      "assistantDocTraversal": "Assistant documents reject invalid ids",
+      "modelUrlAllowlist": "All model downloads come from huggingface.co",
+      "namespaceIsolation": "Tools cannot read each other's data"
+    },
+    "category": {
+      "core": "Core",
+      "tools": "Tools",
+      "ui": "Interface",
+      "network": "Network",
+      "security": "Security"
+    },
+    "online": {
+      "include": "Include online checks",
+      "hosts": "Contacts only these services: hollatzleif.github.io (website & updates), github.com (update server), cardo-polls.hollatzleif.workers.dev (polls & feed), open-meteo.com (weather), huggingface.co (AI models). Nothing about you is sent – Cardo only asks whether they respond.",
+      "offlineSkipped": "offline – skipped",
+      "unreachableSkipped": "not reachable – skipped"
+    },
+    "detail": {
+      "browserSkipped": "only available in the desktop app – skipped",
+      "noDesignDoc": "no design settings saved yet – skipped"
     }
   },
   "market": {

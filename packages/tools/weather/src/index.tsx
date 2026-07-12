@@ -16,6 +16,12 @@ import {
   type PlaceDoc,
 } from './weather';
 
+/** fetch with hard timeout – bad networks must never hang the widget
+ * (same pattern as the host's net.ts; tools cannot import host code). */
+function fetchWithTimeout(url: string, timeoutMs = 10_000): Promise<Response> {
+  return fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+}
+
 /**
  * Weather – Open-Meteo forecast for one place of your choice.
  *
@@ -40,7 +46,7 @@ export function createTool(): CardoTool {
     const place = await c.storage.get<PlaceDoc>('place');
     if (!place) return 'no-place';
     try {
-      const res = await fetch(buildForecastUrl(place.lat, place.lon));
+      const res = await fetchWithTimeout(buildForecastUrl(place.lat, place.lon));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const parsed = parseForecastResponse((await res.json()) as unknown);
       if (!parsed) throw new Error('unexpected payload');
@@ -120,7 +126,7 @@ export function createTool(): CardoTool {
       setSearchState('loading');
       setResults(null);
       try {
-        const res = await fetch(buildGeocodingUrl(q, ctx?.i18n.language ?? 'en'));
+        const res = await fetchWithTimeout(buildGeocodingUrl(q, ctx?.i18n.language ?? 'en'));
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         setResults(parseGeocodingResponse((await res.json()) as unknown));
         setSearchState('idle');

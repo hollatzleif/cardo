@@ -156,6 +156,58 @@ mod tests {
     }
 
     #[test]
+    fn rejects_encoded_and_extra_traversal() {
+        // Encoded/mixed traversal attempts must be rejected: any '/', '\\' or
+        // ".." in the name is refused before it ever reaches the filesystem.
+        for bad in [
+            "..%2Fx.md",     // percent-encoded slash sitting next to ".."
+            "%2e%2e/evil.md", // percent-encoded dots + a real slash
+            "a/../b.md",     // classic traversal
+            "..\\x.md",      // backslash traversal
+            "foo/bar.md",    // any subdirectory
+            "..leading.md",  // leading dot + ".."
+            "sub\\note.md",  // windows separator
+        ] {
+            assert!(validate_name(bad).is_err(), "should reject {bad:?}");
+        }
+        // These are legitimate note names and must pass.
+        for good in ["x .md", "con.md", "note-123.md", "Zusammenfassung.md"] {
+            assert!(validate_name(good).is_ok(), "should accept {good:?}");
+        }
+    }
+
+    #[test]
+    fn nul_byte_name_never_escapes_or_writes() {
+        // validate_name has no separator/".." in a NUL name, so it may pass the
+        // name check – but the OS refuses any path containing an interior NUL,
+        // so nothing is ever written (defence in depth). This test locks that
+        // property: a NUL name must NOT result in a file on disk.
+        let tmp = std::env::temp_dir().join(format!("cardo-notes-nul-{}", std::process::id()));
+        std::fs::create_dir_all(&tmp).unwrap();
+        let dir = tmp.canonicalize().unwrap();
+
+        let name = "evil\0.md";
+        match note_path(&dir, name) {
+            Ok(path) => {
+                // The filesystem layer must reject the NUL byte.
+                assert!(
+                    std::fs::write(&path, "x").is_err(),
+                    "a NUL-byte path must fail at the fs layer"
+                );
+            }
+            Err(_) => { /* also fine if validation is tightened later */ }
+        }
+        // No stray file leaked into the folder.
+        let leaked: Vec<_> = std::fs::read_dir(&dir)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .collect();
+        assert!(leaked.is_empty(), "NUL name must not create any file");
+
+        std::fs::remove_dir_all(&tmp).unwrap();
+    }
+
+    #[test]
     fn roundtrip_in_temp_dir() {
         let tmp = std::env::temp_dir().join(format!("cardo-notes-test-{}", std::process::id()));
         std::fs::create_dir_all(&tmp).unwrap();

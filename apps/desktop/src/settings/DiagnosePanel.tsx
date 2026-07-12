@@ -1,14 +1,33 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@cardo/ui';
-import type { DiagnoseReport } from '@cardo/core';
+import { DIAGNOSE_CATEGORIES, type DiagnoseReport, type DiagnoseResult } from '@cardo/core';
 import { exportReport, runFullDiagnose } from '../diagnose/runDiagnose';
 
 const STATUS_ICON = { pass: '✅', warn: '⚠️', fail: '❌' } as const;
 
+function ResultRows({ results }: { results: DiagnoseResult[] }) {
+  const { t } = useTranslation();
+  return (
+    <table className="diagnose-panel__table">
+      <tbody>
+        {results.map((r) => (
+          <tr key={r.id}>
+            <td>{STATUS_ICON[r.status]}</td>
+            <td>{t(r.titleKey, r.titleVars)}</td>
+            <td className="c-muted">{r.detail ?? ''}</td>
+            <td className="c-muted diagnose-panel__ms">{r.durationMs} ms</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 export function DiagnosePanel() {
   const { t } = useTranslation();
   const [running, setRunning] = useState(false);
+  const [includeOnline, setIncludeOnline] = useState(false);
   const [progress, setProgress] = useState<[number, number] | null>(null);
   const [report, setReport] = useState<DiagnoseReport | null>(null);
   const [exportedTo, setExportedTo] = useState<string | null>(null);
@@ -18,7 +37,9 @@ export function DiagnosePanel() {
     setReport(null);
     setExportedTo(null);
     try {
-      const result = await runFullDiagnose((done, total) => setProgress([done, total]));
+      const result = await runFullDiagnose({ includeNetwork: includeOnline }, (done, total) =>
+        setProgress([done, total]),
+      );
       setReport(result);
     } finally {
       setRunning(false);
@@ -29,6 +50,16 @@ export function DiagnosePanel() {
   return (
     <div className="diagnose-panel">
       <p className="c-muted">{t('diagnose.scratchNote')}</p>
+      <label>
+        <input
+          type="checkbox"
+          checked={includeOnline}
+          disabled={running}
+          onChange={(e) => setIncludeOnline(e.target.checked)}
+        />{' '}
+        {t('diagnose.online.include')}
+      </label>
+      {includeOnline && <p className="c-muted">{t('diagnose.online.hosts')}</p>}
       <div className="diagnose-panel__actions">
         <Button variant="primary" onClick={() => void start()} disabled={running}>
           {running
@@ -55,18 +86,25 @@ export function DiagnosePanel() {
               })}
             </strong>
           </p>
-          <table className="diagnose-panel__table">
-            <tbody>
-              {report.results.map((r) => (
-                <tr key={r.id}>
-                  <td>{STATUS_ICON[r.status]}</td>
-                  <td>{t(r.titleKey, r.titleVars)}</td>
-                  <td className="c-muted">{r.detail ?? ''}</td>
-                  <td className="c-muted diagnose-panel__ms">{r.durationMs} ms</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {DIAGNOSE_CATEGORIES.map((category) => {
+            const rows = report.results.filter((r) => r.category === category);
+            if (rows.length === 0) return null;
+            return (
+              <div key={category}>
+                <h4>
+                  {t(`diagnose.category.${category}`)}{' '}
+                  <span className="c-muted">
+                    {t('diagnose.summary', {
+                      passed: rows.filter((r) => r.status === 'pass').length,
+                      warnings: rows.filter((r) => r.status === 'warn').length,
+                      failed: rows.filter((r) => r.status === 'fail').length,
+                    })}
+                  </span>
+                </h4>
+                <ResultRows results={rows} />
+              </div>
+            );
+          })}
         </>
       )}
     </div>

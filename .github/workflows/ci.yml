@@ -44,24 +44,42 @@ jobs:
       - name: Website build
         run: pnpm --filter @cardo/website build
 
+      - name: Poll worker security tests
+        run: node --test server/polls-worker/test/*.test.mjs
+
   rust:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Detect Rust changes
+        id: rust-changes
+        run: |
+          if git diff --name-only HEAD^ HEAD 2>/dev/null | grep -qE '\.(rs|toml|sql)$|^\.github/workflows/ci\.yml$'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install Tauri system dependencies
+        if: steps.rust-changes.outputs.changed == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
             libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
 
       - uses: dtolnay/rust-toolchain@stable
+        if: steps.rust-changes.outputs.changed == 'true'
         with:
           components: rustfmt
       - uses: Swatinem/rust-cache@v2
+        if: steps.rust-changes.outputs.changed == 'true'
 
       - name: cargo test
+        if: steps.rust-changes.outputs.changed == 'true'
         run: cargo test --workspace
 
       - name: cargo clippy
+        if: steps.rust-changes.outputs.changed == 'true'
         run: cargo clippy --workspace -- -D warnings

@@ -1,4 +1,5 @@
 import { getHost } from '../host';
+import { fetchWithTimeout } from '../host/net';
 import { fetchAppInfo } from '../host/backend';
 import { POLLS_WORKER_URL } from '../polls/config';
 
@@ -73,7 +74,9 @@ export async function setInboxEnabled(enabled: boolean): Promise<void> {
 
 export async function refreshFeed(): Promise<void> {
   try {
-    const res = (await (await fetch(`${POLLS_WORKER_URL}/feed`)).json()) as { items: FeedItem[] };
+    const response = await fetchWithTimeout(`${POLLS_WORKER_URL}/feed`);
+    if (!response.ok) throw new Error(`feed http ${response.status}`);
+    const res = (await response.json()) as { items: FeedItem[] };
     const seen = new Set(await getSeen());
     const items = res.items ?? [];
     setState({
@@ -130,7 +133,7 @@ export async function getVoted(): Promise<Record<string, string>> {
 export async function votePoll(pollId: string, optionId: string): Promise<boolean> {
   try {
     const device = await deviceHash();
-    const res = await fetch(`${POLLS_WORKER_URL}/vote`, {
+    const res = await fetchWithTimeout(`${POLLS_WORKER_URL}/vote`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ poll: pollId, option: optionId, device }),

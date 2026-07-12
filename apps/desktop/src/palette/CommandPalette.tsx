@@ -6,37 +6,12 @@ import type { ScoredSearchResult } from '@cardo/core';
 import { Modal, Button, Input } from '@cardo/ui';
 import { getHost } from '../host';
 import { useAppStore } from '../state/appStore';
+import { paramFields } from './paramFields';
 
 /**
  * Command palette (Cmd/Ctrl+K). Consumes the same Command-API that
  * shortcuts, automations, self-tests and the future AI assistant use.
  */
-
-type ParamField = {
-  name: string;
-  kind: 'string' | 'number' | 'boolean';
-  required: boolean;
-};
-
-/** Introspects a ZodObject into a simple form model. */
-function paramFields(schema: z.ZodType): ParamField[] {
-  if (!(schema instanceof z.ZodObject)) return [];
-  return Object.entries(schema.shape as Record<string, z.ZodType>).map(([name, field]) => {
-    let inner = field;
-    let required = true;
-    while (
-      inner instanceof z.ZodOptional ||
-      inner instanceof z.ZodDefault ||
-      inner instanceof z.ZodNullable
-    ) {
-      required = false;
-      inner = inner instanceof z.ZodDefault ? inner.removeDefault() : inner.unwrap();
-    }
-    const kind =
-      inner instanceof z.ZodNumber ? 'number' : inner instanceof z.ZodBoolean ? 'boolean' : 'string';
-    return { name, kind, required };
-  });
-}
 
 export function CommandPalette({ onClose }: { onClose(): void }) {
   const { t } = useTranslation();

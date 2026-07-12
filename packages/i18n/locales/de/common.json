@@ -85,7 +85,43 @@
       "toolSelfTest": "Selbsttest „{{test}}“ von „{{tool}}“",
       "themes": "Alle Designs vollständig (keine fehlenden Tokens)",
       "i18n": "Übersetzungen vollständig (EN/DE)",
-      "storagePath": "App-Datenordner beschreibbar"
+      "storagePath": "App-Datenordner beschreibbar",
+      "widgetRender": "Widget „{{widget}}“ von „{{tool}}“ wird dargestellt",
+      "commandForms": "Alle Befehlsformulare lassen sich aufbauen",
+      "tourAnchors": "Alle Tour-Schritte zeigen auf vorhandene Anker",
+      "themeRoundtrip": "Jedes Design lässt sich anwenden und zurücksetzen",
+      "languageRoundtrip": "Sprachwechsel funktioniert und stellt zurück",
+      "schedulerRoundtrip": "Planer speichert und storniert Einträge",
+      "designDocRoundtrip": "Design-Einstellungen lassen sich zurückschreiben",
+      "netUpdateServer": "Update-Server antwortet mit gültiger Version",
+      "netWebsite": "Cardo-Website erreichbar",
+      "netPollsWorker": "Umfrage-Server antwortet",
+      "netFeed": "Posteingang-Feed antwortet",
+      "netOpenMeteoGeo": "Wetter: Ortssuche antwortet",
+      "netOpenMeteoForecast": "Wetter: Vorhersage antwortet",
+      "netHuggingface": "Modell-Download-Server antwortet",
+      "cspAllowlist": "Unbekannte Hosts werden blockiert (CSP)",
+      "voteAnonymous": "Umfrage-Stimmen sind anonym (gehashte Geräte-ID)",
+      "assistantDocTraversal": "Assistent-Dokumente lehnen ungültige IDs ab",
+      "modelUrlAllowlist": "Alle Modell-Downloads kommen von huggingface.co",
+      "namespaceIsolation": "Tools können gegenseitig keine Daten lesen"
+    },
+    "category": {
+      "core": "Kern",
+      "tools": "Tools",
+      "ui": "Oberfläche",
+      "network": "Netzwerk",
+      "security": "Sicherheit"
+    },
+    "online": {
+      "include": "Online-Prüfungen einbeziehen",
+      "hosts": "Kontaktiert nur diese Dienste: hollatzleif.github.io (Website & Updates), github.com (Update-Server), cardo-polls.hollatzleif.workers.dev (Umfragen & Feed), open-meteo.com (Wetter), huggingface.co (KI-Modelle). Es wird nichts über dich gesendet – Cardo fragt nur, ob sie antworten.",
+      "offlineSkipped": "offline – übersprungen",
+      "unreachableSkipped": "nicht erreichbar – übersprungen"
+    },
+    "detail": {
+      "browserSkipped": "nur in der Desktop-App verfügbar – übersprungen",
+      "noDesignDoc": "noch keine Design-Einstellungen gespeichert – übersprungen"
     }
   },
   "market": {

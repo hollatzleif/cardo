@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@cardo/ui';
 import { POLLS_WORKER_URL } from '../polls/config';
+import { fetchWithTimeout } from '../host/net';
 import { getVoted, votePoll, type FeedItem } from '../inbox/feed';
 
 /**
@@ -27,7 +28,7 @@ export function PollsPanel() {
     setLoading(true);
     setError(false);
     try {
-      const res = (await (await fetch(`${POLLS_WORKER_URL}/feed`)).json()) as {
+      const res = (await (await fetchWithTimeout(`${POLLS_WORKER_URL}/feed`)).json()) as {
         items: FeedItem[];
       };
       setPolls((res.items ?? []).filter((i) => i.kind === 'poll'));

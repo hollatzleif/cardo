@@ -14,6 +14,9 @@ import { fetchAppInfo, isTauri } from '../host/backend';
 import { getHost } from '../host';
 import { toolFactories } from '../host/tools';
 import { useAppStore } from '../state/appStore';
+import { buildUiChecks } from './uiChecks';
+import { buildNetworkChecks } from './networkChecks';
+import { buildSecurityChecks } from './securityChecks';
 
 /** Maps Rust core-check ids to i18n title keys. */
 const CORE_CHECK_TITLES: Record<string, string> = {
@@ -32,6 +35,7 @@ async function coreChecks(): Promise<DiagnoseCheck[]> {
   return results.map((r) => ({
     id: r.id,
     titleKey: CORE_CHECK_TITLES[r.id] ?? r.id,
+    category: 'core' as const,
     run: async () =>
       r.status === 'pass'
         ? { status: 'pass' }
@@ -43,6 +47,7 @@ function themeCheck(): DiagnoseCheck {
   return {
     id: 'core:themes',
     titleKey: 'diagnose.check.themes',
+    category: 'core',
     async run() {
       const problems = themes
         .map((theme) => ({ theme, missing: validateTheme(theme) }))
@@ -63,6 +68,7 @@ function i18nCheck(): DiagnoseCheck {
   return {
     id: 'core:i18n',
     titleKey: 'diagnose.check.i18n',
+    category: 'core',
     async run() {
       const flatten = (obj: Record<string, unknown>, prefix = ''): string[] =>
         Object.entries(obj).flatMap(([k, v]) =>
@@ -84,7 +90,13 @@ function i18nCheck(): DiagnoseCheck {
   };
 }
 
+export interface RunDiagnoseOptions {
+  /** Include the opt-in online cooperation checks (category "network"). */
+  includeNetwork?: boolean;
+}
+
 export async function runFullDiagnose(
+  options: RunDiagnoseOptions = {},
   onProgress?: (done: number, total: number, current: DiagnoseResult) => void,
 ): Promise<DiagnoseReport> {
   const host = getHost();
@@ -95,6 +107,9 @@ export async function runFullDiagnose(
     ...Object.values(toolFactories).flatMap((factory) =>
       buildToolChecks({ factory }, host.services),
     ),
+    ...buildUiChecks(),
+    ...(options.includeNetwork ? buildNetworkChecks() : []),
+    ...buildSecurityChecks(),
   ];
 
   const info = await fetchAppInfo();

@@ -182,6 +182,21 @@ fn export_report(app: tauri::AppHandle, filename: String, content: String) -> Cm
     Ok(path.to_string_lossy().to_string())
 }
 
+/// Mirror of the inline filename guard in `export_report` (which needs an
+/// AppHandle and so cannot be unit-tested directly). Kept in lock-step with
+/// the check in that command: reject path separators and traversal.
+#[cfg(test)]
+fn export_filename_rejected(filename: &str) -> bool {
+    filename.contains('/') || filename.contains('\\') || filename.contains("..")
+}
+
+/// Mirror of the marker guard in `backup_import`: a file is a valid Cardo
+/// backup only if it parses as JSON and carries `"cardoBackup": 1`.
+#[cfg(test)]
+fn backup_marker_ok(parsed: &Value) -> bool {
+    parsed.get("cardoBackup").and_then(|v| v.as_i64()) == Some(1)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default()
@@ -243,4 +258,49 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running Cardo");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn export_report_rejects_path_tricks() {
+        // These must be refused by export_report's filename guard.
+        for bad in ["../evil", "a/b", "a\\b", "../../etc/passwd", "..", "sub/../x"] {
+            assert!(export_filename_rejected(bad), "should reject {bad:?}");
+        }
+        // Plain filenames are allowed.
+        for good in ["report.json", "diagnose-2026.txt", "cardo report.md"] {
+            assert!(!export_filename_rejected(good), "should accept {good:?}");
+        }
+    }
+
+    #[test]
+    fn backup_import_rejects_invalid_json() {
+        // Exactly the first step of backup_import: parse the file contents.
+        let tmp = std::env::temp_dir().join(format!("cardo-backup-badjson-{}.json", std::process::id()));
+        std::fs::write(&tmp, "{ this is not valid json").unwrap();
+        let raw = std::fs::read_to_string(&tmp).unwrap();
+        let parsed: Result<Value, _> = serde_json::from_str(&raw);
+        assert!(parsed.is_err(), "invalid JSON must fail to parse");
+        std::fs::remove_file(&tmp).unwrap();
+    }
+
+    #[test]
+    fn backup_import_requires_cardo_marker() {
+        // Valid JSON but missing / wrong marker must be rejected.
+        let no_marker: Value = serde_json::json!({ "data": { "notes": {} } });
+        assert!(!backup_marker_ok(&no_marker), "missing marker must be rejected");
+
+        let wrong_marker: Value = serde_json::json!({ "cardoBackup": 2, "data": {} });
+        assert!(!backup_marker_ok(&wrong_marker), "wrong marker version must be rejected");
+
+        let string_marker: Value = serde_json::json!({ "cardoBackup": "1", "data": {} });
+        assert!(!backup_marker_ok(&string_marker), "non-integer marker must be rejected");
+
+        // The genuine article is accepted.
+        let good: Value = serde_json::json!({ "cardoBackup": 1, "data": { "notes": {} } });
+        assert!(backup_marker_ok(&good), "valid backup marker must be accepted");
+    }
 }

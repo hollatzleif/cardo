@@ -300,6 +300,10 @@ export function createProfilesStore(deps: ProfilesDeps = {}): ProfilesStore {
   /* ── Public API ────────────────────────────────────────────────────── */
 
   async function init(): Promise<void> {
+    // Idempotent: initProfiles() is safe to call from change listeners.
+    // Without this guard, widget-listener → init → setState → listener
+    // spins forever (found by the render-smoke suite).
+    if (state.loaded) return;
     const be = await backend();
     const rows = (await be.query(NS, {})) as StoredDoc[];
 

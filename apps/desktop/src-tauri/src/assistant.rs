@@ -117,6 +117,25 @@ fn validate_model_id(id: &str) -> CmdResult<()> {
     }
 }
 
+/// Strict allowlist for model download URLs. Only `https` on the exact host
+/// `huggingface.co` is accepted – no other scheme, no userinfo, no port, no
+/// sub/suffix domains. Parsed by hand (no url crate) so lenient URL
+/// normalisation can never widen the allowlist behind our back.
+fn is_allowed_model_url(url: &str) -> bool {
+    let Some(rest) = url.strip_prefix("https://") else {
+        return false;
+    };
+    // Authority = everything up to the first path/query/fragment delimiter.
+    let authority_end = rest.find(['/', '?', '#']).unwrap_or(rest.len());
+    let authority = &rest[..authority_end];
+    // Reject userinfo ("user@host") and port ("host:port") tricks outright,
+    // then require an exact host match – no subdomains, no suffix domains.
+    if authority.contains('@') || authority.contains(':') {
+        return false;
+    }
+    authority == "huggingface.co"
+}
+
 fn slot_index(slot: &str) -> CmdResult<usize> {
     SLOT_NAMES
         .iter()
@@ -342,7 +361,7 @@ pub async fn assistant_download_model(
     id: String,
     url: String,
 ) -> CmdResult<()> {
-    if !url.starts_with("https://huggingface.co/") {
+    if !is_allowed_model_url(&url) {
         return Err("only https://huggingface.co/ download URLs are allowed".into());
     }
     let final_path = model_path(&app, &id)?;
@@ -353,7 +372,18 @@ pub async fn assistant_download_model(
         set.remove(&id);
     }
 
-    let response = reqwest::get(&url).await.map_err(|e| format!("download failed: {e}"))?;
+    // Bad networks must fail fast, not hang: connect timeout + per-chunk
+    // stall detection (large downloads can take long, so no total timeout).
+    let client = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(15))
+        .read_timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| format!("http client init failed: {e}"))?;
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("download failed: {e}"))?;
     if !response.status().is_success() {
         return Err(format!("download failed: HTTP {}", response.status()));
     }
@@ -973,6 +1003,74 @@ mod tests {
         assert_eq!(strip_think("answer<think>unclosed trailing"), "answer");
         assert_eq!(strip_think("answer<|im_end|>junk"), "answer");
         assert_eq!(strip_think("<think>only thinking</think>"), "");
+    }
+
+    #[test]
+    fn allowed_model_url_accepts_catalog_and_rejects_spoofs() {
+        // Three real catalog URLs; all 18 entries share this scheme+host and
+        // differ only in the path, so the host check covers every one.
+        let good = [
+            "https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf",
+            "https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf",
+            "https://huggingface.co/bartowski/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/Mistral-7B-Instruct-v0.3-Q4_K_M.gguf",
+        ];
+        for url in good {
+            assert!(is_allowed_model_url(url), "should accept {url:?}");
+        }
+        // The shared catalog pattern: https://huggingface.co/<anything>.
+        assert!(is_allowed_model_url("https://huggingface.co/x/y/z.gguf"));
+        assert!(is_allowed_model_url("https://huggingface.co/"));
+
+        let bad = [
+            "http://huggingface.co/x",                  // plain http
+            "https://huggingface.co.evil.com/x",        // suffix domain
+            "https://evil.com/https://huggingface.co/", // real host is evil.com
+            "https://huggingface.co@evil.com/x",        // userinfo trick
+            "https://huggingface.co:1337@evil.com/",    // port + userinfo trick
+            "ftp://huggingface.co/",                    // wrong scheme
+            "totally not a url",                        // garbage
+            "https://sub.huggingface.co/x",             // subdomain
+            "https://huggingface.co:443/x",             // explicit port
+            "https://HUGGINGFACE.CO/x",                 // case (host must match exactly)
+            "//huggingface.co/x",                       // scheme-relative
+            "https:/huggingface.co/x",                  // malformed scheme sep
+            "",                                         // empty
+        ];
+        for url in bad {
+            assert!(!is_allowed_model_url(url), "should reject {url:?}");
+        }
+    }
+
+    #[test]
+    fn doc_scope_matrix_adversarial() {
+        // Ids that must be rejected everywhere (validate_doc_id runs first).
+        let long = "a".repeat(65);
+        let bad_ids = ["A", "a b", "a/../b", "", long.as_str()];
+
+        for scope in ["profile", "memory"] {
+            let kind = if scope == "profile" { "personality" } else { "memory" };
+            for id in bad_ids {
+                assert!(
+                    doc_relpath(scope, id, kind).is_err(),
+                    "scope {scope:?} must reject id {id:?}"
+                );
+            }
+        }
+        // team-competences validates the id for defence in depth, then ignores it.
+        for id in bad_ids {
+            assert!(
+                doc_relpath("team-competences", id, "ignored").is_err(),
+                "team-competences must reject bad id {id:?}"
+            );
+        }
+        assert_eq!(
+            doc_relpath("team-competences", "global", "whatever").unwrap(),
+            PathBuf::from("team-kompetenzen.md")
+        );
+
+        // Bogus scope is rejected even with an otherwise valid id.
+        assert!(doc_relpath("bogus", "valid-id", "personality").is_err());
+        assert!(doc_relpath("", "valid-id", "personality").is_err());
     }
 
     #[test]

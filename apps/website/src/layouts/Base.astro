@@ -29,6 +29,12 @@ const current = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} · Cardo</title>
     <meta name="description" content={description} />
+    {/* Defense in depth: GitHub Pages cannot set headers, so the CSP ships as a meta tag.
+        'unsafe-inline' is needed for the pages' small inline scripts (copy button, polls, admin). */}
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cardo-polls.hollatzleif.workers.dev; frame-src 'none'; object-src 'none'; base-uri 'self'"
+    />
     {/* Same icon as the desktop app, so browser tabs match the dock. */}
     <link rel="icon" type="image/png" href={withBase('/favicon.png')} />
     <link rel="icon" type="image/x-icon" href={withBase('/favicon.ico')} sizes="any" />

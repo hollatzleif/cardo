@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { isTauri } from './backend';
 import { open } from '@tauri-apps/plugin-dialog';
 import type { FilesApi } from '@cardo/plugin-api';
 
@@ -6,7 +7,38 @@ import type { FilesApi } from '@cardo/plugin-api';
  * FilesApi backed by the Rust notes commands. The webview only ever sends
  * file NAMES; Rust resolves and validates them inside the configured folder.
  */
+/** In-memory FilesApi for browser dev – notes stay usable, nothing persists. */
+function createMemoryFilesApi(): FilesApi {
+  const files = new Map<string, string>();
+  return {
+    pickFolder: async () => '/memory',
+    getFolder: async () => '/memory',
+    ensureDefaultFolder: async () => '/memory',
+    setFolder: async (p) => p,
+    list: async () =>
+      [...files.entries()].map(([name, c]) => ({ name, modifiedMs: 0, size: c.length })),
+    read: async (name) => {
+      const c = files.get(name);
+      if (c === undefined) throw new Error('not found');
+      return c;
+    },
+    write: async (name, content) => {
+      files.set(name, content);
+    },
+    rename: async (from, to) => {
+      const c = files.get(from);
+      if (c === undefined) throw new Error('not found');
+      files.delete(from);
+      files.set(to, c);
+    },
+    delete: async (name) => {
+      files.delete(name);
+    },
+  };
+}
+
 export function createFilesApi(): FilesApi {
+  if (!isTauri()) return createMemoryFilesApi();
   return {
     async pickFolder() {
       const picked = await open({ directory: true, multiple: false });
