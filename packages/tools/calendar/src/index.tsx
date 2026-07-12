@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
-import type { CardoTool, ToolContext, WidgetProps } from '@cardo/plugin-api';
+import type { CardoTool, ToolContext, ToolStorage, WidgetProps } from '@cardo/plugin-api';
 import manifest from '../manifest.json';
 import {
   addMonths,
   dateKey,
+  eventStart,
   monthGrid,
   reminderFireTime,
   weekdayLabels,
@@ -40,6 +41,37 @@ function byTime(a: EventDoc, b: EventDoc): number {
   return (a.time ?? '').localeCompare(b.time ?? '') || a.title.localeCompare(b.title);
 }
 
+/**
+ * query() returns doc bodies without ids and the namespace also holds the
+ * 'ui' focus doc – recognize real event docs by shape.
+ */
+function isEventDoc(doc: unknown): doc is EventDoc {
+  const d = doc as Partial<EventDoc> | null;
+  return (
+    !!d &&
+    typeof d.id === 'string' &&
+    d.id.startsWith('event:') &&
+    typeof d.title === 'string' &&
+    typeof d.date === 'string'
+  );
+}
+
+/** Today's events (LOCAL date), all-day first, then by time. Storage-parametrized for self-tests. */
+async function queryTodayIn(
+  storage: ToolStorage,
+): Promise<{ events: Array<{ id: string; title: string; time?: string }>; count: number }> {
+  const today = dateKey(new Date());
+  const docs = await storage.query<Record<string, unknown>>();
+  const todays = docs.filter(isEventDoc).filter((e) => e.date === today);
+  todays.sort(byTime);
+  return {
+    events: todays.map((e) =>
+      e.time ? { id: e.id, title: e.title, time: e.time } : { id: e.id, title: e.title },
+    ),
+    count: todays.length,
+  };
+}
+
 /** Calendar – own appointments with local reminders. Fully offline. */
 export function createTool(): CardoTool {
   let ctx: ToolContext | null = null;
@@ -48,7 +80,10 @@ export function createTool(): CardoTool {
     ctx?.i18n.t(key, vars) ?? key;
 
   async function listEvents(): Promise<EventDoc[]> {
-    return (await ctx?.storage.query<EventDoc>({ orderBy: 'date', direction: 'asc' })) ?? [];
+    const docs =
+      (await ctx?.storage.query<Record<string, unknown>>({ orderBy: 'date', direction: 'asc' })) ??
+      [];
+    return docs.filter(isEventDoc);
   }
 
   /**
@@ -428,10 +463,55 @@ export function createTool(): CardoTool {
         },
       });
 
+      // Data feed for other tools (e.g. a "Today" overview): today's events.
+      context.commands.register({
+        id: 'calendar.query-today',
+        titleKey: 'tool.calendar.command.queryToday',
+        palette: false,
+        params: z.object({}),
+        selfTestParams: {},
+        async run() {
+          return { ok: true, data: await queryTodayIn(context.storage) };
+        },
+      });
+
+      // Global search: events by title (upcoming or up to 30 days back).
+      // Picking a result asks the widget (via the 'ui' doc) to focus the day.
+      context.search.register(async (query) => {
+        const q = query.trim().toLowerCase();
+        if (!q) return [];
+        const now = new Date();
+        const cutoff = dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30));
+        const docs = await context.storage.query<Record<string, unknown>>({
+          orderBy: 'date',
+          direction: 'asc',
+        });
+        const fmt = new Intl.DateTimeFormat(context.i18n.language, {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        });
+        return docs
+          .filter(isEventDoc)
+          .filter((event) => event.date >= cutoff && event.title.toLowerCase().includes(q))
+          .slice(0, 5)
+          .map((event) => {
+            const dateLabel = fmt.format(eventStart(event.date, event.time));
+            return {
+              title: event.title,
+              subtitle: event.time ? `${dateLabel} · ${event.time}` : dateLabel,
+              icon: '📅',
+              action: async () => {
+                await context.storage.set('ui', { focusDate: event.date, at: Date.now() });
+              },
+            };
+          });
+      });
+
       // The scheduler is an in-memory MVP: re-arm every future reminder on activate.
       void (async () => {
-        const events = await context.storage.query<EventDoc>();
-        for (const event of events) {
+        const docs = await context.storage.query<Record<string, unknown>>();
+        for (const event of docs.filter(isEventDoc)) {
           if (!event.time) continue;
           await cancelReminder(context, event);
           await armReminder(context, event);
@@ -485,6 +565,53 @@ export function createTool(): CardoTool {
             };
           }
           return { status: 'pass' };
+        }
+        case 'query-today': {
+          const now = new Date();
+          const today = dateKey(now);
+          const tomorrow = dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+          const probes: EventDoc[] = [
+            {
+              id: 'event:selftest-today-timed',
+              title: 'probe today timed',
+              date: today,
+              time: '09:00',
+              createdAt: now.toISOString(),
+            },
+            {
+              id: 'event:selftest-today-allday',
+              title: 'probe today all-day',
+              date: today,
+              createdAt: now.toISOString(),
+            },
+            {
+              id: 'event:selftest-tomorrow',
+              title: 'probe tomorrow',
+              date: tomorrow,
+              time: '09:00',
+              createdAt: now.toISOString(),
+            },
+          ];
+          for (const probe of probes) await testCtx.storage.set<EventDoc>(probe.id, probe);
+          const result = await queryTodayIn(testCtx.storage);
+          for (const probe of probes) await testCtx.storage.delete(probe.id);
+          const ids = result.events.map((e) => e.id);
+          if (!ids.includes('event:selftest-today-timed') || !ids.includes('event:selftest-today-allday')) {
+            return { status: 'fail', detail: `today's probes missing: ${JSON.stringify(ids)}` };
+          }
+          if (ids.includes('event:selftest-tomorrow')) {
+            return { status: 'fail', detail: "tomorrow's probe leaked into today's list" };
+          }
+          if (ids.indexOf('event:selftest-today-allday') > ids.indexOf('event:selftest-today-timed')) {
+            return { status: 'fail', detail: 'all-day event must sort before timed events' };
+          }
+          if (result.count !== result.events.length) {
+            return {
+              status: 'fail',
+              detail: `count ${result.count} ≠ events.length ${result.events.length}`,
+            };
+          }
+          return { status: 'pass', detail: `today has ${result.count} event(s), tomorrow excluded` };
         }
         case 'reminder-time': {
           const fire = reminderFireTime('2030-01-01', '12:00', 10);

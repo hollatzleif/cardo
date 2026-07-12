@@ -21,6 +21,7 @@
   "commands": ["notes.create", "notes.open"],
   "selfTests": [
     { "id": "markdown-render", "titleKey": "tool.notes.test.markdownRender" },
+    { "id": "wiki-links", "titleKey": "tool.notes.test.wikiLinks" },
     { "id": "file-roundtrip", "titleKey": "tool.notes.test.fileRoundtrip" }
   ],
   "tourSteps": [

@@ -114,6 +114,13 @@ export function createTool(): CardoTool {
       remainingSeconds: remaining,
       endsAt: new Date(Date.now() + remaining * 1000).toISOString(),
     });
+    // Every actual "phase is now running" transition goes through here
+    // (start button, restart after auto-advance, skip + start) – announce
+    // it for coupled tools. Phase names keep the logic.ts convention.
+    ctx?.events.emit('pomodoro:phase-started', {
+      phase: state.phase,
+      at: new Date().toISOString(),
+    });
   }
 
   async function pauseTimer(): Promise<void> {

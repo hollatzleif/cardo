@@ -9,7 +9,7 @@
  * Supported (deliberately small, Obsidian-compatible subset):
  *   headings # ## ###, **bold**, *italic* / _italic_, `inline code`,
  *   ``` code fences ```, unordered (- / *) and ordered (1. / 1)) lists,
- *   [links](https://…), blank-line separated paragraphs.
+ *   [links](https://…), [[wiki-links]], blank-line separated paragraphs.
  */
 
 export function escapeHtml(text: string): string {
@@ -43,6 +43,20 @@ export function renderInline(escaped: string): string {
   let out = escaped.replace(/\uE000/g, '').replace(/`([^`]+)`/g, (_m, code: string) => {
     codeSpans.push(code);
     return `\uE000${codeSpans.length - 1}\uE000`;
+  });
+
+  // Wiki-links [[Note Name]] → internal anchors the widget resolves on click
+  // (Obsidian behavior). Runs on the ALREADY-ESCAPED string and BEFORE the
+  // normal link rule so the two bracket syntaxes never clash. The data
+  // attribute strips (escaped) quotes so the value can never terminate the
+  // attribute or smuggle one into it.
+  out = out.replace(/\[\[([^\][]+)\]\]/g, (match, name: string) => {
+    const label = name.trim();
+    // Also strip '*' and the code-span sentinel so the later bold/italic and
+    // code-restore passes can never rewrite the inside of the attribute.
+    const target = label.replace(/&quot;|&#39;|["'*\uE000]/g, '').trim();
+    if (!target) return match;
+    return `<a data-note="${target}" class="md-wikilink">${label}</a>`;
   });
 
   out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (match, label: string, url: string) => {

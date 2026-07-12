@@ -18,10 +18,11 @@
       "variants": []
     }
   ],
-  "commands": ["routine.add-item", "routine.check", "routine.reset-today"],
+  "commands": ["routine.add-item", "routine.check", "routine.reset-today", "routine.query-status"],
   "selfTests": [
     { "id": "item-roundtrip", "titleKey": "tool.routine.test.itemRoundtrip" },
     { "id": "day-state", "titleKey": "tool.routine.test.dayState" },
+    { "id": "query-status", "titleKey": "tool.routine.test.queryStatus" },
     { "id": "date-key", "titleKey": "tool.routine.test.dateKey" }
   ],
   "tourSteps": [

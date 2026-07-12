@@ -1,0 +1,87 @@
+/* Focus mode – calm fullscreen overlay. Colors exclusively via semantic tokens. */
+
+.focus-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000; /* above everything, including the tour (3000) */
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-canvas);
+  padding: var(--space-6);
+  overflow: auto;
+  overflow-wrap: break-word;
+}
+
+/* Tiny clock, top-center. */
+.focus-clock {
+  position: absolute;
+  top: var(--space-5);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.95em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+/* Centered column; margin:auto keeps it scrollable on tiny windows (800×560+). */
+.focus-center {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  width: min(420px, calc(100vw - 2 * var(--space-6)));
+  min-width: 0;
+}
+
+/* Current-task line: large, centered, borderless except a quiet underline. */
+.focus-task {
+  width: 100%;
+  font-size: 1.4em;
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  padding: var(--space-2) var(--space-1);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.focus-task:focus {
+  border-bottom-color: var(--accent);
+}
+.focus-task::placeholder {
+  color: var(--text-muted);
+}
+
+/* Large card hosting the embedded Pomodoro widget. */
+.focus-card {
+  width: 100%;
+  padding: var(--space-5);
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.focus-card > * {
+  min-width: 0;
+}
+.focus-missing {
+  margin: 0;
+  text-align: center;
+}
+
+/* Subtle exit, bottom-right. */
+.focus-exit {
+  position: absolute;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+.focus-exit:hover {
+  color: var(--text-primary);
+}

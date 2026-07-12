@@ -71,6 +71,9 @@ importers:
       '@cardo/tool-counter':
         specifier: workspace:*
         version: link:../../packages/tools/counter
+      '@cardo/tool-habits':
+        specifier: workspace:*
+        version: link:../../packages/tools/habits
       '@cardo/tool-notes':
         specifier: workspace:*
         version: link:../../packages/tools/notes
@@ -86,6 +89,9 @@ importers:
       '@cardo/tool-stats':
         specifier: workspace:*
         version: link:../../packages/tools/stats
+      '@cardo/tool-today':
+        specifier: workspace:*
+        version: link:../../packages/tools/today
       '@cardo/tool-todo':
         specifier: workspace:*
         version: link:../../packages/tools/todo
@@ -261,6 +267,18 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/habits:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/notes:
     dependencies:
       '@cardo/plugin-api':
@@ -310,6 +328,18 @@ importers:
         version: 3.25.76
 
   packages/tools/stats:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/today:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*

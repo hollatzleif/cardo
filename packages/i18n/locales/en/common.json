@@ -16,7 +16,9 @@
     "deletePage": "Delete page",
     "deletePageConfirm": "Delete this page? The widgets on it will be removed from the layout (your data stays safe).",
     "emptyHint": "This dashboard is empty. Press {{shortcut}} to enter edit mode and add your first widget.",
-    "defaultPageName": "Home"
+    "defaultPageName": "Home",
+    "widgetRemoved": "Widget removed",
+    "pageRemoved": "Page \"{{name}}\" removed"
   },
   "palette": {
     "placeholder": "Type a command or search…",
@@ -49,7 +51,15 @@
     "updateAvailableTitle": "Update {{version}} available",
     "updateAvailableBody": "Install it from Settings → Updates whenever you like.",
     "updateInstalledTitle": "Update {{version}} installed",
-    "updateInstalledBody": "What's new takes effect the next time Cardo starts."
+    "updateInstalledBody": "What's new takes effect the next time Cardo starts.",
+    "polls": "Polls",
+    "backup": "Backup",
+    "backupExport": "Export everything",
+    "backupImport": "Restore backup",
+    "backupHint": "One file with everything: layout, tasks, notes metadata, settings. Keep it somewhere safe – there is no cloud copy.",
+    "backupExported": "Backup saved ({{count}} entries).",
+    "backupImportConfirm": "Restore this backup? Entries with the same ID will be overwritten. Cardo restarts afterwards.",
+    "backupError": "That didn't work. The file may not be a Cardo backup."
   },
   "diagnose": {
     "start": "Run self-test",
@@ -145,6 +155,23 @@
         "title": "Your data stays yours",
         "body": "Cardo works 100% offline. No account, no cloud, no telemetry. Everything lives in one local database and in plain files you own."
       }
+    },
+    "templates": {
+      "title": "How would you like to start?",
+      "subtitle": "Pick a starter layout – everything stays freely rearrangeable. Or start with a blank canvas.",
+      "blank": "Start blank",
+      "work": {
+        "title": "Work",
+        "body": "Today, tasks, calendar, pomodoro and time tracking."
+      },
+      "private": {
+        "title": "Home & life",
+        "body": "Today, routine, habits, countdowns and notes."
+      },
+      "focus": {
+        "title": "Deep focus",
+        "body": "Pomodoro, task board and your productivity stats."
+      }
     }
   },
   "common": {
@@ -156,7 +183,8 @@
     "search": "Search",
     "loading": "Loading…",
     "error": "Something went wrong",
-    "retry": "Retry"
+    "retry": "Retry",
+    "undo": "Undo"
   },
   "tool": {
     "clock": {
@@ -271,7 +299,8 @@
       },
       "command": {
         "create": "Create appointment",
-        "remind": "Show appointment reminder"
+        "remind": "Show appointment reminder",
+        "queryToday": "Today's events (data)"
       },
       "msg": {
         "created": "Appointment created",
@@ -281,7 +310,8 @@
       "test": {
         "eventRoundtrip": "Appointments persist and delete cleanly",
         "monthGrid": "Month grid is computed correctly",
-        "reminderTime": "Reminder times are computed correctly"
+        "reminderTime": "Reminder times are computed correctly",
+        "queryToday": "Query today's events"
       },
       "tour": {
         "title": "Your calendar",
@@ -294,7 +324,8 @@
       "privacy": "Works fully offline. Your notes are plain Markdown (.md) files in a folder you own – readable with any editor, no lock-in.",
       "test": {
         "markdownRender": "Markdown renderer works (incl. HTML escaping)",
-        "fileRoundtrip": "Note files can be written, read and deleted"
+        "fileRoundtrip": "Note files can be written, read and deleted",
+        "wikiLinks": "Wiki-links render safely"
       },
       "command": {
         "create": "Create note",
@@ -429,12 +460,14 @@
         "addItem": "Add routine item",
         "check": "Check off routine item",
         "resetToday": "Reset today's routine",
-        "itemMissing": "This routine item doesn't exist."
+        "itemMissing": "This routine item doesn't exist.",
+        "queryStatus": "Routine status (data)"
       },
       "test": {
         "itemRoundtrip": "Routine items can be stored and deleted",
         "dayState": "Daily check state is stored per day",
-        "dateKey": "Local date key is computed correctly"
+        "dateKey": "Local date key is computed correctly",
+        "queryStatus": "Query today's status"
       },
       "tour": {
         "title": "Your daily routine",
@@ -500,7 +533,8 @@
       "command": {
         "create": "Create task",
         "complete": "Complete task",
-        "delete": "Delete task"
+        "delete": "Delete task",
+        "queryToday": "Query today's tasks"
       },
       "msg": {
         "created": "Task created",
@@ -512,7 +546,9 @@
       "test": {
         "createRoundtrip": "Tasks can be created, read back and deleted",
         "completeFlow": "Completing a task records the completion time",
-        "queryByList": "Tasks can be filtered by list"
+        "queryByList": "Tasks can be filtered by list",
+        "boardStatus": "Board status stays in sync with the done flag",
+        "queryToday": "Today query returns correct counts and ordering"
       },
       "tour": {
         "intro": {
@@ -522,7 +558,21 @@
         "manage": {
           "title": "Organize with lists",
           "body": "Switch lists with the tabs, create new ones with \"+\" and rename the active one. Completed tasks collect at the bottom until you clear them."
+        },
+        "board": {
+          "title": "Your tasks as a board",
+          "body": "Drag cards between To do, In progress and Done. Dropping a card on Done completes the task – just like ticking its checkbox in the list."
         }
+      },
+      "board": {
+        "column": {
+          "todo": "To do",
+          "doing": "In progress",
+          "done": "Done"
+        },
+        "addPlaceholder": "Add a task… (Enter)",
+        "allLists": "All lists",
+        "listLabel": "List"
       }
     },
     "workclock": {
@@ -550,11 +600,82 @@
       "test": {
         "dayRoundtrip": "Day document persists",
         "startStop": "Start/stop accumulates time",
-        "format": "Duration formatting is correct"
+        "format": "Duration formatting is correct",
+        "couplingSetting": "Coupling setting roundtrip"
       },
       "tour": {
         "title": "Your workclock",
         "body": "Hit start when you begin working and stop when you take a break. Cardo adds up your productive time per day – everything stays on your device."
+      },
+      "settings": {
+        "toggle": "Settings",
+        "couplePomodoro": "Couple with Pomodoro"
+      }
+    },
+    "habits": {
+      "name": "Habits",
+      "description": "Track your daily habits with streaks and a 26-week heatmap – fully local.",
+      "privacy": "Works fully offline.",
+      "widget": {
+        "heading": "Today",
+        "allDone": "All habits done – keep the streak alive!",
+        "empty": "No habits yet. Add your first one below.",
+        "check": "Check off \"{{title}}\" for today",
+        "streak": "Current streak: {{days}} days",
+        "remove": "Remove habit",
+        "heatmapLabel": "Last 26 weeks",
+        "addPlaceholder": "New habit…",
+        "add": "Add"
+      },
+      "command": {
+        "add": "Add habit",
+        "check": "Check off habit for today",
+        "queryStatus": "Query habit status"
+      },
+      "msg": {
+        "added": "Habit added.",
+        "notFound": "This habit doesn't exist.",
+        "failed": "That didn't work."
+      },
+      "search": {
+        "streak": "{{days}}-day streak"
+      },
+      "test": {
+        "habitRoundtrip": "Habits can be stored and deleted",
+        "streakCalc": "Streaks are computed correctly",
+        "heatmapRange": "Heatmap covers exactly 26 weeks"
+      },
+      "tour": {
+        "title": "Your habits",
+        "body": "Check off your habits every day and watch your streaks grow. The heatmap shows your last 26 weeks – and everything stays on this device."
+      }
+    },
+    "today": {
+      "name": "Today",
+      "description": "Your day at a glance – events, tasks, routine and habits from your other tools.",
+      "privacy": "Works fully offline. Only shows data other Cardo tools on this device expose via commands.",
+      "section": {
+        "events": "Events",
+        "tasks": "Tasks",
+        "routine": "Routine",
+        "habits": "Habits"
+      },
+      "widget": {
+        "allDay": "All day",
+        "noEvents": "No events today.",
+        "noTasks": "Nothing due today.",
+        "completedToday": "{{count}} done today",
+        "habitsLine": "{{done}}/{{total}} today · best streak: {{streak}}",
+        "completeTask": "Mark task as done",
+        "emptyHint": "Today shows your day at a glance as soon as To-Do, Calendar, Routine or Habits are active."
+      },
+      "test": {
+        "aggregateGraceful": "Aggregation degrades gracefully without providers",
+        "aggregateWithTodo": "Aggregation picks up to-do data"
+      },
+      "tour": {
+        "title": "Your day at a glance",
+        "body": "Today gathers events, tasks, routine and habits from your other tools – always via the command API, never by touching their data directly."
       }
     }
   },
@@ -631,5 +752,21 @@
       "all": "Reset all",
       "hint": "Removes all personal design tweaks and returns to the theme defaults. Your theme choice stays."
     }
+  },
+  "polls": {
+    "intro": "Vote on where Cardo goes next. Polls are questions from the developer – for example \"Should we build feature X?\".",
+    "privacyNote": "Loading polls contacts hollatzleif.github.io (the questions) and a Cloudflare server (the vote counts). When you vote, only the poll ID, your choice and an anonymous device hash are sent – one vote per installation, no name, no profile. Nothing is loaded until you press the button.",
+    "load": "Load polls",
+    "none": "No polls right now. Check back later!",
+    "closed": "closed",
+    "thanks": "Thanks for voting!",
+    "error": "The poll server is unreachable right now. Cardo works normally – try again later."
+  },
+  "focus": {
+    "title": "Focus mode",
+    "taskPlaceholder": "What are you working on right now?",
+    "taskLabel": "Current task",
+    "pomodoroMissing": "The Pomodoro tool is not active. Activate it in the tool market to see your timer here – focus mode works without it, too.",
+    "exit": "Leave focus (Esc)"
   }
 }

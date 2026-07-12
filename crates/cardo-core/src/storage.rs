@@ -13,9 +13,12 @@ use crate::hlc::Hlc;
 
 /// Schema version of this build. The DB refuses to open if ITS version is
 /// newer (downgrade protection after an update rollback).
-pub const SCHEMA_VERSION: i64 = 1;
+pub const SCHEMA_VERSION: i64 = 2;
 
-const MIGRATIONS: &[(i64, &str)] = &[(1, include_str!("../migrations/0001_init.sql"))];
+const MIGRATIONS: &[(i64, &str)] = &[
+    (1, include_str!("../migrations/0001_init.sql")),
+    (2, include_str!("../migrations/0002_schedules.sql")),
+];
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ChangeNotice {
@@ -212,6 +215,79 @@ impl SqliteStorage {
                 .fetch_one(&self.pool)
                 .await?,
         )
+    }
+
+    /* ── Persistent scheduler ─────────────────────────────────────────── */
+
+    pub async fn schedule_set(
+        &self,
+        id: &str,
+        fire_at_ms: i64,
+        command_id: &str,
+        params: &Value,
+    ) -> Result<()> {
+        sqlx::query(
+            "INSERT OR REPLACE INTO schedules (id, fire_at, command_id, params, created_at)
+             VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind(id)
+        .bind(fire_at_ms)
+        .bind(command_id)
+        .bind(params.to_string())
+        .bind(now_ms())
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn schedule_cancel(&self, id: &str) -> Result<()> {
+        sqlx::query("DELETE FROM schedules WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn schedule_list(&self) -> Result<Vec<Value>> {
+        let rows = sqlx::query("SELECT id, fire_at, command_id, params FROM schedules ORDER BY fire_at")
+            .fetch_all(&self.pool)
+            .await?;
+        rows.into_iter()
+            .map(|row| {
+                let params: Value =
+                    serde_json::from_str(row.get::<String, _>("params").as_str())
+                        .unwrap_or(Value::Null);
+                Ok(serde_json::json!({
+                    "id": row.get::<String, _>("id"),
+                    "fireAt": row.get::<i64, _>("fire_at"),
+                    "commandId": row.get::<String, _>("command_id"),
+                    "params": params,
+                }))
+            })
+            .collect()
+    }
+
+    /* ── Backup ───────────────────────────────────────────────────────── */
+
+    /// Full dump of every live document, grouped by namespace.
+    pub async fn dump_all(&self) -> Result<Value> {
+        let rows =
+            sqlx::query("SELECT namespace, id, data FROM documents WHERE deleted = 0 ORDER BY namespace, id")
+                .fetch_all(&self.pool)
+                .await?;
+        let mut out = serde_json::Map::new();
+        for row in rows {
+            let ns = row.get::<String, _>("namespace");
+            let id = row.get::<String, _>("id");
+            let data: Value = serde_json::from_str(row.get::<String, _>("data").as_str())
+                .unwrap_or(Value::Null);
+            out.entry(ns)
+                .or_insert_with(|| Value::Object(serde_json::Map::new()))
+                .as_object_mut()
+                .expect("namespace entry is an object")
+                .insert(id, data);
+        }
+        Ok(Value::Object(out))
     }
 
     async fn log_op(

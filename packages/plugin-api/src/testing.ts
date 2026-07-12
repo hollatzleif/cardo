@@ -90,7 +90,16 @@ export function createTestContext(
       register(spec) {
         registeredCommands.set(spec.id, spec as never);
       },
+      async execute(id, params) {
+        const spec = registeredCommands.get(id);
+        if (!spec) return { ok: false, messageKey: 'common.error' };
+        const parsed = spec.params.safeParse(params);
+        if (!parsed.success) return { ok: false, messageKey: 'common.error' };
+        return spec.run(parsed.data as never);
+      },
+      has: (id) => registeredCommands.has(id),
     },
+    search: { register: () => {} },
     settings: (() => {
       const s = new Map<string, unknown>();
       return {

@@ -21,9 +21,14 @@ declare module '@cardo/plugin-api' {
 const WEEK_DAYS = 7;
 const DAY_MS = 86_400_000;
 
+/** Settings key: automatically follow the Pomodoro work/break phases. */
+const COUPLE_SETTING = 'coupleWithPomodoro';
+
 /** Workclock – tracks productive time per day. Fully local, one doc per day. */
 export function createTool(): CardoTool {
   let ctx: ToolContext | null = null;
+  /** Unsubscribers for cross-tool event listeners – released in deactivate(). */
+  let eventUnsubs: Array<() => void> = [];
 
   /** Module-level translator – widget and commands share the host i18n. */
   const t = (key: string, vars?: Record<string, unknown>): string =>
@@ -89,11 +94,33 @@ export function createTool(): CardoTool {
     return (await findRunning(c)) ? stop(c) : start(c);
   }
 
+  /** Read the coupling setting at EVENT time – it may change while active. */
+  async function couplingEnabled(c: ToolContext): Promise<boolean> {
+    return (await c.settings.get<boolean>(COUPLE_SETTING)) ?? false;
+  }
+
   /* ── Widget ──────────────────────────────────────────────────────────── */
 
   function WorkclockWidget(_props: WidgetProps) {
     const [docs, setDocs] = useState<DayDoc[] | null>(null);
     const [nowMs, setNowMs] = useState(() => Date.now());
+    const [showSettings, setShowSettings] = useState(false);
+    const [couple, setCouple] = useState(false);
+
+    useEffect(() => {
+      let mounted = true;
+      const load = () => {
+        void ctx?.settings.get<boolean>(COUPLE_SETTING).then((value) => {
+          if (mounted) setCouple(value ?? false);
+        });
+      };
+      load();
+      const unsub = ctx?.settings.subscribe(load);
+      return () => {
+        mounted = false;
+        unsub?.();
+      };
+    }, []);
 
     const reload = useCallback(() => {
       const since = localDateKey(new Date(Date.now() - (WEEK_DAYS - 1) * DAY_MS));
@@ -166,17 +193,49 @@ export function createTool(): CardoTool {
         >
           {isRunning ? t('tool.workclock.state.running') : t('tool.workclock.state.paused')}
         </div>
-        <button
-          className={isRunning ? 'c-btn' : 'c-btn c-btn--primary'}
-          disabled={docs === null}
-          onClick={async () => {
-            if (!ctx) return;
-            if (isRunning) await stop(ctx);
-            else await start(ctx);
-          }}
-        >
-          {isRunning ? t('tool.workclock.action.stop') : t('tool.workclock.action.start')}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <button
+            className={isRunning ? 'c-btn' : 'c-btn c-btn--primary'}
+            disabled={docs === null}
+            onClick={async () => {
+              if (!ctx) return;
+              if (isRunning) await stop(ctx);
+              else await start(ctx);
+            }}
+          >
+            {isRunning ? t('tool.workclock.action.stop') : t('tool.workclock.action.start')}
+          </button>
+          <button
+            className="c-btn c-btn--ghost"
+            title={t('tool.workclock.settings.toggle')}
+            aria-label={t('tool.workclock.settings.toggle')}
+            aria-expanded={showSettings}
+            onClick={() => setShowSettings((s) => !s)}
+          >
+            {'⚙'}
+          </button>
+        </div>
+        {showSettings && (
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-2)',
+              fontSize: '0.85em',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={couple}
+              onChange={(e) => {
+                const value = e.target.checked;
+                setCouple(value);
+                void ctx?.settings.set(COUPLE_SETTING, value);
+              }}
+            />
+            <span className="c-muted">{t('tool.workclock.settings.couplePomodoro')}</span>
+          </label>
+        )}
         <div className="c-muted" style={{ fontSize: '0.8em' }}>
           {t('tool.workclock.week', { duration: formatDuration(weekSeconds) })}
         </div>
@@ -217,8 +276,41 @@ export function createTool(): CardoTool {
           return ctx ? toggle(ctx) : { ok: false };
         },
       });
+
+      // Optional Pomodoro coupling: follow the phase events while the
+      // 'coupleWithPomodoro' setting is on (checked per event, not once).
+      // start()/stop() are already graceful no-ops when the clock is
+      // already running / not running.
+      eventUnsubs.push(
+        context.events.on('pomodoro:phase-started', (payload) => {
+          void (async () => {
+            if (!(await couplingEnabled(context))) return;
+            const phase = typeof payload.phase === 'string' ? payload.phase : '';
+            if (phase === 'work') {
+              await start(context);
+            } else if (phase === 'short-break' || phase === 'long-break') {
+              await stop(context);
+            }
+          })().catch(() => {
+            /* coupling is best-effort – never break the event bus */
+          });
+        }),
+      );
+      eventUnsubs.push(
+        context.events.on('pomodoro:finished', (payload) => {
+          void (async () => {
+            if (!(await couplingEnabled(context))) return;
+            const phase = typeof payload.phase === 'string' ? payload.phase : '';
+            if (phase === 'work') await stop(context);
+          })().catch(() => {
+            /* coupling is best-effort – never break the event bus */
+          });
+        }),
+      );
     },
     deactivate() {
+      for (const unsub of eventUnsubs) unsub();
+      eventUnsubs = [];
       ctx = null;
     },
     Widget: WorkclockWidget,
@@ -265,6 +357,25 @@ export function createTool(): CardoTool {
             return { status: 'fail', detail: `unexpected seconds: ${afterStop.seconds}` };
           }
           return { status: 'pass', detail: `accumulated ${afterStop.seconds}s` };
+        }
+        case 'coupling-setting': {
+          const initial = await testCtx.settings.get<boolean>(COUPLE_SETTING);
+          await testCtx.settings.set(COUPLE_SETTING, true);
+          const on = await testCtx.settings.get<boolean>(COUPLE_SETTING);
+          await testCtx.settings.set(COUPLE_SETTING, false);
+          const off = await testCtx.settings.get<boolean>(COUPLE_SETTING);
+          // Restore whatever the scratch context started with.
+          if (initial !== null) await testCtx.settings.set(COUPLE_SETTING, initial);
+          if (on !== true) {
+            return { status: 'fail', detail: `expected true after set, got ${JSON.stringify(on)}` };
+          }
+          if (off !== false) {
+            return {
+              status: 'fail',
+              detail: `expected false after set, got ${JSON.stringify(off)}`,
+            };
+          }
+          return { status: 'pass', detail: 'coupleWithPomodoro setting roundtrips' };
         }
         case 'format': {
           const checks: Array<[number, string]> = [

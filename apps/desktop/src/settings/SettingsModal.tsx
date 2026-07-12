@@ -5,7 +5,9 @@ import { themes } from '@cardo/themes';
 import { supportedLanguages } from '@cardo/i18n';
 import { useAppStore } from '../state/appStore';
 import { DiagnosePanel } from './DiagnosePanel';
+import { PollsPanel } from './PollsPanel';
 import { ProfileModal } from '../profile/ProfileModal';
+import { BackupSection } from './BackupSection';
 import {
   checkForUpdates,
   getUpdateMode,
@@ -97,7 +99,7 @@ const ACCENT_TOKENS = [
   'accent-8',
 ] as const;
 
-type Tab = 'general' | 'diagnostics' | 'about';
+type Tab = 'general' | 'polls' | 'diagnostics' | 'about';
 
 export function SettingsModal({ onClose }: { onClose(): void }) {
   const { t, i18n } = useTranslation();
@@ -121,13 +123,13 @@ export function SettingsModal({ onClose }: { onClose(): void }) {
         <header className="settings__header">
           <h3>{t('settings.title')}</h3>
           <nav className="settings__tabs">
-            {(['general', 'diagnostics', 'about'] as Tab[]).map((id) => (
+            {(['general', 'polls', 'diagnostics', 'about'] as Tab[]).map((id) => (
               <button
                 key={id}
                 className={`c-btn c-btn--ghost${tab === id ? ' settings__tab--active' : ''}`}
                 onClick={() => setTab(id)}
               >
-                {t(`settings.${id === 'general' ? 'general' : id === 'diagnostics' ? 'diagnostics' : 'about'}`)}
+                {t(`settings.${id}`)}
               </button>
             ))}
           </nav>
@@ -176,6 +178,8 @@ export function SettingsModal({ onClose }: { onClose(): void }) {
               <p className="c-muted">{t('settings.themeHint')}</p>
             </div>
 
+            <BackupSection />
+
             <div className="settings__row settings__row--block">
               <span>{t('settings.help')}</span>
               <div className="settings__help-actions">
@@ -212,6 +216,8 @@ export function SettingsModal({ onClose }: { onClose(): void }) {
             </div>
           </div>
         )}
+
+        {tab === 'polls' && <PollsPanel />}
 
         {tab === 'diagnostics' && <DiagnosePanel />}
 

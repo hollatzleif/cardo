@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import type { CommandSpec } from '@cardo/plugin-api';
+import type { ScoredSearchResult } from '@cardo/core';
 import { Modal, Button, Input } from '@cardo/ui';
 import { getHost } from '../host';
 
@@ -54,8 +55,42 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
       .filter(({ command, title }) =>
         q === '' ? true : title.toLowerCase().includes(q) || command.id.includes(q),
       )
-      .slice(0, 12);
+      .slice(0, 8);
   }, [commands, query, t]);
+
+  // Global content search (tools' search providers), debounced.
+  const [contentResults, setContentResults] = useState<ScoredSearchResult[]>([]);
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setContentResults([]);
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      void getHost()
+        .search.query(q)
+        .then(setContentResults)
+        .catch(() => setContentResults([]));
+    }, 150);
+    return () => window.clearTimeout(handle);
+  }, [query]);
+
+  type Row =
+    | { kind: 'command'; command: CommandSpec<never>; title: string }
+    | { kind: 'result'; result: ScoredSearchResult };
+  const rows: Row[] = useMemo(
+    () => [
+      ...matches.map((m) => ({ kind: 'command' as const, ...m })),
+      ...contentResults.map((result) => ({ kind: 'result' as const, result })),
+    ],
+    [matches, contentResults],
+  );
+
+  async function pick(row: Row) {
+    if (row.kind === 'command') return run(row.command);
+    await row.result.action();
+    onClose();
+  }
 
   async function run(command: CommandSpec<never>) {
     const fields = paramFields(command.params as z.ZodType);
@@ -89,13 +124,13 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
     } else if (!pendingCommand) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelected((s) => Math.min(s + 1, matches.length - 1));
+        setSelected((s) => Math.min(s + 1, rows.length - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setSelected((s) => Math.max(s - 1, 0));
-      } else if (e.key === 'Enter' && matches[selected]) {
+      } else if (e.key === 'Enter' && rows[selected]) {
         e.preventDefault();
-        void run(matches[selected].command);
+        void pick(rows[selected]);
       }
     } else if (e.key === 'Enter') {
       e.preventDefault();
@@ -120,18 +155,32 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
               autoFocus
             />
             <div className="palette__list">
-              {matches.length === 0 && (
+              {rows.length === 0 && (
                 <div className="c-muted palette__empty">{t('palette.noResults')}</div>
               )}
-              {matches.map(({ command, title }, i) => (
+              {rows.map((row, i) => (
                 <button
-                  key={command.id}
+                  key={row.kind === 'command' ? row.command.id : `r-${i}-${row.result.title}`}
                   className={`palette__item${i === selected ? ' palette__item--selected' : ''}`}
                   onMouseEnter={() => setSelected(i)}
-                  onClick={() => void run(command)}
+                  onClick={() => void pick(row)}
                 >
-                  <span>{title}</span>
-                  <span className="c-muted palette__id">{command.id}</span>
+                  {row.kind === 'command' ? (
+                    <>
+                      <span>{row.title}</span>
+                      <span className="c-muted palette__id">{row.command.id}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {row.result.icon ? `${row.result.icon} ` : ''}
+                        {row.result.title}
+                      </span>
+                      <span className="c-muted palette__id">
+                        {row.result.subtitle ?? t(`tool.${row.result.toolId}.name`)}
+                      </span>
+                    </>
+                  )}
                 </button>
               ))}
             </div>

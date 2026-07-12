@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import type {
   CardoTool,
   EventBus,
+  SearchResult,
   ToolContext,
   ToolStorage,
   WidgetProps,
@@ -10,10 +11,13 @@ import type {
 import manifest from '../manifest.json';
 import {
   INBOX_ID,
+  computeTodayData,
+  deriveStatus,
   isOverdue,
   isValidDue,
   makeId,
   makeTask,
+  matchesQuery,
   priorityToken,
   sortCompletedTasks,
   sortOpenTasks,
@@ -21,9 +25,27 @@ import {
   type ListDoc,
   type Priority,
   type TaskDoc,
+  type TaskStatus,
+  type TodayData,
 } from './logic';
 
 const PRIORITIES: Priority[] = ['low', 'medium', 'high'];
+const STATUSES: TaskStatus[] = ['todo', 'doing', 'done'];
+
+/** Board scope value meaning "show tasks of every list". */
+const ALL_LISTS = 'all';
+
+/**
+ * Doc id of the tiny UI-state doc used for cross-widget signals
+ * (e.g. the global search asks the main widget to highlight a task).
+ */
+const UI_DOC_ID = 'ui';
+/** A focus request older than this is stale and ignored. */
+const FOCUS_TTL_MS = 10_000;
+/** How long the highlight stays visible. */
+const FOCUS_HIGHLIGHT_MS = 2_500;
+
+type UiDoc = { focusTask?: string; at?: number };
 
 /* ── Storage helpers (parameterized so commands, widget and self-tests share them) ── */
 
@@ -63,20 +85,45 @@ async function createTaskIn(
   return task;
 }
 
+/**
+ * Move a task to a Kanban status, keeping `done`/`completedAt` in sync
+ * (done:true ⇔ status:'done'). Completing emits 'todo:completed' exactly
+ * once – re-completing an already done task is a no-op.
+ */
+async function setTaskStatusIn(
+  storage: ToolStorage,
+  events: EventBus | null,
+  id: string,
+  status: TaskStatus,
+): Promise<TaskDoc | null> {
+  const task = await storage.get<TaskDoc>(id);
+  if (!task) return null;
+  if (status === 'done') {
+    if (task.done) {
+      if (task.status === 'done') return task; // idempotent – no second event
+      const synced: TaskDoc = { ...task, status: 'done' };
+      await storage.set(id, synced);
+      return synced;
+    }
+    const completedAt = new Date().toISOString();
+    const completed: TaskDoc = { ...task, done: true, status: 'done', completedAt };
+    await storage.set(id, completed);
+    // Cross-tool contract: the stats tool consumes this event later.
+    events?.emit('todo:completed', { id: task.id, title: task.title, completedAt });
+    return completed;
+  }
+  if (!task.done && task.status === status) return task;
+  const updated: TaskDoc = { ...task, done: false, status, completedAt: null };
+  await storage.set(id, updated);
+  return updated;
+}
+
 async function completeTaskIn(
   storage: ToolStorage,
   events: EventBus | null,
   id: string,
 ): Promise<TaskDoc | null> {
-  const task = await storage.get<TaskDoc>(id);
-  if (!task) return null;
-  if (task.done) return task; // idempotent – no second event
-  const completedAt = new Date().toISOString();
-  const completed: TaskDoc = { ...task, done: true, completedAt };
-  await storage.set(id, completed);
-  // Cross-tool contract: the stats tool consumes this event later.
-  events?.emit('todo:completed', { id: task.id, title: task.title, completedAt });
-  return completed;
+  return setTaskStatusIn(storage, events, id, 'done');
 }
 
 async function deleteTaskIn(storage: ToolStorage, id: string): Promise<TaskDoc | null> {
@@ -84,6 +131,14 @@ async function deleteTaskIn(storage: ToolStorage, id: string): Promise<TaskDoc |
   if (!task) return null;
   await storage.delete(id);
   return task;
+}
+
+async function queryTodayIn(storage: ToolStorage): Promise<TodayData> {
+  const [tasks, lists] = await Promise.all([
+    storage.query<TaskDoc>({ where: [{ field: 'type', op: '=', value: 'task' }] }),
+    storage.query<ListDoc>({ where: [{ field: 'type', op: '=', value: 'list' }] }),
+  ]);
+  return computeTodayData(tasks, lists, todayIso());
 }
 
 /* ── The tool ─────────────────────────────────────────────────────────── */
@@ -101,6 +156,8 @@ export function createTool(): CardoTool {
     const [newTitle, setNewTitle] = useState('');
     const [newPriority, setNewPriority] = useState<Priority>('medium');
     const [listDraft, setListDraft] = useState<{ mode: 'add' | 'rename'; value: string } | null>(null);
+    const [focusTask, setFocusTask] = useState<string | null>(null);
+    const rowRefs = useRef(new Map<string, HTMLDivElement>());
 
     const reload = useCallback(async () => {
       if (!ctx) return;
@@ -130,6 +187,39 @@ export function createTool(): CardoTool {
       };
     }, [reload]);
 
+    // Focus requests from the global search: highlight + scroll to the task.
+    useEffect(() => {
+      let mounted = true;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const applyFocus = async () => {
+        const ui = await ctx?.storage.get<UiDoc>(UI_DOC_ID);
+        if (!mounted || !ui?.focusTask || typeof ui.at !== 'number') return;
+        if (Date.now() - ui.at > FOCUS_TTL_MS) return; // stale request
+        const task = await ctx?.storage.get<TaskDoc>(ui.focusTask);
+        if (!mounted) return;
+        if (task) setActiveList(task.list);
+        setFocusTask(ui.focusTask);
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+          if (mounted) setFocusTask(null);
+        }, FOCUS_HIGHLIGHT_MS);
+      };
+      void applyFocus();
+      const unsub = ctx?.storage.subscribe((change) => {
+        if (change.docId === UI_DOC_ID) void applyFocus();
+      });
+      return () => {
+        mounted = false;
+        if (timer) clearTimeout(timer);
+        unsub?.();
+      };
+    }, []);
+
+    useEffect(() => {
+      if (!focusTask) return;
+      rowRefs.current.get(focusTask)?.scrollIntoView({ block: 'nearest' });
+    }, [focusTask, tasks, activeList]);
+
     const today = todayIso();
     const inActive = tasks.filter((task) => task.list === activeList);
     const open = sortOpenTasks(inActive.filter((task) => !task.done));
@@ -146,7 +236,7 @@ export function createTool(): CardoTool {
     async function toggleTask(task: TaskDoc) {
       if (!ctx) return;
       if (task.done) {
-        await ctx.storage.set<TaskDoc>(task.id, { ...task, done: false, completedAt: null });
+        await setTaskStatusIn(ctx.storage, ctx.events, task.id, 'todo');
       } else {
         await completeTaskIn(ctx.storage, ctx.events, task.id);
       }
@@ -180,7 +270,20 @@ export function createTool(): CardoTool {
     }
 
     const renderTask = (task: TaskDoc) => (
-      <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+      <div
+        key={task.id}
+        ref={(el) => {
+          if (el) rowRefs.current.set(task.id, el);
+          else rowRefs.current.delete(task.id);
+        }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-2)',
+          borderRadius: 'var(--radius-sm)',
+          ...(task.id === focusTask ? { boxShadow: 'inset 0 0 0 1px var(--accent)' } : {}),
+        }}
+      >
         <input
           type="checkbox"
           checked={task.done}
@@ -389,6 +492,248 @@ export function createTool(): CardoTool {
     );
   }
 
+  function BoardWidget(_props: WidgetProps) {
+    const [lists, setLists] = useState<ListDoc[]>([]);
+    const [tasks, setTasks] = useState<TaskDoc[]>([]);
+    const [scope, setScope] = useState<string>(ALL_LISTS);
+    const [newTitle, setNewTitle] = useState('');
+    const [dragOver, setDragOver] = useState<TaskStatus | null>(null);
+
+    const reload = useCallback(async () => {
+      if (!ctx) return;
+      await ensureInbox(ctx.storage, inboxName());
+      const [ls, ts] = await Promise.all([
+        ctx.storage.query<ListDoc>({
+          where: [{ field: 'type', op: '=', value: 'list' }],
+          orderBy: 'createdAt',
+          direction: 'asc',
+        }),
+        ctx.storage.query<TaskDoc>({ where: [{ field: 'type', op: '=', value: 'task' }] }),
+      ]);
+      setLists(ls);
+      setTasks(ts);
+    }, []);
+
+    useEffect(() => {
+      let mounted = true;
+      const safeReload = () => {
+        if (mounted) void reload();
+      };
+      safeReload();
+      const unsub = ctx?.storage.subscribe(safeReload);
+      return () => {
+        mounted = false;
+        unsub?.();
+      };
+    }, [reload]);
+
+    const today = todayIso();
+    const inScope = scope === ALL_LISTS ? tasks : tasks.filter((task) => task.list === scope);
+    const columns: Record<TaskStatus, TaskDoc[]> = { todo: [], doing: [], done: [] };
+    for (const task of inScope) columns[deriveStatus(task)].push(task);
+    columns.todo = sortOpenTasks(columns.todo);
+    columns.doing = sortOpenTasks(columns.doing);
+    columns.done = sortCompletedTasks(columns.done);
+
+    async function addTask() {
+      const title = newTitle.trim();
+      if (!title || !ctx) return;
+      await createTaskIn(ctx.storage, inboxName(), {
+        title,
+        list: scope === ALL_LISTS ? undefined : scope,
+      });
+      setNewTitle('');
+    }
+
+    async function moveTask(id: string, status: TaskStatus) {
+      if (!ctx || !id) return;
+      await setTaskStatusIn(ctx.storage, ctx.events, id, status);
+    }
+
+    async function clearDone() {
+      if (!ctx) return;
+      await Promise.all(columns.done.map((task) => ctx?.storage.delete(task.id)));
+    }
+
+    const renderCard = (task: TaskDoc) => {
+      const isDone = deriveStatus(task) === 'done';
+      return (
+        <div
+          key={task.id}
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.setData('text/plain', task.id);
+            e.dataTransfer.effectAllowed = 'move';
+          }}
+          style={{
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--bg-canvas)',
+            padding: 'var(--space-2)',
+            cursor: 'grab',
+            flexShrink: 0,
+            minWidth: 0,
+            overflowWrap: 'break-word',
+          }}
+        >
+          <div style={isDone ? { textDecoration: 'line-through', color: 'var(--text-muted)' } : undefined}>
+            {task.title}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginTop: 'var(--space-1)' }}>
+            <span
+              aria-hidden
+              title={t(`tool.todo.priority.${task.priority}`)}
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 999,
+                flexShrink: 0,
+                background: `var(--${priorityToken(task.priority)})`,
+              }}
+            />
+            {task.due ? (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontVariantNumeric: 'tabular-nums',
+                  color: isOverdue(task, today) ? 'var(--danger)' : 'var(--text-muted)',
+                }}
+              >
+                {task.due}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      );
+    };
+
+    const renderColumn = (status: TaskStatus) => (
+      <div
+        key={status}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          setDragOver(status);
+        }}
+        onDragLeave={() => setDragOver((current) => (current === status ? null : current))}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(null);
+          void moveTask(e.dataTransfer.getData('text/plain'), status);
+        }}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--space-2)',
+          padding: 'var(--space-1)',
+          borderRadius: 'var(--radius-sm)',
+          ...(dragOver === status ? { boxShadow: 'inset 0 0 0 1px var(--accent)' } : {}),
+        }}
+      >
+        {/* Column header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              color: 'var(--text-muted)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {t(`tool.todo.board.column.${status}`)}
+          </span>
+          <span className="c-badge c-muted" style={{ flexShrink: 0 }}>
+            {columns[status].length}
+          </span>
+          {status === 'done' && columns.done.length > 0 ? (
+            <button
+              className="c-btn c-btn--ghost"
+              style={{ fontSize: 12, padding: '0 var(--space-1)', marginLeft: 'auto', color: 'var(--text-muted)' }}
+              onClick={() => void clearDone()}
+            >
+              {t('tool.todo.clearCompleted')}
+            </button>
+          ) : null}
+        </div>
+
+        {/* Quick add lives in the first column */}
+        {status === 'todo' ? (
+          <input
+            className="c-input"
+            style={{ flexShrink: 0 }}
+            value={newTitle}
+            placeholder={t('tool.todo.board.addPlaceholder')}
+            aria-label={t('tool.todo.board.addPlaceholder')}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void addTask();
+            }}
+          />
+        ) : null}
+
+        {/* Cards */}
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--space-2)',
+          }}
+        >
+          {columns[status].map(renderCard)}
+        </div>
+      </div>
+    );
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          gap: 'var(--space-2)',
+          padding: 'var(--space-3)',
+        }}
+      >
+        {/* List scope */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
+          <select
+            className="c-input"
+            style={{ width: 'auto' }}
+            value={scope}
+            aria-label={t('tool.todo.board.listLabel')}
+            title={t('tool.todo.board.listLabel')}
+            onChange={(e) => setScope(e.target.value)}
+          >
+            <option value={ALL_LISTS}>{t('tool.todo.board.allLists')}</option>
+            {lists.map((list) => (
+              <option key={list.id} value={list.id}>
+                {list.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Columns */}
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flex: 1, minHeight: 0 }}>
+          {STATUSES.map(renderColumn)}
+        </div>
+      </div>
+    );
+  }
+
+  function Widget(props: WidgetProps) {
+    return props.widgetId === 'board' ? <BoardWidget {...props} /> : <TodoWidget {...props} />;
+  }
+
   return {
     manifest: manifest as CardoTool['manifest'],
 
@@ -452,13 +797,51 @@ export function createTool(): CardoTool {
           return { ok: true, data: task, messageKey: 'tool.todo.msg.deleted' };
         },
       });
+
+      // Data feed for the upcoming "Today" widget: open tasks that are due
+      // today, overdue or high priority, plus day counters. Local date.
+      context.commands.register({
+        id: 'todo.query-today',
+        titleKey: 'tool.todo.command.queryToday',
+        icon: 'calendar',
+        palette: false,
+        params: z.object({}),
+        selfTestParams: {},
+        async run() {
+          const data = await queryTodayIn(context.storage);
+          return { ok: true, data };
+        },
+      });
+
+      // Global search: open tasks by title/category. Picking a result NEVER
+      // completes the task – it only asks the main widget (via the shared
+      // 'ui' doc) to highlight and scroll to it.
+      context.search.register(async (query): Promise<SearchResult[]> => {
+        const q = query.trim();
+        if (!q) return [];
+        const [tasks, lists] = await Promise.all([
+          context.storage.query<TaskDoc>({ where: [{ field: 'type', op: '=', value: 'task' }] }),
+          context.storage.query<ListDoc>({ where: [{ field: 'type', op: '=', value: 'list' }] }),
+        ]);
+        const listName = new Map(lists.map((l) => [l.id, l.name]));
+        return sortOpenTasks(tasks.filter((task) => !task.done && matchesQuery(task, q)))
+          .slice(0, 5)
+          .map((task) => ({
+            title: task.title,
+            subtitle: listName.get(task.list) ?? task.list,
+            icon: '✓',
+            action: async () => {
+              await context.storage.set(UI_DOC_ID, { focusTask: task.id, at: Date.now() });
+            },
+          }));
+      });
     },
 
     deactivate() {
       ctx = null;
     },
 
-    Widget: TodoWidget,
+    Widget,
 
     async runSelfTest(testId, testCtx) {
       switch (testId) {
@@ -502,6 +885,100 @@ export function createTool(): CardoTool {
             return { status: 'fail', detail: `filter returned ${got.length} docs, hasA=${hasA}, onlyA=${onlyA}` };
           }
           return { status: 'pass', detail: 'list filter returns exactly the matching tasks' };
+        }
+        case 'board-status': {
+          // Legacy derivation: docs without a status field.
+          const probe = makeTask({ title: 'selftest board', list: 'list:selftest-board' });
+          if (deriveStatus(probe) !== 'todo') {
+            return { status: 'fail', detail: `fresh task derived as "${deriveStatus(probe)}", expected "todo"` };
+          }
+          if (deriveStatus({ done: true }) !== 'done') {
+            return { status: 'fail', detail: 'legacy done doc (no status field) must derive as "done"' };
+          }
+          await testCtx.storage.set(probe.id, probe);
+          const doing = await setTaskStatusIn(testCtx.storage, testCtx.events, probe.id, 'doing');
+          const done = await setTaskStatusIn(testCtx.storage, testCtx.events, probe.id, 'done');
+          const reopened = await setTaskStatusIn(testCtx.storage, testCtx.events, probe.id, 'todo');
+          const back = await testCtx.storage.get<TaskDoc>(probe.id);
+          await testCtx.storage.delete(probe.id);
+          if (!doing || doing.done || doing.status !== 'doing' || deriveStatus(doing) !== 'doing') {
+            return { status: 'fail', detail: `move to doing produced ${JSON.stringify(doing)}` };
+          }
+          if (!done || !done.done || done.status !== 'done' || !done.completedAt) {
+            return { status: 'fail', detail: `move to done must sync done+completedAt, got ${JSON.stringify(done)}` };
+          }
+          if (!reopened || reopened.done || reopened.status !== 'todo' || reopened.completedAt !== null) {
+            return { status: 'fail', detail: `reopen must clear done+completedAt, got ${JSON.stringify(reopened)}` };
+          }
+          if (!back || deriveStatus(back) !== 'todo') {
+            return { status: 'fail', detail: `persisted doc derived as "${back ? deriveStatus(back) : 'missing'}"` };
+          }
+          return { status: 'pass', detail: 'status ⇄ done stay in sync across todo → doing → done → todo' };
+        }
+        case 'query-today': {
+          const listId = 'list:selftest-today';
+          const listDoc: ListDoc = {
+            id: listId,
+            type: 'list',
+            name: 'Selftest Today',
+            createdAt: new Date().toISOString(),
+          };
+          const today = todayIso();
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const overdueTask = makeTask({
+            title: 'selftest overdue',
+            list: listId,
+            due: todayIso(yesterday),
+            priority: 'low',
+          });
+          const todayTask = makeTask({
+            title: 'selftest due today',
+            list: listId,
+            due: today,
+            priority: 'low',
+          });
+          const futureTask = makeTask({
+            title: 'selftest future',
+            list: listId,
+            due: todayIso(tomorrow),
+            priority: 'low',
+          });
+          const doneTask: TaskDoc = {
+            ...makeTask({ title: 'selftest done', list: listId }),
+            done: true,
+            status: 'done',
+            completedAt: new Date().toISOString(),
+          };
+          const probes = [overdueTask, todayTask, futureTask, doneTask];
+          await testCtx.storage.set(listDoc.id, listDoc);
+          await Promise.all(probes.map((task) => testCtx.storage.set(task.id, task)));
+          // Same internal function the todo.query-today command uses, fed with
+          // exactly our probes (isolated via the probe list) after a storage roundtrip.
+          const stored = await testCtx.storage.query<TaskDoc>({
+            where: [{ field: 'list', op: '=', value: listId }],
+          });
+          const data = computeTodayData(stored, [listDoc], today);
+          await Promise.all(probes.map((task) => testCtx.storage.delete(task.id)));
+          await testCtx.storage.delete(listDoc.id);
+          if (data.overdue !== 1 || data.dueToday !== 1 || data.completedToday !== 1) {
+            return {
+              status: 'fail',
+              detail: `counts overdue=${data.overdue}, dueToday=${data.dueToday}, completedToday=${data.completedToday} – expected 1/1/1`,
+            };
+          }
+          if (data.open.length !== 2 || data.open[0]?.id !== overdueTask.id || data.open[1]?.id !== todayTask.id) {
+            return {
+              status: 'fail',
+              detail: `open should be [overdue, dueToday], got ${JSON.stringify(data.open.map((i) => i.title))}`,
+            };
+          }
+          if (data.open[0]?.overdue !== true || data.open[0]?.list !== 'Selftest Today') {
+            return { status: 'fail', detail: `first item malformed: ${JSON.stringify(data.open[0])}` };
+          }
+          return { status: 'pass', detail: 'query-today counts and ordering match the probe set' };
         }
         default:
           return { status: 'fail', detail: `unknown test "${testId}"` };

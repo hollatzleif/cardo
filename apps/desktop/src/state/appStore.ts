@@ -42,6 +42,7 @@ interface AppState {
   settingsOpen: boolean;
   marketOpen: boolean;
   designOpen: boolean;
+  focusOpen: boolean;
   themeId: string;
   accentToken?: string;
   pages: Page[];
@@ -57,6 +58,7 @@ interface AppState {
   setSettingsOpen(open: boolean): void;
   setMarketOpen(open: boolean): void;
   setDesignOpen(open: boolean): void;
+  setFocusOpen(open: boolean): void;
   setToolActive(toolId: string, active: boolean): Promise<void>;
   saveProfile(profile: Profile): Promise<void>;
   startTour(): void;
@@ -69,6 +71,8 @@ interface AppState {
   renamePage(id: string, name: string): Promise<void>;
   removePage(id: string): Promise<void>;
   addWidget(toolId: string, widgetId: string, size: { w: number; h: number }): Promise<void>;
+  /** Fill the CURRENT page with a starter layout (onboarding templates). */
+  applyTemplate(widgets: Array<Omit<WidgetInstance, 'instanceId'>>): Promise<void>;
   removeWidget(instanceId: string): Promise<void>;
   updateWidgetPositions(
     updates: Array<{ instanceId: string; x: number; y: number; w: number; h: number }>,
@@ -98,6 +102,7 @@ export const useAppStore = create<AppState>((set, get) => {
     settingsOpen: false,
     marketOpen: false,
     designOpen: false,
+    focusOpen: false,
     themeId: defaultThemeId,
     accentToken: undefined,
     pages: [],
@@ -194,6 +199,9 @@ export const useAppStore = create<AppState>((set, get) => {
     setDesignOpen(designOpen) {
       set({ designOpen });
     },
+    setFocusOpen(focusOpen) {
+      set({ focusOpen });
+    },
 
     async setToolActive(toolId, active) {
       const { registry, backend } = getHost();
@@ -270,14 +278,23 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     async removePage(id) {
+      const removed = get().pages.find((p) => p.id === id);
       const remaining = get().pages.filter((p) => p.id !== id);
-      if (remaining.length === 0) return; // never delete the last page
+      if (!removed || remaining.length === 0) return; // never delete the last page
       await getHost().backend.delete('core.layout', id);
       set({
         pages: remaining,
         currentPageId:
           get().currentPageId === id ? remaining[0]!.id : get().currentPageId,
       });
+      getHost().services.events.emit('core:toast', {
+        title: i18next.t('canvas.pageRemoved', { name: removed.name }),
+        actionLabel: i18next.t('common.undo'),
+        onAction: async () => {
+          await persistPage(removed);
+          set({ pages: [...get().pages, removed].sort((a, b) => a.order - b.order) });
+        },
+      } as never);
     },
 
     async addWidget(toolId, widgetId, size) {
@@ -297,13 +314,41 @@ export const useAppStore = create<AppState>((set, get) => {
       await persistPage(updated);
     },
 
+    async applyTemplate(widgets) {
+      const { pages, currentPageId } = get();
+      const page = pages.find((p) => p.id === currentPageId);
+      if (!page) return;
+      const filled: Page = {
+        ...page,
+        widgets: [
+          ...page.widgets,
+          ...widgets.map((w) => ({ ...w, instanceId: `w-${crypto.randomUUID()}` })),
+        ],
+      };
+      set({ pages: pages.map((p) => (p.id === page.id ? filled : p)) });
+      await persistPage(filled);
+    },
+
     async removeWidget(instanceId) {
       const { pages, currentPageId } = get();
       const page = pages.find((p) => p.id === currentPageId);
       if (!page) return;
+      const removed = page.widgets.find((w) => w.instanceId === instanceId);
       const updated = { ...page, widgets: page.widgets.filter((w) => w.instanceId !== instanceId) };
       set({ pages: pages.map((p) => (p.id === page.id ? updated : p)) });
       await persistPage(updated);
+      if (!removed) return;
+      getHost().services.events.emit('core:toast', {
+        title: i18next.t('canvas.widgetRemoved'),
+        actionLabel: i18next.t('common.undo'),
+        onAction: async () => {
+          const current = get().pages.find((p) => p.id === page.id);
+          if (!current) return;
+          const restored = { ...current, widgets: [...current.widgets, removed] };
+          set({ pages: get().pages.map((p) => (p.id === page.id ? restored : p)) });
+          await persistPage(restored);
+        },
+      } as never);
     },
 
     async updateWidgetPositions(updates) {

@@ -1,4 +1,5 @@
 export { CommandRegistry } from './commands';
+export { SearchRegistry, type ScoredSearchResult } from './search';
 export { createEventBus } from './events';
 export {
   createNamespacedStorage,

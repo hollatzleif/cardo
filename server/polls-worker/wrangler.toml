@@ -1,0 +1,11 @@
+# Cardo polls worker – counts anonymous votes, nothing else.
+name = "cardo-polls"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cardo-polls"
+# Run `npx wrangler d1 create cardo-polls` once; it prints the database_id.
+# Paste that id here before the first `npx wrangler deploy`.
+database_id = "05147e2d-1ef6-4da9-a660-395392719fe1"

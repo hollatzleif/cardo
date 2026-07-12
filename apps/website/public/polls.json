@@ -1,0 +1,17 @@
+{
+  "polls": [
+    {
+      "id": "example-poll",
+      "question": {
+        "en": "Should Cardo get a built-in music player?",
+        "de": "Soll Cardo einen eingebauten Musik-Player bekommen?"
+      },
+      "options": [
+        { "id": "yes", "label": { "en": "Yes", "de": "Ja" } },
+        { "id": "no", "label": { "en": "No", "de": "Nein" } }
+      ],
+      "open": true,
+      "createdAt": "2026-07-12"
+    }
+  ]
+}

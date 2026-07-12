@@ -16,7 +16,9 @@
     "deletePage": "Seite löschen",
     "deletePageConfirm": "Diese Seite löschen? Die Widgets darauf werden aus dem Layout entfernt (deine Daten bleiben erhalten).",
     "emptyHint": "Dieses Dashboard ist leer. Drücke {{shortcut}}, um in den Bearbeitungsmodus zu wechseln und dein erstes Widget hinzuzufügen.",
-    "defaultPageName": "Start"
+    "defaultPageName": "Start",
+    "widgetRemoved": "Widget entfernt",
+    "pageRemoved": "Seite „{{name}}\" entfernt"
   },
   "palette": {
     "placeholder": "Befehl eingeben oder suchen…",
@@ -49,7 +51,15 @@
     "updateAvailableTitle": "Update {{version}} verfügbar",
     "updateAvailableBody": "Installiere es unter Einstellungen → Updates, wann immer du willst.",
     "updateInstalledTitle": "Update {{version}} installiert",
-    "updateInstalledBody": "Die Neuerungen greifen beim nächsten Start von Cardo."
+    "updateInstalledBody": "Die Neuerungen greifen beim nächsten Start von Cardo.",
+    "polls": "Umfragen",
+    "backup": "Backup",
+    "backupExport": "Alles exportieren",
+    "backupImport": "Backup wiederherstellen",
+    "backupHint": "Eine Datei mit allem: Layout, Aufgaben, Einstellungen. Bewahre sie sicher auf – es gibt keine Cloud-Kopie.",
+    "backupExported": "Backup gespeichert ({{count}} Einträge).",
+    "backupImportConfirm": "Dieses Backup wiederherstellen? Einträge mit gleicher ID werden überschrieben. Cardo startet danach neu.",
+    "backupError": "Das hat nicht geklappt. Die Datei ist womöglich kein Cardo-Backup."
   },
   "diagnose": {
     "start": "Selbsttest starten",
@@ -145,6 +155,23 @@
         "title": "Deine Daten gehören dir",
         "body": "Cardo arbeitet zu 100 % offline. Kein Konto, keine Cloud, keine Telemetrie. Alles liegt in einer lokalen Datenbank und in Dateien, die dir gehören."
       }
+    },
+    "templates": {
+      "title": "Wie möchtest du starten?",
+      "subtitle": "Wähle eine Startvorlage – alles bleibt frei umbaubar. Oder starte mit einer leeren Fläche.",
+      "blank": "Leer starten",
+      "work": {
+        "title": "Arbeit",
+        "body": "Heute, Aufgaben, Kalender, Pomodoro und Zeiterfassung."
+      },
+      "private": {
+        "title": "Zuhause & Leben",
+        "body": "Heute, Routine, Gewohnheiten, Countdowns und Notizen."
+      },
+      "focus": {
+        "title": "Tiefer Fokus",
+        "body": "Pomodoro, Aufgaben-Board und deine Produktivitäts-Statistik."
+      }
     }
   },
   "common": {
@@ -156,7 +183,8 @@
     "search": "Suchen",
     "loading": "Lädt…",
     "error": "Etwas ist schiefgelaufen",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "undo": "Rückgängig"
   },
   "tool": {
     "clock": {
@@ -271,7 +299,8 @@
       },
       "command": {
         "create": "Termin anlegen",
-        "remind": "Termin-Erinnerung anzeigen"
+        "remind": "Termin-Erinnerung anzeigen",
+        "queryToday": "Heutige Termine (Daten)"
       },
       "msg": {
         "created": "Termin angelegt",
@@ -281,7 +310,8 @@
       "test": {
         "eventRoundtrip": "Termine werden gespeichert und sauber gelöscht",
         "monthGrid": "Monatsraster wird korrekt berechnet",
-        "reminderTime": "Erinnerungszeiten werden korrekt berechnet"
+        "reminderTime": "Erinnerungszeiten werden korrekt berechnet",
+        "queryToday": "Heutige Termine abfragen"
       },
       "tour": {
         "title": "Dein Kalender",
@@ -294,7 +324,8 @@
       "privacy": "Arbeitet komplett offline. Deine Notizen sind einfache Markdown-Dateien (.md) in einem Ordner, der dir gehört – mit jedem Editor lesbar, kein Lock-in.",
       "test": {
         "markdownRender": "Markdown-Renderer funktioniert (inkl. HTML-Escaping)",
-        "fileRoundtrip": "Notiz-Dateien lassen sich schreiben, lesen und löschen"
+        "fileRoundtrip": "Notiz-Dateien lassen sich schreiben, lesen und löschen",
+        "wikiLinks": "Wiki-Links werden sicher gerendert"
       },
       "command": {
         "create": "Notiz erstellen",
@@ -429,12 +460,14 @@
         "addItem": "Routine-Punkt hinzufügen",
         "check": "Routine-Punkt abhaken",
         "resetToday": "Heutige Routine zurücksetzen",
-        "itemMissing": "Diesen Routine-Punkt gibt es nicht."
+        "itemMissing": "Diesen Routine-Punkt gibt es nicht.",
+        "queryStatus": "Routine-Status (Daten)"
       },
       "test": {
         "itemRoundtrip": "Routine-Punkte lassen sich speichern und löschen",
         "dayState": "Tagesstatus wird pro Tag gespeichert",
-        "dateKey": "Lokaler Datums-Schlüssel wird korrekt berechnet"
+        "dateKey": "Lokaler Datums-Schlüssel wird korrekt berechnet",
+        "queryStatus": "Heutigen Status abfragen"
       },
       "tour": {
         "title": "Deine Tagesroutine",
@@ -500,7 +533,8 @@
       "command": {
         "create": "Aufgabe erstellen",
         "complete": "Aufgabe erledigen",
-        "delete": "Aufgabe löschen"
+        "delete": "Aufgabe löschen",
+        "queryToday": "Heutige Aufgaben abfragen"
       },
       "msg": {
         "created": "Aufgabe erstellt",
@@ -512,7 +546,9 @@
       "test": {
         "createRoundtrip": "Aufgaben lassen sich erstellen, zurücklesen und löschen",
         "completeFlow": "Erledigen speichert den Erledigt-Zeitpunkt",
-        "queryByList": "Aufgaben lassen sich nach Liste filtern"
+        "queryByList": "Aufgaben lassen sich nach Liste filtern",
+        "boardStatus": "Board-Status bleibt mit dem Erledigt-Häkchen synchron",
+        "queryToday": "Heute-Abfrage liefert korrekte Zähler und Reihenfolge"
       },
       "tour": {
         "intro": {
@@ -522,7 +558,21 @@
         "manage": {
           "title": "Organisiere dich mit Listen",
           "body": "Wechsle Listen über die Tabs, lege mit \"+\" neue an und benenne die aktive um. Erledigte Aufgaben sammeln sich unten, bis du sie entfernst."
+        },
+        "board": {
+          "title": "Deine Aufgaben als Board",
+          "body": "Ziehe Karten zwischen Zu erledigen, In Arbeit und Erledigt. Legst du eine Karte auf Erledigt ab, wird die Aufgabe abgeschlossen – genau wie über das Häkchen in der Liste."
         }
+      },
+      "board": {
+        "column": {
+          "todo": "Zu erledigen",
+          "doing": "In Arbeit",
+          "done": "Erledigt"
+        },
+        "addPlaceholder": "Aufgabe hinzufügen… (Enter)",
+        "allLists": "Alle Listen",
+        "listLabel": "Liste"
       }
     },
     "workclock": {
@@ -550,11 +600,82 @@
       "test": {
         "dayRoundtrip": "Tages-Dokument wird gespeichert",
         "startStop": "Start/Stopp summiert Zeit",
-        "format": "Dauer-Formatierung stimmt"
+        "format": "Dauer-Formatierung stimmt",
+        "couplingSetting": "Kopplungs-Einstellung speichern"
       },
       "tour": {
         "title": "Deine Arbeitsuhr",
         "body": "Drück auf Start, wenn du anfängst zu arbeiten, und auf Stopp, wenn du Pause machst. Cardo zählt deine produktive Zeit pro Tag zusammen – alles bleibt auf deinem Gerät."
+      },
+      "settings": {
+        "toggle": "Einstellungen",
+        "couplePomodoro": "Mit Pomodoro koppeln"
+      }
+    },
+    "habits": {
+      "name": "Gewohnheiten",
+      "description": "Verfolge deine täglichen Gewohnheiten mit Streaks und einer 26-Wochen-Heatmap – komplett lokal.",
+      "privacy": "Arbeitet komplett offline.",
+      "widget": {
+        "heading": "Heute",
+        "allDone": "Alle Gewohnheiten geschafft – halte den Streak am Leben!",
+        "empty": "Noch keine Gewohnheiten. Füge unten deine erste hinzu.",
+        "check": "„{{title}}“ für heute abhaken",
+        "streak": "Aktueller Streak: {{days}} Tage",
+        "remove": "Gewohnheit entfernen",
+        "heatmapLabel": "Letzte 26 Wochen",
+        "addPlaceholder": "Neue Gewohnheit…",
+        "add": "Hinzufügen"
+      },
+      "command": {
+        "add": "Gewohnheit hinzufügen",
+        "check": "Gewohnheit für heute abhaken",
+        "queryStatus": "Gewohnheiten-Status abfragen"
+      },
+      "msg": {
+        "added": "Gewohnheit hinzugefügt.",
+        "notFound": "Diese Gewohnheit gibt es nicht.",
+        "failed": "Das hat nicht geklappt."
+      },
+      "search": {
+        "streak": "{{days}} Tage Streak"
+      },
+      "test": {
+        "habitRoundtrip": "Gewohnheiten lassen sich speichern und löschen",
+        "streakCalc": "Streaks werden korrekt berechnet",
+        "heatmapRange": "Heatmap umfasst genau 26 Wochen"
+      },
+      "tour": {
+        "title": "Deine Gewohnheiten",
+        "body": "Hake deine Gewohnheiten jeden Tag ab und sieh zu, wie deine Streaks wachsen. Die Heatmap zeigt dir deine letzten 26 Wochen – und alles bleibt auf diesem Gerät."
+      }
+    },
+    "today": {
+      "name": "Heute",
+      "description": "Dein Tag auf einen Blick – Termine, Aufgaben, Routine und Gewohnheiten aus deinen anderen Tools.",
+      "privacy": "Funktioniert komplett offline. Zeigt nur Daten, die andere Cardo-Tools auf diesem Gerät über Kommandos bereitstellen.",
+      "section": {
+        "events": "Termine",
+        "tasks": "Aufgaben",
+        "routine": "Routine",
+        "habits": "Gewohnheiten"
+      },
+      "widget": {
+        "allDay": "Ganztägig",
+        "noEvents": "Heute keine Termine.",
+        "noTasks": "Heute ist nichts fällig.",
+        "completedToday": "{{count}} erledigt heute",
+        "habitsLine": "{{done}}/{{total}} heute · beste Serie: {{streak}}",
+        "completeTask": "Aufgabe als erledigt markieren",
+        "emptyHint": "Heute zeigt dir deinen Tag auf einen Blick, sobald To-Do, Kalender, Routine oder Gewohnheiten aktiv sind."
+      },
+      "test": {
+        "aggregateGraceful": "Aggregation bleibt ohne Anbieter stabil",
+        "aggregateWithTodo": "Aggregation übernimmt To-Do-Daten"
+      },
+      "tour": {
+        "title": "Dein Tag auf einen Blick",
+        "body": "Heute sammelt Termine, Aufgaben, Routine und Gewohnheiten aus deinen anderen Tools – immer über die Kommando-API, nie direkt aus deren Daten."
       }
     }
   },
@@ -631,5 +752,21 @@
       "all": "Alles zurücksetzen",
       "hint": "Entfernt alle persönlichen Design-Anpassungen und kehrt zu den Theme-Standards zurück. Deine Theme-Auswahl bleibt erhalten."
     }
+  },
+  "polls": {
+    "intro": "Stimme ab, wohin sich Cardo entwickelt. Umfragen sind Fragen der Entwicklerin – zum Beispiel „Sollen wir Feature X bauen?\".",
+    "privacyNote": "Beim Laden kontaktiert Cardo hollatzleif.github.io (die Fragen) und einen Cloudflare-Server (die Stimmenzahlen). Beim Abstimmen werden nur Umfrage-ID, deine Wahl und ein anonymer Geräte-Hash gesendet – eine Stimme pro Installation, kein Name, kein Profil. Ohne deinen Klick wird nichts geladen.",
+    "load": "Umfragen laden",
+    "none": "Gerade keine Umfragen. Schau später wieder vorbei!",
+    "closed": "beendet",
+    "thanks": "Danke fürs Abstimmen!",
+    "error": "Der Umfrage-Server ist gerade nicht erreichbar. Cardo funktioniert normal – versuch es später nochmal."
+  },
+  "focus": {
+    "title": "Fokus-Modus",
+    "taskPlaceholder": "Woran arbeitest du gerade?",
+    "taskLabel": "Aktuelle Aufgabe",
+    "pomodoroMissing": "Das Pomodoro-Tool ist nicht aktiv. Aktiviere es im Tool-Markt, um deinen Timer hier zu sehen – der Fokus-Modus funktioniert auch ohne.",
+    "exit": "Fokus verlassen (Esc)"
   }
 }

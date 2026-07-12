@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
-import type { CardoTool, CommandResult, ToolContext, WidgetProps } from '@cardo/plugin-api';
+import type { CardoTool, CommandResult, ToolContext, ToolStorage, WidgetProps } from '@cardo/plugin-api';
 import manifest from '../manifest.json';
 import { localDateKey, type DayDoc, type ItemDoc } from './routine';
 
@@ -17,17 +17,29 @@ export function createTool(): CardoTool {
 
   /* ── Storage helpers ─────────────────────────────────────────────── */
 
-  async function listItems(): Promise<ItemDoc[]> {
-    if (!ctx) return [];
+  async function listItemsIn(storage: ToolStorage): Promise<ItemDoc[]> {
     // query() returns doc bodies without ids, so items carry their id inside
     // the doc. Day docs share the namespace – tell them apart by shape.
-    const docs = await ctx.storage.query<Record<string, unknown>>();
+    const docs = await storage.query<Record<string, unknown>>();
     return docs
       .filter(
         (d): d is ItemDoc =>
           typeof d.id === 'string' && typeof d.title === 'string' && typeof d.order === 'number',
       )
       .sort((a, b) => a.order - b.order);
+  }
+
+  async function listItems(): Promise<ItemDoc[]> {
+    return ctx ? listItemsIn(ctx.storage) : [];
+  }
+
+  /** Today's checklist progress (LOCAL date). Storage-parametrized for self-tests. */
+  async function queryStatusIn(storage: ToolStorage): Promise<{ total: number; done: number }> {
+    const items = await listItemsIn(storage);
+    const date = localDateKey(new Date());
+    const day = await storage.get<DayDoc>(`day:${date}`);
+    const checked = new Set(day?.checked ?? []);
+    return { total: items.length, done: items.filter((i) => checked.has(i.id)).length };
   }
 
   async function getDay(date: string): Promise<DayDoc> {
@@ -305,6 +317,17 @@ export function createTool(): CardoTool {
           return checkItem(itemId);
         },
       });
+      // Data feed for other tools (e.g. a "Today" overview): today's progress.
+      context.commands.register({
+        id: 'routine.query-status',
+        titleKey: 'tool.routine.command.queryStatus',
+        palette: false,
+        params: z.object({}),
+        selfTestParams: {},
+        async run() {
+          return { ok: true, data: await queryStatusIn(context.storage) };
+        },
+      });
       context.commands.register({
         id: 'routine.reset-today',
         titleKey: 'tool.routine.command.resetToday',
@@ -344,6 +367,45 @@ export function createTool(): CardoTool {
           return roundtrip?.date === date && roundtrip.checked.includes('selftest-item')
             ? { status: 'pass' }
             : { status: 'fail', detail: `bad day state: ${JSON.stringify(roundtrip)}` };
+        }
+        case 'query-status': {
+          // Delta-based: the scratch DB may hold leftovers from command probes.
+          const date = localDateKey(new Date());
+          const before = await queryStatusIn(testCtx.storage);
+          const itemA: ItemDoc = { id: 'selftest-qs-a', title: 'probe A', order: 9000 };
+          const itemB: ItemDoc = { id: 'selftest-qs-b', title: 'probe B', order: 9001 };
+          await testCtx.storage.set(`item:${itemA.id}`, itemA);
+          await testCtx.storage.set(`item:${itemB.id}`, itemB);
+          const day = (await testCtx.storage.get<DayDoc>(`day:${date}`)) ?? {
+            id: date,
+            date,
+            checked: [],
+          };
+          await testCtx.storage.set<DayDoc>(`day:${date}`, {
+            ...day,
+            checked: [...day.checked.filter((id) => id !== itemA.id), itemA.id],
+          });
+          const after = await queryStatusIn(testCtx.storage);
+          // Clean up: remove the probe items and the probe check mark.
+          await testCtx.storage.delete(`item:${itemA.id}`);
+          await testCtx.storage.delete(`item:${itemB.id}`);
+          const restored = await testCtx.storage.get<DayDoc>(`day:${date}`);
+          if (restored) {
+            await testCtx.storage.set<DayDoc>(`day:${date}`, {
+              ...restored,
+              checked: restored.checked.filter((id) => id !== itemA.id),
+            });
+          }
+          if (after.total !== before.total + 2) {
+            return {
+              status: 'fail',
+              detail: `total: expected ${before.total + 2}, got ${after.total}`,
+            };
+          }
+          if (after.done !== before.done + 1) {
+            return { status: 'fail', detail: `done: expected ${before.done + 1}, got ${after.done}` };
+          }
+          return { status: 'pass', detail: `status ${after.done}/${after.total} as expected` };
         }
         case 'date-key': {
           const key = localDateKey(new Date(2026, 0, 5, 12, 0, 0));

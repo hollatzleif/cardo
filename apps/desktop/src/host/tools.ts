@@ -2,6 +2,8 @@ import type { CardoTool } from '@cardo/plugin-api';
 import { createTool as createClockTool } from '@cardo/tool-clock';
 import { createTool as createCounterTool } from '@cardo/tool-counter';
 import { createTool as createTodoTool } from '@cardo/tool-todo';
+import { createTool as createTodayTool } from '@cardo/tool-today';
+import { createTool as createHabitsTool } from '@cardo/tool-habits';
 import { createTool as createNotesTool } from '@cardo/tool-notes';
 import { createTool as createCalendarTool } from '@cardo/tool-calendar';
 import { createTool as createPomodoroTool } from '@cardo/tool-pomodoro';
@@ -18,7 +20,9 @@ import { createTool as createRoutineTool } from '@cardo/tool-routine';
  * the live instance, and per diagnose run for isolated scratch instances.
  */
 export const toolFactories: Record<string, () => CardoTool> = {
+  today: createTodayTool,
   todo: createTodoTool,
+  habits: createHabitsTool,
   notes: createNotesTool,
   calendar: createCalendarTool,
   pomodoro: createPomodoroTool,

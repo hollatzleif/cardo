@@ -8,7 +8,9 @@ import { SettingsModal } from './settings/SettingsModal';
 import { ToolMarket } from './market/ToolMarket';
 import { ProfileModal } from './profile/ProfileModal';
 import { Tour } from './onboarding/Tour';
+import { TemplatePicker } from './onboarding/TemplatePicker';
 import { DesignPanel } from './design/DesignPanel';
+import { FocusMode } from './focus/FocusMode';
 
 function greetingKey(hour: number): string {
   if (hour < 11) return 'profile.greetingMorning';
@@ -20,6 +22,8 @@ interface Toast {
   id: number;
   title: string;
   body?: string;
+  actionLabel?: string;
+  onAction?: () => void | Promise<void>;
 }
 
 export function App() {
@@ -40,12 +44,15 @@ export function App() {
   const setMarketOpen = useAppStore((s) => s.setMarketOpen);
   const designOpen = useAppStore((s) => s.designOpen);
   const setDesignOpen = useAppStore((s) => s.setDesignOpen);
+  const focusOpen = useAppStore((s) => s.focusOpen);
+  const setFocusOpen = useAppStore((s) => s.setFocusOpen);
   const profile = useAppStore((s) => s.profile);
   const onboardingDone = useAppStore((s) => s.onboardingDone);
   const tourActive = useAppStore((s) => s.tourActive);
   const startTour = useAppStore((s) => s.startTour);
 
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
@@ -64,23 +71,33 @@ export function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [setEditing, setPaletteOpen]);
 
-  // First start: the tour runs right after the profile is saved. If the app
-  // was closed mid-tour, resume it on the next start (still skippable).
+  // First start: profile → template picker → tour. If the app was closed
+  // mid-onboarding, resume the tour on the next start (still skippable).
   useEffect(() => {
-    if (profile && !onboardingDone && !tourActive) startTour();
+    if (profile && !onboardingDone && !tourActive && !showTemplates) startTour();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile]);
+  }, [profile, showTemplates]);
 
   useEffect(() => {
     let nextId = 1;
     return getHost().services.events.on('core:toast', (payload) => {
+      const p = payload as {
+        title?: unknown;
+        body?: string;
+        actionLabel?: string;
+        onAction?: () => void | Promise<void>;
+      };
       const toast: Toast = {
         id: nextId++,
-        title: String((payload as { title?: unknown }).title ?? ''),
-        body: (payload as { body?: string }).body,
+        title: String(p.title ?? ''),
+        body: p.body,
+        actionLabel: p.actionLabel,
+        onAction: p.onAction,
       };
       setToasts((ts) => [...ts, toast]);
-      setTimeout(() => setToasts((ts) => ts.filter((x) => x.id !== toast.id)), 4000);
+      // Toasts with an action (undo!) stay longer.
+      const ttl = toast.onAction ? 7000 : 4000;
+      setTimeout(() => setToasts((ts) => ts.filter((x) => x.id !== toast.id)), ttl);
     });
   }, []);
 
@@ -169,6 +186,14 @@ export function App() {
             </button>
           )}
           <button
+            className="c-btn c-btn--ghost"
+            title={t('focus.title')}
+            data-tour-anchor="ui:focus-button"
+            onClick={() => setFocusOpen(true)}
+          >
+            ◎ {t('focus.title')}
+          </button>
+          <button
             className={`c-btn c-btn--ghost${marketOpen ? ' topbar__page--active' : ''}`}
             title={t('market.title')}
             data-tour-anchor="ui:market-button"
@@ -194,20 +219,42 @@ export function App() {
       {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
       {designOpen && editing && <DesignPanel onClose={() => setDesignOpen(false)} />}
+      {focusOpen && <FocusMode onClose={() => setFocusOpen(false)} />}
       {needsProfile && (
         <ProfileModal
           onDone={() => {
-            if (!useAppStore.getState().onboardingDone) startTour();
+            if (!useAppStore.getState().onboardingDone) setShowTemplates(true);
           }}
         />
       )}
-      {tourActive && !needsProfile && <Tour />}
+      {showTemplates && !needsProfile && (
+        <TemplatePicker
+          onDone={() => {
+            setShowTemplates(false);
+            startTour();
+          }}
+        />
+      )}
+      {tourActive && !needsProfile && !showTemplates && <Tour />}
 
       <div className="toasts">
         {toasts.map((toast) => (
           <div key={toast.id} className="c-card toast">
-            <strong>{toast.title}</strong>
-            {toast.body && <div className="c-muted">{toast.body}</div>}
+            <div className="toast__text">
+              <strong>{toast.title}</strong>
+              {toast.body && <div className="c-muted">{toast.body}</div>}
+            </div>
+            {toast.onAction && (
+              <button
+                className="c-btn c-btn--primary toast__action"
+                onClick={() => {
+                  void toast.onAction?.();
+                  setToasts((ts) => ts.filter((x) => x.id !== toast.id));
+                }}
+              >
+                {toast.actionLabel}
+              </button>
+            )}
           </div>
         ))}
       </div>

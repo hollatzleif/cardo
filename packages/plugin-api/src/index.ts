@@ -146,10 +146,36 @@ export interface FilesApi {
   delete(name: string): Promise<void>;
 }
 
+/* ── Cross-tool search ─────────────────────────────────────────────────── */
+
+/** One hit in the global search (command palette). */
+export interface SearchResult {
+  title: string;
+  subtitle?: string;
+  /** Icon hint, e.g. "✓" for a todo. */
+  icon?: string;
+  /** Invoked when the user picks the result. */
+  action(): void | Promise<void>;
+}
+
+export type SearchProvider = (query: string) => Promise<SearchResult[]>;
+
 export interface ToolContext {
   storage: ToolStorage;
   events: EventBus;
-  commands: { register<P>(spec: CommandSpec<P>): void };
+  commands: {
+    register<P>(spec: CommandSpec<P>): void;
+    /**
+     * Execute ANY registered command – the sanctioned path for tool-to-tool
+     * automation (same interface the palette, shortcuts and the future AI
+     * assistant use). Unknown command ids reject.
+     */
+    execute(id: string, params: unknown): Promise<CommandResult>;
+    /** Whether a command is currently registered (guard for optional tools). */
+    has(id: string): boolean;
+  };
+  /** Contribute results to the global search (Cmd/Ctrl+K). */
+  search: { register(provider: SearchProvider): void };
   settings: SettingsApi;
   notifications: NotificationsApi;
   scheduler: SchedulerApi;

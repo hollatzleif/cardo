@@ -1,0 +1,30 @@
+{
+  "id": "habits",
+  "nameKey": "tool.habits.name",
+  "descriptionKey": "tool.habits.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.habits.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 6, "h": 6 },
+      "minSize": { "w": 4, "h": 4 },
+      "variants": []
+    }
+  ],
+  "commands": ["habits.add", "habits.check", "habits.query-status"],
+  "selfTests": [
+    { "id": "habit-roundtrip", "titleKey": "tool.habits.test.habitRoundtrip" },
+    { "id": "streak-calc", "titleKey": "tool.habits.test.streakCalc" },
+    { "id": "heatmap-range", "titleKey": "tool.habits.test.heatmapRange" }
+  ],
+  "tourSteps": [
+    { "anchor": "widget:habits:main", "titleKey": "tool.habits.tour.title", "bodyKey": "tool.habits.tour.body" }
+  ]
+}

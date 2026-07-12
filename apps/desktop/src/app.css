@@ -555,3 +555,88 @@
 .c-modal:has(.add-widget) {
   width: min(720px, 92vw);
 }
+
+/* ── Toast action (undo) ── */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.toast__text {
+  min-width: 0;
+}
+.toast__action {
+  flex-shrink: 0;
+}
+
+/* ── Polls ── */
+.polls__item {
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.polls__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.polls__result-label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.polls__bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+.polls__bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 300ms ease;
+}
+.polls__thanks {
+  margin: 0;
+  font-size: 0.85em;
+}
+
+/* ── Onboarding templates ── */
+.templates {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.templates__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-2);
+}
+.templates__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 120ms ease;
+}
+.templates__card:hover {
+  border-color: var(--accent);
+}
+.templates__emoji {
+  font-size: 1.6em;
+}
+.templates__footer {
+  display: flex;
+  justify-content: flex-end;
+}

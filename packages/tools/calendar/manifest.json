@@ -18,10 +18,11 @@
       "variants": []
     }
   ],
-  "commands": ["calendar.create", "calendar.remind"],
+  "commands": ["calendar.create", "calendar.remind", "calendar.query-today"],
   "selfTests": [
     { "id": "event-roundtrip", "titleKey": "tool.calendar.test.eventRoundtrip" },
     { "id": "month-grid", "titleKey": "tool.calendar.test.monthGrid" },
+    { "id": "query-today", "titleKey": "tool.calendar.test.queryToday" },
     { "id": "reminder-time", "titleKey": "tool.calendar.test.reminderTime" }
   ],
   "tourSteps": [

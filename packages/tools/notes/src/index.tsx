@@ -151,6 +151,24 @@ export function createTool(): CardoTool {
       };
     }, [files, reloadList, openNote, flushSave]);
 
+    /**
+     * A [[wiki-link]] was clicked in the preview: open the target note if a
+     * "<name>.md" exists in the current list, otherwise create it empty and
+     * open it (Obsidian behavior).
+     */
+    const openWikiLink = useCallback(
+      async (rawName: string) => {
+        if (!files || !ctx) return;
+        const fileName = sanitizeNoteName(rawName);
+        if (!fileName) return;
+        const existing = await files.list();
+        if (!existing.some((f) => f.name === fileName)) await files.write(fileName, '');
+        await reloadList();
+        await openNote(fileName);
+      },
+      [files, reloadList, openNote],
+    );
+
     function onEdit(next: string) {
       const name = selectedRef.current;
       if (!name) return;
@@ -372,6 +390,14 @@ export function createTool(): CardoTool {
               <div
                 className="cardo-notes-md"
                 style={{ flex: 1, minHeight: 0, overflowY: 'auto', userSelect: 'text', lineHeight: 1.55 }}
+                // Event delegation: wiki-link anchors carry the target note name.
+                onClick={(e) => {
+                  const anchor = (e.target as HTMLElement).closest('[data-note]');
+                  const name = anchor instanceof HTMLElement ? anchor.dataset.note : undefined;
+                  if (!name) return;
+                  e.preventDefault();
+                  void openWikiLink(name);
+                }}
                 // Safe: renderMarkdown escapes ALL input HTML before inserting its own tags.
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
               />
@@ -392,6 +418,7 @@ export function createTool(): CardoTool {
           .cardo-notes-md p, .cardo-notes-md ul, .cardo-notes-md ol { margin: 0.4em 0; }
           .cardo-notes-md ul, .cardo-notes-md ol { padding-left: 1.4em; }
           .cardo-notes-md a { color: var(--accent); }
+          .cardo-notes-md .md-wikilink { cursor: pointer; text-decoration: underline; }
           .cardo-notes-md code { font-family: var(--font-mono); font-size: 0.9em; background: var(--bg-widget-hover); border-radius: var(--radius-sm); padding: 0 4px; }
           .cardo-notes-md pre { background: var(--bg-widget-hover); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-2); overflow-x: auto; }
           .cardo-notes-md pre code { background: transparent; padding: 0; }
@@ -504,6 +531,41 @@ export function createTool(): CardoTool {
         },
       });
 
+      // Global search: note names. Picking a result reuses the notes.open
+      // mechanism – write the 'ui' doc, the widget subscribes and opens it.
+      context.search.register(async (query) => {
+        const q = query.trim().toLowerCase();
+        const files = context.files;
+        if (!q || !files) return [];
+        let all: Array<{ name: string; modifiedMs: number; size: number }>;
+        try {
+          all = await files.list();
+        } catch {
+          return []; // no folder configured yet – nothing to search
+        }
+        const fmt = new Intl.DateTimeFormat(context.i18n.language, {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        });
+        return all
+          .filter(
+            (f) =>
+              f.name.toLowerCase().endsWith('.md') &&
+              displayName(f.name).toLowerCase().includes(q),
+          )
+          .sort((a, b) => b.modifiedMs - a.modifiedMs)
+          .slice(0, 5)
+          .map((f) => ({
+            title: displayName(f.name),
+            subtitle: fmt.format(new Date(f.modifiedMs)),
+            icon: '📝',
+            action: async () => {
+              await rememberLastOpen(context, f.name);
+            },
+          }));
+      });
+
       await restoreFolder(context);
     },
 
@@ -527,6 +589,24 @@ export function createTool(): CardoTool {
             return { status: 'fail', detail: `HTML not escaped: ${out}` };
           }
           return { status: 'pass', detail: 'headings, inline formatting and HTML escaping ok' };
+        }
+        case 'wiki-links': {
+          const out = renderMarkdown('See [[Other Note]] here');
+          if (!out.includes('<a data-note="Other Note" class="md-wikilink">Other Note</a>')) {
+            return { status: 'fail', detail: `wiki-link anchor missing in: ${out}` };
+          }
+          const hostile = renderMarkdown('[[<script>alert(1)</script>]]');
+          if (hostile.includes('<script')) {
+            return { status: 'fail', detail: `script tag not escaped: ${hostile}` };
+          }
+          if (!hostile.includes('&lt;script&gt;')) {
+            return { status: 'fail', detail: `escaped script text missing: ${hostile}` };
+          }
+          const quoted = renderMarkdown('[["quoted" name]]');
+          if (!quoted.includes('data-note="quoted name"')) {
+            return { status: 'fail', detail: `quotes not stripped from attribute: ${quoted}` };
+          }
+          return { status: 'pass', detail: 'wiki-link anchor rendered, hostile input escaped' };
         }
         case 'file-roundtrip': {
           const files: FilesApi | undefined = testCtx.files;

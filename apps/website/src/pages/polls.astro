@@ -1,0 +1,118 @@
+---
+import Base from '../layouts/Base.astro';
+import pollsData from '../../public/polls.json';
+
+// Poll questions/options live in ../../public/polls.json (single source of truth,
+// also read by the desktop app). Vote counts come from the Cloudflare worker
+// and are fetched client-side below.
+const polls = pollsData.polls;
+---
+
+<Base title="Polls" description="Community polls for Cardo – vote from within the app, results are public. One anonymous vote per installation.">
+  <h1>Polls</h1>
+  <p class="muted">
+    Help decide where Cardo goes next. Voting happens inside the app
+    (Settings → Polls) – one vote per installation, completely anonymous.
+    The results below are public and update live.
+  </p>
+
+  <p id="results-status" class="muted results-status" hidden>
+    Results are currently unavailable – please try again later.
+  </p>
+
+  <section class="polls">
+    {polls.map((poll) => (
+      <article class="card poll" data-poll={poll.id}>
+        <header class="poll-header">
+          <h2>{poll.question.en}</h2>
+          {!poll.open && <span class="closed-badge">Closed</span>}
+        </header>
+        <ul class="options">
+          {poll.options.map((option) => (
+            <li data-option={option.id}>
+              <div class="option-row">
+                <span class="option-label">{option.label.en}</span>
+                <span class="option-stats muted" data-stats>– votes · –%</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" data-bar style="width: 0%"></div>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <p class="muted total" data-total>Total votes: –</p>
+      </article>
+    ))}
+  </section>
+
+  <section class="card" style="margin-top:2rem">
+    <h3>How voting works</h3>
+    <p class="muted">
+      Votes are cast from within the Cardo app (Settings → Polls). Each installation
+      can vote once per poll, identified only by an anonymous device hash – no IP
+      address, no account, no personal data. Results on this page are public.
+    </p>
+  </section>
+
+  <style>
+    .polls { display: grid; gap: 1rem; margin-top: 1.5rem; }
+    .poll-header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+    .poll-header h2 { margin: 0 0 0.5rem; font-size: 1.2rem; }
+    .closed-badge {
+      display: inline-block; padding: 0.1rem 0.6rem; border-radius: 999px; font-size: 0.8rem;
+      border: 1px solid var(--text-muted); color: var(--text-muted); white-space: nowrap;
+    }
+    .options { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.9rem; }
+    .option-row { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.95rem; }
+    .option-label { font-weight: 600; }
+    .bar-track {
+      height: 10px; border-radius: 999px; background: var(--surface-1);
+      overflow: hidden; margin-top: 0.3rem;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 999px; background: var(--accent);
+      transition: width 0.4s ease;
+    }
+    .total { margin: 1rem 0 0; font-size: 0.9rem; }
+    .results-status { margin-top: 1rem; }
+  </style>
+
+  <script>
+    // PLACEHOLDER: replace with the real worker URL after `npx wrangler deploy`
+    // (see server/polls-worker/README.md).
+    const WORKER_URL = 'https://cardo-polls.hollatzleif.workers.dev';
+
+    type PollResult = { total: number; counts: Record<string, number> };
+
+    function render(results: Record<string, PollResult>): void {
+      document.querySelectorAll<HTMLElement>('[data-poll]').forEach((pollEl) => {
+        const result = results[pollEl.dataset.poll ?? ''] ?? { total: 0, counts: {} };
+        pollEl.querySelectorAll<HTMLElement>('[data-option]').forEach((optionEl) => {
+          const count = result.counts[optionEl.dataset.option ?? ''] ?? 0;
+          const percent = result.total > 0 ? Math.round((count / result.total) * 100) : 0;
+          const stats = optionEl.querySelector('[data-stats]');
+          const bar = optionEl.querySelector<HTMLElement>('[data-bar]');
+          if (stats) stats.textContent = `${count} vote${count === 1 ? '' : 's'} · ${percent}%`;
+          if (bar) bar.style.width = `${percent}%`;
+        });
+        const totalEl = pollEl.querySelector('[data-total]');
+        if (totalEl) totalEl.textContent = `Total votes: ${result.total}`;
+      });
+    }
+
+    async function loadResults(): Promise<void> {
+      try {
+        const response = await fetch(`${WORKER_URL}/results`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = (await response.json()) as { polls: Record<string, PollResult> };
+        render(data.polls ?? {});
+      } catch {
+        const status = document.getElementById('results-status');
+        if (status) status.hidden = false;
+        render({}); // keep bars at 0 and show "–" as 0
+      }
+    }
+
+    loadResults();
+  </script>
+</Base>

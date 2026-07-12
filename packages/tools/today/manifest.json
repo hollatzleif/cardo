@@ -1,0 +1,33 @@
+{
+  "id": "today",
+  "nameKey": "tool.today.name",
+  "descriptionKey": "tool.today.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.today.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": { "w": 5, "h": 7 },
+      "minSize": { "w": 3, "h": 4 },
+      "variants": []
+    }
+  ],
+  "commands": [],
+  "selfTests": [
+    { "id": "aggregate-graceful", "titleKey": "tool.today.test.aggregateGraceful" },
+    { "id": "aggregate-with-todo", "titleKey": "tool.today.test.aggregateWithTodo" }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:today:main",
+      "titleKey": "tool.today.tour.title",
+      "bodyKey": "tool.today.tour.body"
+    }
+  ]
+}

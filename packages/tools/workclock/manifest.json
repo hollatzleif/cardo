@@ -22,6 +22,7 @@
   "selfTests": [
     { "id": "day-roundtrip", "titleKey": "tool.workclock.test.dayRoundtrip" },
     { "id": "start-stop", "titleKey": "tool.workclock.test.startStop" },
+    { "id": "coupling-setting", "titleKey": "tool.workclock.test.couplingSetting" },
     { "id": "format", "titleKey": "tool.workclock.test.format" }
   ],
   "tourSteps": [

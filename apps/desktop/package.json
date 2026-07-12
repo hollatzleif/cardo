@@ -1,6 +1,6 @@
 {
   "name": "@cardo/desktop",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -20,11 +20,13 @@
     "@cardo/tool-clock": "workspace:*",
     "@cardo/tool-countdown": "workspace:*",
     "@cardo/tool-counter": "workspace:*",
+    "@cardo/tool-habits": "workspace:*",
     "@cardo/tool-notes": "workspace:*",
     "@cardo/tool-pomodoro": "workspace:*",
     "@cardo/tool-quickcapture": "workspace:*",
     "@cardo/tool-routine": "workspace:*",
     "@cardo/tool-stats": "workspace:*",
+    "@cardo/tool-today": "workspace:*",
     "@cardo/tool-todo": "workspace:*",
     "@cardo/tool-workclock": "workspace:*",
     "@cardo/ui": "workspace:*",

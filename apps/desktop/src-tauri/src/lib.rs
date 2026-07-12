@@ -86,6 +86,84 @@ fn app_info(app: tauri::AppHandle, state: State<'_, AppState>) -> Value {
     })
 }
 
+/* ── Persistent scheduler (storage-backed; JS arms the timers) ────────── */
+
+#[tauri::command]
+async fn schedule_set(
+    state: State<'_, AppState>,
+    id: String,
+    fire_at_ms: i64,
+    command_id: String,
+    params: Value,
+) -> CmdResult<()> {
+    state
+        .storage
+        .schedule_set(&id, fire_at_ms, &command_id, &params)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn schedule_cancel(state: State<'_, AppState>, id: String) -> CmdResult<()> {
+    state.storage.schedule_cancel(&id).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn schedule_list(state: State<'_, AppState>) -> CmdResult<Vec<Value>> {
+    state.storage.schedule_list().await.map_err(|e| e.to_string())
+}
+
+/* ── Backup ───────────────────────────────────────────────────────────── */
+
+#[tauri::command]
+async fn backup_export(state: State<'_, AppState>, path: String) -> CmdResult<u64> {
+    let dump = state.storage.dump_all().await.map_err(|e| e.to_string())?;
+    let doc_count = dump
+        .as_object()
+        .map(|o| o.values().filter_map(|v| v.as_object()).map(|m| m.len() as u64).sum())
+        .unwrap_or(0);
+    let wrapped = serde_json::json!({
+        "cardoBackup": 1,
+        "exportedAt": std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as i64)
+            .unwrap_or(0),
+        "data": dump,
+    });
+    let pretty = serde_json::to_string_pretty(&wrapped).map_err(|e| e.to_string())?;
+    std::fs::write(&path, pretty).map_err(|e| e.to_string())?;
+    Ok(doc_count)
+}
+
+/// Restores every document from a backup file (existing ids are
+/// overwritten, everything else stays). Runs through the normal storage
+/// layer, so the change log records the restore like any other write.
+#[tauri::command]
+async fn backup_import(state: State<'_, AppState>, path: String) -> CmdResult<u64> {
+    let raw = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let parsed: Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+    if parsed.get("cardoBackup").and_then(|v| v.as_i64()) != Some(1) {
+        return Err("not a Cardo backup file".into());
+    }
+    let data = parsed
+        .get("data")
+        .and_then(|v| v.as_object())
+        .ok_or_else(|| "backup contains no data".to_string())?;
+    let mut restored = 0u64;
+    for (namespace, docs) in data {
+        let Some(docs) = docs.as_object() else { continue };
+        for (id, doc) in docs {
+            state
+                .storage
+                .set(namespace, id, doc.clone())
+                .await
+                .map_err(|e| e.to_string())?;
+            restored += 1;
+        }
+    }
+    Ok(restored)
+}
+
 /// Writes an exported diagnose report next to the user's downloads
 /// (fallback: app data dir) and returns the full path.
 #[tauri::command]
@@ -141,6 +219,11 @@ pub fn run() {
             notes::notes_write,
             notes::notes_rename,
             notes::notes_delete,
+            schedule_set,
+            schedule_cancel,
+            schedule_list,
+            backup_export,
+            backup_import,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Cardo");

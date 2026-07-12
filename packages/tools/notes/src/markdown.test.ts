@@ -76,6 +76,57 @@ describe('renderMarkdown – inline', () => {
   });
 });
 
+describe('renderMarkdown – wiki-links', () => {
+  it('renders [[Note Name]] as an internal anchor with a data attribute', () => {
+    expect(renderMarkdown('See [[Note Name]]')).toBe(
+      '<p>See <a data-note="Note Name" class="md-wikilink">Note Name</a></p>',
+    );
+  });
+
+  it('coexists with normal links (wiki rule runs first)', () => {
+    expect(renderMarkdown('[[Wiki]] and [ext](https://e.com)')).toBe(
+      '<p><a data-note="Wiki" class="md-wikilink">Wiki</a> and <a href="https://e.com" target="_blank" rel="noopener noreferrer">ext</a></p>',
+    );
+  });
+
+  it('works inside headings and list items', () => {
+    expect(renderMarkdown('- see [[Target]]')).toBe(
+      '<ul><li>see <a data-note="Target" class="md-wikilink">Target</a></li></ul>',
+    );
+  });
+
+  it('keeps wiki-link syntax literal inside inline code', () => {
+    expect(renderMarkdown('`[[not a link]]`')).toBe('<p><code>[[not a link]]</code></p>');
+  });
+
+  it('escapes hostile note names such as [[<script>]]', () => {
+    const out = renderMarkdown('[[<script>alert(1)</script>]]');
+    expect(out).not.toContain('<script');
+    expect(out).toContain('&lt;script&gt;');
+    expect(out).toContain('data-note="&lt;script&gt;alert(1)&lt;/script&gt;"');
+  });
+
+  it('strips quotes from the data attribute value but keeps the visible label', () => {
+    expect(renderMarkdown('[["quoted" name]]')).toBe(
+      '<p><a data-note="quoted name" class="md-wikilink">&quot;quoted&quot; name</a></p>',
+    );
+  });
+
+  it('strips asterisks from the attribute so bold cannot rewrite it', () => {
+    const out = renderMarkdown('[[**bold** name]]');
+    expect(out).toContain('data-note="bold name"');
+  });
+
+  it('leaves quote-only names literal instead of emitting an empty target', () => {
+    expect(renderMarkdown(`[['']]`)).toBe('<p>[[&#39;&#39;]]</p>');
+  });
+
+  it('does not match empty or unclosed brackets', () => {
+    expect(renderMarkdown('[[]]')).toBe('<p>[[]]</p>');
+    expect(renderMarkdown('[[open')).toBe('<p>[[open</p>');
+  });
+});
+
 describe('renderMarkdown – XSS hardening', () => {
   it('escapes script tags instead of emitting them', () => {
     const out = renderMarkdown('<script>alert(1)</script>');

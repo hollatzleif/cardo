@@ -10,6 +10,7 @@ import {
   type ToolContext,
 } from '@cardo/plugin-api';
 import { CommandRegistry } from './commands';
+import { SearchRegistry } from './search';
 import { createNamespacedStorage, type StorageBackend } from './storage';
 
 export interface HostServices {
@@ -21,6 +22,8 @@ export interface HostServices {
   i18n: I18nApi;
   /** File backend for tools with file permissions. Absent in scratch/diagnose contexts. */
   files?: FilesApi;
+  /** Global content search. Optional: scratch contexts use a throwaway one. */
+  search?: SearchRegistry;
 }
 
 const themeApi: ThemeTokensApi = {
@@ -66,6 +69,7 @@ export class ToolRegistry {
 
   createContext(toolId: string, backend?: StorageBackend): ToolContext {
     const s = this.services;
+    const search = s.search ?? new SearchRegistry();
     return {
       storage: createNamespacedStorage(backend ?? s.backend, toolId),
       events: s.events,
@@ -78,6 +82,13 @@ export class ToolRegistry {
           }
           s.commands.register(spec);
         },
+        // Cross-tool automation runs through the same dispatch as the
+        // palette – commands are the only sanctioned tool-to-tool call.
+        execute: (id, params) => s.commands.execute(id, params),
+        has: (id) => s.commands.has(id),
+      },
+      search: {
+        register: (provider) => search.register(toolId, provider),
       },
       settings: {
         get: async <T>(key: string) => {
@@ -125,6 +136,7 @@ export class ToolRegistry {
     if (!entry || !entry.active) return;
     await entry.tool.deactivate();
     this.services.commands.unregisterTool(toolId);
+    this.services.search?.unregisterTool(toolId);
     entry.active = false;
   }
 }

@@ -36,6 +36,8 @@ async function bootstrap(): Promise<void> {
 
   await useAppStore.getState().init();
   void initGlobalShortcuts(host);
+  // Re-arm persisted schedules; overdue ones (missed while closed) fire now.
+  void (host.services.scheduler as { init?: () => Promise<void> }).init?.();
   // Background update check ~10s after launch (never blocks startup).
   window.setTimeout(() => {
     void import('./host/updates').then((u) => u.checkForUpdates({ background: true }));
