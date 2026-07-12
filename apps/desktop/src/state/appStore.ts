@@ -164,16 +164,11 @@ export const useAppStore = create<AppState>((set, get) => {
       const onboardingDoc = (await backend.get('core.settings', 'core.onboarding')) as {
         value?: { done?: boolean };
       } | null;
-      const activeDoc = (await backend.get('core.settings', 'core.activeTools')) as {
-        value?: string[];
-      } | null;
       const { registry } = getHost();
-      const activeToolIds =
-        activeDoc?.value ??
-        registry
-          .list()
-          .filter((t) => t.active)
-          .map((t) => t.tool.manifest.id);
+      const activeToolIds = registry
+        .list()
+        .filter((t) => t.active)
+        .map((t) => t.tool.manifest.id);
 
       set({
         ready: true,
@@ -223,9 +218,15 @@ export const useAppStore = create<AppState>((set, get) => {
       const ids = new Set(get().activeToolIds);
       if (active) ids.add(toolId);
       else ids.delete(toolId);
-      const activeToolIds = [...ids];
-      set({ activeToolIds });
-      await backend.set('core.settings', 'core.activeTools', { value: activeToolIds });
+      set({ activeToolIds: [...ids] });
+      // Persist DEACTIVATIONS – tools from future updates stay on by default.
+      const inactiveDoc = (await backend.get('core.settings', 'core.inactiveTools')) as {
+        value?: string[];
+      } | null;
+      const inactive = new Set(inactiveDoc?.value ?? []);
+      if (active) inactive.delete(toolId);
+      else inactive.add(toolId);
+      await backend.set('core.settings', 'core.inactiveTools', { value: [...inactive] });
     },
 
     async saveProfile(profile) {

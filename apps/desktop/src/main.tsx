@@ -26,12 +26,17 @@ async function bootstrap(): Promise<void> {
   instantiateTools();
   for (const tool of liveTools.values()) host.registry.register(tool);
 
-  const activeDoc = (await host.backend.get('core.settings', 'core.activeTools')) as {
+  // Deactivation list semantics: tools shipped in FUTURE updates are
+  // active by default (an allowlist froze out newly added tools – found
+  // by Leif when the assistant widget was missing). The legacy
+  // core.activeTools doc is intentionally ignored.
+  const inactiveDoc = (await host.backend.get('core.settings', 'core.inactiveTools')) as {
     value?: string[];
   } | null;
-  const active = new Set(activeDoc?.value ?? [...liveTools.keys()]);
+  const inactive = new Set(inactiveDoc?.value ?? []);
+  inactive.delete('assistant'); // the assistant is a core feature, always on
   for (const id of liveTools.keys()) {
-    if (active.has(id)) await host.registry.activate(id);
+    if (!inactive.has(id)) await host.registry.activate(id);
   }
 
   await useAppStore.getState().init();
