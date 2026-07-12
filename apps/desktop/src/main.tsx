@@ -40,6 +40,8 @@ async function bootstrap(): Promise<void> {
   void (host.services.scheduler as { init?: () => Promise<void> }).init?.();
   // Inbox feed check – only ever runs when the user opted in.
   void import('./inbox/feed').then((m) => m.initInbox());
+  // Assistant profiles (incl. one-time v0.3 → v0.4 migration).
+  void import('./assistant').then((m) => m.initProfiles());
   // Background update check ~10s after launch (never blocks startup).
   window.setTimeout(() => {
     void import('./host/updates').then((u) => u.checkForUpdates({ background: true }));

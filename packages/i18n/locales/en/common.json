@@ -60,7 +60,8 @@
     "backupExported": "Backup saved ({{count}} entries).",
     "backupImportConfirm": "Restore this backup? Entries with the same ID will be overwritten. Cardo restarts afterwards.",
     "backupError": "That didn't work. The file may not be a Cardo backup.",
-    "assistant": "Assistant"
+    "assistant": "Assistant",
+    "aiLicenses": "AI models & licenses"
   },
   "diagnose": {
     "start": "Run self-test",
@@ -778,7 +779,12 @@
       },
       "test": {
         "catalogBuild": "Command catalog builds correctly",
-        "proposalValidate": "Proposals are validated, hostile input is filtered"
+        "proposalValidate": "Proposals are validated, hostile input is filtered",
+        "profileCrud": "Profiles can be created, read and deleted",
+        "routerParse": "Router answers resolve to a team member",
+        "templateKnown": "Every model uses a known prompt template",
+        "catalogSane": "Model catalog entries are complete and valid",
+        "scopeEnforcement": "Out-of-scope commands are blocked"
       },
       "tour": {
         "title": "Braindump instead of busywork",
@@ -900,7 +906,23 @@
       "done": "Done",
       "failed": "Failed",
       "dismissed": "Dismissed",
-      "editSent": "Opened for editing"
+      "editSent": "Opened for editing",
+      "noProfiles": "No assistant set up yet. Create one in Settings → Assistant.",
+      "switchLabel": "Switch assistant",
+      "profilesGroup": "Assistants",
+      "modelLoading": "Loading model…",
+      "ramError": "Not enough memory to load this model. Close other apps or pick a smaller model.",
+      "answers": "{{name}} answers",
+      "rememberedTitle": "Remembered:",
+      "forgetLine": "Forget this",
+      "forgetConfirm": "Should I forget: \"{{line}}\"?",
+      "forgotten": "Forgotten.",
+      "blocked": "Skipped – this command is outside this assistant's allowed tools.",
+      "delegateQuestion": "Hand over to {{name}}? – {{reason}}",
+      "delegateAccept": "Hand over",
+      "delegateKeep": "Keep it here",
+      "delegateTakeover": "\"{{name}}\" is taking over…",
+      "delegateDone": "Handed over."
     },
     "rating": {
       "great": "Great",
@@ -916,7 +938,103 @@
       "na": "–"
     },
     "model": {
-      "ramNeed": "needs {{ram}} RAM"
+      "ramNeed": "needs {{ram}} RAM",
+      "qwen3-0-6b": {
+        "strengths": "Tiny and loads in a flash; runs on virtually any machine.",
+        "weaknesses": "Very limited understanding – anything beyond simple requests confuses it.",
+        "idealFor": "Trying the assistant out, or as a quick router model."
+      },
+      "qwen3-1-7b": {
+        "strengths": "Solid small all-rounder with decent German and reliable structured output.",
+        "weaknesses": "Shallow reasoning; misses details in longer braindumps.",
+        "idealFor": "Fast everyday commands on 8 GB machines."
+      },
+      "qwen3-4b": {
+        "strengths": "Good all-rounder: solid German and dependable JSON output for its size.",
+        "weaknesses": "Noticeably slower on 8 GB machines; complex requests can overwhelm it.",
+        "idealFor": "The sensible default on most machines."
+      },
+      "qwen3-8b": {
+        "strengths": "Strong all-rounder with good German and very reliable structured output.",
+        "weaknesses": "Needs 16 GB RAM to feel smooth.",
+        "idealFor": "Main assistant on a 16 GB Apple Silicon Mac."
+      },
+      "qwen3-14b": {
+        "strengths": "Very capable all-rounder; handles long, messy braindumps well.",
+        "weaknesses": "Big download, needs plenty of RAM and replies noticeably slower.",
+        "idealFor": "Quality-first main profile on machines with 16 GB or more."
+      },
+      "qwen3-30b-a3b": {
+        "strengths": "Mixture-of-experts: near-14B quality at the speed of a ~3B model.",
+        "weaknesses": "Huge download, and the full weights must fit in RAM (~24 GB).",
+        "idealFor": "The best quality/speed mix on 32 GB Apple Silicon."
+      },
+      "phi-4-mini": {
+        "strengths": "Remarkably clever for its size, especially at logic and structure.",
+        "weaknesses": "Leans towards English – German replies can sound stiff.",
+        "idealFor": "Fast English-language tasks on small machines."
+      },
+      "phi-4": {
+        "strengths": "Very smart in the 14B class; strong reasoning and clean output.",
+        "weaknesses": "Leans towards English; German is usable but not its strength.",
+        "idealFor": "Complex reasoning tasks, preferably in English."
+      },
+      "mistral-7b": {
+        "strengths": "Proven, fast and dependable workhorse.",
+        "weaknesses": "Older generation – weaker German and less precise than newer 7–8B models.",
+        "idealFor": "A dependable everyday model on mid-range hardware."
+      },
+      "mistral-small-24b": {
+        "strengths": "Very strong across the board, close to much larger models.",
+        "weaknesses": "Needs about 20 GB RAM and is not fast.",
+        "idealFor": "Top quality on 32 GB machines."
+      },
+      "granite-3-1-8b": {
+        "strengths": "Built for function calling – very reliable command and JSON output.",
+        "weaknesses": "Plain, sober writing; not the most creative.",
+        "idealFor": "Profiles that mostly execute commands with structured output."
+      },
+      "deepseek-r1-7b": {
+        "strengths": "Strong step-by-step reasoning for tricky, logical problems.",
+        "weaknesses": "Thinks out loud before answering, which makes it slow (the visible reasoning is stripped automatically).",
+        "idealFor": "Puzzling tasks where quality matters more than speed."
+      },
+      "llama-3-2-1b": {
+        "strengths": "Tiny and instant; surprisingly capable for its size.",
+        "weaknesses": "Very limited depth; Meta license notice applies.",
+        "idealFor": "Router duty and very simple commands on any machine."
+      },
+      "llama-3-2-3b": {
+        "strengths": "Strong for its size and pleasantly quick.",
+        "weaknesses": "Limited depth on complex requests; Meta license notice applies.",
+        "idealFor": "A snappy assistant on 8 GB machines."
+      },
+      "llama-3-1-8b": {
+        "strengths": "Strong all-rounder with broad knowledge and good multilingual skills.",
+        "weaknesses": "Meta license notice applies; needs ~8 GB RAM.",
+        "idealFor": "A general-purpose main assistant."
+      },
+      "gemma-3-4b": {
+        "strengths": "Outstanding German and writing quality for its size.",
+        "weaknesses": "You must accept Google's Gemma terms before downloading.",
+        "idealFor": "German-language writing on small machines."
+      },
+      "gemma-3-12b": {
+        "strengths": "Excellent German, natural style, very good multilingual writing.",
+        "weaknesses": "Needs ~11 GB RAM; Google's Gemma terms must be accepted.",
+        "idealFor": "A German-first main assistant on 16 GB machines."
+      },
+      "gemma-3-27b": {
+        "strengths": "The best German writing quality in this catalog.",
+        "weaknesses": "Very high RAM needs (~22 GB), slow; Gemma terms must be accepted.",
+        "idealFor": "Maximum text quality on 32 GB machines."
+      },
+      "strengths": "Strengths",
+      "weaknesses": "Weaknesses",
+      "idealFor": "Ideal for",
+      "installed": "Installed",
+      "builtWithLlama": "Built with Llama",
+      "moeActive": "≈{{b}}B active parameters"
     },
     "wizard": {
       "checkTitle": "Step 1: System check",
@@ -975,7 +1093,130 @@
         "personality": "Personality (personality.md)",
         "memory": "Memory (memory.md)"
       },
-      "saved": "Saved."
+      "saved": "Saved.",
+      "delegationAsk": "Suggest delegating to other assistants",
+      "delegationAskHint": "If another assistant is better suited for a task, Cardo suggests handing it over.",
+      "deleteBlockedByProfile": "Used by {{names}} – assign a different model to those assistants first."
+    },
+    "team": {
+      "group": "Teams",
+      "routing": "{{leader}} is choosing who should answer…",
+      "routedTo": "→ {{leader}} hands this to {{member}}",
+      "empty": "This team has no usable members. Check the team setup in Settings → Assistant."
+    },
+    "profiles": {
+      "activeTitle": "Active assistant",
+      "activeTeamTitle": "Active team",
+      "sectionTitle": "More assistants & teams",
+      "sectionIntro": "Create several assistants with their own strengths – e.g. Hanna for work, Felix for letters – sharing one memory so nothing gets lost.",
+      "new": "New assistant",
+      "import": "Import",
+      "importTitle": "Import assistant",
+      "importMemory": "Also import the included memory",
+      "importConfirm": "Import \"{{name}}\"?",
+      "importError": "Import failed – the file could not be read.",
+      "exportedTo": "Exported to {{path}}",
+      "activate": "Activate",
+      "duplicate": "Duplicate",
+      "duplicatePrompt": "Name for the copy:",
+      "duplicateName": "{{name}} (copy)",
+      "export": "Export",
+      "deleteConfirm": "Really delete \"{{name}}\"? Its memory is kept and can be reused.",
+      "modelMissing": "Model not installed",
+      "editTitle": "Edit \"{{name}}\"",
+      "nameLabel": "Name",
+      "modelLabel": "Model"
+    },
+    "teams": {
+      "title": "Teams",
+      "new": "New team",
+      "create": "Create team",
+      "editTitle": "Edit team \"{{name}}\"",
+      "deleteConfirm": "Really delete team \"{{name}}\"? The assistants are kept.",
+      "needTwo": "You need at least two assistants for a team.",
+      "membersLabel": "Members (pick at least 2)",
+      "membersLine": "Members: {{names}}",
+      "leaderLabel": "Team lead",
+      "leaderLine": "Lead: {{name}}",
+      "leaderFastest": "(fastest – recommended)"
+    },
+    "flow": {
+      "stepOf": "Step {{n}} of {{total}}",
+      "templateTitle": "What should your new assistant start as?",
+      "modelTitle": "Which model should power it?",
+      "memoryTitle": "Memory",
+      "toolsTitle": "Tools",
+      "lookTitle": "Appearance",
+      "emojiLabel": "Emoji",
+      "colorLabel": "Color",
+      "create": "Create assistant",
+      "creating": "Creating your assistant…",
+      "willDownload": "Will be downloaded when you create it",
+      "competencesLabel": "What is this assistant strong at?",
+      "competencesHint": "One line per strength – Cardo uses this for delegation suggestions."
+    },
+    "templates": {
+      "secretary": {
+        "name": "Secretary",
+        "desc": "Writes letters & emails and keeps track of tasks.",
+        "extra": "You mainly help with writing letters, emails and notes, and you keep an eye on open tasks.",
+        "competences": "Writing letters and emails\nManaging tasks and reminders"
+      },
+      "planner": {
+        "name": "Planner",
+        "desc": "Structures appointments, routines and your day.",
+        "extra": "You mainly help with appointments, routines and day planning, and you think ahead about preparations.",
+        "competences": "Appointments and day planning\nRoutines and habits"
+      },
+      "coach": {
+        "name": "Coach",
+        "desc": "Motivates you with habits, breaks and goals.",
+        "extra": "You gently motivate with habits, breaks and personal goals, without applying pressure.",
+        "competences": "Habits and motivation\nBreaks and balance"
+      },
+      "blank": {
+        "name": "Blank",
+        "desc": "Start from scratch – you answer all questions yourself."
+      }
+    },
+    "memory": {
+      "badge": "Memory: {{name}}",
+      "share": "Share with",
+      "recommended": "(recommended)",
+      "own": "Own memory",
+      "ownName": "Memory name",
+      "defaultOwnName": "{{name}}'s memory",
+      "whyShare": "A shared memory is usually the better choice: all assistants know the same facts, names and preferences, and nothing gets lost when you switch between them. A separate memory only makes sense when one assistant must keep things strictly apart."
+    },
+    "tools": {
+      "all": "All tools (recommended)",
+      "pickHint": "The assistant may only use these tools:"
+    },
+    "license": {
+      "consentTitle": "Confirm license",
+      "consentText": "\"{{model}}\" is provided under the {{name}} terms. Please read and confirm them before the download starts.",
+      "consentCheckbox": "I accept the license terms",
+      "view": "View license"
+    },
+    "competence": {
+      "banner": "\"{{name}}\" successfully proposed {{count}} {{tool}} tasks – add this as a strength?",
+      "accept": "Add it",
+      "ignore": "Ignore",
+      "appendLine": "Proven at {{tool}} tasks ({{toolId}})"
+    },
+    "advanced": {
+      "hint": "These files drive your assistants. Cardo normally manages them automatically – only change them if you know what you're doing.",
+      "profileDocsTitle": "Assistant files",
+      "memoriesTitle": "Memories",
+      "memoryUsers": "Used by: {{names}}",
+      "memoryUnused": "Not in use",
+      "rename": "Rename",
+      "renamePrompt": "New name:",
+      "memoryDeleteBlocked": "A memory can only be deleted once no assistant or team uses it any more.",
+      "memoryDeleteConfirm": "Permanently delete memory \"{{name}}\"? This cannot be undone.",
+      "teamCompetencesTitle": "Team competences (team-kompetenzen.md)",
+      "teamCompetencesHint": "Automatically maintained overview of who is best at what – the basis for delegation suggestions. Your '## Notizen' section is preserved.",
+      "regenerate": "Regenerate"
     }
   }
 }

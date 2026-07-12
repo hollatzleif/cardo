@@ -1,0 +1,602 @@
+---
+import Base from '../layouts/Base.astro';
+import { FORUM_URL, withBase } from '../lib/site';
+---
+
+<Base
+  title="Your Assistant"
+  description="A local AI assistant that turns messy thoughts into concrete actions – running 100 % on your device. Setup, model guide, multiple assistants, teams and delegation, honestly explained."
+>
+  <section class="hero">
+    <h1>Your Assistant</h1>
+    <p class="muted">
+      A local AI that turns messy thoughts into concrete actions: appointments, to-dos, notes,
+      habits – proposed as cards, applied only when <em>you</em> say yes.
+    </p>
+    <p>
+      <span class="badge">● 100 % on your device</span>
+    </p>
+    <p class="muted hero__privacy">
+      The assistant runs entirely on your machine. Your thoughts, your notes, your calendar –
+      none of it ever leaves your device. The <strong>only</strong> network contact is the
+      one-time model download from <code>huggingface.co</code>, and only when you click
+      “Install”. After that, everything works offline. Forever.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>How it works: dump your thoughts, get cards back</h2>
+    <p>
+      You don't write commands. You write the way your head sounds. Say you type this into the
+      assistant widget:
+    </p>
+    <div class="braindump">
+      “dentist tomorrow 9am, buy milk, call Lisa back, want to read daily again”
+    </div>
+    <p>The assistant reads it, sorts it, and answers with proposal cards:</p>
+    <div class="proposals">
+      <div class="proposal">
+        <span class="proposal__kind">📅 Appointment</span>
+        <strong>Dentist</strong> – tomorrow, 9:00, with a reminder before it starts.
+        <span class="proposal__actions"><b>Yes</b> · Edit · No</span>
+      </div>
+      <div class="proposal">
+        <span class="proposal__kind">✓ To-do</span>
+        <strong>Buy milk</strong>
+        <span class="proposal__actions"><b>Yes</b> · Edit · No</span>
+      </div>
+      <div class="proposal">
+        <span class="proposal__kind">✓ To-do</span>
+        <strong>Call Lisa back</strong>
+        <span class="proposal__actions"><b>Yes</b> · Edit · No</span>
+      </div>
+      <div class="proposal">
+        <span class="proposal__kind">🔥 Habit</span>
+        <strong>Read daily</strong> – added to your daily routine.
+        <span class="proposal__actions"><b>Yes</b> · Edit · No</span>
+      </div>
+    </div>
+    <p>
+      <strong>Nothing happens without your confirmation.</strong> Every card waits for
+      <em>Yes</em>, <em>Edit</em> (fix the details first) or <em>No</em>. The assistant can only
+      use the same commands you see in the command palette – it cannot invent actions, touch
+      files behind your back, or delete anything silently.
+    </p>
+    <p class="muted">
+      Trust it after a while? You can switch confirmation off per assistant in its settings –
+      cards then apply immediately. Turning it back on is one click away, and it's on by default.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>Setup: three steps, no expertise needed</h2>
+    <ol>
+      <li>
+        <strong>Open <em>Settings → Assistant</em>.</strong> That's the whole entry point –
+        the assistant is a built-in tool like any other, and its privacy light is green.
+      </li>
+      <li>
+        <strong>Let Cardo check your machine.</strong> The system check looks at your RAM and
+        CPU cores (and recognizes Apple Silicon, which runs local models especially well). Every
+        available model then gets an honest rating: <em>great</em>, <em>okay</em>, <em>slow</em>
+        or <em>too big for this machine</em> – plus one clear recommendation. No guessing, no
+        “it depends” – Cardo tells you what will actually feel good on <em>your</em> hardware.
+      </li>
+      <li>
+        <strong>One click to install.</strong> Pick a model (the recommended one is a safe
+        choice) and press install. This is the one moment Cardo contacts the internet: the model
+        file is downloaded from <code>huggingface.co</code>, with a visible progress bar. Once
+        it's done, you're offline-capable for good.
+      </li>
+    </ol>
+    <p>
+      Right after that, the assistant asks a few <strong>personality questions</strong>: what
+      it should be called, what it should call you, how it should talk (short &amp; direct,
+      friendly, or detailed) and which language it should answer in. Two minutes, and it feels
+      like yours.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>Choosing a model: an honest guide</h2>
+    <p>
+      Bigger models understand more nuance but need more RAM and answer more slowly. Smaller
+      models are quick and light but occasionally miss subtleties. There is no “best” model –
+      only the best one <em>for your machine and your patience</em>. Sizes below are rough
+      values for the usual 4-bit builds Cardo installs; the system check gives you exact,
+      per-machine ratings.
+    </p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Download</th>
+            <th>RAM needed</th>
+            <th>Speed feel</th>
+            <th>Strengths</th>
+            <th>Weaknesses</th>
+            <th>Ideal for</th>
+            <th>License</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="family"><th colspan="8">Qwen3 (Alibaba) – Cardo's default family</th></tr>
+          <tr>
+            <td>Qwen3 0.6B</td>
+            <td>~0.4 GB</td>
+            <td>~2–3 GB</td>
+            <td>Instant</td>
+            <td>Tiny, runs anywhere, surprisingly capable at sorting braindumps</td>
+            <td>Misses nuance, short memory for context</td>
+            <td>Old or low-RAM machines, trying the feature out</td>
+            <td>Apache-2.0</td>
+          </tr>
+          <tr>
+            <td>Qwen3 1.7B</td>
+            <td>~1.3 GB</td>
+            <td>~4 GB</td>
+            <td>Very fast</td>
+            <td>Great speed-to-smarts ratio, solid multilingual (incl. German)</td>
+            <td>Struggles with long, tangled braindumps</td>
+            <td>8 GB laptops that should stay snappy</td>
+            <td>Apache-2.0</td>
+          </tr>
+          <tr>
+            <td>Qwen3 4B</td>
+            <td>~2.4 GB</td>
+            <td>~6 GB</td>
+            <td>Fast</td>
+            <td>The sweet spot: reliable extraction, good dates, good German and English</td>
+            <td>Not a great writer for longer texts</td>
+            <td>Most people – the usual recommendation on 8–16 GB</td>
+            <td>Apache-2.0</td>
+          </tr>
+          <tr>
+            <td>Qwen3 8B</td>
+            <td>~4.7 GB</td>
+            <td>~10 GB</td>
+            <td>Comfortable</td>
+            <td>Noticeably smarter, handles messy multi-topic dumps well</td>
+            <td>Needs 16 GB to feel good; slow on older x86</td>
+            <td>16 GB machines, especially Apple Silicon</td>
+            <td>Apache-2.0</td>
+          </tr>
+          <tr>
+            <td>Qwen3 14B</td>
+            <td>~8.5 GB</td>
+            <td>~16 GB</td>
+            <td>Leisurely</td>
+            <td>Strong reasoning and writing, rarely misreads intent</td>
+            <td>Heavy; only pleasant with 24 GB+ or a strong GPU</td>
+            <td>Powerful desktops that want quality over speed</td>
+            <td>Apache-2.0</td>
+          </tr>
+          <tr>
+            <td>Qwen3 30B-A3B</td>
+            <td>~18 GB</td>
+            <td>~24 GB+</td>
+            <td>Fast <em>for its size</em></td>
+            <td>Mixture-of-experts: big-model quality, but only ~3B parameters active per answer – so it answers quickly once loaded</td>
+            <td>Huge download and RAM footprint; long initial load</td>
+            <td>32 GB+ machines that want the best local quality</td>
+            <td>Apache-2.0</td>
+          </tr>
+
+          <tr class="family"><th colspan="8">Phi-4 (Microsoft)</th></tr>
+          <tr>
+            <td>Phi-4-mini (3.8B)</td>
+            <td>~2.3 GB</td>
+            <td>~6 GB</td>
+            <td>Fast</td>
+            <td>Punches above its weight at logic and structured tasks</td>
+            <td>English-leaning; German is usable but not its strength</td>
+            <td>8 GB machines with mostly English input</td>
+            <td>MIT</td>
+          </tr>
+          <tr>
+            <td>Phi-4 (14B)</td>
+            <td>~8.5 GB</td>
+            <td>~16 GB</td>
+            <td>Leisurely</td>
+            <td>Excellent reasoning and math for its class</td>
+            <td>Same English lean; dry writing style</td>
+            <td>Analytical work on 24 GB+ machines</td>
+            <td>MIT</td>
+          </tr>
+
+          <tr class="family"><th colspan="8">Mistral</th></tr>
+          <tr>
+            <td>Mistral 7B</td>
+            <td>~4.1 GB</td>
+            <td>~9 GB</td>
+            <td>Comfortable</td>
+            <td>Reliable all-rounder, strong European languages (German, French …)</td>
+            <td>Older design; newer 4B models often match it</td>
+            <td>16 GB machines with lots of German input</td>
+            <td>Apache-2.0</td>
+          </tr>
+          <tr>
+            <td>Mistral Small (24B)</td>
+            <td>~14 GB</td>
+            <td>~20–24 GB</td>
+            <td>Leisurely</td>
+            <td>Near-flagship quality, excellent German, great writer</td>
+            <td>Big; needs 32 GB to breathe</td>
+            <td>32 GB+ machines, writing-heavy use</td>
+            <td>Apache-2.0</td>
+          </tr>
+
+          <tr class="family"><th colspan="8">Granite (IBM)</th></tr>
+          <tr>
+            <td>Granite 8B</td>
+            <td>~4.7 GB</td>
+            <td>~10 GB</td>
+            <td>Comfortable</td>
+            <td>Sober, precise, good at following instructions to the letter</td>
+            <td>English-leaning; plain, businesslike tone</td>
+            <td>Work assistants that should be strictly no-nonsense</td>
+            <td>Apache-2.0</td>
+          </tr>
+
+          <tr class="family"><th colspan="8">DeepSeek-R1 (distilled)</th></tr>
+          <tr>
+            <td>DeepSeek-R1 7B</td>
+            <td>~4.4 GB</td>
+            <td>~10 GB</td>
+            <td>Patient</td>
+            <td>“Thinks out loud” before answering – strongest small model for tricky, multi-step problems</td>
+            <td>The thinking step makes every answer slower; overkill for simple to-dos; thinking text is often English</td>
+            <td>Puzzling things out, planning, untangling complicated dumps</td>
+            <td>MIT</td>
+          </tr>
+
+          <tr class="family"><th colspan="8">Llama (Meta)</th></tr>
+          <tr>
+            <td>Llama 3.2 1B</td>
+            <td>~0.8 GB</td>
+            <td>~3 GB</td>
+            <td>Instant</td>
+            <td>Very light, fine for simple extraction</td>
+            <td>Weak German, misses nuance</td>
+            <td>Minimal hardware, English-only use</td>
+            <td>Llama license*</td>
+          </tr>
+          <tr>
+            <td>Llama 3.2 3B</td>
+            <td>~2 GB</td>
+            <td>~5 GB</td>
+            <td>Very fast</td>
+            <td>Friendly tone, good everyday English</td>
+            <td>German noticeably weaker than Qwen3/Gemma at this size</td>
+            <td>8 GB laptops, English-first users</td>
+            <td>Llama license*</td>
+          </tr>
+          <tr>
+            <td>Llama 3.1 8B</td>
+            <td>~4.6 GB</td>
+            <td>~10 GB</td>
+            <td>Comfortable</td>
+            <td>Very well-rounded, warm writing voice, huge community know-how</td>
+            <td>German solid but not stellar</td>
+            <td>16 GB machines, conversational assistants</td>
+            <td>Llama license*</td>
+          </tr>
+
+          <tr class="family"><th colspan="8">Gemma 3 (Google)</th></tr>
+          <tr>
+            <td>Gemma 3 4B</td>
+            <td>~2.5 GB</td>
+            <td>~6 GB</td>
+            <td>Fast</td>
+            <td>Excellent multilingual quality (German included) for its size, pleasant writer</td>
+            <td>Occasionally over-cautious in phrasing</td>
+            <td>8 GB machines with mixed-language input</td>
+            <td>Gemma terms**</td>
+          </tr>
+          <tr>
+            <td>Gemma 3 12B</td>
+            <td>~7 GB</td>
+            <td>~14 GB</td>
+            <td>Leisurely</td>
+            <td>Big step up in nuance and writing, strong German</td>
+            <td>Wants 16 GB+, ideally more</td>
+            <td>16–32 GB machines, writing and summarizing</td>
+            <td>Gemma terms**</td>
+          </tr>
+          <tr>
+            <td>Gemma 3 27B</td>
+            <td>~16 GB</td>
+            <td>~24 GB+</td>
+            <td>Patient</td>
+            <td>Among the best local models overall, superb multilingual</td>
+            <td>Heavy download, heavy RAM, slow on anything but strong hardware</td>
+            <td>32 GB+ machines wanting maximum quality</td>
+            <td>Gemma terms**</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">
+      * Llama models use Meta's community license. It's free for this kind of use, but requires
+      the “Built with Llama” attribution – Cardo shows it for you where the model is active.
+      <br />
+      ** Gemma models are covered by Google's own Gemma Terms of Use rather than a classic
+      open-source license. Cardo shows you the terms and asks for your consent <em>before</em>
+      the download starts – never after. Everything else in the table is Apache-2.0 or MIT:
+      no strings attached.
+    </p>
+
+    <h3>Rule of thumb by machine</h3>
+    <ul>
+      <li>
+        <strong>8 GB laptop:</strong> Qwen3 0.6B–4B, Llama 3.2 1B/3B, Phi-4-mini or Gemma 3 4B.
+        Qwen3 4B is the usual recommendation; if it feels sluggish, drop to 1.7B – a fast small
+        model beats a slow big one every day.
+      </li>
+      <li>
+        <strong>16 GB:</strong> Qwen3 8B, Llama 3.1 8B, Mistral 7B, Granite 8B or DeepSeek-R1 7B
+        run comfortably. Gemma 3 12B and the 14B models fit, but they're the upper edge –
+        expect them to take their time.
+      </li>
+      <li>
+        <strong>32 GB and up:</strong> everything above, plus Qwen3 14B/30B-A3B, Mistral Small
+        24B and Gemma 3 27B. Here quality is the only question – pick by strengths, not by fit.
+      </li>
+    </ul>
+  </section>
+
+  <section class="card step">
+    <h2>Personality, working style, memory: three plain files</h2>
+    <p>
+      Your assistant is not a black box. Everything that shapes it lives in three readable
+      Markdown files on your disk – you can see (and edit) all of them under
+      <em>Settings → Assistant → Advanced</em>:
+    </p>
+    <ul>
+      <li>
+        <strong><code>personality.md</code> – who it is.</strong> Its name, what it calls you,
+        its tone (short &amp; direct / friendly / detailed) and its language. Generated from
+        your answers to the personality questions; edit it any time.
+      </li>
+      <li>
+        <strong><code>instructions.md</code> – how it works.</strong> The working rules: turn
+        braindumps into concrete proposals, resolve “tomorrow” into a real date, never invent
+        commands, when unsure propose anyway and let you fix it via <em>Edit</em>.
+      </li>
+      <li>
+        <strong><code>memory.md</code> – what it knows about you.</strong> Durable facts, one
+        line each: preferences, recurring situations and how you like them solved, background
+        that keeps coming up.
+      </li>
+    </ul>
+    <p>
+      The memory follows two simple rules. First: <strong>the assistant checks its memory before
+      asking you anything</strong> – if it already knows your dentist is Dr. Weber, it fills
+      that in instead of asking again. Second: <strong>you always see what it remembers.</strong>
+      Whenever it saves something new, a <em>“Remembered:”</em> line appears right in the
+      conversation – and every entry has a <strong>✕ “forget this”</strong> next to it. One
+      click, and it's gone from the file. No hidden profile, ever.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>Multiple assistants: one for each part of your life</h2>
+    <p>
+      You don't have to squeeze everything into one assistant. Create as many as you like, each
+      with its own name, personality and job. A worked example:
+    </p>
+    <ul>
+      <li>
+        <strong>Hanna</strong> – your work assistant. Tools: tasks and calendar only. Style:
+        short &amp; direct. You dump your Monday chaos on her, she answers in bullet-length
+        cards and never chats.
+      </li>
+      <li>
+        <strong>Felix</strong> – your writing companion. Tools: notes only. Style: warm and
+        wordy. He helps you draft, rephrase and untangle texts, and never touches your calendar.
+      </li>
+    </ul>
+    <p>
+      <strong>They share one memory by default.</strong> That's deliberate: when you tell Hanna
+      you're on vacation in August and later ask Felix to draft an out-of-office note, Felix
+      already knows. Nothing gets lost just because you switched assistants. If you want a hard
+      wall instead – say, a strict split between work and private life, where the work assistant
+      must know <em>nothing</em> personal – you can give an assistant its own separate memory
+      file in its settings. Shared is the default; separate is one switch.
+    </p>
+    <p>
+      <strong>Tool scopes</strong> keep each assistant honest: Hanna literally cannot create a
+      note, Felix cannot move an appointment – each one only sees the commands of the tools you
+      gave it. <strong>Templates</strong> (work assistant, writing companion, planning helper …)
+      give you a sensible starting point in one click, and you can
+      <strong>export and import profiles</strong> as files – to move an assistant to your other
+      machine, or to share a well-tuned one with a friend. Profiles contain the setup, not your
+      memory, unless you explicitly include it.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>Teams: several assistants, one conversation</h2>
+    <p>
+      Once you have a few assistants, you can group them into a <strong>team</strong> and talk
+      to the team instead of picking who to ask. Behind the scenes a
+      <strong>silent leader</strong> – always the fastest installed model, because its only job
+      is routing – reads each question and hands it to the best-suited member. Silent means it
+      never answers you itself; <strong>you always see who answered</strong>, right on the reply.
+    </p>
+    <p>
+      Example – <em>Group 1: Hanna, Felix, Simon</em> (Simon being a research-minded assistant
+      on a larger model):
+    </p>
+    <ul>
+      <li>
+        “Move my Thursday 1-on-1 to Friday and remind me to prep” → the leader routes it to
+        <strong>Hanna</strong> (calendar + tasks are her competence). Her cards appear, labeled
+        <em>Hanna</em>.
+      </li>
+      <li>
+        “Help me rewrite the intro of my blog post so it sounds less stiff” → routed to
+        <strong>Felix</strong>. Warm, wordy, labeled <em>Felix</em>.
+      </li>
+    </ul>
+    <p>
+      <strong>When is a team worth it?</strong> If you have genuinely different jobs (planning
+      vs. writing vs. thinking) that profit from different personalities or different model
+      sizes, a team saves you the constant “who do I ask?”. If one assistant covers your day
+      fine, stay with one – simpler is better here.
+    </p>
+    <p class="muted">
+      The honest part about RAM: your machine can only hold so many models in memory at once.
+      When the leader routes to a member whose model isn't currently loaded, Cardo swaps models
+      – which means a short loading moment before that answer. Nothing is wrong; that's the
+      price of running everything locally, and Cardo shows a loading state so you know what's
+      happening.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>Delegation: assistants that know their limits</h2>
+    <p>
+      Even outside teams, assistants know about each other. Ask Hanna to polish a paragraph and
+      she won't bluff – you get a card: <em>“Felix is better at this – hand it over?”</em> One
+      click and Felix takes the request, with the same context; decline and Hanna does her best
+      herself. Nothing is handed over without your confirmation, same as everything else.
+    </p>
+    <p>
+      What drives this are <strong>competences</strong>: every assistant's profile lists what
+      it's good at – derived from its tool scope, its model's strengths and its template. And
+      competences are <strong>learned</strong>, too: when you accept a hand-over, that kind of
+      request counts toward the receiving assistant's competences; when you decline, the system
+      takes the hint. Over time, delegation suggestions match how <em>you</em> actually divide
+      the work – you can view and edit each assistant's competence list in its settings at any
+      time.
+    </p>
+  </section>
+
+  <section class="card" style="margin-top:1.25rem">
+    <h2>FAQ</h2>
+
+    <details>
+      <summary>How much RAM do I really need?</summary>
+      <p>
+        The assistant starts at about 2–3 GB of free RAM for the smallest model (Qwen3 0.6B).
+        A comfortable everyday setup is 8 GB total with a ~4B model; 16 GB opens up the 7–8B
+        class; 12B+ models want 16–32 GB. The system check in <em>Settings → Assistant</em>
+        rates every model against your actual machine before you download anything.
+      </p>
+    </details>
+
+    <details>
+      <summary>How fast will it feel?</summary>
+      <p>
+        Local models answer in a visible stream, not instantly. Small models (≤2B) feel
+        immediate; mid-size models (4–8B) take a few seconds for a typical braindump; large
+        models take noticeably longer but understand more. Apple Silicon Macs are markedly
+        faster than comparable x86 machines for this workload. If waiting annoys you, choose a
+        smaller model – responsiveness matters more than the last bit of cleverness.
+      </p>
+    </details>
+
+    <details>
+      <summary>Which models are good at German (or other languages)?</summary>
+      <p>
+        Qwen3, Gemma 3 and Mistral are the strongest German speakers per size class, and handle
+        many other languages well. Llama is solid but English-leaning, especially in the small
+        3.2 models. Phi-4 and Granite are clearly English-first – fine for understanding German
+        input, less polished when writing it. DeepSeek-R1 answers fine in German, but its
+        visible “thinking” text often stays English.
+      </p>
+    </details>
+
+    <details>
+      <summary>What about licenses?</summary>
+      <p>
+        Qwen3, Mistral and Granite are Apache-2.0; Phi-4 and DeepSeek-R1 are MIT – use freely.
+        Llama models use Meta's community license, which requires a “Built with Llama” notice
+        (Cardo displays it for you). Gemma models are under Google's Gemma Terms of Use; Cardo
+        shows you those terms and asks for your consent before the download begins.
+      </p>
+    </details>
+
+    <details>
+      <summary>Why does it load for a few seconds when I switch assistants?</summary>
+      <p>
+        If the assistant you switch to uses a different model than the one currently in memory,
+        Cardo has to unload one and load the other from disk. That's the short loading moment –
+        it's normal, it's local, and it's the trade-off for being able to run several models on
+        one machine. Assistants sharing the same model switch instantly.
+      </p>
+    </details>
+
+    <details>
+      <summary>Is anything sent to a server?</summary>
+      <p>
+        No. Your prompts, files, memory and answers never leave your device – the model runs
+        inside Cardo, not in a cloud. The single exception is the model download itself: when
+        you click install, the model file is fetched from <code>huggingface.co</code>. That
+        request transfers the file to you; it does not carry your data anywhere.
+      </p>
+    </details>
+
+    <details>
+      <summary>Can I use it offline?</summary>
+      <p>
+        Yes – completely, once a model is downloaded. Plane, dead zone, deliberately offline
+        machine: the assistant keeps working exactly the same. It never needs to phone home,
+        because there is no home to phone.
+      </p>
+    </details>
+
+    <p style="margin-top:1rem">
+      More questions? The <a href={withBase('/docs')}>docs</a> cover the rest of Cardo, and the
+      <a href={FORUM_URL} rel="noopener">forum</a> is open for everything else. Don't have Cardo
+      yet? It's on the <a href={withBase('/download')}>download page</a> – free, no account.
+    </p>
+  </section>
+
+  <style>
+    .hero { text-align: center; padding: 2rem 0 1rem; }
+    .hero h1 { font-size: 2.4rem; margin-bottom: 0.5rem; }
+    .hero em { color: var(--accent); font-style: normal; }
+    .hero p { max-width: 680px; margin: 0.75rem auto; }
+    .hero__privacy { font-size: 0.95rem; }
+
+    .step { margin-top: 1.25rem; }
+    .step h2 { margin-top: 0; }
+    .step h3 { margin-top: 1.5rem; }
+    .step li { margin-bottom: 0.6rem; }
+
+    .braindump {
+      background: var(--base); border: 1px solid var(--surface-1); border-radius: 10px;
+      padding: 0.8rem 1rem; font-style: italic; margin: 0.75rem 0;
+    }
+    .proposals { display: grid; gap: 0.6rem; margin: 0.75rem 0; }
+    .proposal {
+      background: var(--base); border: 1px solid var(--surface-1); border-radius: 10px;
+      padding: 0.65rem 0.9rem; display: flex; flex-wrap: wrap; gap: 0.35rem 0.75rem;
+      align-items: baseline;
+    }
+    .proposal__kind { color: var(--text-muted); font-size: 0.85rem; white-space: nowrap; }
+    .proposal__actions { margin-left: auto; color: var(--text-muted); font-size: 0.85rem; white-space: nowrap; }
+    .proposal__actions b { color: var(--success); }
+
+    .table-scroll { overflow-x: auto; margin: 1rem 0; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.88rem; min-width: 900px; }
+    th, td {
+      text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--surface-1);
+      vertical-align: top;
+    }
+    thead th { border-bottom: 2px solid var(--surface-1); white-space: nowrap; }
+    tr.family th {
+      background: var(--base); padding-top: 0.75rem; font-size: 0.92rem;
+    }
+    td:nth-child(2), td:nth-child(3) { white-space: nowrap; }
+
+    details { margin-top: 0.75rem; }
+    summary { cursor: pointer; font-weight: 600; }
+    details p { margin: 0.5rem 0 0.75rem; }
+  </style>
+</Base>

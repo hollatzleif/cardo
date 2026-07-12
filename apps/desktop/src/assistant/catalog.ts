@@ -62,3 +62,29 @@ export function buildCommandCatalog(
     .filter((c) => c.palette !== false)
     .map((c) => ({ id: c.id, title: t(c.titleKey), params: commandParamFields(c.params) }));
 }
+
+/* ── Tool scope ──────────────────────────────────────────────────────── */
+
+/** 'todo.create' → 'todo' (the owning tool id). */
+export function commandToolId(commandId: string): string {
+  const dot = commandId.indexOf('.');
+  return dot < 0 ? commandId : commandId.slice(0, dot);
+}
+
+/**
+ * toolScope semantics: null = everything allowed; otherwise a list of tool
+ * ids (matched against the command's tool prefix) or full command ids.
+ */
+export function isCommandInScope(commandId: string, toolScope: string[] | null): boolean {
+  if (toolScope === null) return true;
+  return toolScope.includes(commandToolId(commandId)) || toolScope.includes(commandId);
+}
+
+/** Filters a built catalog down to a profile's tool scope. */
+export function filterCatalogByScope(
+  entries: CatalogEntry[],
+  toolScope: string[] | null,
+): CatalogEntry[] {
+  if (toolScope === null) return entries;
+  return entries.filter((e) => isCommandInScope(e.id, toolScope));
+}

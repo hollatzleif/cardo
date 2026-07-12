@@ -1,0 +1,221 @@
+/* Assistant widget (multi-assistant + teams) – tokens only, no raw colors. */
+
+.aw-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: var(--space-2);
+  overflow: hidden;
+}
+
+.aw-empty {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-4);
+}
+
+/* ── Header: avatar + switcher ──────────────────────────────────────── */
+
+.aw-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+}
+
+.aw-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  font-size: 1rem;
+  line-height: 1;
+  flex: 0 0 auto;
+  user-select: none;
+}
+
+.aw-avatar--sm {
+  width: 1.4rem;
+  height: 1.4rem;
+  font-size: 0.8rem;
+}
+
+.aw-switcher {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.aw-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85em;
+  flex: 0 0 auto;
+  overflow-wrap: break-word;
+}
+
+.aw-spinner {
+  width: 0.9em;
+  height: 0.9em;
+  border-radius: 50%;
+  border: 2px solid var(--border-subtle);
+  border-top-color: var(--accent);
+  animation: aw-spin 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes aw-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Feed ───────────────────────────────────────────────────────────── */
+
+.aw-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.aw-error {
+  color: var(--danger);
+  overflow-wrap: break-word;
+  margin: 0;
+}
+
+.aw-route {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  overflow-wrap: break-word;
+  margin: 0;
+}
+
+.aw-card {
+  padding: var(--space-3);
+}
+
+.aw-speaker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  min-width: 0;
+}
+
+.aw-speaker__name {
+  font-weight: 600;
+  font-size: 0.85em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.aw-reply {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  margin: 0;
+}
+
+.aw-card__summary {
+  overflow-wrap: break-word;
+  margin: 0;
+}
+
+.aw-card__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.aw-card__status {
+  margin: var(--space-2) 0 0;
+  color: var(--text-muted);
+  overflow-wrap: break-word;
+}
+
+.aw-card__status--ok {
+  color: var(--success);
+}
+
+.aw-card__status--fail {
+  color: var(--danger);
+}
+
+.aw-card__status--blocked {
+  color: var(--warning);
+}
+
+/* ── Memory ("Gemerkt: …") ──────────────────────────────────────────── */
+
+.aw-memory {
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+.aw-memory__title {
+  margin: 0;
+}
+
+.aw-memory__list {
+  list-style: none;
+  margin: var(--space-1) 0 0;
+  padding: 0 0 0 var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.aw-memory__line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.aw-memory__text {
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.aw-forget-x {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  flex: 0 0 auto;
+  font: inherit;
+  line-height: 1;
+}
+
+.aw-forget-x:hover {
+  color: var(--danger);
+  background: var(--bg-widget-hover);
+}
+
+/* ── Composer ───────────────────────────────────────────────────────── */
+
+.aw-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+}
+
+.aw-input {
+  flex: 1 1 auto;
+  resize: none;
+  font-family: inherit;
+  min-width: 0;
+}

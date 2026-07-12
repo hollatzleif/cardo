@@ -1,14 +1,15 @@
 import { z } from 'zod';
 import type { CommandResult } from '@cardo/plugin-api';
-import { localIsoDate } from './prompt';
+import { isCommandInScope } from './catalog';
 
 /**
- * Proposal pipeline: tolerant parsing of the model's JSON reply, execution
- * via the sanctioned command registry, and the append-only memory doc.
+ * Proposal pipeline: tolerant parsing of the model's JSON reply (including
+ * team delegation + forget requests) and execution via the sanctioned
+ * command registry, gated by the profile's tool scope.
  *
- * parseProposals/mergeMemoryLines are pure (unit-tested); the host and the
- * Rust bridge are pulled in lazily so this module stays importable in a
- * plain node test environment.
+ * parseProposals is pure (unit-tested); the host is pulled in lazily so
+ * this module stays importable in a plain node test environment. The memory
+ * doc logic lives in memory.ts.
  */
 
 export interface AssistantProposal {
@@ -17,10 +18,19 @@ export interface AssistantProposal {
   summary: string;
 }
 
+export interface DelegateRequest {
+  to: string;
+  reason: string;
+}
+
 export interface ParsedResponse {
   reply: string;
   proposals: AssistantProposal[];
   memory: string[];
+  /** Delegation requests to other team profiles (unknown ids filtered). */
+  delegate: DelegateRequest[];
+  /** Memory lines the model wants removed (verbatim; prefix-tolerant later). */
+  forget: string[];
   /** true when the raw output contained no usable JSON at all. */
   parseError: boolean;
 }
@@ -31,6 +41,11 @@ const ProposalSchema = z.object({
   summary: z.string().default(''),
 });
 
+const DelegateSchema = z.object({
+  to: z.string().min(1),
+  reason: z.string().default(''),
+});
+
 /** Strips ``` fences (with or without a language tag) around the payload. */
 function stripFences(raw: string): string {
   const trimmed = raw.trim();
@@ -38,15 +53,33 @@ function stripFences(raw: string): string {
   return fence?.[1] ?? trimmed;
 }
 
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((e): e is string => typeof e === 'string' && e.trim() !== '')
+    : [];
+}
+
 /**
  * Tolerant extraction + validation of the model output.
  * Hostile/garbage input never throws: non-JSON yields an empty result with
- * parseError, malformed proposal entries and unknown command ids are
- * silently dropped (the zod schema of the command validates params again
- * at execute time – this is only the first gate).
+ * parseError; malformed proposal entries, unknown command ids and delegate
+ * targets outside knownProfileIds are silently dropped (the zod schema of
+ * the command validates params again at execute time – this is only the
+ * first gate).
  */
-export function parseProposals(raw: string, hasCommand: (id: string) => boolean): ParsedResponse {
-  const empty: ParsedResponse = { reply: '', proposals: [], memory: [], parseError: true };
+export function parseProposals(
+  raw: string,
+  hasCommand: (id: string) => boolean,
+  knownProfileIds: string[] = [],
+): ParsedResponse {
+  const empty: ParsedResponse = {
+    reply: '',
+    proposals: [],
+    memory: [],
+    delegate: [],
+    forget: [],
+    parseError: true,
+  };
   const text = stripFences(raw);
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
@@ -71,11 +104,22 @@ export function parseProposals(raw: string, hasCommand: (id: string) => boolean)
     }
   }
 
-  const memory = Array.isArray(obj.memory)
-    ? obj.memory.filter((e): e is string => typeof e === 'string' && e.trim() !== '')
-    : [];
+  const delegate: DelegateRequest[] = [];
+  if (Array.isArray(obj.delegate)) {
+    for (const item of obj.delegate) {
+      const parsed = DelegateSchema.safeParse(item);
+      if (parsed.success && knownProfileIds.includes(parsed.data.to)) delegate.push(parsed.data);
+    }
+  }
 
-  return { reply, proposals, memory, parseError: false };
+  return {
+    reply,
+    proposals,
+    memory: stringArray(obj.memory),
+    delegate,
+    forget: stringArray(obj.forget),
+    parseError: false,
+  };
 }
 
 /** Executes one accepted proposal via the command registry (params re-validated there). */
@@ -84,39 +128,39 @@ export async function executeProposal(p: AssistantProposal): Promise<CommandResu
   return getHost().commands.execute(p.command, p.params);
 }
 
-/* ── Memory doc ──────────────────────────────────────────────────────── */
-
-export const MEMORY_MAX_LINES = 120;
-
-const DATE_PREFIX = /^- \[\d{4}-\d{2}-\d{2}\]\s*/;
-
-/**
- * Pure merge: appends '- [YYYY-MM-DD] entry' lines, dedupes entries whose
- * text already exists (regardless of date), caps at MEMORY_MAX_LINES by
- * dropping the oldest lines.
- */
-export function mergeMemoryLines(current: string, entries: string[], isoDate: string): string {
-  const lines = current
-    .split('\n')
-    .map((l) => l.trimEnd())
-    .filter((l) => l.trim() !== '');
-  const known = new Set(lines.map((l) => l.replace(DATE_PREFIX, '').trim()));
-
-  for (const entry of entries) {
-    const text = entry.trim();
-    if (text === '' || known.has(text)) continue;
-    known.add(text);
-    lines.push(`- [${isoDate}] ${text}`);
-  }
-
-  const capped = lines.slice(-MEMORY_MAX_LINES);
-  return capped.length === 0 ? '' : `${capped.join('\n')}\n`;
+export interface ExecutedProposal {
+  proposal: AssistantProposal;
+  result: CommandResult;
 }
 
-/** Appends durable facts to memory.md (read → merge → write). */
-export async function appendMemory(entries: string[], now = new Date()): Promise<void> {
-  if (entries.length === 0) return;
-  const { readDoc, writeDoc } = await import('./api');
-  const current = await readDoc('memory').catch(() => '');
-  await writeDoc('memory', mergeMemoryLines(current, entries, localIsoDate(now)));
+export interface ExecuteProposalsOutcome {
+  executed: ExecutedProposal[];
+  blocked: AssistantProposal[];
+}
+
+/**
+ * Executes proposals through the profile's tool scope: out-of-scope
+ * commands are blocked BEFORE any execution attempt (defense in depth – the
+ * catalog shown to the model is already scope-filtered).
+ * `execute` is injectable for tests/self-tests; defaults to the host
+ * command registry.
+ */
+export async function executeProposals(
+  proposals: AssistantProposal[],
+  opts: {
+    toolScope: string[] | null;
+    execute?: (p: AssistantProposal) => Promise<CommandResult>;
+  },
+): Promise<ExecuteProposalsOutcome> {
+  const run = opts.execute ?? executeProposal;
+  const executed: ExecutedProposal[] = [];
+  const blocked: AssistantProposal[] = [];
+  for (const proposal of proposals) {
+    if (!isCommandInScope(proposal.command, opts.toolScope)) {
+      blocked.push(proposal);
+      continue;
+    }
+    executed.push({ proposal, result: await run(proposal) });
+  }
+  return { executed, blocked };
 }

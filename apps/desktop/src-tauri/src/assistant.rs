@@ -1,12 +1,13 @@
 //! Local LLM assistant engine: GGUF models via llama.cpp, fully offline.
 //! Models are downloaded from HuggingFace on user request into
-//! <app_data_dir>/models/ and loaded on demand. Generation runs on a
-//! blocking thread; a tokio mutex serialises access (one generation at
-//! a time – a concurrent caller gets Err("busy")).
+//! <app_data_dir>/models/ and loaded on demand into one of three slots
+//! ("main" | "router" | "sub"). Generation runs on a blocking thread;
+//! a tokio mutex per slot serialises access (one generation at a time
+//! per slot – a concurrent caller gets Err("busy")).
 
 use std::collections::HashSet;
 use std::num::NonZeroU32;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 
 use futures_util::StreamExt;
@@ -24,31 +25,26 @@ type CmdResult<T> = Result<T, String>;
 
 /// The standard llama.cpp JSON grammar (json.gbnf) – used to constrain
 /// output to valid JSON when `json_only` is requested.
-const JSON_GRAMMAR: &str = r#"root   ::= object
-value  ::= object | array | string | number | ("true" | "false" | "null")
-
-object ::=
-  "{" (
-            string ":" value
-    ("," string ":" value)*
-  )? "}"
-
-array  ::=
-  "[" (
-            value
-    ("," value)*
-  )? "]"
-
-string ::=
-  "\"" (
-    [^"\\] |
-    "\\" (["\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F])
-  )* "\""
-
+/// Schema-exact grammar for assistant replies: even the smallest models
+/// are FORCED into the proposal contract (generic JSON alone lets weak
+/// models produce structurally valid garbage – found by the live test).
+const PROPOSAL_GRAMMAR: &str = r#"root ::= "{" ws "\"reply\"" ws ":" ws string ws "," ws "\"proposals\"" ws ":" ws proposals optdelegate optforget ws "," ws "\"memory\"" ws ":" ws stringarr ws "}"
+optdelegate ::= (ws "," ws "\"delegate\"" ws ":" ws delegates)?
+optforget ::= (ws "," ws "\"forget\"" ws ":" ws stringarr)?
+proposals ::= "[" ws "]" | "[" ws proposal (ws "," ws proposal)* ws "]"
+proposal ::= "{" ws "\"command\"" ws ":" ws string ws "," ws "\"params\"" ws ":" ws object ws "," ws "\"summary\"" ws ":" ws string ws "}"
+delegates ::= "[" ws "]" | "[" ws delegate (ws "," ws delegate)* ws "]"
+delegate ::= "{" ws "\"to\"" ws ":" ws string ws "," ws "\"reason\"" ws ":" ws string ws "}"
+stringarr ::= "[" ws "]" | "[" ws string (ws "," ws string)* ws "]"
+value ::= object | array | string | number | ("true" | "false" | "null")
+object ::= "{" ws ( string ws ":" ws value (ws "," ws string ws ":" ws value)* )? ws "}"
+array ::= "[" ws ( value (ws "," ws value)* )? ws "]"
+string ::= "\"" ( [^"\\] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]) )* "\""
 number ::= ("-"? ([0-9] | [1-9] [0-9]*)) ("." [0-9]+)? ([eE] [-+]? [0-9]+)?
+ws ::= [ \t\n]?
 "#;
 
-const DOC_KINDS: [&str; 3] = ["instructions", "personality", "memory"];
+const SLOT_NAMES: [&str; 3] = ["main", "router", "sub"];
 const PROGRESS_EVENT: &str = "assistant:download-progress";
 const PROGRESS_EVERY_BYTES: u64 = 2 * 1024 * 1024;
 
@@ -61,13 +57,25 @@ struct LoadedModel {
 }
 
 #[derive(Default)]
+struct Slot {
+    /// The loaded model. The tokio mutex doubles as the generation gate.
+    loaded: tokio::sync::Mutex<Option<LoadedModel>>,
+    /// Mirror of (model id, file size) for cheap synchronous reads.
+    info: Mutex<Option<(String, u64)>>,
+}
+
+fn set_slot_info(slot: &Slot, value: Option<(String, u64)>) {
+    if let Ok(mut info) = slot.info.lock() {
+        *info = value;
+    }
+}
+
+#[derive(Default)]
 pub struct AssistantState {
     /// Download ids the user asked to cancel; checked between chunks.
     cancelled: Mutex<HashSet<String>>,
-    /// The loaded model. The tokio mutex doubles as the generation gate.
-    loaded: tokio::sync::Mutex<Option<LoadedModel>>,
-    /// Mirror of the loaded model id for cheap synchronous reads.
-    loaded_id: Mutex<Option<String>>,
+    /// Model slots, indexed via `slot_index` ("main" | "router" | "sub").
+    slots: [Slot; 3],
 }
 
 /// llama.cpp allows exactly one backend initialisation per process.
@@ -109,12 +117,21 @@ fn validate_model_id(id: &str) -> CmdResult<()> {
     }
 }
 
-fn validate_doc_kind(kind: &str) -> CmdResult<()> {
-    if DOC_KINDS.contains(&kind) {
-        Ok(())
-    } else {
-        Err(format!("invalid doc kind \"{kind}\" (allowed: {})", DOC_KINDS.join(", ")))
-    }
+fn slot_index(slot: &str) -> CmdResult<usize> {
+    SLOT_NAMES
+        .iter()
+        .position(|s| *s == slot)
+        .ok_or_else(|| format!("invalid slot \"{slot}\" (allowed: {})", SLOT_NAMES.join(", ")))
+}
+
+/// RAM guard: the already loaded models plus the new one, with a 1.4x
+/// overhead factor, must stay strictly below total RAM.
+fn fits_in_ram(loaded_bytes: &[u64], new_bytes: u64, total_ram_mb: u64) -> bool {
+    let needed: u128 =
+        loaded_bytes.iter().map(|&b| u128::from(b)).sum::<u128>() + u128::from(new_bytes);
+    let total_bytes = u128::from(total_ram_mb) * 1024 * 1024;
+    // needed * 1.4 < total  ⇔  needed * 14 < total * 10 (integer-exact)
+    needed * 14 < total_bytes * 10
 }
 
 /// ChatML prompt in the Qwen3 format; `/no_think` disables thinking mode.
@@ -122,6 +139,36 @@ fn build_chatml_prompt(system: &str, user: &str) -> String {
     format!(
         "<|im_start|>system\n{system} /no_think<|im_end|>\n<|im_start|>user\n{user}<|im_end|>\n<|im_start|>assistant\n"
     )
+}
+
+/// Gemma has no system role – the system text is prepended to the first
+/// user turn.
+fn build_gemma_prompt(system: &str, user: &str) -> String {
+    format!("<start_of_turn>user\n{system}\n\n{user}<end_of_turn>\n<start_of_turn>model\n")
+}
+
+fn build_llama3_prompt(system: &str, user: &str) -> String {
+    format!(
+        "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{system}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{user}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+    )
+}
+
+fn build_phi_prompt(system: &str, user: &str) -> String {
+    format!(
+        "<|im_start|>system<|im_sep|>{system}<|im_end|><|im_start|>user<|im_sep|>{user}<|im_end|><|im_start|>assistant<|im_sep|>"
+    )
+}
+
+fn build_prompt(template: &str, system: &str, user: &str) -> CmdResult<String> {
+    match template {
+        "chatml" => Ok(build_chatml_prompt(system, user)),
+        "gemma" => Ok(build_gemma_prompt(system, user)),
+        "llama3" => Ok(build_llama3_prompt(system, user)),
+        "phi" => Ok(build_phi_prompt(system, user)),
+        _ => Err(format!(
+            "invalid template \"{template}\" (allowed: chatml, gemma, llama3, phi)"
+        )),
+    }
 }
 
 /// Defensively removes `<think>...</think>` blocks (and an unclosed
@@ -160,27 +207,99 @@ fn model_path(app: &tauri::AppHandle, id: &str) -> CmdResult<PathBuf> {
     Ok(models_dir(app)?.join(format!("{id}.gguf")))
 }
 
-fn doc_path(app: &tauri::AppHandle, kind: &str) -> CmdResult<PathBuf> {
-    validate_doc_kind(kind)?;
-    let dir = app
+fn assistant_dir(app: &tauri::AppHandle) -> CmdResult<PathBuf> {
+    Ok(app
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?
-        .join("assistant");
-    Ok(dir.join(format!("{kind}.md")))
+        .join("assistant"))
+}
+
+/* ── Scoped assistant documents (pure path logic, unit-tested) ────────── */
+
+/// Doc/profile/memory ids: ^[a-z0-9-]{1,64}$
+fn validate_doc_id(id: &str) -> CmdResult<()> {
+    let ok = !id.is_empty()
+        && id.len() <= 64
+        && id
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-');
+    if ok {
+        Ok(())
+    } else {
+        Err(format!("invalid doc id \"{id}\" (allowed: a-z 0-9 -, max 64 chars)"))
+    }
+}
+
+/// Relative path of a scoped doc under <app_data_dir>/assistant/.
+/// - scope "profile": kinds personality|instructions → profiles/<id>/<kind>.md
+/// - scope "memory": kind memory → memories/<id>.md
+/// - scope "team-competences": kind ignored → team-kompetenzen.md
+///   (the id is validated for defence in depth but otherwise ignored)
+fn doc_relpath(scope: &str, id: &str, kind: &str) -> CmdResult<PathBuf> {
+    validate_doc_id(id)?;
+    match scope {
+        "profile" => {
+            if kind != "personality" && kind != "instructions" {
+                return Err(format!(
+                    "invalid doc kind \"{kind}\" for scope \"profile\" (allowed: personality, instructions)"
+                ));
+            }
+            Ok(PathBuf::from("profiles").join(id).join(format!("{kind}.md")))
+        }
+        "memory" => {
+            if kind != "memory" {
+                return Err(format!(
+                    "invalid doc kind \"{kind}\" for scope \"memory\" (allowed: memory)"
+                ));
+            }
+            Ok(PathBuf::from("memories").join(format!("{id}.md")))
+        }
+        "team-competences" => Ok(PathBuf::from("team-kompetenzen.md")),
+        _ => Err(format!(
+            "invalid doc scope \"{scope}\" (allowed: profile, memory, team-competences)"
+        )),
+    }
+}
+
+/// Moves v1 single-file docs into the scoped layout. Returns true if
+/// anything was moved; a second run is a no-op returning false.
+fn migrate_v1_at(base: &Path) -> CmdResult<bool> {
+    const MOVES: [(&str, &[&str]); 3] = [
+        ("personality.md", &["profiles", "default", "personality.md"]),
+        ("instructions.md", &["profiles", "default", "instructions.md"]),
+        ("memory.md", &["memories", "shared.md"]),
+    ];
+    let mut moved = false;
+    for (old, new_parts) in MOVES {
+        let from = base.join(old);
+        if !from.is_file() {
+            continue;
+        }
+        let to = new_parts.iter().fold(base.to_path_buf(), |p, part| p.join(part));
+        if let Some(parent) = to.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        std::fs::rename(&from, &to).map_err(|e| e.to_string())?;
+        moved = true;
+    }
+    Ok(moved)
 }
 
 /* ── Hardware info ────────────────────────────────────────────────────── */
 
-#[tauri::command]
-pub fn assistant_hw_info() -> Value {
+fn total_ram_mb() -> u64 {
     let mut sys = sysinfo::System::new();
     sys.refresh_memory();
-    let total_ram_mb = sys.total_memory() / (1024 * 1024);
+    sys.total_memory() / (1024 * 1024)
+}
+
+#[tauri::command]
+pub fn assistant_hw_info() -> Value {
     let cpu_cores = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1);
     let apple_silicon = cfg!(target_os = "macos") && cfg!(target_arch = "aarch64");
     json!({
-        "totalRamMb": total_ram_mb,
+        "totalRamMb": total_ram_mb(),
         "cpuCores": cpu_cores,
         "arch": std::env::consts::ARCH,
         "os": std::env::consts::OS,
@@ -311,14 +430,12 @@ pub async fn assistant_delete_model(
     id: String,
 ) -> CmdResult<()> {
     let path = model_path(&app, &id)?;
-    // Unload first if this model is currently loaded.
-    {
-        let mut loaded = state.loaded.lock().await;
+    // Unload first from every slot that holds this model.
+    for slot in &state.slots {
+        let mut loaded = slot.loaded.lock().await;
         if loaded.as_ref().is_some_and(|m| m.id == id) {
             *loaded = None;
-            if let Ok(mut lid) = state.loaded_id.lock() {
-                *lid = None;
-            }
+            set_slot_info(slot, None);
         }
     }
     std::fs::remove_file(&path).map_err(|e| format!("cannot delete model \"{id}\": {e}"))
@@ -332,20 +449,34 @@ pub async fn assistant_load_model(
     state: State<'_, AssistantState>,
     id: String,
     ctx_tokens: u32,
+    slot: String,
 ) -> CmdResult<()> {
     if ctx_tokens == 0 {
         return Err("ctx_tokens must be greater than 0".into());
     }
+    let idx = slot_index(&slot)?;
     let path = model_path(&app, &id)?;
     if !path.is_file() {
         return Err(format!("model \"{id}\" is not downloaded"));
     }
+    let size_bytes = std::fs::metadata(&path).map_err(|e| e.to_string())?.len();
 
-    let mut loaded = state.loaded.lock().await;
-    // Free the previous model before allocating the new one.
+    let slot_state = &state.slots[idx];
+    let mut loaded = slot_state.loaded.lock().await;
+    // Free the previous model in this slot before allocating the new one.
     *loaded = None;
-    if let Ok(mut lid) = state.loaded_id.lock() {
-        *lid = None;
+    set_slot_info(slot_state, None);
+
+    // RAM guard: models loaded in the other slots plus the new one.
+    let other_bytes: Vec<u64> = state
+        .slots
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| *i != idx)
+        .filter_map(|(_, s)| s.info.lock().ok().and_then(|info| info.as_ref().map(|(_, b)| *b)))
+        .collect();
+    if !fits_in_ram(&other_bytes, size_bytes, total_ram_mb()) {
+        return Err("insufficient-ram".into());
     }
 
     let model = tauri::async_runtime::spawn_blocking(move || -> CmdResult<LlamaModel> {
@@ -361,24 +492,33 @@ pub async fn assistant_load_model(
     .map_err(|e| format!("model load task failed: {e}"))??;
 
     *loaded = Some(LoadedModel { id: id.clone(), model: Arc::new(model), ctx_tokens });
-    if let Ok(mut lid) = state.loaded_id.lock() {
-        *lid = Some(id);
-    }
+    set_slot_info(slot_state, Some((id, size_bytes)));
     Ok(())
 }
 
 #[tauri::command]
-pub fn assistant_loaded_model(state: State<'_, AssistantState>) -> Option<String> {
-    state.loaded_id.lock().ok().and_then(|id| id.clone())
+pub fn assistant_loaded_model(
+    state: State<'_, AssistantState>,
+    slot: String,
+) -> CmdResult<Option<String>> {
+    let idx = slot_index(&slot)?;
+    Ok(state.slots[idx]
+        .info
+        .lock()
+        .ok()
+        .and_then(|info| info.as_ref().map(|(id, _)| id.clone())))
 }
 
 #[tauri::command]
-pub async fn assistant_unload_model(state: State<'_, AssistantState>) -> CmdResult<()> {
-    let mut loaded = state.loaded.lock().await;
+pub async fn assistant_unload_model(
+    state: State<'_, AssistantState>,
+    slot: String,
+) -> CmdResult<()> {
+    let idx = slot_index(&slot)?;
+    let slot_state = &state.slots[idx];
+    let mut loaded = slot_state.loaded.lock().await;
     *loaded = None;
-    if let Ok(mut lid) = state.loaded_id.lock() {
-        *lid = None;
-    }
+    set_slot_info(slot_state, None);
     Ok(())
 }
 
@@ -391,7 +531,7 @@ fn build_sampler(model: &LlamaModel, json_only: bool) -> CmdResult<LlamaSampler>
         .unwrap_or(42);
     let mut chain = Vec::new();
     if json_only {
-        let grammar = LlamaSampler::grammar(model, JSON_GRAMMAR, "root")
+        let grammar = LlamaSampler::grammar(model, PROPOSAL_GRAMMAR, "root")
             .map_err(|e| format!("json grammar init failed: {e}"))?;
         chain.push(grammar);
     }
@@ -478,16 +618,19 @@ pub async fn assistant_generate(
     user: String,
     max_tokens: u32,
     json_only: bool,
+    template: String,
+    slot: String,
 ) -> CmdResult<String> {
-    // try_lock doubles as the "one generation at a time" gate.
-    let guard = state.loaded.try_lock().map_err(|_| "busy".to_string())?;
+    let prompt = build_prompt(&template, &system, &user)?;
+    let idx = slot_index(&slot)?;
+    // try_lock doubles as the "one generation at a time per slot" gate.
+    let guard = state.slots[idx].loaded.try_lock().map_err(|_| "busy".to_string())?;
     let loaded = guard.as_ref().ok_or_else(|| "no model loaded".to_string())?;
     let model = Arc::clone(&loaded.model);
     let ctx_tokens = loaded.ctx_tokens;
-    let prompt = build_chatml_prompt(&system, &user);
 
     // The guard stays held across the await, so load/unload/delete wait
-    // and a second generate call fails fast with "busy".
+    // and a second generate call on this slot fails fast with "busy".
     tauri::async_runtime::spawn_blocking(move || {
         generate_blocking(&model, ctx_tokens, &prompt, max_tokens, json_only)
     })
@@ -498,8 +641,13 @@ pub async fn assistant_generate(
 /* ── Assistant documents ──────────────────────────────────────────────── */
 
 #[tauri::command]
-pub async fn assistant_read_doc(app: tauri::AppHandle, kind: String) -> CmdResult<String> {
-    let path = doc_path(&app, &kind)?;
+pub async fn assistant_read_doc(
+    app: tauri::AppHandle,
+    scope: String,
+    id: String,
+    kind: String,
+) -> CmdResult<String> {
+    let path = assistant_dir(&app)?.join(doc_relpath(&scope, &id, &kind)?);
     if !path.exists() {
         return Ok(String::new());
     }
@@ -509,14 +657,108 @@ pub async fn assistant_read_doc(app: tauri::AppHandle, kind: String) -> CmdResul
 #[tauri::command]
 pub async fn assistant_write_doc(
     app: tauri::AppHandle,
+    scope: String,
+    id: String,
     kind: String,
     content: String,
 ) -> CmdResult<()> {
-    let path = doc_path(&app, &kind)?;
+    let path = assistant_dir(&app)?.join(doc_relpath(&scope, &id, &kind)?);
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
     std::fs::write(&path, content).map_err(|e| e.to_string())
+}
+
+/// Removes everything stored for (scope, id). Missing files/folders are
+/// fine – deletion is idempotent.
+#[tauri::command]
+pub async fn assistant_delete_docs(
+    app: tauri::AppHandle,
+    scope: String,
+    id: String,
+) -> CmdResult<()> {
+    validate_doc_id(&id)?;
+    let base = assistant_dir(&app)?;
+    let target = match scope.as_str() {
+        "profile" => base.join("profiles").join(&id),
+        "memory" => base.join("memories").join(format!("{id}.md")),
+        "team-competences" => base.join("team-kompetenzen.md"),
+        _ => {
+            return Err(format!(
+                "invalid doc scope \"{scope}\" (allowed: profile, memory, team-competences)"
+            ))
+        }
+    };
+    if !target.exists() {
+        return Ok(());
+    }
+    if target.is_dir() {
+        std::fs::remove_dir_all(&target).map_err(|e| e.to_string())
+    } else {
+        std::fs::remove_file(&target).map_err(|e| e.to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn assistant_list_doc_ids(app: tauri::AppHandle, scope: String) -> CmdResult<Vec<String>> {
+    let base = assistant_dir(&app)?;
+    let mut ids = Vec::new();
+    match scope.as_str() {
+        "profile" => {
+            let dir = base.join("profiles");
+            if dir.is_dir() {
+                for entry in std::fs::read_dir(&dir).map_err(|e| e.to_string())? {
+                    let entry = entry.map_err(|e| e.to_string())?;
+                    if !entry.path().is_dir() {
+                        continue;
+                    }
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    if validate_doc_id(&name).is_ok() {
+                        ids.push(name);
+                    }
+                }
+            }
+        }
+        "memory" => {
+            let dir = base.join("memories");
+            if dir.is_dir() {
+                for entry in std::fs::read_dir(&dir).map_err(|e| e.to_string())? {
+                    let entry = entry.map_err(|e| e.to_string())?;
+                    let path = entry.path();
+                    if !path.is_file() || path.extension().and_then(|e| e.to_str()) != Some("md") {
+                        continue;
+                    }
+                    let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else { continue };
+                    if validate_doc_id(stem).is_ok() {
+                        ids.push(stem.to_string());
+                    }
+                }
+            }
+        }
+        "team-competences" => {
+            if base.join("team-kompetenzen.md").is_file() {
+                ids.push("global".to_string());
+            }
+        }
+        _ => {
+            return Err(format!(
+                "invalid doc scope \"{scope}\" (allowed: profile, memory, team-competences)"
+            ))
+        }
+    }
+    ids.sort();
+    Ok(ids)
+}
+
+/// Moves pre-0.4.0 docs (assistant/{personality,instructions,memory}.md)
+/// into the scoped layout. Returns true if anything was moved.
+#[tauri::command]
+pub async fn assistant_migrate_v1(app: tauri::AppHandle) -> CmdResult<bool> {
+    let base = assistant_dir(&app)?;
+    if !base.is_dir() {
+        return Ok(false);
+    }
+    migrate_v1_at(&base)
 }
 
 /* ── Tests ────────────────────────────────────────────────────────────── */
@@ -548,22 +790,179 @@ mod tests {
     }
 
     #[test]
-    fn doc_kind_allowlist() {
-        for good in ["instructions", "personality", "memory"] {
-            assert!(validate_doc_kind(good).is_ok());
-        }
-        for bad in ["", "Instructions", "memory.md", "../memory", "notes"] {
-            assert!(validate_doc_kind(bad).is_err(), "should reject {bad:?}");
+    fn slot_name_mapping() {
+        assert_eq!(slot_index("main").unwrap(), 0);
+        assert_eq!(slot_index("router").unwrap(), 1);
+        assert_eq!(slot_index("sub").unwrap(), 2);
+        for bad in ["", "Main", "primary", "main "] {
+            assert!(slot_index(bad).is_err(), "should reject {bad:?}");
         }
     }
 
     #[test]
     fn chatml_prompt_shape() {
-        let p = build_chatml_prompt("You are helpful.", "Hi!");
+        let p = build_prompt("chatml", "You are helpful.", "Hi!").unwrap();
         assert_eq!(
             p,
             "<|im_start|>system\nYou are helpful. /no_think<|im_end|>\n<|im_start|>user\nHi!<|im_end|>\n<|im_start|>assistant\n"
         );
+    }
+
+    #[test]
+    fn gemma_prompt_shape() {
+        let p = build_prompt("gemma", "You are helpful.", "Hi!").unwrap();
+        assert_eq!(
+            p,
+            "<start_of_turn>user\nYou are helpful.\n\nHi!<end_of_turn>\n<start_of_turn>model\n"
+        );
+    }
+
+    #[test]
+    fn llama3_prompt_shape() {
+        let p = build_prompt("llama3", "You are helpful.", "Hi!").unwrap();
+        assert_eq!(
+            p,
+            "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are helpful.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nHi!<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+        );
+    }
+
+    #[test]
+    fn phi_prompt_shape() {
+        let p = build_prompt("phi", "You are helpful.", "Hi!").unwrap();
+        assert_eq!(
+            p,
+            "<|im_start|>system<|im_sep|>You are helpful.<|im_end|><|im_start|>user<|im_sep|>Hi!<|im_end|><|im_start|>assistant<|im_sep|>"
+        );
+    }
+
+    #[test]
+    fn unknown_template_rejected() {
+        for bad in ["", "ChatML", "mistral", "llama2"] {
+            assert!(build_prompt(bad, "s", "u").is_err(), "should reject {bad:?}");
+        }
+    }
+
+    #[test]
+    fn ram_guard() {
+        const MIB: u64 = 1024 * 1024;
+        // Fits comfortably: 2 GiB loaded + 2 GiB new, 16 GiB RAM.
+        assert!(fits_in_ram(&[2048 * MIB], 2048 * MIB, 16 * 1024));
+        // Nothing loaded yet, small model, small RAM.
+        assert!(fits_in_ram(&[], 10 * MIB, 15));
+        // Exact boundary: (10 MiB) * 1.4 == 14 MiB total → NOT allowed.
+        assert!(!fits_in_ram(&[], 10 * MIB, 14));
+        // Just above the boundary is fine.
+        assert!(fits_in_ram(&[], 10 * MIB, 15));
+        // Exceeds: 6 GiB + 6 GiB on a 16 GiB machine (needs 16.8 GiB).
+        assert!(!fits_in_ram(&[6144 * MIB], 6144 * MIB, 16 * 1024));
+        // Multiple loaded slots are summed.
+        assert!(!fits_in_ram(&[4096 * MIB, 4096 * MIB], 4096 * MIB, 16 * 1024));
+        assert!(fits_in_ram(&[1024 * MIB, 1024 * MIB], 1024 * MIB, 16 * 1024));
+    }
+
+    #[test]
+    fn doc_id_validation() {
+        for good in ["default", "shared", "abc-123", "a", &"a".repeat(64)] {
+            assert!(validate_doc_id(good).is_ok(), "should accept {good:?}");
+        }
+        for bad in ["../x", "A", "", "a_b", "a b", "a/b", "a.b", &"a".repeat(65)] {
+            assert!(validate_doc_id(bad).is_err(), "should reject {bad:?}");
+        }
+    }
+
+    #[test]
+    fn doc_paths_per_scope() {
+        assert_eq!(
+            doc_relpath("profile", "default", "personality").unwrap(),
+            PathBuf::from("profiles/default/personality.md")
+        );
+        assert_eq!(
+            doc_relpath("profile", "coach", "instructions").unwrap(),
+            PathBuf::from("profiles/coach/instructions.md")
+        );
+        assert_eq!(
+            doc_relpath("memory", "shared", "memory").unwrap(),
+            PathBuf::from("memories/shared.md")
+        );
+        assert_eq!(
+            doc_relpath("team-competences", "global", "whatever").unwrap(),
+            PathBuf::from("team-kompetenzen.md")
+        );
+
+        // Kind allowlists per scope.
+        assert!(doc_relpath("profile", "default", "memory").is_err());
+        assert!(doc_relpath("profile", "default", "").is_err());
+        assert!(doc_relpath("memory", "shared", "personality").is_err());
+        // Unknown scope.
+        assert!(doc_relpath("notes", "default", "personality").is_err());
+        assert!(doc_relpath("", "default", "personality").is_err());
+    }
+
+    #[test]
+    fn doc_bad_ids_rejected_in_every_scope() {
+        let long = "a".repeat(65);
+        for scope in ["profile", "memory", "team-competences"] {
+            let kind = match scope {
+                "profile" => "personality",
+                "memory" => "memory",
+                _ => "ignored",
+            };
+            for bad in ["../x", "A", "", long.as_str()] {
+                assert!(
+                    doc_relpath(scope, bad, kind).is_err(),
+                    "scope {scope:?} should reject id {bad:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn migration_moves_v1_docs_and_is_idempotent() {
+        let base = std::env::temp_dir()
+            .join(format!("cardo-assistant-migrate-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+
+        std::fs::write(base.join("personality.md"), "P").unwrap();
+        std::fs::write(base.join("instructions.md"), "I").unwrap();
+        std::fs::write(base.join("memory.md"), "M").unwrap();
+
+        assert!(migrate_v1_at(&base).unwrap(), "first run should move files");
+        assert!(!base.join("personality.md").exists());
+        assert!(!base.join("instructions.md").exists());
+        assert!(!base.join("memory.md").exists());
+        assert_eq!(
+            std::fs::read_to_string(base.join("profiles/default/personality.md")).unwrap(),
+            "P"
+        );
+        assert_eq!(
+            std::fs::read_to_string(base.join("profiles/default/instructions.md")).unwrap(),
+            "I"
+        );
+        assert_eq!(std::fs::read_to_string(base.join("memories/shared.md")).unwrap(), "M");
+
+        assert!(!migrate_v1_at(&base).unwrap(), "second run should be a no-op");
+
+        std::fs::remove_dir_all(&base).unwrap();
+    }
+
+    #[test]
+    fn migration_moves_partial_set() {
+        let base = std::env::temp_dir()
+            .join(format!("cardo-assistant-migrate-partial-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+
+        std::fs::write(base.join("memory.md"), "only me").unwrap();
+        assert!(migrate_v1_at(&base).unwrap());
+        assert_eq!(
+            std::fs::read_to_string(base.join("memories/shared.md")).unwrap(),
+            "only me"
+        );
+        assert!(!base.join("profiles").exists() || !base.join("profiles/default/personality.md").exists());
+        assert!(!migrate_v1_at(&base).unwrap());
+
+        std::fs::remove_dir_all(&base).unwrap();
     }
 
     #[test]
@@ -578,7 +977,73 @@ mod tests {
 
     #[test]
     fn json_grammar_is_nonempty_and_has_root() {
-        assert!(JSON_GRAMMAR.contains("root"));
-        assert!(JSON_GRAMMAR.contains("object"));
+        assert!(PROPOSAL_GRAMMAR.contains("\\\"proposals\\\""));
+        assert!(PROPOSAL_GRAMMAR.contains("optdelegate"));
+    }
+
+    /// LIVE test with a real model – excluded from CI (network + 400 MB).
+    /// Run before releases: cargo test -p cardo-desktop --release live_ -- --ignored --nocapture
+    #[test]
+    #[ignore = "downloads a real 400 MB model; run manually before releases"]
+    fn live_generate_qwen3_0_6b() {
+        let model_path = std::env::temp_dir().join("cardo-live-qwen3-0.6b.gguf");
+        if !model_path.is_file() {
+            let status = std::process::Command::new("curl")
+                .args([
+                    "-fsSL",
+                    "-o",
+                    model_path.to_str().expect("temp path utf8"),
+                    "https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf",
+                ])
+                .status()
+                .expect("curl available");
+            assert!(status.success(), "model download failed");
+        }
+
+        let backend = backend().expect("backend");
+        #[cfg(target_os = "macos")]
+        let params = LlamaModelParams::default().with_n_gpu_layers(999);
+        #[cfg(not(target_os = "macos"))]
+        let params = LlamaModelParams::default();
+        let model =
+            LlamaModel::load_from_file(backend, &model_path, &params).expect("model loads");
+
+        // 1. Proposal round: braindump → grammar-constrained JSON with commands.
+        let system = "Du bist der Cardo-Assistent. Verfügbare Befehle:\n\
+            - todo.create {title: string, due?: string}: Aufgabe anlegen\n\
+            - calendar.create {title: string, date: string, time?: string}: Termin anlegen\n\
+            Heute ist der 2026-07-12. Antworte NUR mit JSON: {\"reply\": string, \
+            \"proposals\": [{\"command\": string, \"params\": object, \"summary\": string}], \
+            \"memory\": []}";
+        let user = "morgen um 9 Uhr Zahnarzt, und ich muss Milch kaufen";
+        let prompt = build_prompt("chatml", system, user).expect("prompt");
+        let out = generate_blocking(&model, 2048, &prompt, 512, true).expect("generation");
+        println!("LIVE proposal output: {out}");
+        let parsed: serde_json::Value = serde_json::from_str(out.trim()).expect("valid JSON");
+        let proposals = parsed["proposals"].as_array().expect("proposals array");
+        assert!(!proposals.is_empty(), "expected at least one proposal");
+        let commands: Vec<String> = proposals
+            .iter()
+            .filter_map(|p| p["command"].as_str().map(String::from))
+            .collect();
+        assert!(
+            commands.iter().any(|c| c.contains("todo") || c.contains("calendar")),
+            "expected a todo/calendar proposal, got {commands:?}"
+        );
+
+        // 2. Router round: pick a team member for a writing task.
+        let router_system = "Du bist der Team-Router. Mitglieder:\n\
+            - hanna: Termine und Aufgabenplanung\n\
+            - felix: Briefe und E-Mails formulieren\n\
+            Antworte NUR mit der ID des passendsten Mitglieds (hanna oder felix).";
+        let router_prompt =
+            build_prompt("chatml", router_system, "Schreib einen Brief an meine Versicherung")
+                .expect("router prompt");
+        let route = generate_blocking(&model, 1024, &router_prompt, 16, false).expect("routing");
+        println!("LIVE router output: {route}");
+        assert!(
+            route.to_lowercase().contains("felix") || route.to_lowercase().contains("hanna"),
+            "router must name a member, got: {route}"
+        );
     }
 }

@@ -1,0 +1,190 @@
+/* Assistant settings v0.4 – multi-assistant profiles, teams & memories.
+   Tokens only, no raw colors (token-lint enforced). */
+
+/* ── Active assistant/team card ─────────────────────────────────────── */
+
+.as-active {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.as-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  flex: 0 0 auto;
+}
+
+.as-avatar--sm {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.95rem;
+}
+
+.as-active__info,
+.as-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1 1 12rem;
+  overflow-wrap: break-word;
+}
+
+.as-badges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ── Collapsible "more assistants & teams" section ──────────────────── */
+
+.as-collapse {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.as-collapse > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.as-collapse__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.as-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.as-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.as-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.as-subtitle {
+  margin: var(--space-2) 0 0;
+}
+
+/* ── Competence learning banner ─────────────────────────────────────── */
+
+.as-banner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  margin: var(--space-3) 0;
+  border-color: var(--accent);
+  overflow-wrap: break-word;
+}
+
+/* ── Emoji + color pickers ──────────────────────────────────────────── */
+
+.as-color-dots {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.as-color-dot {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-subtle);
+  padding: 0;
+  cursor: pointer;
+}
+
+.as-color-dot--active {
+  border-color: var(--text-primary);
+}
+
+.as-emoji-input {
+  width: 4.5rem;
+  text-align: center;
+}
+
+/* ── Model picker extras ────────────────────────────────────────────── */
+
+.as-model-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 0.85em;
+  overflow-wrap: break-word;
+}
+
+/* ── Import (hidden file input styled as button) ────────────────────── */
+
+.as-file-button {
+  cursor: pointer;
+}
+
+.as-file-input {
+  display: none;
+}
+
+/* ── License consent / import confirm cards ─────────────────────────── */
+
+.as-consent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-color: var(--warning);
+  overflow-wrap: break-word;
+}
+
+/* ── Creation flow ──────────────────────────────────────────────────── */
+
+.as-flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-wrap: break-word;
+}
+
+/* ── Advanced: memory manager ───────────────────────────────────────── */
+
+.as-memory {
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.as-memory > summary {
+  cursor: pointer;
+  overflow-wrap: break-word;
+}
+
+.as-memory__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}

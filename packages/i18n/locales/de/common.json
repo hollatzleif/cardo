@@ -60,7 +60,8 @@
     "backupExported": "Backup gespeichert ({{count}} Einträge).",
     "backupImportConfirm": "Dieses Backup wiederherstellen? Einträge mit gleicher ID werden überschrieben. Cardo startet danach neu.",
     "backupError": "Das hat nicht geklappt. Die Datei ist womöglich kein Cardo-Backup.",
-    "assistant": "Assistent"
+    "assistant": "Assistent",
+    "aiLicenses": "KI-Modelle & Lizenzen"
   },
   "diagnose": {
     "start": "Selbsttest starten",
@@ -778,7 +779,12 @@
       },
       "test": {
         "catalogBuild": "Befehlskatalog wird korrekt gebaut",
-        "proposalValidate": "Vorschläge werden validiert, feindliche Eingaben gefiltert"
+        "proposalValidate": "Vorschläge werden validiert, feindliche Eingaben gefiltert",
+        "profileCrud": "Profile lassen sich anlegen, lesen und löschen",
+        "routerParse": "Router-Antworten werden einem Team-Mitglied zugeordnet",
+        "templateKnown": "Jedes Modell nutzt ein bekanntes Prompt-Template",
+        "catalogSane": "Modellkatalog-Einträge sind vollständig und gültig",
+        "scopeEnforcement": "Befehle außerhalb des Tool-Umfangs werden blockiert"
       },
       "tour": {
         "title": "Braindump statt Verwaltungsarbeit",
@@ -900,7 +906,23 @@
       "done": "Erledigt",
       "failed": "Fehlgeschlagen",
       "dismissed": "Verworfen",
-      "editSent": "Zum Bearbeiten geöffnet"
+      "editSent": "Zum Bearbeiten geöffnet",
+      "noProfiles": "Noch kein Assistent eingerichtet. Lege unter Einstellungen → Assistent einen an.",
+      "switchLabel": "Assistent wechseln",
+      "profilesGroup": "Assistenten",
+      "modelLoading": "Modell wird geladen…",
+      "ramError": "Nicht genug Arbeitsspeicher für dieses Modell. Schließe andere Programme oder wähle ein kleineres Modell.",
+      "answers": "{{name}} antwortet",
+      "rememberedTitle": "Gemerkt:",
+      "forgetLine": "Vergiss das",
+      "forgetConfirm": "Soll ich vergessen: „{{line}}“?",
+      "forgotten": "Vergessen.",
+      "blocked": "Übersprungen – dieser Befehl liegt außerhalb der erlaubten Werkzeuge dieses Assistenten.",
+      "delegateQuestion": "An {{name}} übergeben? – {{reason}}",
+      "delegateAccept": "Übergeben",
+      "delegateKeep": "Hier behalten",
+      "delegateTakeover": "„{{name}}“ übernimmt…",
+      "delegateDone": "Übergeben."
     },
     "rating": {
       "great": "Sehr gut",
@@ -916,7 +938,103 @@
       "na": "–"
     },
     "model": {
-      "ramNeed": "braucht {{ram}} RAM"
+      "ramNeed": "braucht {{ram}} RAM",
+      "qwen3-0-6b": {
+        "strengths": "Winzig und blitzschnell geladen; läuft auf praktisch jedem Gerät.",
+        "weaknesses": "Sehr begrenztes Verständnis – alles jenseits einfacher Anfragen überfordert es.",
+        "idealFor": "Zum Ausprobieren oder als schnelles Router-Modell."
+      },
+      "qwen3-1-7b": {
+        "strengths": "Solider kleiner Allrounder mit ordentlichem Deutsch und zuverlässiger strukturierter Ausgabe.",
+        "weaknesses": "Wenig Tiefgang; übersieht Details in längeren Braindumps.",
+        "idealFor": "Schnelle Alltagsbefehle auf 8-GB-Geräten."
+      },
+      "qwen3-4b": {
+        "strengths": "Guter Allrounder: solides Deutsch und verlässliche JSON-Ausgabe für seine Größe.",
+        "weaknesses": "Auf 8-GB-Geräten spürbar langsamer; komplexe Anfragen können es überfordern.",
+        "idealFor": "Die vernünftige Standardwahl auf den meisten Geräten."
+      },
+      "qwen3-8b": {
+        "strengths": "Starker Allrounder mit gutem Deutsch und sehr zuverlässiger strukturierter Ausgabe.",
+        "weaknesses": "Braucht 16 GB RAM, um flüssig zu laufen.",
+        "idealFor": "Haupt-Assistent auf einem 16-GB-Mac mit Apple Silicon."
+      },
+      "qwen3-14b": {
+        "strengths": "Sehr fähiger Allrounder; kommt gut mit langen, chaotischen Braindumps zurecht.",
+        "weaknesses": "Großer Download, braucht viel RAM und antwortet spürbar langsamer.",
+        "idealFor": "Qualität-zuerst-Hauptprofil auf Geräten ab 16 GB."
+      },
+      "qwen3-30b-a3b": {
+        "strengths": "Mixture-of-Experts: fast 14B-Qualität bei der Geschwindigkeit eines ~3B-Modells.",
+        "weaknesses": "Riesiger Download, und die vollen Gewichte müssen in den RAM (~24 GB).",
+        "idealFor": "Der beste Mix aus Qualität und Tempo auf 32 GB Apple Silicon."
+      },
+      "phi-4-mini": {
+        "strengths": "Erstaunlich clever für seine Größe, besonders bei Logik und Struktur.",
+        "weaknesses": "Englisch-lastig – deutsche Antworten können hölzern klingen.",
+        "idealFor": "Schnelle englischsprachige Aufgaben auf kleinen Geräten."
+      },
+      "phi-4": {
+        "strengths": "Sehr klug in der 14B-Klasse; starkes Schlussfolgern und saubere Ausgabe.",
+        "weaknesses": "Englisch-lastig; Deutsch ist brauchbar, aber nicht seine Stärke.",
+        "idealFor": "Komplexe Denkaufgaben, am besten auf Englisch."
+      },
+      "mistral-7b": {
+        "strengths": "Bewährtes, schnelles und verlässliches Arbeitstier.",
+        "weaknesses": "Ältere Generation – schwächeres Deutsch und ungenauer als neuere 7–8B-Modelle.",
+        "idealFor": "Ein verlässliches Alltagsmodell auf mittlerer Hardware."
+      },
+      "mistral-small-24b": {
+        "strengths": "Durchweg sehr stark, nah an deutlich größeren Modellen.",
+        "weaknesses": "Braucht rund 20 GB RAM und ist nicht schnell.",
+        "idealFor": "Spitzenqualität auf 32-GB-Geräten."
+      },
+      "granite-3-1-8b": {
+        "strengths": "Gebaut für Function Calling – sehr zuverlässige Befehls- und JSON-Ausgabe.",
+        "weaknesses": "Nüchterner, schmuckloser Schreibstil; nicht besonders kreativ.",
+        "idealFor": "Profile, die vor allem Befehle mit strukturierter Ausgabe ausführen."
+      },
+      "deepseek-r1-7b": {
+        "strengths": "Starkes schrittweises Schlussfolgern bei kniffligen, logischen Problemen.",
+        "weaknesses": "Denkt sichtbar nach, bevor es antwortet – das macht es langsam (das sichtbare Nachdenken wird automatisch entfernt).",
+        "idealFor": "Knobelaufgaben, bei denen Qualität wichtiger ist als Tempo."
+      },
+      "llama-3-2-1b": {
+        "strengths": "Winzig und sofort da; überraschend fähig für seine Größe.",
+        "weaknesses": "Sehr begrenzter Tiefgang; Meta-Lizenzhinweis gilt.",
+        "idealFor": "Router-Dienst und sehr einfache Befehle auf jedem Gerät."
+      },
+      "llama-3-2-3b": {
+        "strengths": "Stark für seine Größe und angenehm flott.",
+        "weaknesses": "Begrenzter Tiefgang bei komplexen Anfragen; Meta-Lizenzhinweis gilt.",
+        "idealFor": "Ein flotter Assistent auf 8-GB-Geräten."
+      },
+      "llama-3-1-8b": {
+        "strengths": "Starker Allrounder mit breitem Wissen und guter Mehrsprachigkeit.",
+        "weaknesses": "Meta-Lizenzhinweis gilt; braucht ~8 GB RAM.",
+        "idealFor": "Ein Haupt-Assistent für alles Mögliche."
+      },
+      "gemma-3-4b": {
+        "strengths": "Herausragendes Deutsch und Schreibqualität für seine Größe.",
+        "weaknesses": "Vor dem Download müssen Googles Gemma-Bedingungen akzeptiert werden.",
+        "idealFor": "Deutschsprachiges Schreiben auf kleinen Geräten."
+      },
+      "gemma-3-12b": {
+        "strengths": "Exzellentes Deutsch, natürlicher Stil, sehr gutes mehrsprachiges Schreiben.",
+        "weaknesses": "Braucht ~11 GB RAM; Googles Gemma-Bedingungen müssen akzeptiert werden.",
+        "idealFor": "Ein deutschsprachiger Haupt-Assistent auf 16-GB-Geräten."
+      },
+      "gemma-3-27b": {
+        "strengths": "Die beste deutsche Schreibqualität in diesem Katalog.",
+        "weaknesses": "Sehr hoher RAM-Bedarf (~22 GB), langsam; Gemma-Bedingungen müssen akzeptiert werden.",
+        "idealFor": "Maximale Textqualität auf 32-GB-Geräten."
+      },
+      "strengths": "Stärken",
+      "weaknesses": "Schwächen",
+      "idealFor": "Ideal für",
+      "installed": "Installiert",
+      "builtWithLlama": "Built with Llama",
+      "moeActive": "≈{{b}} Mrd. aktive Parameter"
     },
     "wizard": {
       "checkTitle": "Schritt 1: System-Check",
@@ -975,7 +1093,130 @@
         "personality": "Persönlichkeit (personality.md)",
         "memory": "Gedächtnis (memory.md)"
       },
-      "saved": "Gespeichert."
+      "saved": "Gespeichert.",
+      "delegationAsk": "Delegation an andere Assistenten vorschlagen",
+      "delegationAskHint": "Wenn ein anderer Assistent eine Aufgabe besser kann, schlägt Cardo vor, sie zu übergeben.",
+      "deleteBlockedByProfile": "Wird von {{names}} verwendet – weise diesen Assistenten zuerst ein anderes Modell zu."
+    },
+    "team": {
+      "group": "Teams",
+      "routing": "{{leader}} wählt aus, wer antwortet…",
+      "routedTo": "→ {{leader}} leitet weiter an {{member}}",
+      "empty": "Dieses Team hat keine nutzbaren Mitglieder. Prüfe die Team-Einstellungen unter Einstellungen → Assistent."
+    },
+    "profiles": {
+      "activeTitle": "Aktiver Assistent",
+      "activeTeamTitle": "Aktives Team",
+      "sectionTitle": "Weitere Assistenten & Teams",
+      "sectionIntro": "Lege mehrere Assistenten mit eigenen Stärken an – z. B. Hanna für die Arbeit, Felix für Briefe – mit gemeinsamem Gedächtnis, damit nichts verloren geht.",
+      "new": "Neuer Assistent",
+      "import": "Importieren",
+      "importTitle": "Assistent importieren",
+      "importMemory": "Enthaltenes Gedächtnis mitimportieren",
+      "importConfirm": "„{{name}}“ importieren?",
+      "importError": "Import fehlgeschlagen – die Datei konnte nicht gelesen werden.",
+      "exportedTo": "Exportiert nach {{path}}",
+      "activate": "Aktivieren",
+      "duplicate": "Duplizieren",
+      "duplicatePrompt": "Name für die Kopie:",
+      "duplicateName": "{{name}} (Kopie)",
+      "export": "Exportieren",
+      "deleteConfirm": "„{{name}}“ wirklich löschen? Das Gedächtnis bleibt erhalten und kann weiterverwendet werden.",
+      "modelMissing": "Modell nicht installiert",
+      "editTitle": "„{{name}}“ bearbeiten",
+      "nameLabel": "Name",
+      "modelLabel": "Modell"
+    },
+    "teams": {
+      "title": "Teams",
+      "new": "Neues Team",
+      "create": "Team erstellen",
+      "editTitle": "Team „{{name}}“ bearbeiten",
+      "deleteConfirm": "Team „{{name}}“ wirklich löschen? Die Assistenten bleiben erhalten.",
+      "needTwo": "Für ein Team brauchst du mindestens zwei Assistenten.",
+      "membersLabel": "Mitglieder (mindestens 2)",
+      "membersLine": "Mitglieder: {{names}}",
+      "leaderLabel": "Teamleitung",
+      "leaderLine": "Leitung: {{name}}",
+      "leaderFastest": "(schnellster – empfohlen)"
+    },
+    "flow": {
+      "stepOf": "Schritt {{n}} von {{total}}",
+      "templateTitle": "Womit soll dein neuer Assistent starten?",
+      "modelTitle": "Welches Modell soll ihn antreiben?",
+      "memoryTitle": "Gedächtnis",
+      "toolsTitle": "Werkzeuge",
+      "lookTitle": "Aussehen",
+      "emojiLabel": "Emoji",
+      "colorLabel": "Farbe",
+      "create": "Assistent erstellen",
+      "creating": "Dein Assistent wird erstellt…",
+      "willDownload": "Wird beim Erstellen heruntergeladen",
+      "competencesLabel": "Worin ist dieser Assistent stark?",
+      "competencesHint": "Eine Zeile pro Stärke – Cardo nutzt das für Delegations-Vorschläge."
+    },
+    "templates": {
+      "secretary": {
+        "name": "Sekretär:in",
+        "desc": "Formuliert Briefe & E-Mails und behält Aufgaben im Blick.",
+        "extra": "Du hilfst vor allem beim Formulieren von Briefen, E-Mails und Notizen und behältst offene Aufgaben im Blick.",
+        "competences": "Briefe und E-Mails formulieren\nAufgaben und Erinnerungen verwalten"
+      },
+      "planner": {
+        "name": "Planer:in",
+        "desc": "Strukturiert Termine, Routinen und deinen Tag.",
+        "extra": "Du hilfst vor allem bei Terminen, Routinen und der Tagesplanung und denkst an Vorbereitungen.",
+        "competences": "Termine und Tagesplanung\nRoutinen und Gewohnheiten"
+      },
+      "coach": {
+        "name": "Coach",
+        "desc": "Motiviert bei Gewohnheiten, Pausen und Zielen.",
+        "extra": "Du motivierst freundlich bei Gewohnheiten, Pausen und persönlichen Zielen, ohne Druck aufzubauen.",
+        "competences": "Gewohnheiten und Motivation\nPausen und Ausgleich"
+      },
+      "blank": {
+        "name": "Leer",
+        "desc": "Ohne Vorgaben starten – du beantwortest alle Fragen selbst."
+      }
+    },
+    "memory": {
+      "badge": "Gedächtnis: {{name}}",
+      "share": "Teilen mit",
+      "recommended": "(empfohlen)",
+      "own": "Eigenes Gedächtnis",
+      "ownName": "Name des Gedächtnisses",
+      "defaultOwnName": "Gedächtnis von {{name}}",
+      "whyShare": "Ein gemeinsames Gedächtnis ist meist die bessere Wahl: Alle Assistenten kennen dieselben Fakten, Namen und Vorlieben – nichts geht verloren, wenn du zwischen ihnen wechselst. Ein eigenes Gedächtnis lohnt sich nur, wenn ein Assistent Dinge strikt getrennt halten soll."
+    },
+    "tools": {
+      "all": "Alle Werkzeuge (empfohlen)",
+      "pickHint": "Der Assistent darf nur diese Werkzeuge nutzen:"
+    },
+    "license": {
+      "consentTitle": "Lizenz bestätigen",
+      "consentText": "Für „{{model}}“ gelten die Bedingungen der {{name}}. Bitte lies und bestätige sie, bevor der Download startet.",
+      "consentCheckbox": "Ich akzeptiere die Lizenzbedingungen",
+      "view": "Lizenz ansehen"
+    },
+    "competence": {
+      "banner": "„{{name}}“ hat {{count}} {{tool}}-Aufgaben erfolgreich vorgeschlagen – als Stärke eintragen?",
+      "accept": "Eintragen",
+      "ignore": "Ignorieren",
+      "appendLine": "Bewährt bei {{tool}}-Aufgaben ({{toolId}})"
+    },
+    "advanced": {
+      "hint": "Diese Dateien steuern deine Assistenten. Normalerweise pflegt Cardo sie automatisch – ändere sie nur, wenn du weißt, was du tust.",
+      "profileDocsTitle": "Assistenten-Dateien",
+      "memoriesTitle": "Gedächtnisse",
+      "memoryUsers": "Genutzt von: {{names}}",
+      "memoryUnused": "Nicht in Verwendung",
+      "rename": "Umbenennen",
+      "renamePrompt": "Neuer Name:",
+      "memoryDeleteBlocked": "Ein Gedächtnis kann erst gelöscht werden, wenn kein Assistent und kein Team es mehr nutzt.",
+      "memoryDeleteConfirm": "Gedächtnis „{{name}}“ endgültig löschen? Das kann nicht rückgängig gemacht werden.",
+      "teamCompetencesTitle": "Team-Kompetenzen (team-kompetenzen.md)",
+      "teamCompetencesHint": "Automatisch gepflegte Übersicht, wer was am besten kann – Grundlage für Delegations-Vorschläge. Dein Abschnitt „## Notizen“ bleibt erhalten.",
+      "regenerate": "Neu erzeugen"
     }
   }
 }

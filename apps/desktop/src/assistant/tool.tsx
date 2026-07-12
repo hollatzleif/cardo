@@ -5,14 +5,20 @@ import {
   type SelfTestResult,
   type ToolContext,
 } from '@cardo/plugin-api';
+import { createMemoryBackend } from '@cardo/core';
 import { AssistantWidget } from './AssistantWidget';
 import { buildCommandCatalog } from './catalog';
-import { parseProposals } from './proposals';
+import { executeProposals, parseProposals, type AssistantProposal } from './proposals';
+import { MODEL_CATALOG } from './models';
+import { createMemoryDocStore } from './api';
+import { createProfilesStore } from './profiles';
+import { parseRouterAnswer } from './routing';
 
 /**
  * Assistant pseudo-tool: a core feature packaged as a CardoTool so it gets
  * the same manifest transparency, privacy declaration, self-tests and
- * widget plumbing as every market tool.
+ * widget plumbing as every market tool. All self-tests run offline against
+ * in-memory stores.
  */
 
 const manifest = ToolManifestSchema.parse({
@@ -32,6 +38,11 @@ const manifest = ToolManifestSchema.parse({
   selfTests: [
     { id: 'catalog-build', titleKey: 'tool.assistant.test.catalogBuild' },
     { id: 'proposal-validate', titleKey: 'tool.assistant.test.proposalValidate' },
+    { id: 'profile-crud', titleKey: 'tool.assistant.test.profileCrud' },
+    { id: 'router-parse', titleKey: 'tool.assistant.test.routerParse' },
+    { id: 'template-known', titleKey: 'tool.assistant.test.templateKnown' },
+    { id: 'catalog-sane', titleKey: 'tool.assistant.test.catalogSane' },
+    { id: 'scope-enforcement', titleKey: 'tool.assistant.test.scopeEnforcement' },
   ],
   tourSteps: [
     {
@@ -81,7 +92,7 @@ export function createAssistantTool(): CardoTool {
     const has = (id: string) => id === 'todo.create';
 
     const valid = parseProposals(
-      '```json\n{"reply":"Alles klar!","proposals":[{"command":"todo.create","params":{"title":"Milch kaufen"},"summary":"Erstellt das To-do „Milch kaufen"."}],"memory":["kauft freitags ein"]}\n```',
+      '```json\n{"reply":"Alles klar!","proposals":[{"command":"todo.create","params":{"title":"Milch kaufen"},"summary":"Erstellt das To-do „Milch kaufen“."}],"memory":["kauft freitags ein"]}\n```',
       has,
     );
     if (valid.parseError || valid.proposals.length !== 1 || valid.memory.length !== 1) {
@@ -89,10 +100,16 @@ export function createAssistantTool(): CardoTool {
     }
 
     const hostile = parseProposals(
-      '{"reply":"ok","proposals":[{"command":"system.wipeEverything","params":{},"summary":"…"},{"command":42},"nope"],"memory":[{"not":"a string"}]}',
+      '{"reply":"ok","proposals":[{"command":"system.wipeEverything","params":{},"summary":"…"},{"command":42},"nope"],"memory":[{"not":"a string"}],"delegate":[{"to":"evil-profile","reason":"x"}]}',
       has,
+      ['known-profile'],
     );
-    if (hostile.parseError || hostile.proposals.length !== 0 || hostile.memory.length !== 0) {
+    if (
+      hostile.parseError ||
+      hostile.proposals.length !== 0 ||
+      hostile.memory.length !== 0 ||
+      hostile.delegate.length !== 0
+    ) {
       return { status: 'fail', detail: `hostile input not filtered: ${JSON.stringify(hostile)}` };
     }
 
@@ -101,6 +118,129 @@ export function createAssistantTool(): CardoTool {
       return { status: 'fail', detail: `garbage not flagged: ${JSON.stringify(garbage)}` };
     }
 
+    return { status: 'pass' };
+  }
+
+  async function testProfileCrud(): Promise<SelfTestResult> {
+    // Fully isolated store: in-memory backend + doc store, no Tauri.
+    const docs = createMemoryDocStore();
+    const store = createProfilesStore({
+      backend: createMemoryBackend(),
+      docs,
+      migrateNative: async () => false,
+    });
+    await store.init();
+
+    const initial = store.getState();
+    if (!initial.loaded || initial.profiles.length !== 1) {
+      return { status: 'fail', detail: `migration did not create a default profile` };
+    }
+
+    const created = await store.createProfile({
+      name: 'Probe',
+      emoji: '🧪',
+      color: 'accent-2',
+      modelId: 'qwen3-4b',
+      memoryChoice: { own: 'Probe-Gedächtnis' },
+      competences: 'Testet Dinge',
+      toolScope: ['todo'],
+      personality: 'PERS',
+      instructions: 'INST',
+    });
+    const personality = await docs.read('profile', created.id, 'personality');
+    if (personality !== 'PERS') {
+      return { status: 'fail', detail: 'personality doc not written' };
+    }
+    if (store.getState().profiles.length !== 2) {
+      return { status: 'fail', detail: 'profile not added to state' };
+    }
+
+    await store.deleteProfile(created.id);
+    if (store.getState().profiles.length !== 1) {
+      return { status: 'fail', detail: 'profile not deleted' };
+    }
+    if ((await docs.read('profile', created.id, 'personality')) !== '') {
+      return { status: 'fail', detail: 'profile docs not deleted' };
+    }
+    if (!store.getState().memories.some((m) => m.name === 'Probe-Gedächtnis')) {
+      return { status: 'fail', detail: 'memory must survive profile deletion' };
+    }
+
+    const last = store.getState().profiles[0];
+    const guard = await store
+      .deleteProfile(last?.id ?? '')
+      .then(() => false)
+      .catch(() => true);
+    if (!guard) return { status: 'fail', detail: 'last profile was deletable' };
+
+    return { status: 'pass' };
+  }
+
+  function testRouterParse(): SelfTestResult {
+    const members = ['p-writer', 'p-coder'];
+    const cases: Array<[string, string]> = [
+      ['p-coder', 'p-coder'],
+      ['  "p-writer"  ', 'p-writer'],
+      ['Ich wähle p-coder, weil…', 'p-coder'],
+      ['keine Ahnung', 'p-writer'],
+    ];
+    for (const [raw, expected] of cases) {
+      const got = parseRouterAnswer(raw, members, 'p-writer');
+      if (got !== expected) {
+        return { status: 'fail', detail: `"${raw}" → "${got}", expected "${expected}"` };
+      }
+    }
+    return { status: 'pass' };
+  }
+
+  function testTemplateKnown(): SelfTestResult {
+    const known = new Set(['chatml', 'gemma', 'llama3', 'phi']);
+    for (const m of MODEL_CATALOG) {
+      if (!known.has(m.template)) {
+        return { status: 'fail', detail: `${m.id}: unknown template "${m.template}"` };
+      }
+    }
+    return { status: 'pass' };
+  }
+
+  function testCatalogSane(): SelfTestResult {
+    const ids = new Set<string>();
+    for (const m of MODEL_CATALOG) {
+      if (ids.has(m.id)) return { status: 'fail', detail: `duplicate id ${m.id}` };
+      ids.add(m.id);
+      if (!m.url.startsWith('https://huggingface.co/')) {
+        return { status: 'fail', detail: `${m.id}: non-huggingface url` };
+      }
+      if (!(m.ramNeedMb > 0)) return { status: 'fail', detail: `${m.id}: ramNeedMb` };
+      if (!(m.sizeBytes > 0)) return { status: 'fail', detail: `${m.id}: sizeBytes` };
+      if (!m.license.url.startsWith('https://')) {
+        return { status: 'fail', detail: `${m.id}: license url` };
+      }
+    }
+    return { status: 'pass' };
+  }
+
+  async function testScopeEnforcement(): Promise<SelfTestResult> {
+    const executed: string[] = [];
+    const proposals: AssistantProposal[] = [
+      { command: 'todo.create', params: { title: 'ok' }, summary: 's' },
+      { command: 'system.wipeEverything', params: {}, summary: 'evil' },
+    ];
+    const outcome = await executeProposals(proposals, {
+      toolScope: ['todo'],
+      execute: async (p) => {
+        executed.push(p.command);
+        return { ok: true };
+      },
+    });
+    if (
+      outcome.executed.length !== 1 ||
+      outcome.blocked.length !== 1 ||
+      executed.join(',') !== 'todo.create' ||
+      outcome.blocked[0]?.command !== 'system.wipeEverything'
+    ) {
+      return { status: 'fail', detail: `scope not enforced: ${JSON.stringify(outcome)}` };
+    }
     return { status: 'pass' };
   }
 
@@ -123,6 +263,16 @@ export function createAssistantTool(): CardoTool {
         }
         case 'proposal-validate':
           return testProposalValidate();
+        case 'profile-crud':
+          return testProfileCrud();
+        case 'router-parse':
+          return testRouterParse();
+        case 'template-known':
+          return testTemplateKnown();
+        case 'catalog-sane':
+          return testCatalogSane();
+        case 'scope-enforcement':
+          return testScopeEnforcement();
         default:
           return { status: 'fail', detail: `unknown test "${testId}"` };
       }

@@ -7,6 +7,7 @@ import { useAppStore } from '../state/appStore';
 import { DiagnosePanel } from './DiagnosePanel';
 import { PollsPanel } from './PollsPanel';
 import { AssistantSettings } from '../assistant';
+import { MODEL_CATALOG } from '../assistant/models';
 import { ProfileModal } from '../profile/ProfileModal';
 import { BackupSection } from './BackupSection';
 import {
@@ -236,6 +237,16 @@ export function SettingsModal({ onClose }: { onClose(): void }) {
                 <li key={theme.id}>
                   {t(theme.nameKey)} · {theme.license.spdx} ·{' '}
                   <span className="settings__license-url">{theme.license.source}</span>
+                </li>
+              ))}
+            </ul>
+            <h4>{t('settings.aiLicenses')}</h4>
+            <ul className="c-muted settings__licenses">
+              {MODEL_CATALOG.map((model) => (
+                <li key={model.id}>
+                  {model.label} · {model.license.name}
+                  {model.license.notice === 'llama' ? ' · Built with Llama' : ''} ·{' '}
+                  <span className="settings__license-url">{model.license.url}</span>
                 </li>
               ))}
             </ul>

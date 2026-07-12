@@ -237,6 +237,9 @@ pub fn run() {
             assistant::assistant_generate,
             assistant::assistant_read_doc,
             assistant::assistant_write_doc,
+            assistant::assistant_delete_docs,
+            assistant::assistant_list_doc_ids,
+            assistant::assistant_migrate_v1,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Cardo");
