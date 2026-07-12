@@ -18,7 +18,8 @@
     "emptyHint": "Dieses Dashboard ist leer. Drücke {{shortcut}}, um in den Bearbeitungsmodus zu wechseln und dein erstes Widget hinzuzufügen.",
     "defaultPageName": "Start",
     "widgetRemoved": "Widget entfernt",
-    "pageRemoved": "Seite „{{name}}\" entfernt"
+    "pageRemoved": "Seite „{{name}}\" entfernt",
+    "widgetVariant": "Ansicht"
   },
   "palette": {
     "placeholder": "Befehl eingeben oder suchen…",
@@ -820,11 +821,16 @@
         "routerParse": "Router-Antworten werden einem Team-Mitglied zugeordnet",
         "templateKnown": "Jedes Modell nutzt ein bekanntes Prompt-Template",
         "catalogSane": "Modellkatalog-Einträge sind vollständig und gültig",
-        "scopeEnforcement": "Befehle außerhalb des Tool-Umfangs werden blockiert"
+        "scopeEnforcement": "Befehle außerhalb des Tool-Umfangs werden blockiert",
+        "modelCompetences": "Modell-Kompetenzen werden für jedes Modell aufgelöst (en/de)"
       },
       "tour": {
         "title": "Braindump statt Verwaltungsarbeit",
         "body": "Schreib einfach auf, was dir durch den Kopf geht. Dein Assistent macht daraus konkrete Vorschläge – du bestätigst nur noch mit Ja, Bearbeiten oder Nein. Alles läuft lokal."
+      },
+      "variant": {
+        "classic": "Klassisch",
+        "messenger": "Messenger"
       }
     }
   },
@@ -958,7 +964,9 @@
       "delegateAccept": "Übergeben",
       "delegateKeep": "Hier behalten",
       "delegateTakeover": "„{{name}}“ übernimmt…",
-      "delegateDone": "Übergeben."
+      "delegateDone": "Übergeben.",
+      "modelMissing": "Modell fehlt",
+      "switchToProfile": "Zu {{name}} wechseln"
     },
     "rating": {
       "great": "Sehr gut",
@@ -1161,7 +1169,8 @@
       "modelMissing": "Modell nicht installiert",
       "editTitle": "„{{name}}“ bearbeiten",
       "nameLabel": "Name",
-      "modelLabel": "Modell"
+      "modelLabel": "Modell",
+      "competencesFromModel": "Stärken (durch das Modell bestimmt)"
     },
     "teams": {
       "title": "Teams",
@@ -1189,7 +1198,8 @@
       "creating": "Dein Assistent wird erstellt…",
       "willDownload": "Wird beim Erstellen heruntergeladen",
       "competencesLabel": "Worin ist dieser Assistent stark?",
-      "competencesHint": "Eine Zeile pro Stärke – Cardo nutzt das für Delegations-Vorschläge."
+      "competencesHint": "Eine Zeile pro Stärke – Cardo nutzt das für Delegations-Vorschläge.",
+      "modelDrivenHint": "Die Stärken deines Assistenten ergeben sich aus dem gewählten Modell."
     },
     "templates": {
       "secretary": {
@@ -1253,6 +1263,21 @@
       "teamCompetencesTitle": "Team-Kompetenzen (team-kompetenzen.md)",
       "teamCompetencesHint": "Automatisch gepflegte Übersicht, wer was am besten kann – Grundlage für Delegations-Vorschläge. Dein Abschnitt „## Notizen“ bleibt erhalten.",
       "regenerate": "Neu erzeugen"
+    },
+    "chat": {
+      "placeholder": "Braindump… (/clearchat leert diesen Chat)",
+      "cleared": "Chatverlauf gelöscht.",
+      "contextHint": "Dieser Chat ist ziemlich lang geworden – das kann das Modell verlangsamen und verwirren. Tippe /clearchat, um frisch zu starten.",
+      "empty": "Noch keine Nachrichten.",
+      "back": "Zurück",
+      "listLabel": "Chats",
+      "time": {
+        "now": "gerade eben",
+        "minutes": "vor {{count}} Min.",
+        "hours": "vor {{count}} Std.",
+        "days_one": "vor {{count}} Tag",
+        "days_other": "vor {{count}} Tagen"
+      }
     }
   }
 }

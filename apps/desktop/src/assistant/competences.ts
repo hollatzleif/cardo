@@ -1,11 +1,13 @@
 /**
  * Competence documents. Pure module.
  *
- * - Each profile has a free-text competences string (what it is good at) –
- *   shown to the router and to team mates.
+ * - Since v0.5 competences are MODEL-derived: callers resolve each
+ *   member's strengths/weaknesses/idealFor via modelCompetencesDetailed()
+ *   (profiles.ts) and pass the resulting text here.
  * - Teams get one generated overview doc (scope 'team-competences', id
- *   'global'): a section per member plus a user-editable '## Notizen'
- *   section that regeneration must preserve.
+ *   'global'): a section per member ('### <emoji> <name> (<modelLabel>)',
+ *   weaknesses included so router/delegation know the tradeoffs) plus a
+ *   user-editable '## Notizen' section that regeneration must preserve.
  * - Suggestion logic (learned from accepted proposals) lives in profiles.ts
  *   (recordProposalOutcome / competenceSuggestions); the threshold and the
  *   "already mentioned" check are defined here so they can be unit-tested
@@ -24,6 +26,10 @@ export function competencesMentionTool(competences: string, toolId: string): boo
 
 export interface TeamCompetenceMember {
   name: string;
+  emoji: string;
+  /** Display label of the member's model (e.g. "Qwen3 4B"). */
+  modelLabel: string;
+  /** Model-derived competence lines – pass modelCompetencesDetailed(...). */
   competences: string;
 }
 
@@ -35,8 +41,8 @@ export function extractNotesSection(existing: string): string {
 }
 
 /**
- * (Re)generates the team competences doc: one section per member, then the
- * preserved '## Notizen' section from the previous version.
+ * (Re)generates the team competences doc: one model-derived section per
+ * member, then the preserved '## Notizen' section from the previous version.
  */
 export function generateTeamCompetences(
   members: TeamCompetenceMember[],
@@ -44,7 +50,7 @@ export function generateTeamCompetences(
 ): string {
   const sections: string[] = ['# Team-Kompetenzen', ''];
   for (const member of members) {
-    sections.push(`## ${member.name}`);
+    sections.push(`### ${member.emoji} ${member.name} (${member.modelLabel})`);
     sections.push(member.competences.trim() || '(keine Angaben)');
     sections.push('');
   }

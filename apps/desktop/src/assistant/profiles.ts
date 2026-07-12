@@ -1,10 +1,13 @@
+import i18next from 'i18next';
+import { defaultLanguage, resources } from '@cardo/i18n';
 import type { StorageBackend } from '@cardo/core';
 import {
   defaultDocStore,
+  listModels as listInstalledModels,
   migrateV1,
   type AssistantDocStore,
 } from './api';
-import { fastestModelId } from './models';
+import { fastestModelId, modelById } from './models';
 import { commandToolId } from './catalog';
 import { COMPETENCE_SUGGESTION_THRESHOLD, competencesMentionTool } from './competences';
 import { readMemory } from './memory';
@@ -32,7 +35,12 @@ export interface AssistantProfile {
   color: string;
   modelId: string;
   memoryId: string;
-  /** Free text: what this profile is good at (shown to router + team). */
+  /**
+   * LEGACY (pre-v0.5): user-authored free text. Since v0.5 competences are
+   * derived from the model – use profileCompetences()/modelCompetences()
+   * instead of reading this field. Kept only so old stored profiles (and
+   * profile exports) keep parsing; new profiles store ''.
+   */
   competences: string;
   /** null = all tools; otherwise tool ids (or full command ids). */
   toolScope: string[] | null;
@@ -78,7 +86,6 @@ export interface CreateProfileInput {
   color: string;
   modelId: string;
   memoryChoice: MemoryChoice;
-  competences: string;
   toolScope: string[] | null;
   personality: string;
   instructions: string;
@@ -124,6 +131,8 @@ export interface ProfilesDeps {
   docs?: AssistantDocStore;
   /** Rust-side v1 file migration; injectable for tests. */
   migrateNative?: () => Promise<boolean>;
+  /** Installed-model listing (migration guard); injectable for tests. */
+  listModels?: () => Promise<Array<{ id: string }>>;
 }
 
 const NS = 'core.assistant';
@@ -137,6 +146,78 @@ export const SHARED_MEMORY_NAME = 'Gemeinsam';
 
 function uid(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/* ── Model-derived competences (v0.5) ─────────────────────────────────── */
+/*
+ * Strengths are determined by the chosen MODEL, not typed by the user:
+ * a hand-written "great at planning" is meaningless when another
+ * assistant's model is objectively better at it. These helpers resolve
+ * the catalog's honest strength/weakness texts per language.
+ */
+
+/**
+ * Resolves an i18n key for an explicit language: through i18next once the
+ * app has initialized it, otherwise straight from the bundled resources
+ * (keeps this module usable in plain node tests, fully offline).
+ */
+function resolveI18nText(key: string, language: string): string {
+  if (i18next.isInitialized) {
+    const value = i18next.getFixedT(language)(key);
+    return typeof value === 'string' ? value : '';
+  }
+  const lookup = (lang: string): unknown =>
+    key.split('.').reduce<unknown>(
+      (node, part) =>
+        node !== null && typeof node === 'object'
+          ? (node as Record<string, unknown>)[part]
+          : undefined,
+      (resources as Record<string, { common?: unknown }>)[lang]?.common,
+    );
+  const hit = lookup(language) ?? lookup(defaultLanguage);
+  return typeof hit === 'string' ? hit : '';
+}
+
+/**
+ * One-line, model-derived competences of a profile, e.g.
+ * "Stärken: … · Ideal für: …". Empty string for unknown model ids.
+ */
+export function modelCompetences(modelId: string, language: string): string {
+  const model = modelById(modelId);
+  if (!model) return '';
+  const strengthsLabel = resolveI18nText('assistant.model.strengths', language);
+  const idealForLabel = resolveI18nText('assistant.model.idealFor', language);
+  return (
+    `${strengthsLabel}: ${resolveI18nText(model.strengthsKey, language)}` +
+    ` · ${idealForLabel}: ${resolveI18nText(model.idealForKey, language)}`
+  );
+}
+
+/**
+ * Multi-line variant including the model's WEAKNESSES – used for the team
+ * competences doc so router/delegation know the tradeoffs too.
+ */
+export function modelCompetencesDetailed(modelId: string, language: string): string {
+  const model = modelById(modelId);
+  if (!model) return '';
+  const line = (labelKey: string, textKey: string): string =>
+    `${resolveI18nText(labelKey, language)}: ${resolveI18nText(textKey, language)}`;
+  return [
+    line('assistant.model.strengths', model.strengthsKey),
+    line('assistant.model.weaknesses', model.weaknessesKey),
+    line('assistant.model.idealFor', model.idealForKey),
+  ].join('\n');
+}
+
+/**
+ * Computed accessor replacing the legacy profile.competences field:
+ * a profile's competences ARE its model's competences.
+ */
+export function profileCompetences(
+  profile: Pick<AssistantProfile, 'modelId'>,
+  language: string,
+): string {
+  return modelCompetences(profile.modelId, language);
 }
 
 interface StoredDoc {
@@ -178,6 +259,7 @@ export function createProfilesStore(deps: ProfilesDeps = {}): ProfilesStore {
   let backendInstance: StorageBackend | null = deps.backend ?? null;
   let docsInstance: AssistantDocStore | null = deps.docs ?? null;
   const migrateNative = deps.migrateNative ?? migrateV1;
+  const listModels = deps.listModels ?? listInstalledModels;
 
   /** Lazy so importing this module never touches the host before init. */
   async function backend(): Promise<StorageBackend> {
@@ -259,6 +341,14 @@ export function createProfilesStore(deps: ProfilesDeps = {}): ProfilesStore {
     await persistActive(sel);
   }
 
+  /** Creates the shared memory once (migration + first real profile). */
+  async function ensureSharedMemory(): Promise<void> {
+    if (state.memories.some((m) => m.id === SHARED_MEMORY_ID)) return;
+    const shared: MemoryMeta = { id: SHARED_MEMORY_ID, name: SHARED_MEMORY_NAME };
+    await persistMemoryMeta(shared);
+    setState({ memories: [...state.memories, shared] });
+  }
+
   /* ── Migration ─────────────────────────────────────────────────────── */
 
   async function migrateIfNeeded(): Promise<void> {
@@ -274,7 +364,18 @@ export function createProfilesStore(deps: ProfilesDeps = {}): ProfilesStore {
       value?: boolean;
     } | null;
 
-    const shared: MemoryMeta = { id: SHARED_MEMORY_ID, name: SHARED_MEMORY_NAME };
+    // v0.5 guard against a dead default profile: only migrate when there
+    // really is a legacy install – a saved persona, or a legacy model that
+    // is actually installed. Fresh installs create NOTHING here; the first
+    // createProfile() sets up the shared memory and active selection.
+    const hasLegacyPersona = personaDoc?.value != null;
+    const legacyModelId = typeof modelDoc?.value === 'string' ? modelDoc.value : null;
+    const installedIds = await listModels()
+      .then((models) => models.map((m) => m.id))
+      .catch(() => [] as string[]);
+    const legacyModelInstalled = legacyModelId !== null && installedIds.includes(legacyModelId);
+    if (!hasLegacyPersona && !legacyModelInstalled) return;
+
     const profile: AssistantProfile = {
       id: DEFAULT_PROFILE_ID,
       name: personaDoc?.value?.assistantName || 'Assistent',
@@ -289,8 +390,7 @@ export function createProfilesStore(deps: ProfilesDeps = {}): ProfilesStore {
     };
     const active: ActiveSelection = { type: 'profile', id: DEFAULT_PROFILE_ID };
 
-    await persistMemoryMeta(shared);
-    setState({ memories: [...state.memories.filter((m) => m.id !== shared.id), shared] });
+    await ensureSharedMemory();
     await persistProfile(profile);
     setState({ profiles: [profile] });
     await persistActive(active);
@@ -351,6 +451,9 @@ export function createProfilesStore(deps: ProfilesDeps = {}): ProfilesStore {
   }
 
   async function createProfile(input: CreateProfileInput): Promise<AssistantProfile> {
+    // Fresh installs skip the migration entirely – the first real profile
+    // creation must therefore provide the shared memory itself.
+    if (state.profiles.length === 0) await ensureSharedMemory();
     const memoryId = await resolveMemoryChoice(input.memoryChoice);
     const profile: AssistantProfile = {
       id: uid('p'),
@@ -359,7 +462,7 @@ export function createProfilesStore(deps: ProfilesDeps = {}): ProfilesStore {
       color: input.color,
       modelId: input.modelId,
       memoryId,
-      competences: input.competences,
+      competences: '', // v0.5: competences are model-derived (profileCompetences)
       toolScope: input.toolScope,
       ...(input.askBeforeExecute !== undefined ? { askBeforeExecute: input.askBeforeExecute } : {}),
       ...(input.delegationAsk !== undefined ? { delegationAsk: input.delegationAsk } : {}),
@@ -369,6 +472,9 @@ export function createProfilesStore(deps: ProfilesDeps = {}): ProfilesStore {
     await docs().write('profile', profile.id, 'instructions', input.instructions);
     await persistProfile(profile);
     setState({ profiles: [...state.profiles, profile] });
+    // A fresh install's active selection still points at the (never
+    // created) 'default' profile – repair it to the first real one.
+    await ensureValidActive();
     return profile;
   }
 

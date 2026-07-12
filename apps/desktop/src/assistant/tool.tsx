@@ -11,7 +11,7 @@ import { buildCommandCatalog } from './catalog';
 import { executeProposals, parseProposals, type AssistantProposal } from './proposals';
 import { MODEL_CATALOG } from './models';
 import { createMemoryDocStore } from './api';
-import { createProfilesStore } from './profiles';
+import { createProfilesStore, modelCompetences, SHARED_MEMORY_ID } from './profiles';
 import { parseRouterAnswer } from './routing';
 
 /**
@@ -33,12 +33,20 @@ const manifest = ToolManifestSchema.parse({
     network: [{ host: 'huggingface.co', dataKey: 'tool.assistant.privacy.download' }],
     summaryKey: 'tool.assistant.privacy.summary',
   },
-  widgets: [{ id: 'main', defaultSize: { w: 5, h: 6 }, minSize: { w: 3, h: 4 } }],
+  widgets: [
+    {
+      id: 'main',
+      defaultSize: { w: 5, h: 6 },
+      minSize: { w: 3, h: 4 },
+      variants: ['classic', 'messenger'],
+    },
+  ],
   commands: [],
   selfTests: [
     { id: 'catalog-build', titleKey: 'tool.assistant.test.catalogBuild' },
     { id: 'proposal-validate', titleKey: 'tool.assistant.test.proposalValidate' },
     { id: 'profile-crud', titleKey: 'tool.assistant.test.profileCrud' },
+    { id: 'model-competences', titleKey: 'tool.assistant.test.modelCompetences' },
     { id: 'router-parse', titleKey: 'tool.assistant.test.routerParse' },
     { id: 'template-known', titleKey: 'tool.assistant.test.templateKnown' },
     { id: 'catalog-sane', titleKey: 'tool.assistant.test.catalogSane' },
@@ -128,12 +136,33 @@ export function createAssistantTool(): CardoTool {
       backend: createMemoryBackend(),
       docs,
       migrateNative: async () => false,
+      listModels: async () => [],
     });
     await store.init();
 
     const initial = store.getState();
-    if (!initial.loaded || initial.profiles.length !== 1) {
-      return { status: 'fail', detail: `migration did not create a default profile` };
+    if (!initial.loaded || initial.profiles.length !== 0) {
+      return {
+        status: 'fail',
+        detail: 'fresh install must not get a migrated default profile',
+      };
+    }
+
+    const first = await store.createProfile({
+      name: 'Erste',
+      emoji: '🤖',
+      color: 'accent-1',
+      modelId: 'qwen3-4b',
+      memoryChoice: { share: SHARED_MEMORY_ID },
+      toolScope: null,
+      personality: '',
+      instructions: '',
+    });
+    if (!store.getState().memories.some((m) => m.id === SHARED_MEMORY_ID)) {
+      return { status: 'fail', detail: 'first creation must ensure the shared memory' };
+    }
+    if (first.memoryId !== SHARED_MEMORY_ID) {
+      return { status: 'fail', detail: 'first profile could not share the shared memory' };
     }
 
     const created = await store.createProfile({
@@ -142,7 +171,6 @@ export function createAssistantTool(): CardoTool {
       color: 'accent-2',
       modelId: 'qwen3-4b',
       memoryChoice: { own: 'Probe-Gedächtnis' },
-      competences: 'Testet Dinge',
       toolScope: ['todo'],
       personality: 'PERS',
       instructions: 'INST',
@@ -173,6 +201,25 @@ export function createAssistantTool(): CardoTool {
       .catch(() => true);
     if (!guard) return { status: 'fail', detail: 'last profile was deletable' };
 
+    return { status: 'pass' };
+  }
+
+  /** Every catalog model must resolve non-empty competences in en + de. */
+  function testModelCompetences(): SelfTestResult {
+    for (const model of MODEL_CATALOG) {
+      for (const language of ['en', 'de'] as const) {
+        const text = modelCompetences(model.id, language);
+        if (!text.trim()) {
+          return { status: 'fail', detail: `${model.id} (${language}): empty competences` };
+        }
+        if (text.includes('assistant.model.')) {
+          return { status: 'fail', detail: `${model.id} (${language}): unresolved i18n key` };
+        }
+      }
+    }
+    if (modelCompetences('no-such-model', 'de') !== '') {
+      return { status: 'fail', detail: 'unknown model id must yield ""' };
+    }
     return { status: 'pass' };
   }
 
@@ -265,6 +312,8 @@ export function createAssistantTool(): CardoTool {
           return testProposalValidate();
         case 'profile-crud':
           return testProfileCrud();
+        case 'model-competences':
+          return testModelCompetences();
         case 'router-parse':
           return testRouterParse();
         case 'template-known':

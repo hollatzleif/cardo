@@ -18,7 +18,8 @@
     "emptyHint": "This dashboard is empty. Press {{shortcut}} to enter edit mode and add your first widget.",
     "defaultPageName": "Home",
     "widgetRemoved": "Widget removed",
-    "pageRemoved": "Page \"{{name}}\" removed"
+    "pageRemoved": "Page \"{{name}}\" removed",
+    "widgetVariant": "View"
   },
   "palette": {
     "placeholder": "Type a command or search…",
@@ -820,11 +821,16 @@
         "routerParse": "Router answers resolve to a team member",
         "templateKnown": "Every model uses a known prompt template",
         "catalogSane": "Model catalog entries are complete and valid",
-        "scopeEnforcement": "Out-of-scope commands are blocked"
+        "scopeEnforcement": "Out-of-scope commands are blocked",
+        "modelCompetences": "Model competences resolve for every model (en/de)"
       },
       "tour": {
         "title": "Braindump instead of busywork",
         "body": "Just write down whatever is on your mind. Your assistant turns it into concrete proposals – you only confirm with Yes, Edit or No. Everything runs locally."
+      },
+      "variant": {
+        "classic": "Classic",
+        "messenger": "Messenger"
       }
     }
   },
@@ -958,7 +964,9 @@
       "delegateAccept": "Hand over",
       "delegateKeep": "Keep it here",
       "delegateTakeover": "\"{{name}}\" is taking over…",
-      "delegateDone": "Handed over."
+      "delegateDone": "Handed over.",
+      "modelMissing": "model missing",
+      "switchToProfile": "Switch to {{name}}"
     },
     "rating": {
       "great": "Great",
@@ -1161,7 +1169,8 @@
       "modelMissing": "Model not installed",
       "editTitle": "Edit \"{{name}}\"",
       "nameLabel": "Name",
-      "modelLabel": "Model"
+      "modelLabel": "Model",
+      "competencesFromModel": "Strengths (determined by the model)"
     },
     "teams": {
       "title": "Teams",
@@ -1189,7 +1198,8 @@
       "creating": "Creating your assistant…",
       "willDownload": "Will be downloaded when you create it",
       "competencesLabel": "What is this assistant strong at?",
-      "competencesHint": "One line per strength – Cardo uses this for delegation suggestions."
+      "competencesHint": "One line per strength – Cardo uses this for delegation suggestions.",
+      "modelDrivenHint": "Your assistant's strengths are determined by the model you choose."
     },
     "templates": {
       "secretary": {
@@ -1253,6 +1263,21 @@
       "teamCompetencesTitle": "Team competences (team-kompetenzen.md)",
       "teamCompetencesHint": "Automatically maintained overview of who is best at what – the basis for delegation suggestions. Your '## Notizen' section is preserved.",
       "regenerate": "Regenerate"
+    },
+    "chat": {
+      "placeholder": "Braindump… (/clearchat clears this chat)",
+      "cleared": "Chat history cleared.",
+      "contextHint": "This chat has gotten quite long – that can slow the model down and confuse it. Type /clearchat to start fresh.",
+      "empty": "No messages yet.",
+      "back": "Back",
+      "listLabel": "Chats",
+      "time": {
+        "now": "just now",
+        "minutes": "{{count}} min ago",
+        "hours": "{{count}} h ago",
+        "days_one": "{{count}} day ago",
+        "days_other": "{{count}} days ago"
+      }
     }
   }
 }

@@ -16,6 +16,35 @@
   padding: var(--space-4);
 }
 
+/* Conversation column (classic: the whole widget; messenger: right pane). */
+.aw-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Hint states (no profiles / model missing) below the always-on header. */
+.aw-empty-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.aw-empty-body p {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
 /* ── Header: avatar + switcher ──────────────────────────────────────── */
 
 .aw-header {
@@ -49,6 +78,23 @@
 .aw-switcher {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.aw-back {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 1.1em;
+  line-height: 1;
+  padding: var(--space-1) var(--space-2);
+  flex: 0 0 auto;
+}
+
+.aw-back:hover {
+  background: var(--bg-widget-hover);
 }
 
 .aw-status {
@@ -98,6 +144,45 @@
   font-size: 0.85em;
   overflow-wrap: break-word;
   margin: 0;
+}
+
+/* One persisted assistant answer: reply + proposal cards + memory block. */
+.aw-turn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* User messages: right-aligned bubble, messenger style. */
+.aw-msg-row {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.aw-msg {
+  max-width: 85%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.aw-msg--user {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+}
+
+/* System-style hint card (e.g. "history is long – try /clearchat"). */
+.aw-hintcard {
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-muted);
+  font-size: 0.85em;
+  overflow-wrap: break-word;
 }
 
 .aw-card {
@@ -218,4 +303,99 @@
   resize: none;
   font-family: inherit;
   min-width: 0;
+}
+
+/* ── Messenger variant: chat list + conversation ────────────────────── */
+
+.aw-root--messenger {
+  flex-direction: row;
+  gap: var(--space-3);
+}
+
+.aw-chatlist {
+  flex: 0 0 auto;
+  width: 13rem;
+  max-width: 45%;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  border-right: 1px solid var(--border-subtle);
+  padding-right: var(--space-2);
+}
+
+/* Collapsed (narrow) mode: whichever pane is shown takes the full width. */
+.aw-root--messenger > .aw-chatlist:only-child {
+  width: 100%;
+  max-width: none;
+  border-right: none;
+  padding-right: 0;
+}
+
+.aw-chatlist__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.aw-chatlist__item:hover {
+  background: var(--bg-widget-hover);
+}
+
+.aw-chatlist__item--active {
+  background: var(--bg-raised);
+}
+
+.aw-chatlist__item--disabled,
+.aw-chatlist__item--disabled:hover {
+  color: var(--text-muted);
+  cursor: default;
+  background: none;
+  opacity: 0.7;
+}
+
+.aw-chatlist__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.aw-chatlist__name {
+  font-weight: 600;
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.aw-chatlist__snippet {
+  color: var(--text-muted);
+  font-size: 0.8em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.aw-chatlist__time {
+  color: var(--text-muted);
+  font-size: 0.75em;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  white-space: nowrap;
 }

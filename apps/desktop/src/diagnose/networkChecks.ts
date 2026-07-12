@@ -2,6 +2,17 @@ import i18next from 'i18next';
 import type { DiagnoseCheck } from '@cardo/core';
 import type { SelfTestResult } from '@cardo/plugin-api';
 import { fetchWithTimeout } from '../host/net';
+import { invoke } from '@tauri-apps/api/core';
+import { isTauri } from '../host/backend';
+
+/**
+ * github.com and huggingface.co cannot be fetched from the webview
+ * (no CORS headers on github.com; HF CDN redirect chains) – those two
+ * probes run in Rust via net_probe when available.
+ */
+async function rustProbe(url: string): Promise<{ status: number; ms: number; bodyPrefix: string }> {
+  return invoke('net_probe', { url });
+}
 import { POLLS_WORKER_URL } from '../polls/config';
 import { MODEL_CATALOG } from '../assistant/models';
 
@@ -81,6 +92,15 @@ export function buildNetworkChecks(): DiagnoseCheck[] {
 
   return [
     netCheck('update-server', 'diagnose.check.netUpdateServer', async () => {
+      if (isTauri()) {
+        const probe = await rustProbe(UPDATE_MANIFEST_URL);
+        if (probe.status < 200 || probe.status >= 400) {
+          return { status: 'fail', detail: `HTTP ${probe.status}` };
+        }
+        return /"version"\s*:\s*"\d+\.\d+\.\d+"/.test(probe.bodyPrefix)
+          ? pass(probe.ms)
+          : { status: 'fail', detail: 'manifest has no valid version field' };
+      }
       const { res, ms } = await timed(() =>
         fetchWithTimeout(UPDATE_MANIFEST_URL, undefined, NET_TIMEOUT_MS),
       );
@@ -142,6 +162,12 @@ export function buildNetworkChecks(): DiagnoseCheck[] {
 
     netCheck('huggingface', 'diagnose.check.netHuggingface', async () => {
       if (!smallestModel) return { status: 'fail', detail: 'model catalog is empty' };
+      if (isTauri()) {
+        const probe = await rustProbe(smallestModel.url);
+        return probe.status === 200 || probe.status === 206
+          ? pass(probe.ms)
+          : { status: 'fail', detail: `HTTP ${probe.status}` };
+      }
       const { res, ms } = await timed(() =>
         fetchWithTimeout(
           smallestModel.url,

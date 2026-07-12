@@ -5,9 +5,23 @@ import { Button } from '@cardo/ui';
 import { getHost } from '../host';
 import * as api from './api';
 import { buildCommandCatalog, isCommandInScope, type CatalogSource } from './catalog';
+import {
+  appendChat,
+  CHAT_CONTEXT_CHAR_LIMIT,
+  chatContext,
+  clearChat,
+  estimateContextChars,
+  loadChat,
+  makeChatEntry,
+  updateChatEntry,
+  type ChatEntry,
+  type ChatProposalOutcome,
+  type ChatProposalSnapshot,
+} from './chats';
 import { requestPaletteEdit } from './hostBridge';
 import { appendMemory, forgetLines } from './memory';
 import { modelById, type PromptTemplate } from './models';
+import * as profilesModule from './profiles';
 import {
   getActive,
   getProfilesState,
@@ -21,17 +35,21 @@ import {
   type ResolvedActive,
 } from './profiles';
 import { buildSystemPrompt } from './prompt';
-import { executeProposals, parseProposals, type AssistantProposal } from './proposals';
+import { executeProposals, parseProposals } from './proposals';
 import { buildRouterPrompt, parseRouterAnswer } from './routing';
 import { getAskBeforeExecute, onAssistantSettingsChange } from './store';
 import './assistant-widget.css';
 
 /**
- * Braindump widget, multi-assistant edition (v0.4.0): thoughts in, concrete
- * command proposals out – now per assistant profile or team. Everything runs
- * locally; the model answers with a strict JSON contract that is parsed
- * defensively and executed only via the command registry, filtered by the
- * active profile's tool scope.
+ * Braindump widget, persistent-chat edition (v0.5.0): thoughts in, concrete
+ * command proposals out – per assistant profile or team, with the full
+ * conversation persisted per selection (chats.ts). Everything runs locally;
+ * the model answers with a strict JSON contract that is parsed defensively
+ * and executed only via the command registry, filtered by the active
+ * profile's tool scope.
+ *
+ * Variants: 'classic' (default) is the single-chat look; 'messenger' adds a
+ * chat list (one conversation per profile/team) on the left.
  */
 
 type Setup = 'loading' | 'noProfiles' | 'noModel' | 'ready';
@@ -42,35 +60,35 @@ interface Speaker {
   color: string;
 }
 
-type ProposalStatus = 'pending' | 'done' | 'failed' | 'dismissed' | 'edited' | 'blocked';
-
-interface ReplyItem {
-  id: number;
-  type: 'reply';
-  speaker: Speaker;
-  text: string;
+/** Persisted conversation entry, rendered from the chat store. */
+interface EntryItem {
+  key: string;
+  kind: 'entry';
+  entry: ChatEntry;
 }
 
+/** Session-only items (never persisted): routing notes, hints, questions. */
 interface RouteItem {
-  id: number;
-  type: 'route';
+  key: string;
+  kind: 'route';
   text: string;
 }
 
-interface ProposalItem {
-  id: number;
-  type: 'proposal';
-  speaker: Speaker;
-  profileId: string;
-  toolScope: AssistantProfile['toolScope'];
-  proposal: AssistantProposal;
-  status: ProposalStatus;
-  resultMessage?: string;
+interface NoticeItem {
+  key: string;
+  kind: 'notice';
+  text: string;
+}
+
+interface HintItem {
+  key: string;
+  kind: 'hint';
+  text: string;
 }
 
 interface DelegationItem {
-  id: number;
-  type: 'delegation';
+  key: string;
+  kind: 'delegation';
   speaker: Speaker;
   targetId: string;
   targetName: string;
@@ -80,26 +98,28 @@ interface DelegationItem {
   status: 'pending' | 'accepted' | 'declined';
 }
 
-interface MemoryItem {
-  id: number;
-  type: 'memory';
-  speaker: Speaker;
-  memoryId: string;
-  lines: string[];
-}
-
 interface ForgetItem {
-  id: number;
-  type: 'forget';
+  key: string;
+  kind: 'forget';
   speaker: Speaker;
   memoryId: string;
   line: string;
   status: 'pending' | 'done' | 'declined';
 }
 
-type FeedItem = ReplyItem | RouteItem | ProposalItem | DelegationItem | MemoryItem | ForgetItem;
+type FeedItem = EntryItem | RouteItem | NoticeItem | HintItem | DelegationItem | ForgetItem;
 
-type DistributiveOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
+/** Optional contract with settings: model-derived competences per model id. */
+const modelCompetencesFn = (
+  profilesModule as unknown as {
+    modelCompetences?: (modelId: string, language: string) => string;
+  }
+).modelCompetences;
+
+const CLEAR_COMMAND = '/clearchat';
+/** Grid units → approximate pixels; below this the messenger collapses. */
+const GRID_UNIT_PX = 56;
+const NARROW_PX = 520;
 
 function templateFor(modelId: string): PromptTemplate {
   return modelById(modelId)?.template ?? 'chatml';
@@ -107,6 +127,10 @@ function templateFor(modelId: string): PromptTemplate {
 
 function speakerOf(source: { name: string; emoji: string; color: string }): Speaker {
   return { name: source.name, emoji: source.emoji, color: source.color };
+}
+
+function ownerIdOf(active: ResolvedActive): string {
+  return active.kind === 'team' ? active.team.id : active.profile.id;
 }
 
 /** Model ids that must be installed before the selection is usable. */
@@ -120,20 +144,47 @@ function requiredModelIds(active: ResolvedActive, profiles: AssistantProfile[]):
   return [...ids];
 }
 
-export function AssistantWidget(_props: WidgetProps) {
+function entriesOf(items: FeedItem[]): ChatEntry[] {
+  const entries: ChatEntry[] = [];
+  for (const it of items) if (it.kind === 'entry') entries.push(it.entry);
+  return entries;
+}
+
+/** One-line preview of an entry for the messenger chat list. */
+function snippetOf(entry: ChatEntry): string {
+  if (entry.text.trim() !== '') return entry.text;
+  const first = entry.proposals?.[0];
+  if (first) return first.summary;
+  return entry.memory?.[0] ?? '';
+}
+
+export function AssistantWidget(props: WidgetProps) {
   const { t, i18n } = useTranslation();
   const [setup, setSetup] = useState<Setup>('loading');
   const [profiles, setProfiles] = useState<AssistantProfile[]>([]);
   const [teams, setTeams] = useState<AssistantTeam[]>([]);
   const [selection, setSelection] = useState<ResolvedActive | null>(null);
+  const [installedIds, setInstalledIds] = useState<string[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
-  const nextIdRef = useRef(1);
+  /** Ephemeral per-proposal result messages, keyed `${entryId}:${index}`. */
+  const [resultMsgs, setResultMsgs] = useState<Record<string, string>>({});
+  const [lastByOwner, setLastByOwner] = useState<Record<string, { text: string; at: string }>>({});
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('chat');
+  const nextKeyRef = useRef(1);
+  const installedRef = useRef<Set<string>>(new Set());
+  const contextHintShownRef = useRef<Set<string>>(new Set());
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const language = i18n.language.startsWith('de') ? 'de' : 'en';
+  const isMessenger = props.variant === 'messenger';
+  const narrow = isMessenger && props.size.w * GRID_UNIT_PX < NARROW_PX;
+
+  const ownerId = selection ? ownerIdOf(selection) : null;
+  const installedSet = new Set(installedIds);
 
   const refresh = useCallback(async () => {
     try {
@@ -141,6 +192,9 @@ export function AssistantWidget(_props: WidgetProps) {
       const state = getProfilesState();
       setProfiles(state.profiles);
       setTeams(state.teams);
+      const installed = await api.listModels().catch(() => []);
+      installedRef.current = new Set(installed.map((m) => m.id));
+      setInstalledIds(installed.map((m) => m.id));
       if (state.profiles.length === 0) {
         setSelection(null);
         setSetup('noProfiles');
@@ -152,10 +206,8 @@ export function AssistantWidget(_props: WidgetProps) {
         setSetup('noProfiles');
         return;
       }
-      const installed = await api.listModels();
       const needed = requiredModelIds(active, state.profiles);
-      const usable =
-        needed.length > 0 && needed.every((id) => installed.some((m) => m.id === id));
+      const usable = needed.length > 0 && needed.every((id) => installedRef.current.has(id));
       setSetup(usable ? 'ready' : 'noModel');
     } catch {
       setSetup('noModel');
@@ -172,38 +224,126 @@ export function AssistantWidget(_props: WidgetProps) {
     };
   }, [refresh]);
 
+  /* ── Persistent chat: load on selection change / mount ───────────────── */
+
+  useEffect(() => {
+    if (!ownerId) {
+      setFeed([]);
+      return;
+    }
+    let cancelled = false;
+    setError(null);
+    loadChat(ownerId)
+      .then((entries) => {
+        if (cancelled) return;
+        setFeed(entries.map((entry) => ({ key: entry.id, kind: 'entry', entry })));
+      })
+      .catch(() => {
+        if (!cancelled) setFeed([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ownerId]);
+
+  /* Messenger: last-message snippets for every profile/team chat. */
+  const ownerKey = [...profiles.map((p) => p.id), ...teams.map((tm) => tm.id)].join(',');
+  useEffect(() => {
+    if (!isMessenger || ownerKey === '') return;
+    let cancelled = false;
+    void (async () => {
+      const map: Record<string, { text: string; at: string }> = {};
+      for (const id of ownerKey.split(',')) {
+        const entries = await loadChat(id).catch(() => [] as ChatEntry[]);
+        const last = entries[entries.length - 1];
+        if (last) map[id] = { text: snippetOf(last), at: last.at };
+      }
+      if (!cancelled) setLastByOwner(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isMessenger, ownerKey]);
+
+  /* Auto-scroll to the newest message on every feed change. */
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [feed]);
+
+  /* One-time hint per chat once the prompt context grows heavy. */
+  useEffect(() => {
+    if (!ownerId) return;
+    if (contextHintShownRef.current.has(ownerId)) return;
+    if (estimateContextChars(entriesOf(feed)) <= CHAT_CONTEXT_CHAR_LIMIT) return;
+    contextHintShownRef.current.add(ownerId);
+    const key = `s-${nextKeyRef.current++}`;
+    setFeed((prev) => [
+      ...prev,
+      { key, kind: 'hint', text: String(t('assistant.chat.contextHint')) },
+    ]);
+  }, [feed, ownerId, t]);
+
   /* ── Feed helpers ─────────────────────────────────────────────────── */
 
-  function push(item: DistributiveOmit<FeedItem, 'id'>): void {
-    const id = nextIdRef.current++;
-    setFeed((prev) => [...prev, { ...item, id } as FeedItem]);
+  function ephemeralKey(): string {
+    return `s-${nextKeyRef.current++}`;
   }
 
-  function setProposalStatus(id: number, status: ProposalStatus, resultMessage?: string): void {
+  function pushItem(item: FeedItem): void {
+    setFeed((prev) => [...prev, item]);
+  }
+
+  /** Renders + persists one chat entry (persistence is best effort). */
+  async function appendEntryItem(chatOwnerId: string, entry: ChatEntry): Promise<void> {
+    setFeed((prev) => [...prev, { key: entry.id, kind: 'entry', entry }]);
+    setLastByOwner((prev) => ({
+      ...prev,
+      [chatOwnerId]: { text: snippetOf(entry), at: entry.at },
+    }));
+    try {
+      await appendChat(chatOwnerId, entry);
+    } catch {
+      /* history is a convenience – never block the conversation on it */
+    }
+  }
+
+  /** Patches a persisted entry in the feed AND in the chat store. */
+  function patchEntry(entryId: string, patch: Partial<Omit<ChatEntry, 'id'>>): void {
     setFeed((prev) =>
-      prev.map((it) => (it.id === id && it.type === 'proposal' ? { ...it, status, resultMessage } : it)),
+      prev.map((it) =>
+        it.kind === 'entry' && it.entry.id === entryId
+          ? { ...it, entry: { ...it.entry, ...patch, id: entryId } }
+          : it,
+      ),
+    );
+    if (ownerId) void updateChatEntry(ownerId, entryId, patch).catch(() => {});
+  }
+
+  function setSnapshotOutcome(
+    entry: ChatEntry,
+    index: number,
+    outcome: ChatProposalOutcome,
+    resultMessage?: string,
+  ): void {
+    const proposals = (entry.proposals ?? []).map((p, i) =>
+      i === index ? { ...p, outcome } : p,
+    );
+    patchEntry(entry.id, { proposals });
+    if (resultMessage !== undefined) {
+      setResultMsgs((prev) => ({ ...prev, [`${entry.id}:${index}`]: resultMessage }));
+    }
+  }
+
+  function setDelegationStatus(key: string, status: DelegationItem['status']): void {
+    setFeed((prev) =>
+      prev.map((it) => (it.key === key && it.kind === 'delegation' ? { ...it, status } : it)),
     );
   }
 
-  function setDelegationStatus(id: number, status: DelegationItem['status']): void {
+  function setForgetStatus(key: string, status: ForgetItem['status']): void {
     setFeed((prev) =>
-      prev.map((it) => (it.id === id && it.type === 'delegation' ? { ...it, status } : it)),
-    );
-  }
-
-  function setForgetStatus(id: number, status: ForgetItem['status']): void {
-    setFeed((prev) =>
-      prev.map((it) => (it.id === id && it.type === 'forget' ? { ...it, status } : it)),
-    );
-  }
-
-  function removeMemoryLine(id: number, line: string): void {
-    setFeed((prev) =>
-      prev.flatMap((it) => {
-        if (it.id !== id || it.type !== 'memory') return [it];
-        const lines = it.lines.filter((l) => l !== line);
-        return lines.length === 0 ? [] : [{ ...it, lines }];
-      }),
+      prev.map((it) => (it.key === key && it.kind === 'forget' ? { ...it, status } : it)),
     );
   }
 
@@ -211,6 +351,32 @@ export function AssistantWidget(_props: WidgetProps) {
     return String(
       t(api.isInsufficientRam(err) ? 'assistant.widget.ramError' : 'assistant.widget.generateError'),
     );
+  }
+
+  function speakerName(speakerId?: string): string {
+    return (
+      getProfilesState().profiles.find((p) => p.id === speakerId)?.name ??
+      String(t('assistant.widget.defaultName'))
+    );
+  }
+
+  function speakerFor(speakerId?: string): Speaker {
+    const profile = getProfilesState().profiles.find((p) => p.id === speakerId);
+    if (profile) return speakerOf(profile);
+    return { name: String(t('assistant.widget.defaultName')), emoji: '🤖', color: 'accent-1' };
+  }
+
+  /**
+   * Conversation context for the prompt: the last few user/assistant texts
+   * (no cards) as a 'Bisheriger Verlauf' block above the current message.
+   */
+  function composeUserPrompt(question: string, entries: ChatEntry[]): string {
+    const ctx = chatContext(entries);
+    if (ctx.length === 0) return question;
+    const lines = ctx.map(
+      (e) => `${e.role === 'user' ? 'Nutzer' : speakerName(e.speakerId)}: ${e.text}`,
+    );
+    return `Bisheriger Verlauf:\n${lines.join('\n')}\n\nAktuelle Nachricht: ${question}`;
   }
 
   /* ── Model + generation pipeline ──────────────────────────────────── */
@@ -228,14 +394,18 @@ export function AssistantWidget(_props: WidgetProps) {
   }
 
   /**
-   * Generates + renders one answer as the given profile.
-   * Returns false when the model output was unusable (input stays put).
+   * Generates + persists + renders one answer as the given profile.
+   * `question` is the raw braindump (re-run verbatim on delegation),
+   * `promptUser` the history-augmented prompt actually sent to the model.
+   * Returns false when the model output was unusable.
    */
   async function runAsProfile(
     profile: AssistantProfile,
     question: string,
+    promptUser: string,
     memoryId: string,
     slot: 'main' | 'sub',
+    chatOwnerId: string,
   ): Promise<boolean> {
     const speaker = speakerOf(profile);
     await ensureModel(profile.modelId, slot);
@@ -268,13 +438,17 @@ export function AssistantWidget(_props: WidgetProps) {
       delegation: {
         enabled: delegationEnabled,
         ownProfileId: profile.id,
-        others: others.map((p) => ({ id: p.id, name: p.name, competences: p.competences })),
+        others: others.map((p) => ({
+          id: p.id,
+          name: p.name,
+          competences: modelCompetencesFn?.(p.modelId, language) ?? p.competences ?? '',
+        })),
       },
     });
 
     const raw = await api.generate({
       system,
-      user: question,
+      user: promptUser,
       maxTokens: 1024,
       jsonOnly: true,
       template: templateFor(profile.modelId),
@@ -290,62 +464,60 @@ export function AssistantWidget(_props: WidgetProps) {
       return false;
     }
 
-    if (parsed.reply !== '') push({ type: 'reply', speaker, text: parsed.reply });
+    if (parsed.memory.length > 0) await appendMemory(memoryId, parsed.memory);
 
-    if (parsed.memory.length > 0) {
-      await appendMemory(memoryId, parsed.memory);
-      push({ type: 'memory', speaker, memoryId, lines: parsed.memory });
-    }
-
-    for (const line of parsed.forget) {
-      push({ type: 'forget', speaker, memoryId, line, status: 'pending' });
-    }
-
+    // One persisted entry per answer: reply text + proposal cards + memory.
+    let snapshots: ChatProposalSnapshot[];
+    const resultMessages = new Map<number, string>();
     if (await effectiveAskBeforeExecute(profile)) {
-      for (const proposal of parsed.proposals) {
-        push({
-          type: 'proposal',
-          speaker,
-          profileId: profile.id,
-          toolScope: profile.toolScope,
-          proposal,
-          status: 'pending',
-        });
-      }
+      snapshots = parsed.proposals.map((p) => ({ ...p, outcome: 'pending' as const }));
     } else {
       // Auto-execute mode: run everything the scope allows, flag the rest.
       const { executed, blocked } = await executeProposals(parsed.proposals, {
         toolScope: profile.toolScope,
       });
+      snapshots = [];
       for (const entry of executed) {
-        push({
-          type: 'proposal',
-          speaker,
-          profileId: profile.id,
-          toolScope: profile.toolScope,
-          proposal: entry.proposal,
-          status: entry.result.ok ? 'done' : 'failed',
-          resultMessage: entry.result.messageKey ? String(t(entry.result.messageKey)) : undefined,
+        if (entry.result.messageKey) {
+          resultMessages.set(snapshots.length, String(t(entry.result.messageKey)));
+        }
+        snapshots.push({
+          ...entry.proposal,
+          outcome: entry.result.ok ? ('done' as const) : ('failed' as const),
         });
       }
-      for (const proposal of blocked) {
-        push({
-          type: 'proposal',
-          speaker,
-          profileId: profile.id,
-          toolScope: profile.toolScope,
-          proposal,
-          status: 'blocked',
+      for (const proposal of blocked) snapshots.push({ ...proposal, outcome: 'blocked' as const });
+    }
+
+    if (parsed.reply !== '' || snapshots.length > 0 || parsed.memory.length > 0) {
+      const entry = makeChatEntry({
+        role: 'assistant',
+        speakerId: profile.id,
+        text: parsed.reply,
+        ...(snapshots.length > 0 ? { proposals: snapshots } : {}),
+        ...(parsed.memory.length > 0 ? { memory: parsed.memory, memoryId } : {}),
+      });
+      if (resultMessages.size > 0) {
+        setResultMsgs((prev) => {
+          const next = { ...prev };
+          for (const [idx, msg] of resultMessages) next[`${entry.id}:${idx}`] = msg;
+          return next;
         });
       }
+      await appendEntryItem(chatOwnerId, entry);
+    }
+
+    for (const line of parsed.forget) {
+      pushItem({ key: ephemeralKey(), kind: 'forget', speaker, memoryId, line, status: 'pending' });
     }
 
     // Delegation always asks – even in auto-execute mode (safety).
     for (const entry of parsed.delegate) {
       const target = state.profiles.find((p) => p.id === entry.to);
       if (!target || target.id === profile.id) continue;
-      push({
-        type: 'delegation',
+      pushItem({
+        key: ephemeralKey(),
+        kind: 'delegation',
         speaker,
         targetId: target.id,
         targetName: target.name,
@@ -359,7 +531,11 @@ export function AssistantWidget(_props: WidgetProps) {
   }
 
   /** Team flow: leader routes the braindump to a member, member answers. */
-  async function runTeam(active: Extract<ResolvedActive, { kind: 'team' }>, question: string): Promise<boolean> {
+  async function runTeam(
+    active: Extract<ResolvedActive, { kind: 'team' }>,
+    question: string,
+    promptUser: string,
+  ): Promise<boolean> {
     const team = active.team;
     const state = getProfilesState();
     const members = team.memberIds
@@ -399,13 +575,21 @@ export function AssistantWidget(_props: WidgetProps) {
     );
     const member = members.find((m) => m.id === chosenId) ?? leader;
 
-    push({
-      type: 'route',
+    pushItem({
+      key: ephemeralKey(),
+      kind: 'route',
       text: String(t('assistant.team.routedTo', { leader: leader.name, member: member.name })),
     });
 
     // The member answers with their own persona + the shared team memory.
-    return runAsProfile(member, question, resolveMemoryId({ type: 'team', id: team.id }), 'main');
+    return runAsProfile(
+      member,
+      question,
+      promptUser,
+      resolveMemoryId({ type: 'team', id: team.id }),
+      'main',
+      team.id,
+    );
   }
 
   /* ── Top-level actions ────────────────────────────────────────────── */
@@ -415,20 +599,47 @@ export function AssistantWidget(_props: WidgetProps) {
     if (text === '' || busy) return;
     const active = selection;
     if (!active) return;
+    const chatOwnerId = ownerIdOf(active);
+
+    // '/clearchat' is a local command – nothing is sent to the model.
+    if (text.toLowerCase() === CLEAR_COMMAND) {
+      setInput('');
+      setError(null);
+      try {
+        await clearChat(chatOwnerId);
+      } catch {
+        /* best effort */
+      }
+      contextHintShownRef.current.delete(chatOwnerId);
+      setLastByOwner((prev) => {
+        const next = { ...prev };
+        delete next[chatOwnerId];
+        return next;
+      });
+      setFeed([
+        { key: ephemeralKey(), kind: 'notice', text: String(t('assistant.chat.cleared')) },
+      ]);
+      return;
+    }
+
     setBusy(true);
     setError(null);
-    setFeed([]);
+    const promptUser = composeUserPrompt(text, entriesOf(feed));
+    await appendEntryItem(chatOwnerId, makeChatEntry({ role: 'user', text }));
+    setInput('');
     try {
-      const ok =
-        active.kind === 'team'
-          ? await runTeam(active, text)
-          : await runAsProfile(
-              active.profile,
-              text,
-              resolveMemoryId({ type: 'profile', id: active.profile.id }),
-              'main',
-            );
-      if (ok) setInput('');
+      if (active.kind === 'team') {
+        await runTeam(active, text, promptUser);
+      } else {
+        await runAsProfile(
+          active.profile,
+          text,
+          promptUser,
+          resolveMemoryId({ type: 'profile', id: active.profile.id }),
+          'main',
+          chatOwnerId,
+        );
+      }
     } catch (err) {
       setError(errText(err));
     } finally {
@@ -448,7 +659,8 @@ export function AssistantWidget(_props: WidgetProps) {
     try {
       await setActive({ type: kind, id });
       await refresh();
-      // Warm up the model behind the new selection so the first question is snappy.
+      // Warm up the model behind the new selection so the first question is
+      // snappy – but only when it is actually installed.
       const active: ResolvedActive | null = getActive() ?? null;
       const modelId =
         active?.kind === 'profile'
@@ -456,7 +668,11 @@ export function AssistantWidget(_props: WidgetProps) {
           : active
             ? getProfilesState().profiles.find((p) => p.id === active.team.leaderId)?.modelId
             : undefined;
-      if (modelId !== undefined && (await api.loadedModel('main')) !== modelId) {
+      if (
+        modelId !== undefined &&
+        installedRef.current.has(modelId) &&
+        (await api.loadedModel('main')) !== modelId
+      ) {
         await api.loadModel(modelId, api.CTX_TOKENS, 'main');
       }
     } catch (err) {
@@ -466,64 +682,88 @@ export function AssistantWidget(_props: WidgetProps) {
     }
   }
 
-  async function acceptProposal(item: ProposalItem): Promise<void> {
-    if (item.status !== 'pending') return;
-    void recordProposalOutcome(item.profileId, item.proposal.command, true);
+  function openChat(kind: 'profile' | 'team', id: string): void {
+    setMobileView('chat');
+    const value = `${kind}:${id}`;
+    const current =
+      selection?.kind === 'team' ? `team:${selection.team.id}` : `profile:${selection?.profile.id}`;
+    if (value !== current) void switchTo(value);
+  }
+
+  async function acceptProposal(entry: ChatEntry, index: number): Promise<void> {
+    const snap = entry.proposals?.[index];
+    if (!snap || snap.outcome !== 'pending') return;
+    const profile = getProfilesState().profiles.find((p) => p.id === entry.speakerId);
+    if (!profile) {
+      // The answering profile is gone – its tool scope is unknowable.
+      setSnapshotOutcome(entry, index, 'blocked');
+      return;
+    }
+    void recordProposalOutcome(profile.id, snap.command, true);
     try {
-      const res = await executeProposals([item.proposal], { toolScope: item.toolScope });
+      const res = await executeProposals(
+        [{ command: snap.command, params: snap.params, summary: snap.summary }],
+        { toolScope: profile.toolScope },
+      );
       const first = res.executed[0];
       if (first) {
-        setProposalStatus(
-          item.id,
+        setSnapshotOutcome(
+          entry,
+          index,
           first.result.ok ? 'done' : 'failed',
           first.result.messageKey ? String(t(first.result.messageKey)) : undefined,
         );
       } else {
-        setProposalStatus(item.id, res.blocked.length > 0 ? 'blocked' : 'failed');
+        setSnapshotOutcome(entry, index, res.blocked.length > 0 ? 'blocked' : 'failed');
       }
     } catch {
-      setProposalStatus(item.id, 'failed');
+      setSnapshotOutcome(entry, index, 'failed');
     }
   }
 
-  function declineProposal(item: ProposalItem): void {
-    if (item.status !== 'pending') return;
-    void recordProposalOutcome(item.profileId, item.proposal.command, false);
-    setProposalStatus(item.id, 'dismissed');
+  function declineProposal(entry: ChatEntry, index: number): void {
+    const snap = entry.proposals?.[index];
+    if (!snap || snap.outcome !== 'pending') return;
+    if (entry.speakerId) void recordProposalOutcome(entry.speakerId, snap.command, false);
+    setSnapshotOutcome(entry, index, 'dismissed');
   }
 
-  function editProposal(item: ProposalItem): void {
-    if (item.status !== 'pending') return;
-    requestPaletteEdit(item.proposal.command, item.proposal.params);
-    setProposalStatus(item.id, 'edited');
+  function editProposal(entry: ChatEntry, index: number): void {
+    const snap = entry.proposals?.[index];
+    if (!snap || snap.outcome !== 'pending') return;
+    requestPaletteEdit(snap.command, snap.params);
+    setSnapshotOutcome(entry, index, 'edited');
   }
 
   async function acceptDelegation(item: DelegationItem): Promise<void> {
     if (item.status !== 'pending' || busy) return;
+    const active = selection;
     const target = getProfilesState().profiles.find((p) => p.id === item.targetId);
-    if (!target) {
-      setDelegationStatus(item.id, 'declined');
+    if (!target || !active) {
+      setDelegationStatus(item.key, 'declined');
       return;
     }
     setBusy(true);
     setError(null);
-    setDelegationStatus(item.id, 'accepted');
+    setDelegationStatus(item.key, 'accepted');
+    const chatOwnerId = ownerIdOf(active);
+    const promptUser = composeUserPrompt(item.question, entriesOf(feed));
     try {
       const memoryId = target.memoryId;
       if ((await api.loadedModel('main')) === target.modelId) {
         // Same model – instant handover, only the docs change.
-        await runAsProfile(target, item.question, memoryId, 'main');
+        await runAsProfile(target, item.question, promptUser, memoryId, 'main', chatOwnerId);
       } else {
         setStatus(String(t('assistant.widget.delegateTakeover', { name: target.name })));
         try {
           await api.loadModel(target.modelId, api.CTX_TOKENS, 'sub');
-          await runAsProfile(target, item.question, memoryId, 'sub');
+          await runAsProfile(target, item.question, promptUser, memoryId, 'sub', chatOwnerId);
         } catch (err) {
           if (!api.isInsufficientRam(err)) throw err;
           // No headroom for a second model – swap sequentially on main.
           setStatus(String(t('assistant.widget.delegateTakeover', { name: target.name })));
           await api.loadModel(target.modelId, api.CTX_TOKENS, 'main');
-          await runAsProfile(target, item.question, memoryId, 'main');
+          await runAsProfile(target, item.question, promptUser, memoryId, 'main', chatOwnerId);
         }
       }
     } catch (err) {
@@ -534,10 +774,15 @@ export function AssistantWidget(_props: WidgetProps) {
     }
   }
 
-  async function forgetRemembered(item: MemoryItem, line: string): Promise<void> {
+  /** Forget one remembered line straight from a persisted answer card. */
+  async function forgetRemembered(entry: ChatEntry, line: string): Promise<void> {
+    const memoryId =
+      entry.memoryId ??
+      getProfilesState().profiles.find((p) => p.id === entry.speakerId)?.memoryId;
+    if (memoryId === undefined) return;
     try {
-      await forgetLines(item.memoryId, [line]);
-      removeMemoryLine(item.id, line);
+      await forgetLines(memoryId, [line]);
+      patchEntry(entry.id, { memory: (entry.memory ?? []).filter((l) => l !== line) });
     } catch {
       setError(String(t('assistant.manage.error')));
     }
@@ -547,7 +792,7 @@ export function AssistantWidget(_props: WidgetProps) {
     if (item.status !== 'pending') return;
     try {
       await forgetLines(item.memoryId, [item.line]);
-      setForgetStatus(item.id, 'done');
+      setForgetStatus(item.key, 'done');
     } catch {
       setError(String(t('assistant.manage.error')));
     }
@@ -559,6 +804,21 @@ export function AssistantWidget(_props: WidgetProps) {
       void send();
     }
   }
+
+  /* ── Usability (installed models) ─────────────────────────────────── */
+
+  function profileUsable(p: AssistantProfile): boolean {
+    return installedSet.has(p.modelId);
+  }
+
+  function teamUsable(team: AssistantTeam): boolean {
+    const members = team.memberIds
+      .map((id) => profiles.find((p) => p.id === id))
+      .filter((p): p is AssistantProfile => p !== undefined);
+    return members.length > 0 && members.every((m) => installedSet.has(m.modelId));
+  }
+
+  const firstUsableProfile = profiles.find((p) => profileUsable(p)) ?? null;
 
   /* ── Rendering ────────────────────────────────────────────────────── */
 
@@ -583,65 +843,128 @@ export function AssistantWidget(_props: WidgetProps) {
     );
   }
 
-  function proposalStatusLine(item: ProposalItem): JSX.Element {
+  function outcomeLine(outcome: ChatProposalOutcome, resultMessage?: string): JSX.Element {
     const cls =
-      item.status === 'done'
+      outcome === 'done'
         ? ' aw-card__status--ok'
-        : item.status === 'failed'
+        : outcome === 'failed'
           ? ' aw-card__status--fail'
-          : item.status === 'blocked'
+          : outcome === 'blocked'
             ? ' aw-card__status--blocked'
             : '';
     return (
       <p className={`aw-card__status${cls}`}>
-        {item.status === 'done' && `✓ ${t('assistant.widget.done')}`}
-        {item.status === 'failed' && `✗ ${t('assistant.widget.failed')}`}
-        {item.status === 'blocked' && t('assistant.widget.blocked')}
-        {item.status === 'dismissed' && t('assistant.widget.dismissed')}
-        {item.status === 'edited' && t('assistant.widget.editSent')}
-        {item.resultMessage ? ` · ${item.resultMessage}` : ''}
+        {outcome === 'done' && `✓ ${t('assistant.widget.done')}`}
+        {outcome === 'failed' && `✗ ${t('assistant.widget.failed')}`}
+        {outcome === 'blocked' && t('assistant.widget.blocked')}
+        {outcome === 'dismissed' && t('assistant.widget.dismissed')}
+        {outcome === 'edited' && t('assistant.widget.editSent')}
+        {resultMessage ? ` · ${resultMessage}` : ''}
       </p>
     );
   }
 
+  function proposalCard(
+    entry: ChatEntry,
+    index: number,
+    snap: ChatProposalSnapshot,
+    speaker: Speaker,
+  ): JSX.Element {
+    return (
+      <div key={`${entry.id}:p${index}`} className="aw-card c-card">
+        {speakerChip(speaker)}
+        <p className="aw-card__summary">{snap.summary}</p>
+        {snap.outcome === 'pending' ? (
+          <div className="aw-card__actions">
+            <Button variant="primary" onClick={() => void acceptProposal(entry, index)}>
+              {t('assistant.widget.yes')}
+            </Button>
+            <Button onClick={() => editProposal(entry, index)}>{t('assistant.widget.edit')}</Button>
+            <Button variant="ghost" onClick={() => declineProposal(entry, index)}>
+              {t('assistant.widget.no')}
+            </Button>
+          </div>
+        ) : (
+          outcomeLine(snap.outcome, resultMsgs[`${entry.id}:${index}`])
+        )}
+      </div>
+    );
+  }
+
+  function memoryBlock(entry: ChatEntry): JSX.Element {
+    return (
+      <div className="aw-memory">
+        <p className="aw-memory__title">{t('assistant.widget.rememberedTitle')}</p>
+        <ul className="aw-memory__list">
+          {(entry.memory ?? []).map((line) => (
+            <li key={line} className="aw-memory__line">
+              <span className="aw-memory__text">{line}</span>
+              <button
+                type="button"
+                className="aw-forget-x"
+                aria-label={t('assistant.widget.forgetLine')}
+                title={String(t('assistant.widget.forgetLine'))}
+                onClick={() => void forgetRemembered(entry, line)}
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  function renderEntry(entry: ChatEntry): JSX.Element {
+    if (entry.role === 'user') {
+      return (
+        <div key={entry.id} className="aw-msg-row">
+          <div className="aw-msg aw-msg--user">{entry.text}</div>
+        </div>
+      );
+    }
+    if (entry.role === 'system') {
+      return (
+        <p key={entry.id} className="aw-route">
+          {entry.text}
+        </p>
+      );
+    }
+    const speaker = speakerFor(entry.speakerId);
+    return (
+      <div key={entry.id} className="aw-turn">
+        {entry.text !== '' && (
+          <div className="aw-card c-card">
+            {speakerChip(speaker, String(t('assistant.widget.answers', { name: speaker.name })))}
+            <p className="aw-reply">{entry.text}</p>
+          </div>
+        )}
+        {(entry.proposals ?? []).map((snap, index) => proposalCard(entry, index, snap, speaker))}
+        {(entry.memory?.length ?? 0) > 0 && memoryBlock(entry)}
+      </div>
+    );
+  }
+
   function renderItem(item: FeedItem): JSX.Element {
-    switch (item.type) {
+    switch (item.kind) {
+      case 'entry':
+        return renderEntry(item.entry);
       case 'route':
+      case 'notice':
         return (
-          <p key={item.id} className="aw-route">
+          <p key={item.key} className="aw-route">
             {item.text}
           </p>
         );
-      case 'reply':
+      case 'hint':
         return (
-          <div key={item.id} className="aw-card c-card">
-            {speakerChip(item.speaker, String(t('assistant.widget.answers', { name: item.speaker.name })))}
-            <p className="aw-reply">{item.text}</p>
-          </div>
-        );
-      case 'proposal':
-        return (
-          <div key={item.id} className="aw-card c-card">
-            {speakerChip(item.speaker)}
-            <p className="aw-card__summary">{item.proposal.summary}</p>
-            {item.status === 'pending' ? (
-              <div className="aw-card__actions">
-                <Button variant="primary" onClick={() => void acceptProposal(item)}>
-                  {t('assistant.widget.yes')}
-                </Button>
-                <Button onClick={() => editProposal(item)}>{t('assistant.widget.edit')}</Button>
-                <Button variant="ghost" onClick={() => declineProposal(item)}>
-                  {t('assistant.widget.no')}
-                </Button>
-              </div>
-            ) : (
-              proposalStatusLine(item)
-            )}
+          <div key={item.key} className="aw-hintcard">
+            {item.text}
           </div>
         );
       case 'delegation':
         return (
-          <div key={item.id} className="aw-card c-card">
+          <div key={item.key} className="aw-card c-card">
             {speakerChip(item.speaker)}
             <p className="aw-card__summary">
               {t('assistant.widget.delegateQuestion', { name: item.targetName, reason: item.reason })}
@@ -651,7 +974,7 @@ export function AssistantWidget(_props: WidgetProps) {
                 <Button variant="primary" disabled={busy} onClick={() => void acceptDelegation(item)}>
                   {t('assistant.widget.delegateAccept')}
                 </Button>
-                <Button variant="ghost" onClick={() => setDelegationStatus(item.id, 'declined')}>
+                <Button variant="ghost" onClick={() => setDelegationStatus(item.key, 'declined')}>
                   {t('assistant.widget.delegateKeep')}
                 </Button>
               </div>
@@ -664,31 +987,9 @@ export function AssistantWidget(_props: WidgetProps) {
             )}
           </div>
         );
-      case 'memory':
-        return (
-          <div key={item.id} className="aw-memory">
-            <p className="aw-memory__title">{t('assistant.widget.rememberedTitle')}</p>
-            <ul className="aw-memory__list">
-              {item.lines.map((line) => (
-                <li key={line} className="aw-memory__line">
-                  <span className="aw-memory__text">{line}</span>
-                  <button
-                    type="button"
-                    className="aw-forget-x"
-                    aria-label={t('assistant.widget.forgetLine')}
-                    title={String(t('assistant.widget.forgetLine'))}
-                    onClick={() => void forgetRemembered(item, line)}
-                  >
-                    ✕
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
       case 'forget':
         return (
-          <div key={item.id} className="aw-card c-card">
+          <div key={item.key} className="aw-card c-card">
             {speakerChip(item.speaker)}
             <p className="aw-card__summary">
               {t('assistant.widget.forgetConfirm', { line: item.line })}
@@ -698,7 +999,7 @@ export function AssistantWidget(_props: WidgetProps) {
                 <Button variant="primary" onClick={() => void confirmForget(item)}>
                   {t('assistant.widget.yes')}
                 </Button>
-                <Button variant="ghost" onClick={() => setForgetStatus(item.id, 'declined')}>
+                <Button variant="ghost" onClick={() => setForgetStatus(item.key, 'declined')}>
                   {t('assistant.widget.no')}
                 </Button>
               </div>
@@ -714,26 +1015,54 @@ export function AssistantWidget(_props: WidgetProps) {
     }
   }
 
+  function relTime(iso: string): string {
+    const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
+    if (minutes < 1) return String(t('assistant.chat.time.now'));
+    if (minutes < 60) return String(t('assistant.chat.time.minutes', { count: minutes }));
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return String(t('assistant.chat.time.hours', { count: hours }));
+    return String(t('assistant.chat.time.days', { count: Math.floor(hours / 24) }));
+  }
+
+  function chatListItem(
+    kind: 'profile' | 'team',
+    id: string,
+    visual: Speaker,
+    usable: boolean,
+  ): JSX.Element {
+    const value = `${kind}:${id}`;
+    const isActive = selectValue === value;
+    const last = lastByOwner[id];
+    const cls = `aw-chatlist__item${isActive ? ' aw-chatlist__item--active' : ''}${
+      usable ? '' : ' aw-chatlist__item--disabled'
+    }`;
+    return (
+      <button
+        key={value}
+        type="button"
+        className={cls}
+        disabled={!usable || busy}
+        onClick={() => openChat(kind, id)}
+      >
+        {avatarCircle(visual, false)}
+        <span className="aw-chatlist__meta">
+          <span className="aw-chatlist__name">
+            {visual.name}
+            {!usable && ` – ${t('assistant.widget.modelMissing')}`}
+          </span>
+          <span className="aw-chatlist__snippet">
+            {last ? last.text : t('assistant.chat.empty')}
+          </span>
+        </span>
+        {last && <span className="aw-chatlist__time">{relTime(last.at)}</span>}
+      </button>
+    );
+  }
+
   if (setup === 'loading') {
     return (
       <div className="aw-root aw-empty">
         <p className="c-muted">{t('common.loading')}</p>
-      </div>
-    );
-  }
-
-  if (setup === 'noProfiles') {
-    return (
-      <div className="aw-root aw-empty">
-        <p className="c-muted">{t('assistant.widget.noProfiles')}</p>
-      </div>
-    );
-  }
-
-  if (setup === 'noModel') {
-    return (
-      <div className="aw-root aw-empty">
-        <p className="c-muted">{t('assistant.widget.noModel')}</p>
       </div>
     );
   }
@@ -749,10 +1078,23 @@ export function AssistantWidget(_props: WidgetProps) {
       : `profile:${selection.profile.id}`
     : '';
 
-  return (
-    <div className="aw-root">
-      <header className="aw-header">
-        {activeVisual && avatarCircle(activeVisual, false)}
+  // The header (avatar + switcher) renders in EVERY state – hiding the
+  // switcher on 'noModel' was the dead end users kept getting trapped in.
+  const header = (
+    <header className="aw-header">
+      {narrow && mobileView === 'chat' && (
+        <button
+          type="button"
+          className="aw-back"
+          aria-label={t('assistant.chat.back')}
+          title={String(t('assistant.chat.back'))}
+          onClick={() => setMobileView('list')}
+        >
+          ‹
+        </button>
+      )}
+      {activeVisual && avatarCircle(activeVisual, false)}
+      {profiles.length > 0 && (
         <select
           className="c-input aw-switcher"
           aria-label={t('assistant.widget.switchLabel')}
@@ -760,53 +1102,112 @@ export function AssistantWidget(_props: WidgetProps) {
           disabled={busy}
           onChange={(e) => void switchTo(e.target.value)}
         >
-          {profiles.length > 0 && (
-            <optgroup label={String(t('assistant.widget.profilesGroup'))}>
-              {profiles.map((p) => (
-                <option key={p.id} value={`profile:${p.id}`}>
-                  {`${p.emoji} ${p.name}`}
+          <optgroup label={String(t('assistant.widget.profilesGroup'))}>
+            {profiles.map((p) => {
+              const usable = profileUsable(p);
+              return (
+                <option key={p.id} value={`profile:${p.id}`} disabled={!usable}>
+                  {`${p.emoji} ${p.name}${usable ? '' : ` – ${t('assistant.widget.modelMissing')}`}`}
                 </option>
-              ))}
-            </optgroup>
-          )}
+              );
+            })}
+          </optgroup>
           {teams.length > 0 && (
             <optgroup label={String(t('assistant.team.group'))}>
-              {teams.map((team) => (
-                <option key={team.id} value={`team:${team.id}`}>
-                  {`👥 ${team.name}`}
-                </option>
-              ))}
+              {teams.map((team) => {
+                const usable = teamUsable(team);
+                return (
+                  <option key={team.id} value={`team:${team.id}`} disabled={!usable}>
+                    {`👥 ${team.name}${usable ? '' : ` – ${t('assistant.widget.modelMissing')}`}`}
+                  </option>
+                );
+              })}
             </optgroup>
           )}
         </select>
-      </header>
+      )}
+    </header>
+  );
 
-      {(busy || status !== null) && (
-        <div className="aw-status">
-          <span className="aw-spinner" aria-hidden />
-          <span className="c-muted">{status ?? t('assistant.widget.thinking')}</span>
+  let body: JSX.Element;
+  if (setup === 'noProfiles') {
+    body = (
+      <div className="aw-empty-body">
+        <p className="c-muted">{t('assistant.widget.noProfiles')}</p>
+      </div>
+    );
+  } else if (setup === 'noModel') {
+    body = (
+      <div className="aw-empty-body">
+        <p className="c-muted">{t('assistant.widget.noModel')}</p>
+        {firstUsableProfile && (
+          <Button
+            variant="primary"
+            disabled={busy}
+            onClick={() => void switchTo(`profile:${firstUsableProfile.id}`)}
+          >
+            {t('assistant.widget.switchToProfile', { name: firstUsableProfile.name })}
+          </Button>
+        )}
+        {error !== null && <p className="aw-error">{error}</p>}
+      </div>
+    );
+  } else {
+    body = (
+      <>
+        {(busy || status !== null) && (
+          <div className="aw-status">
+            <span className="aw-spinner" aria-hidden />
+            <span className="c-muted">{status ?? t('assistant.widget.thinking')}</span>
+          </div>
+        )}
+
+        <div className="aw-scroll" ref={scrollRef}>
+          {feed.length === 0 && !busy && (
+            <p className="aw-route">{t('assistant.chat.empty')}</p>
+          )}
+          {feed.map((item) => renderItem(item))}
+          {error !== null && <p className="aw-error">{error}</p>}
+        </div>
+
+        <div className="aw-composer">
+          <textarea
+            className="c-input aw-input"
+            placeholder={t('assistant.chat.placeholder')}
+            value={input}
+            rows={2}
+            disabled={busy}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={onComposerKeyDown}
+          />
+          <Button variant="primary" disabled={busy || input.trim() === ''} onClick={() => void send()}>
+            {t('assistant.widget.send')}
+          </Button>
+        </div>
+      </>
+    );
+  }
+
+  const showList = isMessenger && (!narrow || mobileView === 'list');
+  const showChat = !isMessenger || !narrow || mobileView === 'chat';
+
+  return (
+    <div className={`aw-root${isMessenger ? ' aw-root--messenger' : ''}`}>
+      {showList && (
+        <aside className="aw-chatlist" aria-label={String(t('assistant.chat.listLabel'))}>
+          {profiles.map((p) => chatListItem('profile', p.id, speakerOf(p), profileUsable(p)))}
+          {teams.map((team) => chatListItem('team', team.id, speakerOf(team), teamUsable(team)))}
+          {profiles.length === 0 && (
+            <p className="aw-route">{t('assistant.widget.noProfiles')}</p>
+          )}
+        </aside>
+      )}
+      {showChat && (
+        <div className="aw-main">
+          {header}
+          {body}
         </div>
       )}
-
-      <div className="aw-scroll">
-        {error !== null && <p className="aw-error">{error}</p>}
-        {feed.map((item) => renderItem(item))}
-      </div>
-
-      <div className="aw-composer">
-        <textarea
-          className="c-input aw-input"
-          placeholder={t('assistant.widget.placeholder')}
-          value={input}
-          rows={2}
-          disabled={busy}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={onComposerKeyDown}
-        />
-        <Button variant="primary" disabled={busy || input.trim() === ''} onClick={() => void send()}>
-          {t('assistant.widget.send')}
-        </Button>
-      </div>
     </div>
   );
 }

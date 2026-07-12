@@ -27,7 +27,6 @@ import {
   createMemory,
   createProfile,
   createTeam,
-  competenceSuggestions,
   deleteMemory,
   deleteProfile,
   deleteTeam,
@@ -37,7 +36,10 @@ import {
   importProfile,
   initProfiles,
   memoryUsers,
+  modelCompetences,
+  modelCompetencesDetailed,
   onProfilesChange,
+  profileCompetences,
   renameMemory,
   setActive,
   updateProfile,
@@ -45,7 +47,6 @@ import {
   type ActiveSelection,
   type AssistantProfile,
   type AssistantTeam,
-  type CompetenceSuggestion,
   type MemoryMeta,
   type ProfileExport,
   type ProfilesState,
@@ -63,15 +64,16 @@ import './assistant.css';
 import './assistant-settings.css';
 
 /**
- * Assistant settings tab (v0.4, multi-assistant):
+ * Assistant settings tab (v0.5, multi-assistant):
  * 1. Active assistant/team card.
  * 2. Collapsible "more assistants & teams" (profiles, teams, import/export,
  *    creation flow with template → persona → model → memory → tools → look).
+ *    Competences are MODEL-derived (profiles.modelCompetences) – there is
+ *    no competences editor anywhere anymore.
  * 3. Global model management (install honors license consents, delete is
  *    blocked while a profile uses the model).
- * 4. Competence-learning banner.
- * 5. Global toggles (askBeforeExecute, delegation suggestions).
- * 6. Advanced: per-profile docs, memory manager, team competences.
+ * 4. Global toggles (askBeforeExecute, delegation suggestions).
+ * 5. Advanced: per-profile docs, memory manager, team competences.
  *
  * With exactly one profile and no teams this collapses to the familiar
  * v0.3 view: the top card, model list, toggles and customize button all
@@ -120,14 +122,20 @@ async function setDelegationAsk(value: boolean): Promise<void> {
 
 /**
  * (Re)writes the global team competences doc (scope 'team-competences',
- * id 'global') from every profile's competences, preserving the
- * user-maintained '## Notizen' section.
+ * id 'global') from every profile's MODEL-derived competences (strengths,
+ * weaknesses, ideal-for), preserving the user-maintained '## Notizen'
+ * section.
  */
-async function regenerateTeamCompetencesDoc(): Promise<void> {
+async function regenerateTeamCompetencesDoc(language: string): Promise<void> {
   const { profiles } = getProfilesState();
   const existing = await api.readDoc('team-competences', 'global', 'competences').catch(() => '');
   const content = generateTeamCompetences(
-    profiles.map((p) => ({ name: p.name, competences: p.competences })),
+    profiles.map((p) => ({
+      name: p.name,
+      emoji: p.emoji,
+      modelLabel: modelById(p.modelId)?.label ?? p.modelId,
+      competences: modelCompetencesDetailed(p.modelId, language),
+    })),
     existing,
   );
   await api.writeDoc('team-competences', 'global', 'competences', content);
@@ -562,7 +570,6 @@ function NewAssistantFlow({
 
   const [step, setStep] = useState<FlowStep>('template');
   const [persona, setPersonaState] = useState<AssistantPersona>(defaultPersona());
-  const [competences, setCompetences] = useState('');
   const [emoji, setEmoji] = useState('🤖');
   const [color, setColor] = useState('accent-2');
   const [modelId, setModelId] = useState<string | null>(recommendedId);
@@ -582,7 +589,6 @@ function NewAssistantFlow({
       style: tpl.style,
       extra: tpl.id === 'blank' ? '' : t(`assistant.templates.${tpl.id}.extra`),
     });
-    setCompetences(tpl.id === 'blank' ? '' : t(`assistant.templates.${tpl.id}.competences`));
     setStep('persona');
   }
 
@@ -599,7 +605,6 @@ function NewAssistantFlow({
         memMode === 'share' && shareId
           ? { share: shareId }
           : { own: ownName.trim() || t('assistant.memory.defaultOwnName', { name }) },
-      competences,
       toolScope: allTools ? null : [...toolIds],
       personality: generatePersonality(persona, lang),
       instructions: generateInstructions(lang),
@@ -613,7 +618,6 @@ function NewAssistantFlow({
     memMode,
     shareId,
     ownName,
-    competences,
     allTools,
     toolIds,
     firstRun,
@@ -675,24 +679,14 @@ function NewAssistantFlow({
               setPersonaState(p);
               setStep('model');
             }}
-          >
-            <label className="awizard-field">
-              <span>{t('assistant.flow.competencesLabel')}</span>
-              <textarea
-                className="c-input assistant-textarea"
-                rows={3}
-                value={competences}
-                onChange={(e) => setCompetences(e.target.value)}
-              />
-              <span className="c-muted">{t('assistant.flow.competencesHint')}</span>
-            </label>
-          </PersonaForm>
+          />
         </>
       )}
 
       {step === 'model' && (
         <>
           {stepTitle(3, 'assistant.flow.modelTitle')}
+          <p className="c-muted">{t('assistant.flow.modelDrivenHint')}</p>
           {hw && (
             <p className="c-muted">
               {t('assistant.wizard.checkIntro', {
@@ -872,14 +866,13 @@ function ProfileEditor({
   installedIds: string[];
   onClose(): void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const allIds = toolOptions.map((o) => o.id);
   const scope: string[] = profile.toolScope ?? allIds;
   const [name, setName] = useState<string>(profile.name);
   const [emoji, setEmoji] = useState<string>(profile.emoji);
   const [color, setColor] = useState<string>(profile.color);
   const [modelId, setModelId] = useState<string>(profile.modelId);
-  const [competences, setCompetences] = useState<string>(profile.competences);
   const [allTools, setAllTools] = useState(profile.toolScope === null);
   const [toolIds, setToolIds] = useState<Set<string>>(new Set(scope));
 
@@ -889,7 +882,6 @@ function ProfileEditor({
       emoji,
       color,
       modelId,
-      competences,
       toolScope: allTools ? null : [...toolIds],
     });
     onClose();
@@ -925,16 +917,10 @@ function ProfileEditor({
           ))}
         </select>
       </label>
-      <label className="awizard-field">
-        <span>{t('assistant.flow.competencesLabel')}</span>
-        <textarea
-          className="c-input assistant-textarea"
-          rows={3}
-          value={competences}
-          onChange={(e) => setCompetences(e.target.value)}
-        />
-        <span className="c-muted">{t('assistant.flow.competencesHint')}</span>
-      </label>
+      <div className="awizard-field">
+        <span>{t('assistant.profiles.competencesFromModel')}</span>
+        <p className="c-muted as-competences-line">{modelCompetences(modelId, i18n.language)}</p>
+      </div>
       <ToolScopeField
         toolOptions={toolOptions}
         allTools={allTools}
@@ -967,7 +953,7 @@ function TeamForm({
   memories: MemoryMeta[];
   onClose(): void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [name, setName] = useState<string>(initial?.name ?? '');
   const [emoji, setEmoji] = useState<string>(initial?.emoji ?? '👥');
   const [color, setColor] = useState<string>(initial?.color ?? 'accent-3');
@@ -1020,12 +1006,14 @@ function TeamForm({
             memMode === 'share' && shareId ? { share: shareId } : { own: ownMemoryName },
         });
       }
-      await regenerateTeamCompetencesDoc();
+      await regenerateTeamCompetencesDoc(i18n.language);
       onClose();
     } finally {
       setSaving(false);
     }
   }
+
+  const modelLabel = (p: AssistantProfile): string => modelById(p.modelId)?.label ?? p.modelId;
 
   return (
     <div className="awizard-form">
@@ -1054,6 +1042,7 @@ function TeamForm({
               />
               <Avatar emoji={p.emoji} color={p.color} small />
               {p.name}
+              <span className="c-muted">({modelLabel(p)})</span>
             </label>
           ))}
         </div>
@@ -1068,7 +1057,7 @@ function TeamForm({
           >
             {members.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name}
+                {m.name} ({modelLabel(m)})
                 {m.id === recommendedLeaderId ? ` ${t('assistant.teams.leaderFastest')}` : ''}
               </option>
             ))}
@@ -1126,62 +1115,6 @@ function TeamForm({
         </Button>
         <Button variant="primary" disabled={!valid || saving} onClick={() => void submit()}>
           {initial ? t('common.save') : t('assistant.teams.create')}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/* ── Competence learning banner ──────────────────────────────────────── */
-
-function CompetenceBanner({
-  suggestions,
-  profiles,
-  toolNames,
-  onHandled,
-}: {
-  suggestions: CompetenceSuggestion[];
-  profiles: AssistantProfile[];
-  toolNames: Map<string, string>;
-  onHandled(): void;
-}) {
-  const { t } = useTranslation();
-  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
-
-  // One banner at a time; 'accepted' is the count of successful proposals.
-  const items = suggestions.map((s) => ({ ...s, key: `${s.profileId}|${s.toolId}` }));
-  const current = items.find(
-    (s) => !dismissed.has(s.key) && profiles.some((p) => p.id === s.profileId),
-  );
-  if (!current) return null;
-  const profile = profiles.find((p) => p.id === current.profileId);
-  if (!profile) return null;
-  const tool = toolNames.get(current.toolId) ?? current.toolId;
-
-  const hide = () => setDismissed(new Set([...dismissed, current.key]));
-
-  async function accept() {
-    if (!profile || !current) return;
-    // The appended line names the tool id as well, so the suggestion engine
-    // (competencesMentionTool) recognises it as covered.
-    const line = t('assistant.competence.appendLine', { tool, toolId: current.toolId });
-    await updateProfile(profile.id, {
-      competences: profile.competences ? `${profile.competences}\n${line}` : line,
-    });
-    await regenerateTeamCompetencesDoc();
-    hide();
-    onHandled();
-  }
-
-  return (
-    <div className="as-banner c-card">
-      <p>{t('assistant.competence.banner', { name: profile.name, count: current.accepted, tool })}</p>
-      <div className="awizard-actions">
-        <Button variant="primary" onClick={() => void accept()}>
-          {t('assistant.competence.accept')}
-        </Button>
-        <Button variant="ghost" onClick={hide}>
-          {t('assistant.competence.ignore')}
         </Button>
       </div>
     </div>
@@ -1477,7 +1410,7 @@ function MemoryManager({ memories }: { memories: MemoryMeta[] }) {
 /* ── Advanced: team competences (read-only) ──────────────────────────── */
 
 function TeamCompetencesView() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -1492,7 +1425,7 @@ function TeamCompetencesView() {
   async function regenerate() {
     setBusy(true);
     try {
-      await regenerateTeamCompetencesDoc();
+      await regenerateTeamCompetencesDoc(i18n.language);
       await load();
     } finally {
       setBusy(false);
@@ -1540,7 +1473,6 @@ export function AssistantSettings() {
   const [pstate, setPState] = useState<ProfilesState>(() => getProfilesState());
   const [ask, setAsk] = useState(true);
   const [deleg, setDeleg] = useState(true);
-  const [suggestions, setSuggestions] = useState<CompetenceSuggestion[]>([]);
   const [view, setView] = useState<View>({ kind: 'main' });
   const [sectionOpen, setSectionOpen] = useState(false);
   const [editingPersona, setEditingPersona] = useState(false);
@@ -1554,21 +1486,8 @@ export function AssistantSettings() {
         .map(([id, factory]) => ({ id, nameKey: factory().manifest.nameKey })),
     [],
   );
-  const toolNames = useMemo(
-    () => new Map(toolOptions.map((o) => [o.id, t(o.nameKey)])),
-    [toolOptions, t],
-  );
-
   const syncProfiles = useCallback(() => {
     setPState(getProfilesState());
-  }, []);
-
-  const refreshSuggestions = useCallback(() => {
-    try {
-      setSuggestions(competenceSuggestions());
-    } catch {
-      setSuggestions([]);
-    }
   }, []);
 
   const refreshModels = useCallback(async () => {
@@ -1580,7 +1499,6 @@ export function AssistantSettings() {
     const off = onProfilesChange((s) => {
       if (!alive) return;
       setPState(s);
-      refreshSuggestions();
     });
     void (async () => {
       await initProfiles();
@@ -1597,14 +1515,13 @@ export function AssistantSettings() {
       setInstalled(models);
       setAsk(askValue);
       setDeleg(delegValue);
-      refreshSuggestions();
       setReady(true);
     })();
     return () => {
       alive = false;
       off();
     };
-  }, [syncProfiles, refreshSuggestions]);
+  }, [syncProfiles]);
 
   const rated = useMemo(() => (hw ? rateModels(hw) : []), [hw]);
   const installedIds = useMemo(() => installed.map((m) => m.id), [installed]);
@@ -1776,6 +1693,9 @@ export function AssistantSettings() {
             <span className="c-muted">
               {activeModelEntry?.label ?? `${activeProfile.modelId} (${t('assistant.profiles.modelMissing')})`}
             </span>
+            <span className="c-muted as-competences-line">
+              {profileCompetences(activeProfile, i18n.language)}
+            </span>
             <div className="as-badges">
               <MemoryBadge memoryId={activeProfile.memoryId} memories={pstate.memories} />
             </div>
@@ -1808,6 +1728,9 @@ export function AssistantSettings() {
                           {entry?.label ?? p.modelId}
                           {!installedIds.includes(p.modelId) &&
                             ` – ${t('assistant.profiles.modelMissing')}`}
+                        </span>
+                        <span className="c-muted as-competences-line">
+                          {profileCompetences(p, i18n.language)}
                         </span>
                         <div className="as-badges">
                           <MemoryBadge memoryId={p.memoryId} memories={pstate.memories} />
@@ -2010,15 +1933,7 @@ export function AssistantSettings() {
         })}
       </div>
 
-      {/* 4 ── competence learning banner */}
-      <CompetenceBanner
-        suggestions={suggestions}
-        profiles={pstate.profiles}
-        toolNames={toolNames}
-        onHandled={() => void refreshSuggestions()}
-      />
-
-      {/* 5 ── global toggles */}
+      {/* 4 ── global toggles */}
       <div className="settings__row settings__row--block">
         <label className="awizard-choice">
           <input
@@ -2067,7 +1982,7 @@ export function AssistantSettings() {
         </div>
       )}
 
-      {/* 6 ── advanced */}
+      {/* 5 ── advanced */}
       <details className="assistant-advanced">
         <summary>{t('assistant.manage.advanced')}</summary>
         <p className="c-muted">{t('assistant.advanced.hint')}</p>

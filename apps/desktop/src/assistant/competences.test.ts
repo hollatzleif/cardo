@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryBackend } from '@cardo/core';
 import { createMemoryDocStore } from './api';
-import { createProfilesStore, SHARED_MEMORY_ID } from './profiles';
+import { createProfilesStore, modelCompetencesDetailed, SHARED_MEMORY_ID } from './profiles';
 import {
   COMPETENCE_SUGGESTION_THRESHOLD,
   competencesMentionTool,
   generateTeamCompetences,
   NOTES_HEADING,
+  type TeamCompetenceMember,
 } from './competences';
 
 async function makeStore(competences = '') {
@@ -14,19 +15,22 @@ async function makeStore(competences = '') {
     backend: createMemoryBackend(),
     docs: createMemoryDocStore(),
     migrateNative: vi.fn(async () => false),
+    listModels: async () => [],
   });
   await store.init();
-  const profile = await store.createProfile({
+  let profile = await store.createProfile({
     name: 'Anna',
     emoji: '🦊',
     color: 'accent-3',
     modelId: 'qwen3-4b',
     memoryChoice: { share: SHARED_MEMORY_ID },
-    competences,
     toolScope: null,
     personality: '',
     instructions: '',
   });
+  // The legacy free-text field is no longer a creation input; seed it via
+  // update where a test needs the "already mentioned" suppression.
+  if (competences !== '') profile = await store.updateProfile(profile.id, { competences });
   return { store, profile };
 }
 
@@ -77,19 +81,30 @@ describe('competencesMentionTool', () => {
 });
 
 describe('generateTeamCompetences', () => {
-  const members = [
-    { name: 'Texterin', competences: 'Schreibt gute Texte' },
-    { name: 'Coder', competences: '' },
+  const members: TeamCompetenceMember[] = [
+    {
+      name: 'Texterin',
+      emoji: '✍️',
+      modelLabel: 'Qwen3 8B',
+      competences: modelCompetencesDetailed('qwen3-8b', 'de'),
+    },
+    { name: 'Coder', emoji: '🧑‍💻', modelLabel: 'Phi-4 Mini', competences: '' },
   ];
 
-  it('generates one section per member plus an empty notes section', () => {
+  it('generates one model-labelled section per member plus an empty notes section', () => {
     const doc = generateTeamCompetences(members);
     expect(doc).toContain('# Team-Kompetenzen');
-    expect(doc).toContain('## Texterin');
-    expect(doc).toContain('Schreibt gute Texte');
-    expect(doc).toContain('## Coder');
+    expect(doc).toContain('### ✍️ Texterin (Qwen3 8B)');
+    expect(doc).toContain('### 🧑‍💻 Coder (Phi-4 Mini)');
     expect(doc).toContain('(keine Angaben)');
     expect(doc).toContain(NOTES_HEADING);
+  });
+
+  it('includes strengths, weaknesses and ideal-for lines of the member model', () => {
+    const doc = generateTeamCompetences(members);
+    expect(doc).toContain('Stärken:');
+    expect(doc).toContain('Schwächen:'); // tradeoffs for router/delegation
+    expect(doc).toContain('Ideal für:');
   });
 
   it('preserves the user-maintained notes section on regeneration', () => {
@@ -98,13 +113,21 @@ describe('generateTeamCompetences', () => {
       `${NOTES_HEADING}\n- Texterin macht das Kunden-Wording`,
     );
     const regenerated = generateTeamCompetences(
-      [...members, { name: 'Neu', competences: 'Recherchiert' }],
+      [
+        ...members,
+        {
+          name: 'Neu',
+          emoji: '🔎',
+          modelLabel: 'Qwen3 4B',
+          competences: modelCompetencesDetailed('qwen3-4b', 'de'),
+        },
+      ],
       existing,
     );
-    expect(regenerated).toContain('## Neu');
+    expect(regenerated).toContain('### 🔎 Neu (Qwen3 4B)');
     expect(regenerated).toContain('- Texterin macht das Kunden-Wording');
     // The notes section stays at the end, exactly once.
     expect(regenerated.indexOf(NOTES_HEADING)).toBe(regenerated.lastIndexOf(NOTES_HEADING));
-    expect(regenerated.indexOf(NOTES_HEADING)).toBeGreaterThan(regenerated.indexOf('## Neu'));
+    expect(regenerated.indexOf(NOTES_HEADING)).toBeGreaterThan(regenerated.indexOf('### 🔎 Neu'));
   });
 });

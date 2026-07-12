@@ -1,4 +1,5 @@
-/* Assistant settings v0.4 – multi-assistant profiles, teams & memories.
+/* Assistant settings v0.5 – multi-assistant profiles, teams & memories;
+   competences are model-derived (read-only lines, no editor).
    Tokens only, no raw colors (token-lint enforced). */
 
 /* ── Active assistant/team card ─────────────────────────────────────── */
@@ -91,15 +92,12 @@
   margin: var(--space-2) 0 0;
 }
 
-/* ── Competence learning banner ─────────────────────────────────────── */
+/* ── Model-derived competences (read-only line on cards + edit view) ── */
 
-.as-banner {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  margin: var(--space-3) 0;
-  border-color: var(--accent);
+.as-competences-line {
+  font-size: 0.85em;
+  margin: 0;
+  white-space: normal;
   overflow-wrap: break-word;
 }
 
@@ -132,12 +130,19 @@
 
 /* ── Model picker extras ────────────────────────────────────────────── */
 
+/* Strengths / weaknesses / ideal-for: all three lines are always fully
+   visible – wrapping, never clamped or truncated (they decide the pick). */
 .as-model-lines {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   font-size: 0.85em;
   overflow-wrap: break-word;
+}
+
+.as-model-lines > span {
+  display: block;
+  white-space: normal;
 }
 
 /* ── Import (hidden file input styled as button) ────────────────────── */

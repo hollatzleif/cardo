@@ -14,6 +14,8 @@ export interface WidgetInstance {
   w: number;
   h: number;
   accentToken?: string;
+  /** Manifest-declared view variant of this widget instance. */
+  variant?: string;
 }
 
 export interface Page {
@@ -77,6 +79,7 @@ interface AppState {
   addWidget(toolId: string, widgetId: string, size: { w: number; h: number }): Promise<void>;
   /** Fill the CURRENT page with a starter layout (onboarding templates). */
   applyTemplate(widgets: Array<Omit<WidgetInstance, 'instanceId'>>): Promise<void>;
+  setWidgetVariant(instanceId: string, variant: string | undefined): Promise<void>;
   removeWidget(instanceId: string): Promise<void>;
   updateWidgetPositions(
     updates: Array<{ instanceId: string; x: number; y: number; w: number; h: number }>,
@@ -341,6 +344,18 @@ export const useAppStore = create<AppState>((set, get) => {
       };
       set({ pages: pages.map((p) => (p.id === page.id ? filled : p)) });
       await persistPage(filled);
+    },
+
+    async setWidgetVariant(instanceId, variant) {
+      const { pages, currentPageId } = get();
+      const page = pages.find((p) => p.id === currentPageId);
+      if (!page) return;
+      const widgets = page.widgets.map((w) =>
+        w.instanceId === instanceId ? { ...w, variant: variant || undefined } : w,
+      );
+      const updated = { ...page, widgets };
+      set({ pages: pages.map((p) => (p.id === page.id ? updated : p)) });
+      await persistPage(updated);
     },
 
     async removeWidget(instanceId) {

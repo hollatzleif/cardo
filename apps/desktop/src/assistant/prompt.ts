@@ -111,6 +111,7 @@ export function buildSystemPrompt(input: PromptInput): string {
     'Regeln:',
     '- "reply": kurz, in der Antwortsprache, im Ton der Persönlichkeit.',
     '- "proposals": nur Befehls-IDs aus "Verfügbare Befehle"; niemals eigene erfinden. Leeres Array, wenn nichts zu tun ist.',
+    '- Schlage ALLE sinnvollen Aktionen vor, auch mehrere ergänzende für dasselbe Ereignis: Eine Klausur morgen um 9 Uhr ergibt z. B. SOWOHL einen Kalender-Termin ALS AUCH einen Wecker. Lieber ein Vorschlag zu viel als einer zu wenig – der Nutzer bestätigt jeden einzeln.',
     '- Relative Datumsangaben ("morgen", "nächsten Montag") IMMER anhand des aktuellen Datums in konkrete ISO-Daten (YYYY-MM-DD) auflösen.',
     '- "summary": beschreibt exakt, was passieren wird, inklusive der konkreten Werte – in der Antwortsprache.',
     '- "memory": nur dauerhaft nützliche Fakten (Vorlieben, wiederkehrende Probleme + Lösungen, Hintergrund); sonst [].',

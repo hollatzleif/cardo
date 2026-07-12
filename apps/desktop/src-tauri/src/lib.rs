@@ -165,6 +165,59 @@ async fn backup_import(state: State<'_, AppState>, path: String) -> CmdResult<u6
     Ok(restored)
 }
 
+
+/* ── Diagnose network probe ───────────────────────────────────────────── */
+
+/// Hosts the diagnose may probe. The webview cannot fetch some of these
+/// (github.com sends no CORS headers), so the probe runs in Rust.
+const PROBE_ALLOWED_HOSTS: [&str; 7] = [
+    "github.com",
+    "hollatzleif.github.io",
+    "cardo-polls.hollatzleif.workers.dev",
+    "api.open-meteo.com",
+    "geocoding-api.open-meteo.com",
+    "huggingface.co",
+    "objects.githubusercontent.com",
+];
+
+fn probe_host_allowed(url: &str) -> bool {
+    let Some(rest) = url.strip_prefix("https://") else { return false };
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or("");
+    if authority.contains('@') || authority.contains(':') {
+        return false;
+    }
+    PROBE_ALLOWED_HOSTS.contains(&authority)
+}
+
+/// GETs an allowlisted URL (first bytes only) and reports status + latency.
+/// Follows redirects (GitHub release downloads redirect to CDNs).
+#[tauri::command]
+async fn net_probe(url: String) -> CmdResult<Value> {
+    if !probe_host_allowed(&url) {
+        return Err(format!("host not allowed for probing: {url}"));
+    }
+    let started = std::time::Instant::now();
+    let client = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(8))
+        .timeout(std::time::Duration::from_secs(8))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let response = client
+        .get(&url)
+        .header("Range", "bytes=0-512")
+        .send()
+        .await
+        .map_err(|e| format!("unreachable: {e}"))?;
+    let status = response.status().as_u16();
+    let body = response.text().await.unwrap_or_default();
+    let ms = started.elapsed().as_millis() as u64;
+    Ok(serde_json::json!({
+        "status": status,
+        "ms": ms,
+        "bodyPrefix": body.chars().take(512).collect::<String>(),
+    }))
+}
+
 /// Writes an exported diagnose report next to the user's downloads
 /// (fallback: app data dir) and returns the full path.
 #[tauri::command]
@@ -241,6 +294,7 @@ pub fn run() {
             schedule_list,
             backup_export,
             backup_import,
+            net_probe,
             assistant::assistant_hw_info,
             assistant::assistant_list_models,
             assistant::assistant_download_model,
@@ -302,5 +356,22 @@ mod tests {
         // The genuine article is accepted.
         let good: Value = serde_json::json!({ "cardoBackup": 1, "data": { "notes": {} } });
         assert!(backup_marker_ok(&good), "valid backup marker must be accepted");
+    }
+
+    #[test]
+    fn probe_allowlist_rejects_foreign_and_tricky_hosts() {
+        assert!(probe_host_allowed("https://github.com/x/releases/latest/download/latest.json"));
+        assert!(probe_host_allowed("https://huggingface.co/a/b/resolve/main/x.gguf"));
+        for bad in [
+            "http://github.com/x",
+            "https://github.com.evil.com/x",
+            "https://github.com@evil.com/x",
+            "https://github.com:8443/x",
+            "https://evil.com/https://github.com/",
+            "ftp://github.com/",
+            "",
+        ] {
+            assert!(!probe_host_allowed(bad), "should reject {bad:?}");
+        }
     }
 }

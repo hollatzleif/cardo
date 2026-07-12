@@ -728,3 +728,10 @@
   text-decoration: underline;
   padding: 0;
 }
+
+/* ── Widget variant picker (edit mode) ── */
+.widget-frame__variant {
+  max-width: 130px;
+  font-size: 0.8em;
+  padding: 2px var(--space-1);
+}
