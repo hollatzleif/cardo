@@ -55,6 +55,10 @@ interface AppState {
   init(): Promise<void>;
   setEditing(editing: boolean): void;
   setPaletteOpen(open: boolean): void;
+  /** One-shot prefill consumed by the palette on open (assistant "Bearbeiten"). */
+  paletteSeed: { commandId: string; params: Record<string, unknown> } | null;
+  openPaletteWithCommand(commandId: string, params: Record<string, unknown>): void;
+  consumePaletteSeed(): { commandId: string; params: Record<string, unknown> } | null;
   setSettingsOpen(open: boolean): void;
   setMarketOpen(open: boolean): void;
   setDesignOpen(open: boolean): void;
@@ -189,6 +193,15 @@ export const useAppStore = create<AppState>((set, get) => {
     },
     setPaletteOpen(paletteOpen) {
       set({ paletteOpen });
+    },
+    paletteSeed: null,
+    openPaletteWithCommand(commandId, params) {
+      set({ paletteSeed: { commandId, params }, paletteOpen: true });
+    },
+    consumePaletteSeed() {
+      const seed = get().paletteSeed;
+      if (seed) set({ paletteSeed: null });
+      return seed;
     },
     setSettingsOpen(settingsOpen) {
       set({ settingsOpen });

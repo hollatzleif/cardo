@@ -1,6 +1,6 @@
 {
   "name": "@cardo/desktop",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -21,6 +21,7 @@
     "@cardo/tool-countdown": "workspace:*",
     "@cardo/tool-counter": "workspace:*",
     "@cardo/tool-habits": "workspace:*",
+    "@cardo/tool-hydration": "workspace:*",
     "@cardo/tool-notes": "workspace:*",
     "@cardo/tool-pomodoro": "workspace:*",
     "@cardo/tool-quickcapture": "workspace:*",
@@ -28,6 +29,7 @@
     "@cardo/tool-stats": "workspace:*",
     "@cardo/tool-today": "workspace:*",
     "@cardo/tool-todo": "workspace:*",
+    "@cardo/tool-weather": "workspace:*",
     "@cardo/tool-workclock": "workspace:*",
     "@cardo/ui": "workspace:*",
     "@tauri-apps/api": "^2.2.0",

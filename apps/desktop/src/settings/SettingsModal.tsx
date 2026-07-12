@@ -6,6 +6,7 @@ import { supportedLanguages } from '@cardo/i18n';
 import { useAppStore } from '../state/appStore';
 import { DiagnosePanel } from './DiagnosePanel';
 import { PollsPanel } from './PollsPanel';
+import { AssistantSettings } from '../assistant';
 import { ProfileModal } from '../profile/ProfileModal';
 import { BackupSection } from './BackupSection';
 import {
@@ -99,7 +100,7 @@ const ACCENT_TOKENS = [
   'accent-8',
 ] as const;
 
-type Tab = 'general' | 'polls' | 'diagnostics' | 'about';
+type Tab = 'general' | 'assistant' | 'polls' | 'diagnostics' | 'about';
 
 export function SettingsModal({ onClose }: { onClose(): void }) {
   const { t, i18n } = useTranslation();
@@ -123,7 +124,7 @@ export function SettingsModal({ onClose }: { onClose(): void }) {
         <header className="settings__header">
           <h3>{t('settings.title')}</h3>
           <nav className="settings__tabs">
-            {(['general', 'polls', 'diagnostics', 'about'] as Tab[]).map((id) => (
+            {(['general', 'assistant', 'polls', 'diagnostics', 'about'] as Tab[]).map((id) => (
               <button
                 key={id}
                 className={`c-btn c-btn--ghost${tab === id ? ' settings__tab--active' : ''}`}
@@ -216,6 +217,8 @@ export function SettingsModal({ onClose }: { onClose(): void }) {
             </div>
           </div>
         )}
+
+        {tab === 'assistant' && <AssistantSettings />}
 
         {tab === 'polls' && <PollsPanel />}
 

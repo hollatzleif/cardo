@@ -74,6 +74,9 @@ importers:
       '@cardo/tool-habits':
         specifier: workspace:*
         version: link:../../packages/tools/habits
+      '@cardo/tool-hydration':
+        specifier: workspace:*
+        version: link:../../packages/tools/hydration
       '@cardo/tool-notes':
         specifier: workspace:*
         version: link:../../packages/tools/notes
@@ -95,6 +98,9 @@ importers:
       '@cardo/tool-todo':
         specifier: workspace:*
         version: link:../../packages/tools/todo
+      '@cardo/tool-weather':
+        specifier: workspace:*
+        version: link:../../packages/tools/weather
       '@cardo/tool-workclock':
         specifier: workspace:*
         version: link:../../packages/tools/workclock
@@ -279,6 +285,18 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/hydration:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/notes:
     dependencies:
       '@cardo/plugin-api':
@@ -352,6 +370,18 @@ importers:
         version: 3.25.76
 
   packages/tools/todo:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/weather:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*

@@ -59,7 +59,8 @@
     "backupHint": "One file with everything: layout, tasks, notes metadata, settings. Keep it somewhere safe – there is no cloud copy.",
     "backupExported": "Backup saved ({{count}} entries).",
     "backupImportConfirm": "Restore this backup? Entries with the same ID will be overwritten. Cardo restarts afterwards.",
-    "backupError": "That didn't work. The file may not be a Cardo backup."
+    "backupError": "That didn't work. The file may not be a Cardo backup.",
+    "assistant": "Assistant"
   },
   "diagnose": {
     "start": "Run self-test",
@@ -677,6 +678,112 @@
         "title": "Your day at a glance",
         "body": "Today gathers events, tasks, routine and habits from your other tools – always via the command API, never by touching their data directly."
       }
+    },
+    "weather": {
+      "name": "Weather",
+      "description": "Current weather and a 5-day forecast for your place – with honest data age.",
+      "privacy": {
+        "summary": "This tool contacts the free Open-Meteo weather service. Only two things ever leave your device: the city name you type into the search, and the coordinates of the place you picked. Never your name, your files, or anything else about you.",
+        "geo": "Only the city name you type into the search field – nothing else.",
+        "forecast": "Only the coordinates of your chosen place – never anything about you."
+      },
+      "setupHint": "Which place's weather do you want? Search for a city to get started.",
+      "searchPlaceholder": "Search for a city…",
+      "search": "Search",
+      "noResults": "No places found. Try a different spelling.",
+      "searchError": "Couldn't reach the place search right now. Check your connection and try again.",
+      "cancel": "Cancel",
+      "changePlace": "Change place",
+      "refresh": "Refresh weather",
+      "noData": "Offline – no weather data yet. Cardo will try again.",
+      "wind": "Wind",
+      "humidity": "Humidity",
+      "updatedJustNow": "updated just now",
+      "updatedAgo": "updated {{minutes}} min ago",
+      "offlineHint": "offline – showing last data",
+      "wmo": {
+        "clear": "Clear sky",
+        "partly": "Partly cloudy",
+        "overcast": "Overcast",
+        "fog": "Fog",
+        "rain": "Rain",
+        "snow": "Snow",
+        "showers": "Showers",
+        "thunder": "Thunderstorm",
+        "unknown": "Weather"
+      },
+      "command": {
+        "refresh": "Refresh weather"
+      },
+      "msg": {
+        "noPlace": "No place set up yet – open the weather widget and search for your city.",
+        "offline": "No connection right now – keeping the last weather data.",
+        "refreshed": "Weather updated."
+      },
+      "test": {
+        "cacheRoundtrip": "Weather cache can be stored and removed",
+        "wmoMapping": "Weather codes map to the right icons",
+        "urlBuilding": "Forecast URL is built correctly"
+      },
+      "tour": {
+        "title": "Weather at a glance",
+        "body": "Search for your city once and Cardo shows the current weather plus five days ahead. You always see how old the data is – and offline, the last forecast simply stays put."
+      }
+    },
+    "hydration": {
+      "name": "Hydration",
+      "description": "Counts your daily glasses of water and reminds you to drink – fully local.",
+      "privacy": "Works fully offline. Your drinking habits never leave this device.",
+      "widget": {
+        "progressLabel": "{{glasses}} of {{goal}} glasses today",
+        "goalReached": "Goal reached – nicely hydrated! 🎉",
+        "addGlass": "Log one glass",
+        "removeGlass": "Remove one glass",
+        "settingsToggle": "Show or hide settings"
+      },
+      "settings": {
+        "dailyGoal": "Daily goal (glasses)",
+        "remindEveryMinutes": "Remind every (minutes)",
+        "remindFrom": "Remind from",
+        "remindUntil": "Remind until",
+        "intervalHint": "0 = reminders off"
+      },
+      "command": {
+        "drink": "Log a glass of water",
+        "remind": "Hydration reminder (internal)"
+      },
+      "notification": {
+        "title": "Time for a glass of water 💧",
+        "body": "You're at {{glasses}} of {{goal}} glasses – have a sip!"
+      },
+      "msg": {
+        "failed": "Hydration could not be updated."
+      },
+      "test": {
+        "dayRoundtrip": "Daily glass count is stored per day",
+        "windowLogic": "Reminder time window is computed correctly",
+        "drinkCommand": "Drinking increments today's count"
+      },
+      "tour": {
+        "title": "Stay hydrated",
+        "body": "Tap +1 for every glass you drink. Cardo reminds you during your chosen hours until you hit your goal – everything stays on this device."
+      }
+    },
+    "assistant": {
+      "name": "Assistant",
+      "description": "Your local thinking partner: dump your thoughts and turn them into concrete actions with one click – the AI runs entirely on your device.",
+      "privacy": {
+        "summary": "The AI runs entirely on your device – your thoughts and data never leave it. Only when you press install does Cardo download a model file from huggingface.co.",
+        "download": "Downloads the selected AI model file from huggingface.co – only when you press install. Nothing about you is sent; the request only reveals which model is being fetched."
+      },
+      "test": {
+        "catalogBuild": "Command catalog builds correctly",
+        "proposalValidate": "Proposals are validated, hostile input is filtered"
+      },
+      "tour": {
+        "title": "Braindump instead of busywork",
+        "body": "Just write down whatever is on your mind. Your assistant turns it into concrete proposals – you only confirm with Yes, Edit or No. Everything runs locally."
+      }
     }
   },
   "theme": {
@@ -776,5 +883,99 @@
     "enable": "Enable inbox",
     "disable": "Disable inbox",
     "empty": "No news right now. Check back later!"
+  },
+  "assistant": {
+    "widget": {
+      "noModel": "No AI model installed yet. Set up your assistant in Settings → Assistant.",
+      "defaultName": "Assistant",
+      "thinking": "thinking…",
+      "placeholder": "Braindump…",
+      "send": "Send",
+      "parseError": "The model's answer was unusable. Just try again.",
+      "generateError": "Something went wrong. Check in Settings → Assistant whether your model can be loaded.",
+      "remembered": "Remembered: {{items}}",
+      "yes": "Yes",
+      "edit": "Edit",
+      "no": "No",
+      "done": "Done",
+      "failed": "Failed",
+      "dismissed": "Dismissed",
+      "editSent": "Opened for editing"
+    },
+    "rating": {
+      "great": "Great",
+      "ok": "Okay",
+      "slow": "Slow",
+      "tooBig": "Too big"
+    },
+    "speed": {
+      "veryFast": "instant replies",
+      "fast": "fast",
+      "moderate": "moderate",
+      "slow": "very slow",
+      "na": "–"
+    },
+    "model": {
+      "ramNeed": "needs {{ram}} RAM"
+    },
+    "wizard": {
+      "checkTitle": "Step 1: System check",
+      "checkIntro": "Your device: {{ram}} RAM, {{cores}} cores, {{chip}}. Pick a model – the recommended one fits your hardware best.",
+      "recommended": "Recommended",
+      "continue": "Continue",
+      "downloadTitle": "Step 2: Installing {{model}}",
+      "starting": "Starting download…",
+      "loadSmoke": "Loading the model for the first time…",
+      "downloadError": "Download or loading failed. Check your internet connection and try again.",
+      "back": "Back",
+      "personaTitle": "Step 3: Make it yours",
+      "finish": "Finish setup",
+      "doneTitle": "All set!",
+      "doneBody": "Your assistant is ready. Add the Assistant widget to your dashboard and dump your thoughts."
+    },
+    "persona": {
+      "nameQuestion": "What should your assistant be called?",
+      "callYouQuestion": "What should it call you?",
+      "styleQuestion": "Reply style",
+      "style": {
+        "concise": "short & direct",
+        "friendly": "friendly",
+        "detailed": "detailed"
+      },
+      "languageQuestion": "Language",
+      "language": {
+        "de": "Deutsch",
+        "en": "English",
+        "app": "same as app"
+      },
+      "extraQuestion": "Anything else it should know?"
+    },
+    "manage": {
+      "currentModel": "Current model",
+      "noModel": "No model selected",
+      "models": "Models",
+      "active": "Active",
+      "use": "Use",
+      "install": "Install",
+      "error": "That didn't work. Try again.",
+      "deleteConfirm": "Really delete this model? The file is removed from your device; you can reinstall it any time.",
+      "switchTitle": "Switch to {{model}} – what should happen?",
+      "switchKeep": "Keep personality, working style & memories (recommended)",
+      "switchKeepHint": "Your assistant stays the same – only the model behind it changes.",
+      "switchFresh": "Start fresh",
+      "switchFreshHint": "Personality, working style and memory are reset to their post-setup state.",
+      "askBeforeExecute": "Ask before executing",
+      "askBeforeExecuteHint": "Recommended: every proposal waits for your Yes. If you turn this off, the assistant executes valid proposals immediately.",
+      "persona": "Personality",
+      "customize": "Customize assistant",
+      "advanced": "Advanced",
+      "advancedHint": "These three files drive your assistant. Cardo normally manages them automatically – only change them if you know what you're doing.",
+      "doc": {
+        "instructions": "Working style (instructions.md)",
+        "personality": "Personality (personality.md)",
+        "memory": "Memory (memory.md)"
+      },
+      "saved": "Saved."
+    }
   }
 }

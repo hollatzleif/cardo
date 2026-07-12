@@ -5,6 +5,7 @@ import type { CommandSpec } from '@cardo/plugin-api';
 import type { ScoredSearchResult } from '@cardo/core';
 import { Modal, Button, Input } from '@cardo/ui';
 import { getHost } from '../host';
+import { useAppStore } from '../state/appStore';
 
 /**
  * Command palette (Cmd/Ctrl+K). Consumes the same Command-API that
@@ -46,6 +47,26 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => inputRef.current?.focus(), [pendingCommand]);
+
+  // The assistant's "Bearbeiten" opens the palette prefilled for one command.
+  useEffect(() => {
+    const seed = useAppStore.getState().consumePaletteSeed();
+    if (!seed) return;
+    const spec = getHost()
+      .commands.list()
+      .find((c) => c.id === seed.commandId);
+    if (!spec) return;
+    setPendingCommand(spec);
+    setValues(
+      Object.fromEntries(
+        Object.entries(seed.params).map(([k, v]) => [
+          k,
+          typeof v === 'boolean' ? v : String(v),
+        ]),
+      ),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const commands = useMemo(() => getHost().commands.listForPalette(), []);
   const matches = useMemo(() => {

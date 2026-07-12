@@ -13,6 +13,9 @@ import { createTool as createAlarmTool } from '@cardo/tool-alarm';
 import { createTool as createCountdownTool } from '@cardo/tool-countdown';
 import { createTool as createQuickcaptureTool } from '@cardo/tool-quickcapture';
 import { createTool as createRoutineTool } from '@cardo/tool-routine';
+import { createAssistantTool } from '../assistant';
+import { createTool as createWeatherTool } from '@cardo/tool-weather';
+import { createTool as createHydrationTool } from '@cardo/tool-hydration';
 
 /**
  * First-party tool catalog. Every tool ships with the app; "installing" in
@@ -20,6 +23,7 @@ import { createTool as createRoutineTool } from '@cardo/tool-routine';
  * the live instance, and per diagnose run for isolated scratch instances.
  */
 export const toolFactories: Record<string, () => CardoTool> = {
+  assistant: createAssistantTool,
   today: createTodayTool,
   todo: createTodoTool,
   habits: createHabitsTool,
@@ -32,6 +36,8 @@ export const toolFactories: Record<string, () => CardoTool> = {
   countdown: createCountdownTool,
   quickcapture: createQuickcaptureTool,
   routine: createRoutineTool,
+  weather: createWeatherTool,
+  hydration: createHydrationTool,
   clock: createClockTool,
   counter: createCounterTool,
 };

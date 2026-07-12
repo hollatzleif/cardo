@@ -25,7 +25,10 @@ export function ToolMarket() {
 
   const tools = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return [...liveTools.values()].filter((tool) => {
+    // The assistant is a core feature: configured in settings, not here.
+    return [...liveTools.values()]
+      .filter((tool) => tool.manifest.id !== 'assistant')
+      .filter((tool) => {
       const active = activeToolIds.includes(tool.manifest.id);
       if (status === 'active' && !active) return false;
       if (status === 'inactive' && active) return false;

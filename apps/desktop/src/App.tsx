@@ -13,6 +13,7 @@ import { DesignPanel } from './design/DesignPanel';
 import { FocusMode } from './focus/FocusMode';
 import { Inbox } from './inbox/Inbox';
 import { getInboxState, onInboxChange } from './inbox/feed';
+import { setPaletteEditHandler } from './assistant';
 
 function greetingKey(hour: number): string {
   if (hour < 11) return 'profile.greetingMorning';
@@ -61,6 +62,13 @@ export function App() {
   useEffect(() => {
     setInboxUnread(getInboxState().unread);
     return onInboxChange((s) => setInboxUnread(s.unread));
+  }, []);
+
+  // Assistant "Bearbeiten": opens the palette prefilled for one command.
+  useEffect(() => {
+    setPaletteEditHandler((commandId, params) =>
+      useAppStore.getState().openPaletteWithCommand(commandId, params),
+    );
   }, []);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');

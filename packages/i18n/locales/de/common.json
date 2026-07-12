@@ -59,7 +59,8 @@
     "backupHint": "Eine Datei mit allem: Layout, Aufgaben, Einstellungen. Bewahre sie sicher auf – es gibt keine Cloud-Kopie.",
     "backupExported": "Backup gespeichert ({{count}} Einträge).",
     "backupImportConfirm": "Dieses Backup wiederherstellen? Einträge mit gleicher ID werden überschrieben. Cardo startet danach neu.",
-    "backupError": "Das hat nicht geklappt. Die Datei ist womöglich kein Cardo-Backup."
+    "backupError": "Das hat nicht geklappt. Die Datei ist womöglich kein Cardo-Backup.",
+    "assistant": "Assistent"
   },
   "diagnose": {
     "start": "Selbsttest starten",
@@ -677,6 +678,112 @@
         "title": "Dein Tag auf einen Blick",
         "body": "Heute sammelt Termine, Aufgaben, Routine und Gewohnheiten aus deinen anderen Tools – immer über die Kommando-API, nie direkt aus deren Daten."
       }
+    },
+    "weather": {
+      "name": "Wetter",
+      "description": "Aktuelles Wetter und 5-Tage-Vorschau für deinen Ort – mit ehrlicher Datenanzeige.",
+      "privacy": {
+        "summary": "Dieses Tool kontaktiert den kostenlosen Wetterdienst Open-Meteo. Nur zwei Dinge verlassen jemals dein Gerät: der Ortsname, den du in die Suche tippst, und die Koordinaten deines gewählten Orts. Nie dein Name, deine Dateien oder sonst irgendetwas über dich.",
+        "geo": "Nur der Ortsname, den du ins Suchfeld tippst – sonst nichts.",
+        "forecast": "Nur die Koordinaten deines gewählten Orts – nie etwas über dich."
+      },
+      "setupHint": "Für welchen Ort willst du das Wetter? Such eine Stadt, um loszulegen.",
+      "searchPlaceholder": "Stadt suchen…",
+      "search": "Suchen",
+      "noResults": "Keine Orte gefunden. Versuch eine andere Schreibweise.",
+      "searchError": "Die Ortssuche ist gerade nicht erreichbar. Prüf deine Verbindung und versuch es nochmal.",
+      "cancel": "Abbrechen",
+      "changePlace": "Ort ändern",
+      "refresh": "Wetter aktualisieren",
+      "noData": "Offline – noch keine Wetterdaten. Cardo versucht es weiter.",
+      "wind": "Wind",
+      "humidity": "Luftfeuchtigkeit",
+      "updatedJustNow": "gerade aktualisiert",
+      "updatedAgo": "vor {{minutes}} Min aktualisiert",
+      "offlineHint": "offline – letzter Stand",
+      "wmo": {
+        "clear": "Klarer Himmel",
+        "partly": "Leicht bewölkt",
+        "overcast": "Bedeckt",
+        "fog": "Nebel",
+        "rain": "Regen",
+        "snow": "Schnee",
+        "showers": "Schauer",
+        "thunder": "Gewitter",
+        "unknown": "Wetter"
+      },
+      "command": {
+        "refresh": "Wetter aktualisieren"
+      },
+      "msg": {
+        "noPlace": "Noch kein Ort eingerichtet – öffne das Wetter-Widget und such deine Stadt.",
+        "offline": "Gerade keine Verbindung – das Wetter bleibt auf dem letzten Stand.",
+        "refreshed": "Wetter aktualisiert."
+      },
+      "test": {
+        "cacheRoundtrip": "Wetter-Cache lässt sich speichern und löschen",
+        "wmoMapping": "Wettercodes werden den richtigen Symbolen zugeordnet",
+        "urlBuilding": "Vorhersage-URL wird korrekt gebaut"
+      },
+      "tour": {
+        "title": "Wetter auf einen Blick",
+        "body": "Such einmal deine Stadt und Cardo zeigt dir das aktuelle Wetter plus fünf Tage Vorschau. Du siehst immer, wie alt die Daten sind – und offline bleibt einfach die letzte Vorhersage stehen."
+      }
+    },
+    "hydration": {
+      "name": "Trinken",
+      "description": "Zählt deine täglichen Gläser Wasser und erinnert dich ans Trinken – komplett lokal.",
+      "privacy": "Funktioniert komplett offline. Deine Trinkdaten verlassen dieses Gerät nie.",
+      "widget": {
+        "progressLabel": "{{glasses}} von {{goal}} Gläsern heute",
+        "goalReached": "Ziel erreicht – super hydriert! 🎉",
+        "addGlass": "Ein Glas eintragen",
+        "removeGlass": "Ein Glas entfernen",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "settings": {
+        "dailyGoal": "Tagesziel (Gläser)",
+        "remindEveryMinutes": "Erinnern alle (Minuten)",
+        "remindFrom": "Erinnern ab",
+        "remindUntil": "Erinnern bis",
+        "intervalHint": "0 = keine Erinnerungen"
+      },
+      "command": {
+        "drink": "Ein Glas Wasser eintragen",
+        "remind": "Trink-Erinnerung (intern)"
+      },
+      "notification": {
+        "title": "Zeit für ein Glas Wasser 💧",
+        "body": "Du bist bei {{glasses}} von {{goal}} Gläsern – trink einen Schluck!"
+      },
+      "msg": {
+        "failed": "Trinken konnte nicht gespeichert werden."
+      },
+      "test": {
+        "dayRoundtrip": "Gläserzahl wird pro Tag gespeichert",
+        "windowLogic": "Erinnerungs-Zeitfenster wird korrekt berechnet",
+        "drinkCommand": "Trinken erhöht den heutigen Zähler"
+      },
+      "tour": {
+        "title": "Bleib hydriert",
+        "body": "Tippe +1 für jedes Glas, das du trinkst. Cardo erinnert dich in deinem Zeitfenster, bis du dein Ziel erreichst – alles bleibt auf diesem Gerät."
+      }
+    },
+    "assistant": {
+      "name": "Assistent",
+      "description": "Dein lokaler Denk-Partner: Kippe deine Gedanken ab und mach daraus mit einem Klick konkrete Aktionen – die KI läuft komplett auf deinem Gerät.",
+      "privacy": {
+        "summary": "Die KI läuft komplett lokal auf deinem Gerät – deine Gedanken und Daten verlassen es nie. Nur wenn du auf Installieren drückst, lädt Cardo eine Modell-Datei von huggingface.co herunter.",
+        "download": "Lädt die gewählte KI-Modell-Datei von huggingface.co herunter – ausschließlich, wenn du auf Installieren drückst. Dabei wird nichts über dich übertragen; die Anfrage verrät nur, welches Modell geladen wird."
+      },
+      "test": {
+        "catalogBuild": "Befehlskatalog wird korrekt gebaut",
+        "proposalValidate": "Vorschläge werden validiert, feindliche Eingaben gefiltert"
+      },
+      "tour": {
+        "title": "Braindump statt Verwaltungsarbeit",
+        "body": "Schreib einfach auf, was dir durch den Kopf geht. Dein Assistent macht daraus konkrete Vorschläge – du bestätigst nur noch mit Ja, Bearbeiten oder Nein. Alles läuft lokal."
+      }
     }
   },
   "theme": {
@@ -776,5 +883,99 @@
     "enable": "Postfach aktivieren",
     "disable": "Postfach deaktivieren",
     "empty": "Gerade keine Neuigkeiten. Schau später wieder vorbei!"
+  },
+  "assistant": {
+    "widget": {
+      "noModel": "Noch kein KI-Modell installiert. Richte deinen Assistenten unter Einstellungen → Assistent ein.",
+      "defaultName": "Assistent",
+      "thinking": "denkt nach…",
+      "placeholder": "Braindump…",
+      "send": "Senden",
+      "parseError": "Die Antwort des Modells war unbrauchbar. Versuch es einfach noch einmal.",
+      "generateError": "Da ist etwas schiefgelaufen. Prüfe unter Einstellungen → Assistent, ob dein Modell geladen werden kann.",
+      "remembered": "Gemerkt: {{items}}",
+      "yes": "Ja",
+      "edit": "Bearbeiten",
+      "no": "Nein",
+      "done": "Erledigt",
+      "failed": "Fehlgeschlagen",
+      "dismissed": "Verworfen",
+      "editSent": "Zum Bearbeiten geöffnet"
+    },
+    "rating": {
+      "great": "Sehr gut",
+      "ok": "Gut",
+      "slow": "Langsam",
+      "tooBig": "Zu groß"
+    },
+    "speed": {
+      "veryFast": "antwortet sofort",
+      "fast": "flott",
+      "moderate": "gemächlich",
+      "slow": "sehr langsam",
+      "na": "–"
+    },
+    "model": {
+      "ramNeed": "braucht {{ram}} RAM"
+    },
+    "wizard": {
+      "checkTitle": "Schritt 1: System-Check",
+      "checkIntro": "Dein Gerät: {{ram}} RAM, {{cores}} Kerne, {{chip}}. Wähle ein Modell – das empfohlene passt am besten zu deiner Hardware.",
+      "recommended": "Empfohlen",
+      "continue": "Weiter",
+      "downloadTitle": "Schritt 2: {{model}} wird installiert",
+      "starting": "Download startet…",
+      "loadSmoke": "Modell wird zum ersten Mal geladen…",
+      "downloadError": "Download oder Laden fehlgeschlagen. Prüfe deine Internetverbindung und versuch es erneut.",
+      "back": "Zurück",
+      "personaTitle": "Schritt 3: Mach ihn zu deinem",
+      "finish": "Einrichtung abschließen",
+      "doneTitle": "Fertig!",
+      "doneBody": "Dein Assistent ist startklar. Füge das Assistent-Widget zu deinem Dashboard hinzu und kippe deine Gedanken ab."
+    },
+    "persona": {
+      "nameQuestion": "Wie soll dein Assistent heißen?",
+      "callYouQuestion": "Wie soll er dich nennen?",
+      "styleQuestion": "Antwortstil",
+      "style": {
+        "concise": "kurz & direkt",
+        "friendly": "freundlich",
+        "detailed": "ausführlich"
+      },
+      "languageQuestion": "Sprache",
+      "language": {
+        "de": "Deutsch",
+        "en": "English",
+        "app": "wie App"
+      },
+      "extraQuestion": "Noch etwas, das er wissen soll?"
+    },
+    "manage": {
+      "currentModel": "Aktuelles Modell",
+      "noModel": "Kein Modell ausgewählt",
+      "models": "Modelle",
+      "active": "Aktiv",
+      "use": "Verwenden",
+      "install": "Installieren",
+      "error": "Das hat nicht geklappt. Versuch es erneut.",
+      "deleteConfirm": "Dieses Modell wirklich löschen? Die Datei wird vom Gerät entfernt; du kannst es jederzeit neu installieren.",
+      "switchTitle": "Zu {{model}} wechseln – was soll passieren?",
+      "switchKeep": "Persönlichkeit, Arbeitsweise & Erinnerungen übernehmen (empfohlen)",
+      "switchKeepHint": "Dein Assistent bleibt derselbe – nur das Modell dahinter wechselt.",
+      "switchFresh": "Frisch starten",
+      "switchFreshHint": "Persönlichkeit, Arbeitsweise und Gedächtnis werden auf den Stand direkt nach der Einrichtung zurückgesetzt.",
+      "askBeforeExecute": "Vor dem Ausführen fragen",
+      "askBeforeExecuteHint": "Empfohlen: Jeder Vorschlag wartet auf dein Ja. Wenn du das ausschaltest, führt der Assistent gültige Vorschläge sofort aus.",
+      "persona": "Persönlichkeit",
+      "customize": "Assistent anpassen",
+      "advanced": "Erweitert",
+      "advancedHint": "Diese drei Dateien steuern deinen Assistenten. Normalerweise pflegt Cardo sie automatisch – ändere sie nur, wenn du weißt, was du tust.",
+      "doc": {
+        "instructions": "Arbeitsweise (instructions.md)",
+        "personality": "Persönlichkeit (personality.md)",
+        "memory": "Gedächtnis (memory.md)"
+      },
+      "saved": "Gespeichert."
+    }
   }
 }

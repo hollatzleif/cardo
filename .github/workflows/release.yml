@@ -67,6 +67,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          components: rustfmt
       - uses: Swatinem/rust-cache@v2
 
       - name: Install JS dependencies
@@ -78,6 +79,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # llama.cpp needs std::filesystem → macOS 10.15+; we target 11.0.
+          MACOSX_DEPLOYMENT_TARGET: '11.0'
         with:
           projectPath: apps/desktop
           owner: hollatzleif

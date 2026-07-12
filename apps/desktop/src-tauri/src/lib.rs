@@ -2,6 +2,7 @@
 //! The webview NEVER touches SQLite directly – every write goes through
 //! the Rust StorageAdapter, which records the change log atomically.
 
+mod assistant;
 mod notes;
 
 use cardo_core::diagnose::CoreCheckResult;
@@ -194,6 +195,7 @@ pub fn run() {
 
     builder
         .manage(notes::NotesState::default())
+        .manage(assistant::AssistantState::default())
         .setup(|app| {
             let app_data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&app_data_dir)?;
@@ -224,6 +226,17 @@ pub fn run() {
             schedule_list,
             backup_export,
             backup_import,
+            assistant::assistant_hw_info,
+            assistant::assistant_list_models,
+            assistant::assistant_download_model,
+            assistant::assistant_cancel_download,
+            assistant::assistant_delete_model,
+            assistant::assistant_load_model,
+            assistant::assistant_loaded_model,
+            assistant::assistant_unload_model,
+            assistant::assistant_generate,
+            assistant::assistant_read_doc,
+            assistant::assistant_write_doc,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Cardo");
