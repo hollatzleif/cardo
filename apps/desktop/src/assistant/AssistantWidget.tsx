@@ -458,6 +458,21 @@ export function AssistantWidget(props: WidgetProps) {
       host.commands.list() as unknown as CatalogSource[],
       (key) => String(t(key)),
     ).filter((entry) => isCommandInScope(entry.id, profile.toolScope));
+
+    // Current-state snapshots: any in-scope `*.context` command is run
+    // read-only so the assistant knows existing/completed items (dedupe).
+    const currentState: string[] = [];
+    for (const entry of host.commands.list() as unknown as CatalogSource[]) {
+      if (!entry.id.endsWith('.context') || !isCommandInScope(entry.id, profile.toolScope)) continue;
+      try {
+        const res = await host.commands.execute(entry.id, {});
+        const data = res.ok ? (res.data as { contextText?: unknown } | undefined) : undefined;
+        const text = typeof data?.contextText === 'string' ? data.contextText.trim() : '';
+        if (text) currentState.push(text);
+      } catch {
+        // Context is best-effort; a failing provider never blocks the prompt.
+      }
+    }
     const system = buildSystemPrompt({
       instructions,
       personality,
@@ -481,6 +496,8 @@ export function AssistantWidget(props: WidgetProps) {
       // Live from the theme + design registries, so the assistant always
       // knows the CURRENT designs/options — never a stale hardcoded list.
       capabilities: buildCapabilities((key) => String(t(key)), language),
+      // Live task/data snapshot so it flags duplicates and completed items.
+      currentState,
     });
 
     let raw: string;

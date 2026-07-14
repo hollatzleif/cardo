@@ -24,7 +24,7 @@
       "variants": []
     }
   ],
-  "commands": ["todo.create", "todo.complete", "todo.delete", "todo.query-today"],
+  "commands": ["todo.create", "todo.complete", "todo.delete", "todo.query-today", "todo.context"],
   "selfTests": [
     { "id": "create-roundtrip", "titleKey": "tool.todo.test.createRoundtrip" },
     { "id": "complete-flow", "titleKey": "tool.todo.test.completeFlow" },

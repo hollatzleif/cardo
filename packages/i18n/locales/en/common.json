@@ -602,7 +602,8 @@
         "create": "Create task",
         "complete": "Complete task",
         "delete": "Delete task",
-        "queryToday": "Query today's tasks"
+        "queryToday": "Query today's tasks",
+        "context": "Current tasks (for the assistant)"
       },
       "msg": {
         "created": "Task created",

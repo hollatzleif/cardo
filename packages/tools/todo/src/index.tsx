@@ -10,6 +10,7 @@ import type {
 } from '@cardo/plugin-api';
 import manifest from '../manifest.json';
 import {
+  buildTodoContext,
   INBOX_ID,
   computeTodayData,
   deriveStatus,
@@ -810,6 +811,27 @@ export function createTool(): CardoTool {
         async run() {
           const data = await queryTodayIn(context.storage);
           return { ok: true, data };
+        },
+      });
+
+      // Assistant "current state" provider: any command ending in `.context`
+      // is executed (no params, read-only) before the assistant prompts, and
+      // its `contextText` is injected so the assistant knows existing/completed
+      // tasks and can flag duplicates instead of blindly re-creating them.
+      context.commands.register({
+        id: 'todo.context',
+        titleKey: 'tool.todo.command.context',
+        palette: false,
+        params: z.object({}),
+        selfTestParams: {},
+        async run() {
+          const tasks = await context.storage.query<TaskDoc>({
+            where: [{ field: 'type', op: '=', value: 'task' }],
+          });
+          return {
+            ok: true,
+            data: { contextText: buildTodoContext(tasks, context.i18n.language) },
+          };
         },
       });
 

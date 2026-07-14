@@ -51,6 +51,12 @@ export interface PromptInput {
     /** Human-readable lines describing what the design engine can change. */
     design?: string[];
   };
+  /**
+   * Live snapshots of the user's current data (open/done tasks, …) gathered
+   * from tools' `*.context` commands, so the assistant can spot duplicates
+   * and already-completed items instead of blindly re-creating them.
+   */
+  currentState?: string[];
   /** Injected for tests; defaults to now. Relative dates resolve against this. */
   now?: Date;
 }
@@ -149,6 +155,11 @@ export function buildSystemPrompt(input: PromptInput): string {
     sections.push(lines.join('\n'));
   }
 
+  const currentState = (input.currentState ?? []).filter((line) => line.trim().length > 0);
+  if (currentState.length > 0) {
+    sections.push(['## Aktueller Stand', ...currentState].join('\n'));
+  }
+
   const fileRule = input.agentWorkspace
     ? '- Datei-Wünsche (Liste/Notiz/Tabelle anlegen, Text schreiben, Datei lesen): erledige das DIREKT im Notiz-Ordner und beschreibe es im "reply" – keine workspace.*-Karte dafür. Für Cardo-Werkzeuge (Wecker, Termin …) nutzt du weiterhin die proposals.'
     : '- Datei-Wünsche (Liste anlegen, Text in Datei schreiben, Datei lesen): nutze die workspace.*-Befehle als Vorschläge. Dateien liegen im Notiz-Ordner des Nutzers; erlaubt sind .md, .txt, .csv und .json.';
@@ -161,6 +172,7 @@ export function buildSystemPrompt(input: PromptInput): string {
     '- "reply": kurz, in der Antwortsprache, im Ton der Persönlichkeit.',
     '- "proposals": nur Befehls-IDs aus "Verfügbare Befehle"; niemals eigene erfinden. Leeres Array, wenn nichts zu tun ist.',
     '- Schlage ALLE sinnvollen Aktionen vor, auch mehrere ergänzende für dasselbe Ereignis: Eine Klausur morgen um 9 Uhr ergibt z. B. SOWOHL einen Kalender-Termin ALS AUCH einen Wecker. Lieber ein Vorschlag zu viel als einer zu wenig – der Nutzer bestätigt jeden einzeln.',
+    '- Gleiche jede geplante Aktion mit "Aktueller Stand" ab: Steht eine Aufgabe/ein Termin dort schon OFFEN, lege sie NICHT ungefragt neu an – weise im "reply" darauf hin und frag nach ("steht schon offen drin – trotzdem nochmal?"). Wurde sie KÜRZLICH ERLEDIGT, frag, ob es etwas Neues ist ("hast du erst erledigt – neue?"). Schlage sie nur vor, wenn der Nutzer es bestätigt oder es klar etwas anderes ist.',
     fileRule,
     '- Relative Datumsangaben ("morgen", "nächsten Montag") IMMER anhand des aktuellen Datums in konkrete ISO-Daten (YYYY-MM-DD) auflösen.',
     '- "summary": beschreibt exakt, was passieren wird, inklusive der konkreten Werte – in der Antwortsprache.',

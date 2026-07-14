@@ -178,6 +178,56 @@ export function computeTodayData(
   };
 }
 
+/**
+ * Compact snapshot of the task list for the assistant's "current state"
+ * context, so it can spot duplicates and already-completed items instead of
+ * blindly re-creating them. Open tasks first (priority/due order), then the
+ * most recently completed ones (with a "today" marker). Capped for prompt size.
+ */
+export function buildTodoContext(tasks: TaskDoc[], language: string, now: Date = new Date()): string {
+  const de = language === 'de';
+  const today = todayIso(now);
+  const open = tasks
+    .filter((task) => !task.done)
+    .sort((a, b) => {
+      const byPriority = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+      if (byPriority !== 0) return byPriority;
+      if ((a.due ?? '') !== (b.due ?? '')) {
+        if (!a.due) return 1;
+        if (!b.due) return -1;
+        return a.due < b.due ? -1 : 1;
+      }
+      return 0;
+    });
+  const done = tasks
+    .filter((task) => task.done && task.completedAt != null)
+    .sort((a, b) => ((b.completedAt ?? '') < (a.completedAt ?? '') ? -1 : 1));
+
+  const openLabels = open.slice(0, 25).map((task) => {
+    const prio = task.priority === 'high' ? (de ? ' (Prio hoch)' : ' (high prio)') : '';
+    const due = task.due ? (de ? `, fällig ${task.due}` : `, due ${task.due}`) : '';
+    return `«${task.title}»${prio}${due}`;
+  });
+  const doneLabels = done.slice(0, 12).map((task) => {
+    const onToday =
+      task.completedAt && localDateOf(task.completedAt) === today ? (de ? ' (heute)' : ' (today)') : '';
+    return `«${task.title}»${onToday}`;
+  });
+
+  const parts: string[] = [];
+  parts.push(
+    openLabels.length > 0
+      ? `${de ? 'Offene Aufgaben' : 'Open tasks'}: ${openLabels.join(', ')}.`
+      : de
+        ? 'Keine offenen Aufgaben.'
+        : 'No open tasks.',
+  );
+  if (doneLabels.length > 0) {
+    parts.push(`${de ? 'Kürzlich erledigt' : 'Recently completed'}: ${doneLabels.join(', ')}.`);
+  }
+  return parts.join(' ');
+}
+
 /** Case-insensitive title/category match for the global search provider. */
 export function matchesQuery(task: Pick<TaskDoc, 'title' | 'category'>, query: string): boolean {
   const q = query.trim().toLowerCase();

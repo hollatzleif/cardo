@@ -199,6 +199,35 @@ describe('buildSystemPrompt', () => {
     });
     expect(bare).not.toContain('## Cardo aktuell');
   });
+
+  it('renders current-state snapshots and the dedupe rule', () => {
+    const prompt = buildSystemPrompt({
+      instructions: '',
+      personality: '',
+      memory: '',
+      catalog,
+      language: 'de',
+      now: new Date(2026, 6, 12),
+      currentState: ['Offene Aufgaben: «Staffa fragen». Kürzlich erledigt: «Wäsche» (heute).'],
+    });
+    expect(prompt).toContain('## Aktueller Stand');
+    expect(prompt).toContain('«Staffa fragen»');
+    // The output contract tells it to check that section before proposing.
+    expect(prompt).toContain('Aktueller Stand');
+    expect(prompt).toContain('steht schon offen drin');
+
+    // Empty/blank snapshots add no section.
+    const none = buildSystemPrompt({
+      instructions: '',
+      personality: '',
+      memory: '',
+      catalog,
+      language: 'de',
+      now: new Date(2026, 6, 12),
+      currentState: ['   '],
+    });
+    expect(none).not.toContain('## Aktueller Stand');
+  });
 });
 
 describe('filterCatalogByScope', () => {

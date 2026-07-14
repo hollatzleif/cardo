@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildTodoContext,
   computeTodayData,
   deriveStatus,
   isOverdue,
@@ -128,6 +129,35 @@ describe('deriveStatus', () => {
   });
   it('normalizes an inconsistent open doc carrying status:"done" to "todo"', () => {
     expect(deriveStatus({ done: false, status: 'done' })).toBe('todo');
+  });
+});
+
+describe('buildTodoContext', () => {
+  const now = new Date('2026-07-14T09:00:00');
+  it('lists open tasks (priority first) and recently completed with a today marker', () => {
+    const tasks = [
+      task({ id: 'task:1', title: 'Staffa fragen', done: false, priority: 'medium' }),
+      task({ id: 'task:2', title: 'Wichtig', done: false, priority: 'high' }),
+      task({
+        id: 'task:3',
+        title: 'Wäsche aufhängen',
+        done: true,
+        completedAt: '2026-07-14T08:00:00',
+      }),
+    ];
+    const ctx = buildTodoContext(tasks, 'de', now);
+    expect(ctx).toContain('Offene Aufgaben');
+    expect(ctx).toContain('«Staffa fragen»');
+    expect(ctx).toContain('«Wichtig» (Prio hoch)');
+    // High priority sorts before medium.
+    expect(ctx.indexOf('«Wichtig»')).toBeLessThan(ctx.indexOf('«Staffa fragen»'));
+    expect(ctx).toContain('Kürzlich erledigt');
+    expect(ctx).toContain('«Wäsche aufhängen» (heute)');
+  });
+
+  it('says so when there are no open tasks', () => {
+    expect(buildTodoContext([], 'de', now)).toBe('Keine offenen Aufgaben.');
+    expect(buildTodoContext([], 'en', now)).toBe('No open tasks.');
   });
 });
 
