@@ -1025,7 +1025,8 @@
       "delegateTakeover": "\"{{name}}\" is taking over…",
       "delegateDone": "Handed over.",
       "modelMissing": "model missing",
-      "switchToProfile": "Switch to {{name}}"
+      "switchToProfile": "Switch to {{name}}",
+      "proposalsTitle": "Suggestions ({{count}})"
     },
     "rating": {
       "great": "Great",

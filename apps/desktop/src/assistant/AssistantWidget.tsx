@@ -176,6 +176,7 @@ export function AssistantWidget(props: WidgetProps) {
   const [lastByOwner, setLastByOwner] = useState<Record<string, { text: string; at: string }>>({});
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('chat');
   const [claudeInstalled, setClaudeInstalled] = useState(false);
+  const [proposalsCollapsed, setProposalsCollapsed] = useState(false);
   const nextKeyRef = useRef(1);
   const installedRef = useRef<Set<string>>(new Set());
   const claudeInstalledRef = useRef(false);
@@ -1059,7 +1060,12 @@ export function AssistantWidget(props: WidgetProps) {
             <p className="aw-reply">{entry.text}</p>
           </div>
         )}
-        {(entry.proposals ?? []).map((snap, index) => proposalCard(entry, index, snap, speaker))}
+        {/* Pending proposals are managed in the collapsible panel below the
+            chat; resolved ones stay inline as a compact history line. */}
+        {(entry.proposals ?? [])
+          .map((snap, index) => ({ snap, index }))
+          .filter(({ snap }) => snap.outcome !== 'pending')
+          .map(({ snap, index }) => proposalCard(entry, index, snap, speaker))}
         {(entry.memory?.length ?? 0) > 0 && memoryBlock(entry)}
       </div>
     );
@@ -1289,6 +1295,37 @@ export function AssistantWidget(props: WidgetProps) {
           {feed.map((item) => renderItem(item))}
           {error !== null && <p className="aw-error">{error}</p>}
         </div>
+
+        {(() => {
+          const pending = feed.flatMap((item) =>
+            item.kind === 'entry'
+              ? (item.entry.proposals ?? [])
+                  .map((snap, index) => ({ entry: item.entry, index, snap }))
+                  .filter((p) => p.snap.outcome === 'pending')
+              : [],
+          );
+          if (pending.length === 0) return null;
+          return (
+            <div className="aw-proposals">
+              <button
+                type="button"
+                className="aw-proposals__head"
+                aria-expanded={!proposalsCollapsed}
+                onClick={() => setProposalsCollapsed((v) => !v)}
+              >
+                <span className="aw-proposals__caret">{proposalsCollapsed ? '▸' : '▾'}</span>
+                {t('assistant.widget.proposalsTitle', { count: pending.length })}
+              </button>
+              {!proposalsCollapsed && (
+                <div className="aw-proposals__list">
+                  {pending.map(({ entry, index, snap }) =>
+                    proposalCard(entry, index, snap, speakerFor(entry.speakerId)),
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         <div className="aw-composer">
           <textarea
