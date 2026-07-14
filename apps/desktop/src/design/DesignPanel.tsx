@@ -2,20 +2,37 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input } from '@cardo/ui';
+import { themes } from '@cardo/themes';
+import { useAppStore } from '../state/appStore';
+import { DESIGN_PRESETS, type DesignPreset } from './presets';
 import {
   applyDesign,
   currentTokenHex,
   loadAndApplyStoredDesign,
   saveDesign,
   BACKGROUND_FITS,
+  CARD_STYLES,
   DENSITIES,
   FONT_PRESETS,
   type BackgroundFit,
+  type CardStyle,
   type Density,
   type DesignOverrides,
   type FontPreset,
 } from './design';
 import './design.css';
+
+/** Accent palette tokens offered as one-click accent overrides. */
+const ACCENT_TOKENS = [
+  'accent-1',
+  'accent-2',
+  'accent-3',
+  'accent-4',
+  'accent-5',
+  'accent-6',
+  'accent-7',
+  'accent-8',
+] as const;
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const SAVE_DEBOUNCE_MS = 300;
@@ -48,6 +65,25 @@ export function DesignPanel({ onClose }: { onClose(): void }) {
   const [bgError, setBgError] = useState(false);
   const saveTimer = useRef<number | undefined>(undefined);
   const pendingSave = useRef<DesignOverrides | null>(null);
+
+  const themeId = useAppStore((s) => s.themeId);
+  const accentToken = useAppStore((s) => s.accentToken);
+  const setTheme = useAppStore((s) => s.setTheme);
+  const setAccent = useAppStore((s) => s.setAccent);
+
+  /**
+   * A preset applies a whole direction at once: theme + font + density +
+   * radius + card style. Persist the design first, then switch the theme
+   * (setTheme re-applies the stored design afterwards) so both land together.
+   */
+  async function applyPreset(preset: DesignPreset): Promise<void> {
+    if (saveTimer.current !== undefined) window.clearTimeout(saveTimer.current);
+    pendingSave.current = null;
+    await saveDesign(preset.design);
+    await setTheme(preset.themeId);
+    applyDesign(preset.design);
+    setD(preset.design);
+  }
 
   useEffect(() => {
     let alive = true;
@@ -124,6 +160,74 @@ export function DesignPanel({ onClose }: { onClose(): void }) {
           ✕
         </Button>
       </header>
+
+      <Section title={t('design.preset.title')}>
+        <p className="c-muted design-hint">{t('design.preset.hint')}</p>
+        <div className="design-presets">
+          {DESIGN_PRESETS.map((preset) => {
+            const th = themes.find((x) => x.id === preset.themeId);
+            const active = preset.themeId === themeId;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                className={`design-preset${active ? ' design-preset--active' : ''}`}
+                onClick={() => void applyPreset(preset)}
+                style={{ background: th?.palette.base, borderColor: th?.palette['accent-1'] }}
+              >
+                <span className="design-preset__name" style={{ color: th?.palette.text }}>
+                  {t(preset.nameKey)}
+                </span>
+                <span
+                  className="design-preset__desc"
+                  style={{ color: th?.palette['text-muted'] ?? th?.palette.text }}
+                >
+                  {t(preset.descKey)}
+                </span>
+                <span className="design-preset__dots">
+                  <i style={{ background: th?.palette['accent-1'] }} />
+                  <i style={{ background: th?.palette['accent-3'] }} />
+                  <i style={{ background: th?.palette['accent-5'] }} />
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </Section>
+
+      <Section title={t('design.theme.title')}>
+        <div className="design-themes" data-tour-anchor="ui:theme-picker">
+          {themes.map((theme) => (
+            <button
+              key={theme.id}
+              className={`design-theme-swatch${theme.id === themeId ? ' design-theme-swatch--active' : ''}`}
+              title={t(theme.nameKey)}
+              onClick={() => void setTheme(theme.id)}
+              style={{ background: theme.palette.base, borderColor: theme.palette['accent-1'] }}
+            >
+              <span style={{ color: theme.palette.text }}>{t(theme.nameKey)}</span>
+              <span className="design-theme-dot" style={{ background: theme.palette['accent-1'] }} />
+            </button>
+          ))}
+        </div>
+        <div className="design-row">
+          <span className="design-row__label">{t('settings.accentOverride')}</span>
+          <div className="design-accents">
+            {ACCENT_TOKENS.map((token) => (
+              <button
+                key={token}
+                className={`design-accent-dot${accentToken === token ? ' design-accent-dot--active' : ''}`}
+                title={token}
+                style={{ background: `var(--palette-${token})` }}
+                onClick={() => void setAccent(token)}
+              />
+            ))}
+          </div>
+          <Button variant="ghost" onClick={() => void setAccent(undefined)}>
+            {t('settings.resetOverrides')}
+          </Button>
+        </div>
+      </Section>
 
       <Section title={t('design.typography.title')}>
         <label className="design-row">
@@ -332,6 +436,24 @@ export function DesignPanel({ onClose }: { onClose(): void }) {
           />
           {t('design.widgets.border')}
         </label>
+        <div className="design-row">
+          <span className="design-row__label">{t('design.widgets.cardStyle')}</span>
+          <div className="design-cardstyles">
+            {CARD_STYLES.map((style) => {
+              const active = (d.cardStyle ?? 'soft') === style;
+              return (
+                <button
+                  key={style}
+                  type="button"
+                  className={`design-cardstyle${active ? ' design-cardstyle--active' : ''}`}
+                  onClick={() => update({ cardStyle: style === 'soft' ? undefined : (style as CardStyle) })}
+                >
+                  {t(`design.widgets.cardStyleOption.${style}`)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </Section>
 
       <Section title={t('design.layout.title')}>

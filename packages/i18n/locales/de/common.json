@@ -95,7 +95,10 @@
       "diagnostics": "Der Selbsttest prüft die ganze App und erstellt dir einen Report.",
       "help": "Tour neu starten und Dokumentation finden.",
       "about": "Version, Lizenzen und Transparenz."
-    }
+    },
+    "designArea": "Design & Themes",
+    "designAreaHint": "Vorlagen, Themes, Akzent, Schrift, Kartenstil und mehr findest du im Design-Bereich.",
+    "openDesign": "Design öffnen"
   },
   "diagnose": {
     "start": "Selbsttest starten",
@@ -273,6 +276,13 @@
       "tour": {
         "title": "Das ist ein Widget",
         "body": "Jedes Tool lebt in einem Widget wie diesem. Im Bearbeitungsmodus kannst du es verschieben und in der Größe ändern."
+      },
+      "variant": {
+        "digital": "Digital",
+        "analog": "Analog",
+        "minimal": "Minimal",
+        "words": "In Worten",
+        "mono": "Terminal"
       }
     },
     "counter": {
@@ -437,6 +447,38 @@
         "changeFolder": "Ordner wechseln",
         "noFolder": "Kein Ordner ausgewählt"
       }
+    },
+    "files-explorer": {
+      "name": "Dateien",
+      "description": "Durchstöbere und bearbeite die Dateien in deinem Cardo-Ordner – Markdown, Text, Bilder, PDF & HTML, Obsidian-artig mit Wiki-Links und Backlinks.",
+      "privacy": "Liest und schreibt Dateien nur in deinem eigenen Cardo-Ordner. Alles bleibt auf deinem Gerät; nichts wird hochgeladen.",
+      "test": {
+        "browse": "Dateien werden mit korrektem Typ aufgelistet",
+        "markdown": "Markdown-Wiki-Links werden korrekt erkannt"
+      },
+      "saved": "Gespeichert",
+      "invalidName": "Bitte einen Namen ohne Schrägstriche verwenden.",
+      "noBackend": "Dateizugriff ist hier nicht verfügbar.",
+      "newPlaceholder": "Neue Datei…",
+      "new": "Neue Datei",
+      "reveal": "Ordner öffnen",
+      "empty": "Noch keine Dateien. Lege oben eine an.",
+      "kind": {
+        "text": "Notizen & Text",
+        "image": "Bilder",
+        "pdf": "PDF",
+        "html": "Webseiten"
+      },
+      "delete": "{{name}} löschen",
+      "pickHint": "Wähle eine Datei zum Ansehen oder Bearbeiten.",
+      "edit": "Bearbeiten",
+      "preview": "Vorschau",
+      "save": "Speichern",
+      "openExternal": "Extern öffnen",
+      "editorLabel": "Editor für {{name}}",
+      "backlinks": "Verlinkt von ({{count}})",
+      "loading": "Wird geladen…",
+      "externalHint": "Diese Datei öffnet sich in der Standard-App deines Systems."
     },
     "pomodoro": {
       "name": "Pomodoro",
@@ -926,7 +968,13 @@
       "radius": "Eckenradius",
       "transparency": "Transparenz",
       "shadow": "Schlagschatten",
-      "border": "Rahmen"
+      "border": "Rahmen",
+      "cardStyle": "Kartenstil",
+      "cardStyleOption": {
+        "soft": "Weich",
+        "flat": "Flach",
+        "paper": "Papier"
+      }
     },
     "layout": {
       "title": "Layout",
@@ -965,6 +1013,9 @@
         "name": "Editorial / Clean",
         "desc": "GitHub Hell, luftig, feine Trennlinien."
       }
+    },
+    "theme": {
+      "title": "Theme"
     }
   },
   "polls": {

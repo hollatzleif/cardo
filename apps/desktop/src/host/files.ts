@@ -37,6 +37,15 @@ function createMemoryFilesApi(): FilesApi {
     reveal: async () => {
       /* no-op in browser dev */
     },
+    browse: async () =>
+      [...files.entries()].map(([name, c]) => ({
+        name,
+        kind: 'text' as const,
+        modifiedMs: 0,
+        size: c.length,
+      })),
+    readDataUrl: async () => '',
+    openExternal: async () => {},
   };
 }
 
@@ -67,5 +76,19 @@ export function createFilesApi(): FilesApi {
       if (!current) await invoke('notes_default_folder');
       await invoke('notes_reveal_folder');
     },
+    async browse() {
+      const entries =
+        await invoke<Array<{ name: string; kind: string; modified_ms: number; size: number }>>(
+          'files_browse',
+        );
+      return entries.map((e) => ({
+        name: e.name,
+        kind: e.kind as 'text' | 'image' | 'pdf' | 'html',
+        modifiedMs: e.modified_ms,
+        size: e.size,
+      }));
+    },
+    readDataUrl: (name) => invoke('files_read_data_url', { name }),
+    openExternal: (name) => invoke('files_open_external', { name }),
   };
 }

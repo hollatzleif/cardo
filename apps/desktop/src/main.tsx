@@ -4,6 +4,9 @@ import '@cardo/ui/tokens.css';
 import '@cardo/ui/base.css';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+// KaTeX styles for rendered LaTeX in note/file previews. Fonts are bundled
+// same-origin by Vite, so the app's CSP (default-src 'self') serves them.
+import 'katex/dist/katex.min.css';
 import './app.css';
 import { initHost } from './host';
 import { instantiateTools, liveTools } from './host/tools';

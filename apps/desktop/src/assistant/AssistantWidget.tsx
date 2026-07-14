@@ -13,6 +13,7 @@ import {
   estimateContextChars,
   loadChat,
   makeChatEntry,
+  subscribeChatChanges,
   updateChatEntry,
   type ChatEntry,
   type ChatProposalOutcome,
@@ -178,6 +179,7 @@ export function AssistantWidget(props: WidgetProps) {
   const [claudeInstalled, setClaudeInstalled] = useState(false);
   const [proposalsCollapsed, setProposalsCollapsed] = useState(false);
   const nextKeyRef = useRef(1);
+  const busyRef = useRef(false);
   const installedRef = useRef<Set<string>>(new Set());
   const claudeInstalledRef = useRef(false);
   const contextHintShownRef = useRef<Set<string>>(new Set());
@@ -256,6 +258,36 @@ export function AssistantWidget(props: WidgetProps) {
       });
     return () => {
       cancelled = true;
+    };
+  }, [ownerId]);
+
+  /* Keep a ref of `busy` so the chat-change subscription (a long-lived
+     closure) reads the CURRENT value instead of the one captured at
+     subscribe time. */
+  useEffect(() => {
+    busyRef.current = busy;
+  }, [busy]);
+
+  /* Surface persisted replies that landed elsewhere: an in-flight generation
+     that finished on a now-unmounted instance, or another surface writing to
+     the same chat. Reload from the store on a change for THIS chat – but only
+     while idle, since a busy instance owns the feed (it also holds ephemeral
+     pushItem items that are not persisted and must survive). */
+  useEffect(() => {
+    if (!ownerId) return;
+    let cancelled = false;
+    const off = subscribeChatChanges((changedOwnerId) => {
+      if (changedOwnerId !== ownerId || busyRef.current) return;
+      loadChat(ownerId)
+        .then((entries) => {
+          if (cancelled) return;
+          setFeed(entries.map((entry) => ({ key: entry.id, kind: 'entry', entry })));
+        })
+        .catch(() => {});
+    });
+    return () => {
+      cancelled = true;
+      off();
     };
   }, [ownerId]);
 
@@ -1333,7 +1365,6 @@ export function AssistantWidget(props: WidgetProps) {
             placeholder={t('assistant.chat.placeholder')}
             value={input}
             rows={2}
-            disabled={busy}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onComposerKeyDown}
           />

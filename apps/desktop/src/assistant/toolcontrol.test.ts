@@ -43,6 +43,9 @@ function makeMemoryFiles() {
       files.delete(name);
     },
     reveal: async () => {},
+    browse: async () => [],
+    readDataUrl: async () => '',
+    openExternal: async () => {},
   };
 }
 

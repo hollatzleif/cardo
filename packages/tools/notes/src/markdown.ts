@@ -12,6 +12,8 @@
  *   [links](https://…), [[wiki-links]], blank-line separated paragraphs.
  */
 
+import { renderMathHtml } from '@cardo/ui';
+
 export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -19,6 +21,16 @@ export function escapeHtml(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/** Reverse escapeHtml so LaTeX source (which may contain < > & …) reaches KaTeX intact. */
+function unescapeHtml(text: string): string {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
 }
 
 /** Allow only harmless link targets; anything like "javascript:…" is rejected. */
@@ -38,12 +50,29 @@ function safeHref(rawUrl: string): string | null {
  */
 export function renderInline(escaped: string): string {
   const codeSpans: string[] = [];
-  // U+E000 (private use area) is the placeholder sentinel for code spans.
-  // Strip any pre-existing occurrence so user text can never forge one.
-  let out = escaped.replace(/\uE000/g, '').replace(/`([^`]+)`/g, (_m, code: string) => {
-    codeSpans.push(code);
-    return `\uE000${codeSpans.length - 1}\uE000`;
-  });
+  // U+E000/U+E001 (private use area) are the placeholder sentinels for code
+  // spans and math. Strip any pre-existing occurrence so user text can never
+  // forge one.
+  let out = escaped
+    .replace(/[\uE000\uE001]/g, '')
+    .replace(/`([^`]+)`/g, (_m, code: string) => {
+      codeSpans.push(code);
+      return `\uE000${codeSpans.length - 1}\uE000`;
+    });
+
+  // LaTeX math \u2013 cut out (like code spans) so its $, \, {} never collide with
+  // the Markdown passes below. Content is un-escaped before KaTeX because it
+  // was HTML-escaped upstream. Display $$\u2026$$ first, then inline $\u2026$ (only when
+  // it actually looks like math, so prices like "$5" stay literal text).
+  const mathSpans: string[] = [];
+  const pushMath = (tex: string, display: boolean): string => {
+    mathSpans.push(renderMathHtml(unescapeHtml(tex), display));
+    return `\uE001${mathSpans.length - 1}\uE001`;
+  };
+  out = out.replace(/\$\$([^\n]+?)\$\$/g, (_m, tex: string) => pushMath(tex, true));
+  out = out.replace(/\$([^\n$]+?)\$/g, (m, tex: string) =>
+    /[\\^_{}]/.test(tex) ? pushMath(tex, false) : m,
+  );
 
   // Wiki-links [[Note Name]] → internal anchors the widget resolves on click
   // (Obsidian behavior). Runs on the ALREADY-ESCAPED string and BEFORE the
@@ -69,7 +98,13 @@ export function renderInline(escaped: string): string {
   out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>');
   out = out.replace(/(^|\s)_([^_]+)_(?=\s|$)/g, '$1<em>$2</em>');
 
-  return out.replace(/\uE000(\d+)\uE000/g, (_m, i: string) => `<code>${codeSpans[Number(i)] ?? ''}</code>`);
+  out = out.replace(
+    /\uE000(\d+)\uE000/g,
+    (_m, i: string) => `<code>${codeSpans[Number(i)] ?? ''}</code>`,
+  );
+  // Restore rendered KaTeX last: its markup is trusted (trust:false) and must
+  // bypass the escaping applied to everything else.
+  return out.replace(/\uE001(\d+)\uE001/g, (_m, i: string) => mathSpans[Number(i)] ?? '');
 }
 
 /** Render a full Markdown document to a safe HTML string. */
@@ -106,6 +141,22 @@ export function renderMarkdown(source: string): string {
       }
       i += 1; // skip closing fence (or run past end for an unclosed fence)
       html.push(`<pre><code>${escapeHtml(buffer.join('\n'))}</code></pre>`);
+      continue;
+    }
+
+    // Block math fence: a line that is exactly "$$" opens a display-math block
+    // until the next "$$" line (single-line "$$…$$" is handled inline instead).
+    if (line.trim() === '$$') {
+      flushParagraph();
+      flushList();
+      const buffer: string[] = [];
+      i += 1;
+      while (i < lines.length && (lines[i] ?? '').trim() !== '$$') {
+        buffer.push(lines[i] ?? '');
+        i += 1;
+      }
+      i += 1; // skip closing fence
+      html.push(renderMathHtml(buffer.join('\n'), true));
       continue;
     }
 

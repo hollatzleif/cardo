@@ -4,8 +4,6 @@ import { Button } from '@cardo/ui';
 import { themes } from '@cardo/themes';
 import { supportedLanguages } from '@cardo/i18n';
 import { useAppStore } from '../state/appStore';
-import { DESIGN_PRESETS, type DesignPreset } from '../design/presets';
-import { saveDesign } from '../design/design';
 import { getHost } from '../host';
 import { fetchAppInfo, type AppInfo } from '../host/backend';
 import { isInboxEnabled, setInboxEnabled } from '../inbox/feed';
@@ -120,114 +118,26 @@ function GeneralSection({ onEditProfile }: { onEditProfile(): void }) {
   );
 }
 
-const ACCENT_TOKENS = [
-  'accent-1',
-  'accent-2',
-  'accent-3',
-  'accent-4',
-  'accent-5',
-  'accent-6',
-  'accent-7',
-  'accent-8',
-] as const;
-
 function AppearanceSection() {
   const { t } = useTranslation();
-  const themeId = useAppStore((s) => s.themeId);
-  const accentToken = useAppStore((s) => s.accentToken);
-  const setTheme = useAppStore((s) => s.setTheme);
-  const setAccent = useAppStore((s) => s.setAccent);
+  const setEditing = useAppStore((s) => s.setEditing);
+  const setDesignOpen = useAppStore((s) => s.setDesignOpen);
+  const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
 
-  // A preset applies a whole direction at once: theme + font + density +
-  // radius + widget style. saveDesign first, then setTheme (which re-applies
-  // the stored design after the theme), so both land together.
-  async function applyPreset(preset: DesignPreset): Promise<void> {
-    await saveDesign(preset.design);
-    await setTheme(preset.themeId);
+  // Design & themes now live in the dedicated Design panel (edit mode → 🎨).
+  // This just jumps there: enable edit mode, open the panel, leave settings.
+  function openDesign(): void {
+    setEditing(true);
+    setDesignOpen(true);
+    setSettingsOpen(false);
   }
 
   return (
-    <>
-      <Card>
-        <Wide>
-          <div className="settings-page__row-label">{t('design.preset.title')}</div>
-          <div className="settings-page__row-desc">{t('design.preset.hint')}</div>
-          <div className="settings-page__presets">
-            {DESIGN_PRESETS.map((preset) => {
-              const th = themes.find((x) => x.id === preset.themeId);
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  className={`settings-page__preset${preset.themeId === themeId ? ' settings-page__preset--active' : ''}`}
-                  onClick={() => void applyPreset(preset)}
-                  style={{ background: th?.palette.base, borderColor: th?.palette['accent-1'] }}
-                >
-                  <span className="settings-page__preset-name" style={{ color: th?.palette.text }}>
-                    {t(preset.nameKey)}
-                  </span>
-                  <span
-                    className="settings-page__preset-desc"
-                    style={{ color: th?.palette['text-muted'] ?? th?.palette.text }}
-                  >
-                    {t(preset.descKey)}
-                  </span>
-                  <span className="settings-page__preset-dots">
-                    <i style={{ background: th?.palette['accent-1'] }} />
-                    <i style={{ background: th?.palette['accent-3'] }} />
-                    <i style={{ background: th?.palette['accent-5'] }} />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Wide>
-      </Card>
-      <Card>
-        <Wide>
-          <div className="settings-page__row-label">{t('settings.theme')}</div>
-          <div className="settings-page__row-desc">{t('settings.themeHint')}</div>
-          <div className="settings__themes settings-page__themes" data-tour-anchor="ui:theme-picker">
-            {themes.map((theme) => (
-              <button
-                key={theme.id}
-                className={`settings__theme-swatch${theme.id === themeId ? ' settings__theme-swatch--active' : ''}`}
-                title={t(theme.nameKey)}
-                onClick={() => void setTheme(theme.id)}
-                style={{
-                  // Swatch preview colors come from theme data, not from code.
-                  background: theme.palette.base,
-                  borderColor: theme.palette['accent-1'],
-                }}
-              >
-                <span style={{ color: theme.palette.text }}>{t(theme.nameKey)}</span>
-                <span
-                  className="settings__theme-dot"
-                  style={{ background: theme.palette['accent-1'] }}
-                />
-              </button>
-            ))}
-          </div>
-        </Wide>
-        <Row label={t('settings.accentOverride')}>
-          <div className="settings__accents">
-            {ACCENT_TOKENS.map((token) => (
-              <button
-                key={token}
-                className={`settings__accent-dot${accentToken === token ? ' settings__accent-dot--active' : ''}`}
-                title={token}
-                style={{ background: `var(--palette-${token})` }}
-                onClick={() => void setAccent(token)}
-              />
-            ))}
-            <Button variant="ghost" onClick={() => void setAccent(undefined)}>
-              {t('settings.resetOverrides')}
-            </Button>
-          </div>
-        </Row>
-      </Card>
-      <Footnote>{t('settings.appearanceEditHint')}</Footnote>
-    </>
+    <Card>
+      <Row label={t('settings.designArea')} description={t('settings.designAreaHint')}>
+        <Button onClick={openDesign}>{t('settings.openDesign')}</Button>
+      </Row>
+    </Card>
   );
 }
 

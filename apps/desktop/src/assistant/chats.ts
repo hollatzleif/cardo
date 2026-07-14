@@ -63,6 +63,26 @@ async function resolveBackend(injected?: StorageBackend): Promise<StorageBackend
   return getHost().backend;
 }
 
+/**
+ * Synchronous pub/sub for persisted chat mutations. Lets a widget instance
+ * re-load a chat when its content changed elsewhere – e.g. an in-flight
+ * generation that completed on a now-unmounted instance, or another surface
+ * writing to the same chat. Fired only after the store write succeeded.
+ */
+const chatChangeListeners = new Set<(ownerId: string) => void>();
+
+/** Subscribe to persisted chat changes; returns an unsubscribe function. */
+export function subscribeChatChanges(cb: (ownerId: string) => void): () => void {
+  chatChangeListeners.add(cb);
+  return () => {
+    chatChangeListeners.delete(cb);
+  };
+}
+
+function notifyChatChange(ownerId: string): void {
+  for (const cb of chatChangeListeners) cb(ownerId);
+}
+
 function newId(): string {
   return `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -111,6 +131,7 @@ export async function appendChat(
   const entries = await loadChat(ownerId, be);
   entries.push(entry);
   await persist(ownerId, entries.slice(-CHAT_MAX_ENTRIES), be);
+  notifyChatChange(ownerId);
 }
 
 /** Patches one entry in place (e.g. a proposal outcome change). */
@@ -124,11 +145,13 @@ export async function updateChatEntry(
   const entries = await loadChat(ownerId, be);
   const next = entries.map((e) => (e.id === entryId ? { ...e, ...patch, id: e.id } : e));
   await persist(ownerId, next, be);
+  notifyChatChange(ownerId);
 }
 
 export async function clearChat(ownerId: string, backend?: StorageBackend): Promise<void> {
   const be = await resolveBackend(backend);
   await be.delete(NS, chatKey(ownerId));
+  notifyChatChange(ownerId);
 }
 
 /**

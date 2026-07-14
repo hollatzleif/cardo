@@ -146,6 +146,21 @@ export interface FilesApi {
   delete(name: string): Promise<void>;
   /** Reveals the folder in the OS file manager (Finder/Explorer/…). */
   reveal(): Promise<void>;
+  /** Lists browsable files (text/image/pdf/html) with a kind hint. */
+  browse(): Promise<FileBrowseEntry[]>;
+  /** Reads an image file as a base64 data: URL for in-app preview. */
+  readDataUrl(name: string): Promise<string>;
+  /** Opens a file (e.g. PDF/HTML) in the OS default application. */
+  openExternal(name: string): Promise<void>;
+}
+
+export type FileKind = 'text' | 'image' | 'pdf' | 'html';
+
+export interface FileBrowseEntry {
+  name: string;
+  kind: FileKind;
+  modifiedMs: number;
+  size: number;
 }
 
 /* ── Cross-tool search ─────────────────────────────────────────────────── */

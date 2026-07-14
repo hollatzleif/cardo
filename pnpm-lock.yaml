@@ -74,6 +74,9 @@ importers:
       '@cardo/tool-counter':
         specifier: workspace:*
         version: link:../../packages/tools/counter
+      '@cardo/tool-files-explorer':
+        specifier: workspace:*
+        version: link:../../packages/tools/files-explorer
       '@cardo/tool-habits':
         specifier: workspace:*
         version: link:../../packages/tools/habits
@@ -134,6 +137,9 @@ importers:
       i18next:
         specifier: ^24.2.0
         version: 24.2.3(typescript@5.9.3)
+      katex:
+        specifier: ^0.17.0
+        version: 0.17.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -276,6 +282,21 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/files-explorer:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      '@cardo/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/habits:
     dependencies:
       '@cardo/plugin-api':
@@ -305,6 +326,9 @@ importers:
       '@cardo/plugin-api':
         specifier: workspace:*
         version: link:../../plugin-api
+      '@cardo/ui':
+        specifier: workspace:*
+        version: link:../../ui
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -413,9 +437,16 @@ importers:
       '@cardo/themes':
         specifier: workspace:*
         version: link:../themes
+      katex:
+        specifier: ^0.17.0
+        version: 0.17.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
+    devDependencies:
+      '@types/katex':
+        specifier: ^0.16.8
+        version: 0.16.8
 
 packages:
 
@@ -1581,6 +1612,9 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
+  '@types/katex@0.16.8':
+    resolution: {integrity: sha512-trgaNyfU+Xh2Tc+ABIb44a5AYUpicB3uwirOioeOkNPPbmgRNtcWyDeeFRzjPZENO9Vq8gvVqfhaaXWLlevVwg==}
+
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
 
@@ -1918,6 +1952,10 @@ packages:
   commander@11.1.0:
     resolution: {integrity: sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ==}
     engines: {node: '>=16'}
+
+  commander@8.3.0:
+    resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
+    engines: {node: '>= 12'}
 
   common-ancestor-path@1.0.1:
     resolution: {integrity: sha512-L3sHRo1pXXEqX8VU28kfgUY+YGsk09hPqZiZmLacNib6XNTCM8ubYeT7ryXQw8asB1sKgcU5lkB7ONug08aB8w==}
@@ -2553,6 +2591,10 @@ packages:
   json5@2.2.3:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
+    hasBin: true
+
+  katex@0.17.0:
+    resolution: {integrity: sha512-Vdw0ATsQ9V+LuegM/BTwQqV/6cTl5lbGcIrU+BCgLxyf6bo38ybOr372tuSIxir3CN720flu1meYR6XzNMwQnw==}
     hasBin: true
 
   keyv@4.5.4:
@@ -4585,6 +4627,8 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
+  '@types/katex@0.16.8': {}
+
   '@types/mdast@4.0.4':
     dependencies:
       '@types/unist': 3.0.3
@@ -5044,6 +5088,8 @@ snapshots:
   comma-separated-tokens@2.0.3: {}
 
   commander@11.1.0: {}
+
+  commander@8.3.0: {}
 
   common-ancestor-path@1.0.1: {}
 
@@ -5781,6 +5827,10 @@ snapshots:
   json-stable-stringify-without-jsonify@1.0.1: {}
 
   json5@2.2.3: {}
+
+  katex@0.17.0:
+    dependencies:
+      commander: 8.3.0
 
   keyv@4.5.4:
     dependencies:

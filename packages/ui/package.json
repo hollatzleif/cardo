@@ -11,9 +11,13 @@
     "./base.css": "./src/base.css"
   },
   "dependencies": {
-    "@cardo/themes": "workspace:*"
+    "@cardo/themes": "workspace:*",
+    "katex": "^0.17.0"
   },
   "peerDependencies": {
     "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.8"
   }
 }

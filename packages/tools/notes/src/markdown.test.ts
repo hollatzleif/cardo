@@ -9,6 +9,41 @@ describe('escapeHtml', () => {
   });
 });
 
+describe('LaTeX math', () => {
+  it('renders a single-line $$…$$ block as display KaTeX', () => {
+    const html = renderMarkdown('$$\\frac{1}{3}$$');
+    expect(html).toContain('katex-display');
+    expect(html).not.toContain('$$');
+  });
+
+  it('renders a multi-line $$ fence', () => {
+    const html = renderMarkdown('$$\n\\frac{1}{3}\n$$');
+    expect(html).toContain('katex-display');
+  });
+
+  it('renders inline $…$ that looks like math', () => {
+    const html = renderMarkdown('Energie ist $E = mc^2$ laut Einstein.');
+    expect(html).toContain('katex');
+    expect(html).not.toContain('katex-display');
+    expect(html).toContain('Einstein');
+  });
+
+  it('leaves prices like $5 and $10 as literal text', () => {
+    const html = renderMarkdown('Das kostet $5 und $10 zusammen.');
+    expect(html).not.toContain('katex');
+    expect(html).toContain('$5');
+    expect(html).toContain('$10');
+  });
+
+  it('feeds < into KaTeX un-escaped (no double-escaping)', () => {
+    // The $…$ is math-ish (has "_"), so it renders; the "<" was HTML-escaped
+    // upstream and must be un-escaped before KaTeX, never double-escaped.
+    const html = renderMarkdown('$x_1 < x_2$');
+    expect(html).toContain('katex');
+    expect(html).not.toContain('&amp;lt;');
+  });
+});
+
 describe('renderMarkdown – blocks', () => {
   it('renders headings # through ###', () => {
     expect(renderMarkdown('# One')).toBe('<h1>One</h1>');

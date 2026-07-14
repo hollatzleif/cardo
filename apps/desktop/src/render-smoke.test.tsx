@@ -94,6 +94,9 @@ function createMemoryFilesApi(): FilesApi {
       docs.delete(name);
     },
     reveal: async () => {},
+    browse: async () => [],
+    readDataUrl: async () => '',
+    openExternal: async () => {},
   };
 }
 
@@ -276,7 +279,7 @@ describe('surfaces render and take basic interaction (network down)', () => {
     // show up as the section title + one section-identifying element.
     const sections: Array<[labelKey: string, probe: string]> = [
       ['settings.general', '.settings-page__card'], // general
-      ['settings.section.appearance', '[data-tour-anchor="ui:theme-picker"]'], // appearance
+      ['settings.section.appearance', '.settings-page__card'], // appearance (design pointer)
       ['settings.assistant', '.assistant-settings'], // assistant
       ['settings.section.inboxPolls', '.settings-page__card'], // inbox & polls
       ['settings.section.data', '.settings-page__card'], // data & backup

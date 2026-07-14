@@ -16,6 +16,7 @@ import { createTool as createRoutineTool } from '@cardo/tool-routine';
 import { createAssistantTool } from '../assistant';
 import { createTool as createWeatherTool } from '@cardo/tool-weather';
 import { createTool as createHydrationTool } from '@cardo/tool-hydration';
+import { createTool as createFilesExplorerTool } from '@cardo/tool-files-explorer';
 
 /**
  * First-party tool catalog. Every tool ships with the app; "installing" in
@@ -28,6 +29,7 @@ export const toolFactories: Record<string, () => CardoTool> = {
   todo: createTodoTool,
   habits: createHabitsTool,
   notes: createNotesTool,
+  'files-explorer': createFilesExplorerTool,
   calendar: createCalendarTool,
   pomodoro: createPomodoroTool,
   workclock: createWorkclockTool,

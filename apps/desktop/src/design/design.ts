@@ -21,6 +21,10 @@ export type BackgroundFit = (typeof BACKGROUND_FITS)[number];
 export const DENSITIES = ['compact', 'normal', 'airy'] as const;
 export type Density = (typeof DENSITIES)[number];
 
+/** Card elevation styles: flat (border only), soft (default shadow), paper (raised). */
+export const CARD_STYLES = ['soft', 'flat', 'paper'] as const;
+export type CardStyle = (typeof CARD_STYLES)[number];
+
 export interface DesignOverrides {
   /* Typography */
   fontPreset?: FontPreset;
@@ -57,6 +61,8 @@ export interface DesignOverrides {
 
   /* Layout */
   density?: Density;
+  /** Card elevation style – default 'soft'. */
+  cardStyle?: CardStyle;
 }
 
 /** Storage location: namespace + document id. */
@@ -140,6 +146,7 @@ export function applyDesign(d: DesignOverrides): void {
   }
   if (d.shadow === false) props.set('--shadow-widget', 'none');
   if (d.border === false) data.set('designWidgetBorder', 'off');
+  if (d.cardStyle && d.cardStyle !== 'soft') data.set('cardStyle', d.cardStyle);
 
   /* Layout density */
   if (d.density && d.density !== 'normal') {
