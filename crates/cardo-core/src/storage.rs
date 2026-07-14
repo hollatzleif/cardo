@@ -1,5 +1,5 @@
 use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use async_trait::async_trait;
 use serde::Serialize;
@@ -116,9 +116,23 @@ impl SqliteStorage {
             .filename(path)
             .create_if_missing(true)
             .journal_mode(SqliteJournalMode::Wal)
+            // WAL permits only ONE writer at a time; with a multi-connection
+            // pool, concurrent writes (e.g. several assistant proposals
+            // executed in quick succession) would otherwise fail instantly
+            // with SQLITE_BUSY ("database is locked"). A busy timeout makes a
+            // blocked writer wait for the lock instead of erroring out.
+            .busy_timeout(Duration::from_secs(5))
             .foreign_keys(true);
+        // Single connection: SQLite allows only one writer, and set()/delete()
+        // run a read-then-write transaction. With several pooled connections,
+        // two such transactions could deadlock on the write-lock upgrade
+        // (SQLITE_BUSY that a busy timeout can't resolve) — seen as intermittent
+        // "database is locked" when assistant proposals fire in quick
+        // succession. One connection serialises every op; for a local
+        // single-user dashboard the throughput cost is irrelevant, and WAL
+        // still keeps reads fast and writes crash-safe.
         let pool = SqlitePoolOptions::new()
-            .max_connections(4)
+            .max_connections(1)
             .connect_with(options)
             .await?;
 
@@ -586,6 +600,36 @@ mod tests {
         // Re-creating after delete works and logs a create.
         let n2 = s.set("todo", "1", json!({"title": "again"})).await.unwrap();
         assert_eq!(n2.operation, "create");
+    }
+
+    #[tokio::test]
+    async fn concurrent_writes_all_succeed() {
+        // Regression: several assistant proposals executed in quick succession
+        // fire concurrent set()s on the multi-connection WAL pool. Without a
+        // busy timeout the loser of the write lock failed with SQLITE_BUSY
+        // ("database is locked"); with it, every write waits and succeeds.
+        let (s, _dir) = open_temp().await;
+        let s = std::sync::Arc::new(s);
+        let mut handles = Vec::new();
+        for i in 0..16 {
+            let s = std::sync::Arc::clone(&s);
+            handles.push(tokio::spawn(async move {
+                s.set("todo", &format!("task:{i}"), json!({ "title": format!("t{i}") })).await
+            }));
+        }
+        for h in handles {
+            h.await.unwrap().expect("concurrent write must not fail with SQLITE_BUSY");
+        }
+        let all = s
+            .query("todo", Query {
+                where_: vec![],
+                order_by: None,
+                direction: None,
+                limit: None,
+            })
+            .await
+            .unwrap();
+        assert_eq!(all.len(), 16, "every concurrent write must be persisted");
     }
 
     #[tokio::test]
