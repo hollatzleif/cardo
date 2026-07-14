@@ -42,6 +42,7 @@ function makeMemoryFiles() {
     delete: async (name: string) => {
       files.delete(name);
     },
+    reveal: async () => {},
   };
 }
 

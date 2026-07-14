@@ -192,3 +192,53 @@
     padding: var(--space-4);
   }
 }
+
+/* ── Design presets (one-click directions) ── */
+.settings-page__presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+.settings-page__preset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+  text-align: left;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.settings-page__preset:hover {
+  transform: translateY(-2px);
+}
+.settings-page__preset--active {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.settings-page__preset-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.settings-page__preset-desc {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+.settings-page__preset-dots {
+  display: flex;
+  gap: 4px;
+  margin-top: var(--space-1);
+}
+.settings-page__preset-dots i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-page__preset {
+    transition: none;
+  }
+}

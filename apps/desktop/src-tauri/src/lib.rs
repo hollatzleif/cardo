@@ -285,6 +285,7 @@ pub fn run() {
             notes::notes_set_folder,
             notes::notes_default_folder,
             notes::notes_get_folder,
+            notes::notes_reveal_folder,
             notes::notes_list,
             notes::notes_read,
             notes::notes_write,

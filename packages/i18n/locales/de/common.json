@@ -22,7 +22,8 @@
     "widgetVariant": "Ansicht",
     "moveWidget": "Widget verschieben",
     "enterFullscreen": "Vollbild",
-    "exitFullscreen": "Vollbild verlassen"
+    "exitFullscreen": "Vollbild verlassen",
+    "openFolder": "Notizordner öffnen"
   },
   "palette": {
     "placeholder": "Befehl eingeben oder suchen…",
@@ -940,6 +941,30 @@
       "title": "Zurücksetzen",
       "all": "Alles zurücksetzen",
       "hint": "Entfernt alle persönlichen Design-Anpassungen und kehrt zu den Theme-Standards zurück. Deine Theme-Auswahl bleibt erhalten."
+    },
+    "preset": {
+      "title": "Design-Richtungen",
+      "hint": "Ein Klick setzt einen ganzen Look — Theme, Schrift, Abstände und Karten-Stil. Darunter passt du alles weiter an.",
+      "calmNord": {
+        "name": "Ruhiger Arbeitsplatz",
+        "desc": "Nord, kühl und aufgeräumt — flache Karten, kein Schatten."
+      },
+      "warmNotebook": {
+        "name": "Warmes Notizbuch",
+        "desc": "Gruvbox Hell, Serifen-Titel, weiche Papier-Karten."
+      },
+      "terminal": {
+        "name": "Terminal / Maker",
+        "desc": "Gruvbox Dunkel, Monospace, scharfe Kanten."
+      },
+      "softPastel": {
+        "name": "Softes Pastell",
+        "desc": "Catppuccin Latte, rund, sanfte Schatten."
+      },
+      "editorial": {
+        "name": "Editorial / Clean",
+        "desc": "GitHub Hell, luftig, feine Trennlinien."
+      }
     }
   },
   "polls": {

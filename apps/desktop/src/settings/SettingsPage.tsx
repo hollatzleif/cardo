@@ -4,6 +4,8 @@ import { Button } from '@cardo/ui';
 import { themes } from '@cardo/themes';
 import { supportedLanguages } from '@cardo/i18n';
 import { useAppStore } from '../state/appStore';
+import { DESIGN_PRESETS, type DesignPreset } from '../design/presets';
+import { saveDesign } from '../design/design';
 import { getHost } from '../host';
 import { fetchAppInfo, type AppInfo } from '../host/backend';
 import { isInboxEnabled, setInboxEnabled } from '../inbox/feed';
@@ -135,8 +137,52 @@ function AppearanceSection() {
   const accentToken = useAppStore((s) => s.accentToken);
   const setTheme = useAppStore((s) => s.setTheme);
   const setAccent = useAppStore((s) => s.setAccent);
+
+  // A preset applies a whole direction at once: theme + font + density +
+  // radius + widget style. saveDesign first, then setTheme (which re-applies
+  // the stored design after the theme), so both land together.
+  async function applyPreset(preset: DesignPreset): Promise<void> {
+    await saveDesign(preset.design);
+    await setTheme(preset.themeId);
+  }
+
   return (
     <>
+      <Card>
+        <Wide>
+          <div className="settings-page__row-label">{t('design.preset.title')}</div>
+          <div className="settings-page__row-desc">{t('design.preset.hint')}</div>
+          <div className="settings-page__presets">
+            {DESIGN_PRESETS.map((preset) => {
+              const th = themes.find((x) => x.id === preset.themeId);
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className={`settings-page__preset${preset.themeId === themeId ? ' settings-page__preset--active' : ''}`}
+                  onClick={() => void applyPreset(preset)}
+                  style={{ background: th?.palette.base, borderColor: th?.palette['accent-1'] }}
+                >
+                  <span className="settings-page__preset-name" style={{ color: th?.palette.text }}>
+                    {t(preset.nameKey)}
+                  </span>
+                  <span
+                    className="settings-page__preset-desc"
+                    style={{ color: th?.palette['text-muted'] ?? th?.palette.text }}
+                  >
+                    {t(preset.descKey)}
+                  </span>
+                  <span className="settings-page__preset-dots">
+                    <i style={{ background: th?.palette['accent-1'] }} />
+                    <i style={{ background: th?.palette['accent-3'] }} />
+                    <i style={{ background: th?.palette['accent-5'] }} />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Wide>
+      </Card>
       <Card>
         <Wide>
           <div className="settings-page__row-label">{t('settings.theme')}</div>

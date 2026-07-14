@@ -144,6 +144,8 @@ export interface FilesApi {
   write(name: string, content: string): Promise<void>;
   rename(from: string, to: string): Promise<void>;
   delete(name: string): Promise<void>;
+  /** Reveals the folder in the OS file manager (Finder/Explorer/…). */
+  reveal(): Promise<void>;
 }
 
 /* ── Cross-tool search ─────────────────────────────────────────────────── */

@@ -134,6 +134,14 @@ export function App() {
           ✉
           {inboxUnread > 0 && <span className="topbar__inbox-badge">{inboxUnread}</span>}
         </button>
+        <button
+          className="c-btn c-btn--ghost topbar__reveal"
+          title={t('canvas.openFolder')}
+          aria-label={t('canvas.openFolder')}
+          onClick={() => void getHost().services.files?.reveal().catch(() => {})}
+        >
+          📂
+        </button>
         {profile && (
           <span className="c-muted topbar__greeting">
             {t(greetingKey(new Date().getHours()), { name: profile.name })}

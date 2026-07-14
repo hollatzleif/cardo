@@ -93,6 +93,7 @@ function createMemoryFilesApi(): FilesApi {
     delete: async (name) => {
       docs.delete(name);
     },
+    reveal: async () => {},
   };
 }
 

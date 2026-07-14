@@ -34,6 +34,9 @@ function createMemoryFilesApi(): FilesApi {
     delete: async (name) => {
       files.delete(name);
     },
+    reveal: async () => {
+      /* no-op in browser dev */
+    },
   };
 }
 
@@ -57,5 +60,12 @@ export function createFilesApi(): FilesApi {
     write: (name, content) => invoke('notes_write', { name, content }),
     rename: (from, to) => invoke('notes_rename', { from, to }),
     delete: (name) => invoke('notes_delete', { name }),
+    async reveal() {
+      // Only create the default if no folder is configured yet — never
+      // overwrite a folder the user picked themselves.
+      const current = await invoke<string | null>('notes_get_folder');
+      if (!current) await invoke('notes_default_folder');
+      await invoke('notes_reveal_folder');
+    },
   };
 }

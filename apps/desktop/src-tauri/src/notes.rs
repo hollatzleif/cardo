@@ -83,6 +83,26 @@ pub fn notes_get_folder(state: tauri::State<'_, NotesState>) -> Option<String> {
         .map(|p| p.to_string_lossy().to_string())
 }
 
+/// Reveals the notes folder in the OS file manager (Finder/Explorer/files).
+/// Args are passed directly to the launcher (no shell), so the canonical
+/// folder path can't be interpreted as a command.
+#[tauri::command]
+pub fn notes_reveal_folder(state: tauri::State<'_, NotesState>) -> CmdResult<()> {
+    let dir = current_dir(&state)?;
+    let launcher = if cfg!(target_os = "macos") {
+        "open"
+    } else if cfg!(target_os = "windows") {
+        "explorer"
+    } else {
+        "xdg-open"
+    };
+    std::process::Command::new(launcher)
+        .arg(dir.as_os_str())
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[tauri::command]
 pub fn notes_list(state: tauri::State<'_, NotesState>) -> CmdResult<Vec<NoteMeta>> {
     let dir = current_dir(&state)?;

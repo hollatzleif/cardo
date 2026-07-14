@@ -22,7 +22,8 @@
     "widgetVariant": "View",
     "moveWidget": "Move widget",
     "enterFullscreen": "Fullscreen",
-    "exitFullscreen": "Exit fullscreen"
+    "exitFullscreen": "Exit fullscreen",
+    "openFolder": "Open notes folder"
   },
   "palette": {
     "placeholder": "Type a command or search…",
@@ -940,6 +941,30 @@
       "title": "Reset",
       "all": "Reset all",
       "hint": "Removes all personal design tweaks and returns to the theme defaults. Your theme choice stays."
+    },
+    "preset": {
+      "title": "Design directions",
+      "hint": "One click sets a whole look — theme, font, spacing and card style. Tweak everything further below.",
+      "calmNord": {
+        "name": "Calm workspace",
+        "desc": "Nord, cool and tidy — flat cards, no shadow."
+      },
+      "warmNotebook": {
+        "name": "Warm notebook",
+        "desc": "Gruvbox light, serif titles, soft paper cards."
+      },
+      "terminal": {
+        "name": "Terminal / maker",
+        "desc": "Gruvbox dark, monospace, sharp edges."
+      },
+      "softPastel": {
+        "name": "Soft pastel",
+        "desc": "Catppuccin Latte, rounded, gentle shadows."
+      },
+      "editorial": {
+        "name": "Editorial / clean",
+        "desc": "GitHub light, airy, fine hairlines."
+      }
     }
   },
   "polls": {
