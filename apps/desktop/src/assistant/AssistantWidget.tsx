@@ -474,6 +474,9 @@ export function AssistantWidget(props: WidgetProps) {
           competences: modelCompetencesFn?.(p.modelId, language) ?? p.competences ?? '',
         })),
       },
+      // Claude works directly on files in the notes workspace (sandboxed);
+      // this adds its Cardo-understanding + hard limits + big-task section.
+      agentWorkspace: claudeEntry !== null,
     });
 
     let raw: string;
@@ -491,7 +494,9 @@ export function AssistantWidget(props: WidgetProps) {
           user: promptUser,
           model: claudeEntry.cliModel ?? claudeEntry.id,
           workspaceDir: workspaceDir ?? '',
-          maxTurns: 10,
+          // Room for multi-file / multi-step work; the Rust bridge clamps to 30
+          // and every turn stays confined to the workspace sandbox.
+          maxTurns: 24,
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

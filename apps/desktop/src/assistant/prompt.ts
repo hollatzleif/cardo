@@ -33,6 +33,12 @@ export interface PromptInput {
   currentDateIso?: string;
   /** Team delegation: when enabled the output contract gains delegate/forget. */
   delegation?: DelegationInput;
+  /**
+   * Claude-style agent: works directly on files in the user's notes folder
+   * (its sandboxed workspace) instead of only proposing workspace.* cards.
+   * Adds the Cardo-understanding + hard limits + big-task behaviour section.
+   */
+  agentWorkspace?: boolean;
   /** Injected for tests; defaults to now. Relative dates resolve against this. */
   now?: Date;
 }
@@ -104,6 +110,22 @@ export function buildSystemPrompt(input: PromptInput): string {
     );
   }
 
+  if (input.agentWorkspace) {
+    sections.push(
+      [
+        '## Cardo & dein Arbeitsbereich',
+        'Cardo ist eine lokale Dashboard-App: Der Nutzer ordnet sich Widgets und Werkzeuge (Uhr, To-do, Kalender, Wecker, Notizen, Gewohnheiten u. a.) frei an. Alles bleibt auf seinem Gerät; er passt Aussehen und Funktion selbst an. Du bist ein Assistent INNERHALB von Cardo und hilfst ihm, Gedanken zu ordnen und Dinge zu erledigen. Du darfst dem Nutzer Cardo und seine Funktionsweise erklären.',
+        'Zusammenarbeit: Cardo-Werkzeuge steuerst du über Vorschlagskarten (die "proposals" unten – der Nutzer bestätigt jede mit Ja/Bearbeiten/Nein). Datei-Arbeit im Notiz-Ordner erledigst du hingegen DIREKT selbst: Du hast dort Lese- und Schreibzugriff (erlaubt sind u. a. .md, .txt, .csv, .json). Fasse im "reply" zusammen, was du angelegt oder geändert hast – dafür brauchst du KEINE workspace.*-Karte.',
+        'Deine Grenzen (wichtig): Du kannst und darfst Cardos eigene App-Dateien, die Einstellungen, die Datenbank, Update-Schlüssel oder andere Assistenten NICHT einsehen oder verändern – dafür hast du keine Rechte, und der Zugriff ist technisch auf den Notiz-Ordner beschränkt. Bittet dich der Nutzer darum, erkläre ihm freundlich, dass du dazu keine Berechtigung hast.',
+        'Große Aufträge: Ist eine Aufgabe umfangreich, arbeite sie gründlich und vollständig ab, statt sie zu verkürzen; nimm dir die nötige Zeit und beschreibe im "reply" am Ende, was du erledigt hast.',
+      ].join('\n'),
+    );
+  }
+
+  const fileRule = input.agentWorkspace
+    ? '- Datei-Wünsche (Liste/Notiz/Tabelle anlegen, Text schreiben, Datei lesen): erledige das DIREKT im Notiz-Ordner und beschreibe es im "reply" – keine workspace.*-Karte dafür. Für Cardo-Werkzeuge (Wecker, Termin …) nutzt du weiterhin die proposals.'
+    : '- Datei-Wünsche (Liste anlegen, Text in Datei schreiben, Datei lesen): nutze die workspace.*-Befehle als Vorschläge. Dateien liegen im Notiz-Ordner des Nutzers; erlaubt sind .md, .txt, .csv und .json.';
+
   const outputFormat = [
     '## Ausgabeformat',
     'Antworte AUSSCHLIESSLICH mit einem einzigen JSON-Objekt – kein Markdown, kein Text davor oder danach:',
@@ -112,7 +134,7 @@ export function buildSystemPrompt(input: PromptInput): string {
     '- "reply": kurz, in der Antwortsprache, im Ton der Persönlichkeit.',
     '- "proposals": nur Befehls-IDs aus "Verfügbare Befehle"; niemals eigene erfinden. Leeres Array, wenn nichts zu tun ist.',
     '- Schlage ALLE sinnvollen Aktionen vor, auch mehrere ergänzende für dasselbe Ereignis: Eine Klausur morgen um 9 Uhr ergibt z. B. SOWOHL einen Kalender-Termin ALS AUCH einen Wecker. Lieber ein Vorschlag zu viel als einer zu wenig – der Nutzer bestätigt jeden einzeln.',
-    '- Datei-Wünsche (Liste anlegen, Text in Datei schreiben, Datei lesen): nutze die workspace.*-Befehle als Vorschläge. Dateien liegen im Notiz-Ordner des Nutzers; erlaubt sind .md, .txt, .csv und .json.',
+    fileRule,
     '- Relative Datumsangaben ("morgen", "nächsten Montag") IMMER anhand des aktuellen Datums in konkrete ISO-Daten (YYYY-MM-DD) auflösen.',
     '- "summary": beschreibt exakt, was passieren wird, inklusive der konkreten Werte – in der Antwortsprache.',
     '- "memory": nur dauerhaft nützliche Fakten (Vorlieben, wiederkehrende Probleme + Lösungen, Hintergrund); sonst [].',

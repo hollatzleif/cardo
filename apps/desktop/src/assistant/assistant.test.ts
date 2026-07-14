@@ -138,6 +138,37 @@ describe('buildSystemPrompt', () => {
     expect(prompt).not.toContain('## Team');
     expect(prompt).not.toContain('"delegate"');
   });
+
+  it('agentWorkspace adds the Cardo context, hard limits and direct-file rule', () => {
+    const on = buildSystemPrompt({
+      instructions: '',
+      personality: '',
+      memory: '',
+      catalog,
+      language: 'de',
+      now: new Date(2026, 6, 12),
+      agentWorkspace: true,
+    });
+    expect(on).toContain('## Cardo & dein Arbeitsbereich');
+    // States the hard limit and that it directly does file work.
+    expect(on).toContain('keine Rechte');
+    expect(on).toContain('DIREKT');
+    expect(on).toContain('Große Aufträge');
+    // The direct-file rule replaces the workspace.*-proposal rule.
+    expect(on).not.toContain('nutze die workspace.*-Befehle als Vorschläge');
+
+    // Default (local models) keeps the proposal-card rule and no Cardo section.
+    const off = buildSystemPrompt({
+      instructions: '',
+      personality: '',
+      memory: '',
+      catalog,
+      language: 'de',
+      now: new Date(2026, 6, 12),
+    });
+    expect(off).not.toContain('## Cardo & dein Arbeitsbereich');
+    expect(off).toContain('nutze die workspace.*-Befehle als Vorschläge');
+  });
 });
 
 describe('filterCatalogByScope', () => {

@@ -24,9 +24,17 @@ const ALLOWED_MODELS: [&str; 8] = [
     "claude-haiku-4-5",
 ];
 
-const GENERATE_TIMEOUT: Duration = Duration::from_secs(180);
+const GENERATE_TIMEOUT: Duration = Duration::from_secs(600);
 const VERSION_TIMEOUT: Duration = Duration::from_secs(5);
 const STDERR_TAIL_CHARS: usize = 800;
+
+/// File tools Claude may use — but ONLY scoped to the workspace (see
+/// `build_claude_args`). Order is fixed for golden tests.
+const FILE_TOOLS: [&str; 6] = ["Read", "Write", "Edit", "LS", "Glob", "Grep"];
+/// Tools explicitly denied. Bash/Task would escape the workspace scoping
+/// (a shell or subagent can read any path), so they are hard-disabled;
+/// WebFetch/WebSearch are pointless here and kept off for tidiness.
+const DENIED_TOOLS: [&str; 4] = ["Bash", "Task", "WebFetch", "WebSearch"];
 
 /* ── Pure helpers (unit-tested) ───────────────────────────────────────── */
 
@@ -40,20 +48,60 @@ fn workspace_allowed(workspace: &Path, forbidden: &[PathBuf]) -> bool {
     !forbidden.iter().any(|f| workspace.starts_with(f))
 }
 
-/// CLI argument list for one generation. The prompt goes via stdin, so
-/// only fixed flags appear here (no arg-length limits, no injection).
-fn build_claude_args(model: &str, max_turns: u32) -> Vec<String> {
-    vec![
+/// A `permissions.deny` settings JSON that hard-blocks every file tool on
+/// the given (app) directories, whatever the allow-scoping does. Defense in
+/// depth: the workspace is already guaranteed to sit outside these dirs, so
+/// scoping alone excludes them — this survives any glob edge case too.
+fn build_settings_json(forbidden: &[PathBuf]) -> String {
+    let mut deny: Vec<String> = Vec::new();
+    for dir in forbidden {
+        let d = dir.to_string_lossy();
+        for tool in FILE_TOOLS {
+            deny.push(format!("{tool}({d}/**)"));
+        }
+    }
+    json!({ "permissions": { "deny": deny } }).to_string()
+}
+
+/// CLI argument list for one generation. The prompt goes via stdin, so only
+/// fixed flags appear here (no arg-length limits, no injection).
+///
+/// Security: the file tools are scoped to `<workspace>/**` with permission
+/// mode `acceptEdits`, so file work INSIDE the workspace is auto-approved
+/// while any path outside it (absolute paths, `..`-traversal, the app's own
+/// storage) is DENIED — verified by live tests. `acceptEdits` (not `default`)
+/// is required so ordinary in-workspace writes don't stall on a confirmation
+/// prompt that headless `-p` can never answer. Bash/Task are denied outright
+/// so no shell or subagent can bypass the scope.
+fn build_claude_args(
+    model: &str,
+    max_turns: u32,
+    workspace: &Path,
+    forbidden: &[PathBuf],
+) -> Vec<String> {
+    let ws = workspace.to_string_lossy();
+    let mut args = vec![
         "-p".to_string(),
         "--output-format".to_string(),
         "json".to_string(),
         "--model".to_string(),
         model.to_string(),
-        "--allowedTools".to_string(),
-        "Read,Write,Edit,Glob,Grep,LS".to_string(),
-        "--max-turns".to_string(),
-        max_turns.to_string(),
-    ]
+        "--permission-mode".to_string(),
+        "acceptEdits".to_string(),
+    ];
+    args.push("--allowedTools".to_string());
+    for tool in FILE_TOOLS {
+        args.push(format!("{tool}({ws}/**)"));
+    }
+    args.push("--disallowedTools".to_string());
+    for tool in DENIED_TOOLS {
+        args.push(tool.to_string());
+    }
+    args.push("--settings".to_string());
+    args.push(build_settings_json(forbidden));
+    args.push("--max-turns".to_string());
+    args.push(max_turns.to_string());
+    args
 }
 
 /// Leading version token of `claude --version` output,
@@ -184,7 +232,9 @@ pub async fn claude_generate(
             ALLOWED_MODELS.join(", ")
         ));
     }
-    let max_turns = max_turns.clamp(1, 10);
+    // Big tasks (multi-file work) need room; scoping applies to every turn,
+    // so a higher ceiling stays safe.
+    let max_turns = max_turns.clamp(1, 30);
 
     if workspace_dir.is_empty() {
         return Err("workspace not allowed".to_string());
@@ -196,12 +246,13 @@ pub async fn claude_generate(
     let workspace = workspace
         .canonicalize()
         .map_err(|_| "workspace not allowed".to_string())?;
-    if !workspace.is_dir() || !workspace_allowed(&workspace, &forbidden_dirs(&app)) {
+    let forbidden = forbidden_dirs(&app);
+    if !workspace.is_dir() || !workspace_allowed(&workspace, &forbidden) {
         return Err("workspace not allowed".to_string());
     }
 
     let cli = find_claude_cli().ok_or_else(|| "claude CLI not found".to_string())?;
-    let args = build_claude_args(&model, max_turns);
+    let args = build_claude_args(&model, max_turns, &workspace, &forbidden);
 
     let mut child = tokio::process::Command::new(&cli)
         .args(&args)
@@ -270,20 +321,78 @@ mod tests {
 
     #[test]
     fn build_claude_args_golden() {
+        let ws = PathBuf::from("/Users/x/Documents/Cardo Notes");
+        let forbidden = vec![PathBuf::from("/Users/x/Library/Application Support/cardo")];
         assert_eq!(
-            build_claude_args("claude-sonnet-5", 5),
+            build_claude_args("claude-sonnet-5", 5, &ws, &forbidden),
             vec![
                 "-p",
                 "--output-format",
                 "json",
                 "--model",
                 "claude-sonnet-5",
+                "--permission-mode",
+                "acceptEdits",
                 "--allowedTools",
-                "Read,Write,Edit,Glob,Grep,LS",
+                "Read(/Users/x/Documents/Cardo Notes/**)",
+                "Write(/Users/x/Documents/Cardo Notes/**)",
+                "Edit(/Users/x/Documents/Cardo Notes/**)",
+                "LS(/Users/x/Documents/Cardo Notes/**)",
+                "Glob(/Users/x/Documents/Cardo Notes/**)",
+                "Grep(/Users/x/Documents/Cardo Notes/**)",
+                "--disallowedTools",
+                "Bash",
+                "Task",
+                "WebFetch",
+                "WebSearch",
+                "--settings",
+                &build_settings_json(&forbidden),
                 "--max-turns",
                 "5",
             ]
         );
+    }
+
+    #[test]
+    fn allowed_tools_are_scoped_to_the_workspace() {
+        // Every granted file tool must carry the workspace glob — never a
+        // bare, unscoped grant (the v0.6.0 escape bug).
+        let ws = PathBuf::from("/ws");
+        let args = build_claude_args("haiku", 10, &ws, &[]);
+        let i = args.iter().position(|a| a == "--allowedTools").unwrap();
+        for tool in FILE_TOOLS {
+            assert!(
+                args.contains(&format!("{tool}(/ws/**)")),
+                "{tool} must be scoped to the workspace"
+            );
+            assert!(
+                !args[i + 1..].contains(&tool.to_string()),
+                "{tool} must never appear unscoped"
+            );
+        }
+        // Bash/Task are explicitly disallowed so they can't bypass scoping.
+        assert!(args.iter().any(|a| a == "--disallowedTools"));
+        assert!(args.contains(&"Bash".to_string()));
+        assert!(args.contains(&"Task".to_string()));
+        assert!(args.contains(&"--permission-mode".to_string()));
+    }
+
+    #[test]
+    fn settings_deny_covers_every_forbidden_dir() {
+        let forbidden = vec![
+            PathBuf::from("/app/data"),
+            PathBuf::from("/app/config"),
+        ];
+        let s = build_settings_json(&forbidden);
+        let v: Value = serde_json::from_str(&s).unwrap();
+        let deny = v["permissions"]["deny"].as_array().unwrap();
+        // 6 file tools × 2 dirs.
+        assert_eq!(deny.len(), 12);
+        assert!(deny.iter().any(|r| r == "Read(/app/data/**)"));
+        assert!(deny.iter().any(|r| r == "Write(/app/config/**)"));
+        // Empty forbidden list → empty deny list (valid, scoping still guards).
+        let empty: Value = serde_json::from_str(&build_settings_json(&[])).unwrap();
+        assert_eq!(empty["permissions"]["deny"].as_array().unwrap().len(), 0);
     }
 
     #[test]
