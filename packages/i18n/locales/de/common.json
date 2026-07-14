@@ -19,7 +19,10 @@
     "defaultPageName": "Start",
     "widgetRemoved": "Widget entfernt",
     "pageRemoved": "Seite „{{name}}\" entfernt",
-    "widgetVariant": "Ansicht"
+    "widgetVariant": "Ansicht",
+    "moveWidget": "Widget verschieben",
+    "enterFullscreen": "Vollbild",
+    "exitFullscreen": "Vollbild verlassen"
   },
   "palette": {
     "placeholder": "Befehl eingeben oder suchen…",

@@ -19,7 +19,10 @@
     "defaultPageName": "Home",
     "widgetRemoved": "Widget removed",
     "pageRemoved": "Page \"{{name}}\" removed",
-    "widgetVariant": "View"
+    "widgetVariant": "View",
+    "moveWidget": "Move widget",
+    "enterFullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen"
   },
   "palette": {
     "placeholder": "Type a command or search…",

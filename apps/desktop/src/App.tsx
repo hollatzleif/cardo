@@ -58,6 +58,7 @@ export function App() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [inboxUnread, setInboxUnread] = useState(0);
+  const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     setInboxUnread(getInboxState().unread);
@@ -121,7 +122,7 @@ export function App() {
   const needsProfile = !profile;
 
   return (
-    <div className="app">
+    <div className={`app${fullscreen ? ' app--fullscreen' : ''}`}>
       <header className="topbar">
         <span className="topbar__brand">{t('app.name')}</span>
         <button
@@ -228,6 +229,14 @@ export function App() {
             ⊞ {t('market.title')}
           </button>
           <button
+            className="c-btn c-btn--ghost"
+            title={t('canvas.enterFullscreen')}
+            aria-label={t('canvas.enterFullscreen')}
+            onClick={() => setFullscreen(true)}
+          >
+            ⛶
+          </button>
+          <button
             className={`c-btn c-btn--ghost${settingsOpen ? ' topbar__page--active' : ''}`}
             title={t('settings.title')}
             data-tour-anchor="ui:settings-button"
@@ -237,6 +246,17 @@ export function App() {
           </button>
         </div>
       </header>
+
+      {fullscreen && (
+        <button
+          className="c-btn c-btn--ghost app__fullscreen-exit"
+          title={t('canvas.exitFullscreen')}
+          aria-label={t('canvas.exitFullscreen')}
+          onClick={() => setFullscreen(false)}
+        >
+          ⛶ {t('canvas.exitFullscreen')}
+        </button>
+      )}
 
       <main className="app__canvas">
         {settingsOpen ? <SettingsPage /> : marketOpen ? <ToolMarket /> : <Canvas />}

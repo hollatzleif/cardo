@@ -52,10 +52,16 @@ export function LayoutEngine({ widgets, editing, onPositionsChange, renderWidget
       cols={GRID_COLS}
       rowHeight={ROW_HEIGHT}
       margin={[12, 12]}
+      // The .canvas already frames the grid; RGL's default 10px container
+      // padding would stack on top and reserve phantom scroll space below.
+      containerPadding={[0, 0]}
       isDraggable={editing}
       isResizable={editing}
       compactType="vertical"
-      draggableCancel=".widget-body, .widget-frame__remove"
+      // Only the explicit grip handle starts a drag, so the title bar's
+      // controls (variant picker, remove) and the widget body stay clickable
+      // — fixes the "widget follows the cursor while picking a style" trap.
+      draggableHandle=".widget-frame__drag"
       onLayoutChange={(next: Layout[]) => {
         if (!editing) return;
         const updates = next

@@ -48,10 +48,33 @@
   flex: 1;
   overflow: auto;
   position: relative;
+  min-height: 0;
 }
 .canvas {
   min-height: 100%;
   padding: var(--space-3);
+}
+
+/* ── Fullscreen (immersive) mode ── */
+.app--fullscreen .topbar {
+  display: none;
+}
+.app__fullscreen-exit {
+  position: fixed;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 200;
+  opacity: 0.5;
+  box-shadow: var(--shadow-widget);
+  transition: opacity 0.15s ease;
+}
+.app__fullscreen-exit:hover {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app__fullscreen-exit {
+    transition: none;
+  }
 }
 .canvas__empty {
   position: absolute;
@@ -80,18 +103,35 @@
 .widget-frame--editing {
   border-style: dashed;
   border-color: var(--accent);
-  cursor: grab;
 }
 .widget-frame__toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
   border-bottom: 1px solid var(--border-subtle);
   font-size: 12px;
 }
 .widget-frame__title {
   color: var(--text-muted);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Only this grip starts a drag (LayoutEngine draggableHandle). */
+.widget-frame__drag {
+  cursor: grab;
+  color: var(--text-muted);
+  padding: 0 var(--space-1);
+  font-size: 14px;
+  line-height: 1;
+  user-select: none;
+  touch-action: none;
+}
+.widget-frame__drag:active {
+  cursor: grabbing;
 }
 .widget-frame__remove {
   padding: 0 var(--space-1);

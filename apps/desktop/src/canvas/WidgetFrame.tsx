@@ -31,6 +31,14 @@ export function WidgetFrame({
       {editing && (
         <div className="widget-frame__toolbar">
           <span className="widget-frame__title">{t(tool.manifest.nameKey)}</span>
+          <span
+            className="widget-frame__drag"
+            role="button"
+            aria-label={t('canvas.moveWidget')}
+            title={t('canvas.moveWidget')}
+          >
+            ⠿
+          </span>
           {variants.length > 1 && (
             <select
               className="c-input widget-frame__variant"
