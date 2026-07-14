@@ -169,6 +169,36 @@ describe('buildSystemPrompt', () => {
     expect(off).not.toContain('## Cardo & dein Arbeitsbereich');
     expect(off).toContain('nutze die workspace.*-Befehle als Vorschläge');
   });
+
+  it('renders live capabilities (themes + design) when provided', () => {
+    const prompt = buildSystemPrompt({
+      instructions: '',
+      personality: '',
+      memory: '',
+      catalog,
+      language: 'de',
+      now: new Date(2026, 6, 12),
+      capabilities: {
+        themes: ['Nord (dunkel)', 'GitHub Light (hell)'],
+        design: ['Schriftart (system, serif), Dichte (normal).'],
+      },
+    });
+    expect(prompt).toContain('## Cardo aktuell');
+    expect(prompt).toContain('Nord (dunkel)');
+    expect(prompt).toContain('GitHub Light (hell)');
+    expect(prompt).toContain('Schriftart (system, serif)');
+
+    // No capabilities → no section at all.
+    const bare = buildSystemPrompt({
+      instructions: '',
+      personality: '',
+      memory: '',
+      catalog,
+      language: 'de',
+      now: new Date(2026, 6, 12),
+    });
+    expect(bare).not.toContain('## Cardo aktuell');
+  });
 });
 
 describe('filterCatalogByScope', () => {

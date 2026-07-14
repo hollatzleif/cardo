@@ -35,6 +35,7 @@ import {
   type ResolvedActive,
 } from './profiles';
 import { buildSystemPrompt } from './prompt';
+import { buildCapabilities } from './capabilities';
 import { executeProposals, parseProposals } from './proposals';
 import { buildRouterPrompt, parseRouterAnswer } from './routing';
 import { getAskBeforeExecute, onAssistantSettingsChange } from './store';
@@ -477,6 +478,9 @@ export function AssistantWidget(props: WidgetProps) {
       // Claude works directly on files in the notes workspace (sandboxed);
       // this adds its Cardo-understanding + hard limits + big-task section.
       agentWorkspace: claudeEntry !== null,
+      // Live from the theme + design registries, so the assistant always
+      // knows the CURRENT designs/options — never a stale hardcoded list.
+      capabilities: buildCapabilities((key) => String(t(key)), language),
     });
 
     let raw: string;

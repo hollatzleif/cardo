@@ -39,6 +39,18 @@ export interface PromptInput {
    * Adds the Cardo-understanding + hard limits + big-task behaviour section.
    */
   agentWorkspace?: boolean;
+  /**
+   * Live capabilities pulled from the app's own registries (themes, design
+   * engine, …) at assembly time — NOT hardcoded, so they never go stale:
+   * a future update that adds a theme or design option surfaces here
+   * automatically. Rendered as a "Cardo aktuell" section.
+   */
+  capabilities?: {
+    /** Human-readable theme labels incl. light/dark, e.g. "Nord (dunkel)". */
+    themes?: string[];
+    /** Human-readable lines describing what the design engine can change. */
+    design?: string[];
+  };
   /** Injected for tests; defaults to now. Relative dates resolve against this. */
   now?: Date;
 }
@@ -114,12 +126,27 @@ export function buildSystemPrompt(input: PromptInput): string {
     sections.push(
       [
         '## Cardo & dein Arbeitsbereich',
-        'Cardo ist eine lokale Dashboard-App: Der Nutzer ordnet sich Widgets und Werkzeuge (Uhr, To-do, Kalender, Wecker, Notizen, Gewohnheiten u. a.) frei an. Alles bleibt auf seinem Gerät; er passt Aussehen und Funktion selbst an. Du bist ein Assistent INNERHALB von Cardo und hilfst ihm, Gedanken zu ordnen und Dinge zu erledigen. Du darfst dem Nutzer Cardo und seine Funktionsweise erklären.',
+        'Cardo ist eine lokale Dashboard-App: Der Nutzer ordnet sich frei Widgets und Werkzeuge an und passt Aussehen und Funktion selbst an – alles bleibt auf seinem Gerät. Du bist ein Assistent INNERHALB von Cardo und hilfst ihm, Gedanken zu ordnen und Dinge zu erledigen; du darfst ihm Cardo und seine Funktionsweise erklären. Welche Werkzeuge es aktuell gibt, siehst du unter "Verfügbare Befehle"; welche Designs es gibt, unter "Cardo aktuell" – verlass dich auf diese Listen statt auf Annahmen, denn sie ändern sich mit Updates.',
         'Zusammenarbeit: Cardo-Werkzeuge steuerst du über Vorschlagskarten (die "proposals" unten – der Nutzer bestätigt jede mit Ja/Bearbeiten/Nein). Datei-Arbeit im Notiz-Ordner erledigst du hingegen DIREKT selbst: Du hast dort Lese- und Schreibzugriff (erlaubt sind u. a. .md, .txt, .csv, .json). Fasse im "reply" zusammen, was du angelegt oder geändert hast – dafür brauchst du KEINE workspace.*-Karte.',
         'Deine Grenzen (wichtig): Du kannst und darfst Cardos eigene App-Dateien, die Einstellungen, die Datenbank, Update-Schlüssel oder andere Assistenten NICHT einsehen oder verändern – dafür hast du keine Rechte, und der Zugriff ist technisch auf den Notiz-Ordner beschränkt. Bittet dich der Nutzer darum, erkläre ihm freundlich, dass du dazu keine Berechtigung hast.',
         'Große Aufträge: Ist eine Aufgabe umfangreich, arbeite sie gründlich und vollständig ab, statt sie zu verkürzen; nimm dir die nötige Zeit und beschreibe im "reply" am Ende, was du erledigt hast.',
       ].join('\n'),
     );
+  }
+
+  // Live capabilities from the app's registries — never hardcoded, so a
+  // future theme/design addition shows up here without touching this file.
+  const capThemes = input.capabilities?.themes ?? [];
+  const capDesign = input.capabilities?.design ?? [];
+  if (capThemes.length > 0 || capDesign.length > 0) {
+    const lines = ['## Cardo aktuell'];
+    if (capThemes.length > 0) {
+      lines.push(`Verfügbare Designs (Themes): ${capThemes.join(', ')}.`);
+    }
+    for (const line of capDesign) {
+      lines.push(line);
+    }
+    sections.push(lines.join('\n'));
   }
 
   const fileRule = input.agentWorkspace
