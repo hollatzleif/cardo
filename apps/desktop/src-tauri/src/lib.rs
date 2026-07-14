@@ -3,6 +3,7 @@
 //! the Rust StorageAdapter, which records the change log atomically.
 
 mod assistant;
+mod claude;
 mod notes;
 
 use cardo_core::diagnose::CoreCheckResult;
@@ -289,6 +290,13 @@ pub fn run() {
             notes::notes_write,
             notes::notes_rename,
             notes::notes_delete,
+            notes::workspace_list,
+            notes::workspace_read,
+            notes::workspace_write,
+            notes::workspace_append,
+            notes::workspace_delete,
+            claude::claude_check,
+            claude::claude_generate,
             schedule_set,
             schedule_cancel,
             schedule_list,

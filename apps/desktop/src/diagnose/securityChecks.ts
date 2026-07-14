@@ -96,8 +96,10 @@ function modelUrlAllowlistCheck(): DiagnoseCheck {
     titleKey: 'diagnose.check.modelUrlAllowlist',
     category: 'security',
     async run() {
+      // Only local models are ever downloaded – claude entries (provider
+      // 'claude') carry an informational url that is never fetched.
       const offenders = MODEL_CATALOG.filter(
-        (model) => !model.url.startsWith('https://huggingface.co/'),
+        (model) => model.provider === 'local' && !model.url.startsWith('https://huggingface.co/'),
       );
       return offenders.length > 0
         ? {

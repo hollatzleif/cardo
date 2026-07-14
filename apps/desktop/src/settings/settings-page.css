@@ -1,0 +1,194 @@
+/*
+ * Fullscreen settings page: 220px sidebar navigation + content column.
+ * One scale, grouped row cards, no gradients/shadows – colors only via
+ * semantic tokens (see stylelint + token-lint).
+ */
+
+.settings-page {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ── Sidebar ── */
+.settings-page__nav {
+  width: 220px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-4) var(--space-2);
+  border-right: 1px solid var(--border-subtle);
+}
+.settings-page__nav-head {
+  padding: 0 var(--space-2) var(--space-3);
+}
+.settings-page__back {
+  padding: var(--space-1) var(--space-2);
+  margin-left: calc(-1 * var(--space-2));
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+.settings-page__title {
+  margin: var(--space-2) 0 0;
+  font-size: 1.05em;
+  font-weight: 600;
+}
+.settings-page__nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.95em;
+  text-align: left;
+  cursor: pointer;
+}
+.settings-page__nav-item:hover {
+  background: var(--bg-widget-hover);
+}
+.settings-page__nav-item--active {
+  background: var(--bg-widget);
+  border-left-color: var(--accent);
+}
+.settings-page__nav-glyph {
+  width: 1.4em;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+.settings-page__nav-item--active .settings-page__nav-glyph {
+  color: var(--accent);
+}
+
+/* ── Content column ── */
+.settings-page__content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+.settings-page__content-inner {
+  max-width: 680px;
+  padding: var(--space-6) var(--space-6) var(--space-8);
+}
+.settings-page__section-title {
+  margin: 0 0 var(--space-1);
+  font-size: 1.3em;
+}
+.settings-page__section-desc {
+  margin: 0 0 var(--space-5);
+  color: var(--text-muted);
+}
+
+/* ── Grouped cards with divided rows ── */
+.settings-page__card {
+  background: var(--bg-widget);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-5);
+  overflow: hidden;
+}
+.settings-page__card > * + * {
+  border-top: 1px solid var(--border-subtle);
+}
+.settings-page__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 56px;
+  padding: var(--space-2) var(--space-4);
+}
+.settings-page__row-text {
+  min-width: 0;
+}
+.settings-page__row-label {
+  font-weight: 500;
+}
+.settings-page__row-desc {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 0.88em;
+  overflow-wrap: break-word;
+}
+.settings-page__row-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.settings-page__row-control .c-input,
+.settings-page__row-control select {
+  width: auto;
+  max-width: 240px;
+}
+.settings-page__wide {
+  padding: var(--space-4);
+  min-width: 0;
+}
+.settings-page__wide > .settings-page__row-desc {
+  margin-bottom: var(--space-3);
+}
+
+/* Legacy blocks mounted as-is inside a card (BackupSection). */
+.settings-page__card > .settings__row {
+  padding: var(--space-3) var(--space-4);
+}
+
+/* ── Small print ── */
+.settings-page__group-label {
+  margin: var(--space-5) 0 var(--space-2);
+  color: var(--text-muted);
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.settings-page__footnote {
+  margin: calc(-1 * var(--space-3)) var(--space-1) var(--space-5);
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+.settings-page__url {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  user-select: text;
+  cursor: text;
+  overflow-wrap: anywhere;
+}
+.settings-page__themes {
+  margin-top: var(--space-3);
+}
+.settings-page__licenses {
+  margin: 0;
+  padding-left: 1.2em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 0.9em;
+}
+
+/* Narrow windows: collapse the sidebar to glyphs only. */
+@media (max-width: 760px) {
+  .settings-page__nav {
+    width: 56px;
+    padding: var(--space-4) var(--space-1);
+  }
+  .settings-page__nav-label,
+  .settings-page__title,
+  .settings-page__back {
+    display: none;
+  }
+  .settings-page__content-inner {
+    padding: var(--space-4);
+  }
+}

@@ -120,6 +120,67 @@ export async function generate(opts: {
   });
 }
 
+/* ── Claude (Claude Code CLI via the user's Anthropic account) ───────── */
+
+export interface ClaudeCheckResult {
+  installed: boolean;
+  version: string | null;
+  path: string | null;
+}
+
+/** Marker contained in Rust error strings for auth/login problems. */
+export const CLAUDE_ERROR_MARKER = 'claude-error';
+
+/** Detects the Claude Code CLI. Non-Tauri environments report "missing". */
+export async function claudeCheck(): Promise<ClaudeCheckResult> {
+  if (!inTauri()) return { installed: false, version: null, path: null };
+  return invoke('claude_check');
+}
+
+const CLAUDE_CHECK_TTL_MS = 60_000;
+let claudeCheckCache: { at: number; result: ClaudeCheckResult } | null = null;
+
+/**
+ * claudeCheck with a 60 s cache – the widget consults it before every
+ * generation and the switcher on every refresh, so the CLI probe must stay
+ * cheap. `force` bypasses the cache (settings "Erneut prüfen" button).
+ */
+export async function claudeCheckCached(opts?: { force?: boolean }): Promise<ClaudeCheckResult> {
+  const now = Date.now();
+  if (!opts?.force && claudeCheckCache && now - claudeCheckCache.at < CLAUDE_CHECK_TTL_MS) {
+    return claudeCheckCache.result;
+  }
+  const result = await claudeCheck().catch(
+    (): ClaudeCheckResult => ({ installed: false, version: null, path: null }),
+  );
+  claudeCheckCache = { at: now, result };
+  return result;
+}
+
+/**
+ * One-shot generation through the Claude Code CLI. The reply is the model's
+ * text output (our JSON proposal contract inside – same parseProposals
+ * pipeline as local models). Rejects with strings from the Rust side:
+ * auth problems contain 'claude-error' (plus a login hint), timeouts
+ * contain 'timed out'.
+ */
+export async function claudeGenerate(opts: {
+  system: string;
+  user: string;
+  model: string;
+  workspaceDir: string;
+  maxTurns: number;
+}): Promise<string> {
+  if (!inTauri()) throw new Error('assistant unavailable outside Tauri');
+  return invoke('claude_generate', {
+    system: opts.system,
+    user: opts.user,
+    model: opts.model,
+    workspaceDir: opts.workspaceDir,
+    maxTurns: opts.maxTurns,
+  });
+}
+
 /* ── Scoped docs ─────────────────────────────────────────────────────── */
 
 /**

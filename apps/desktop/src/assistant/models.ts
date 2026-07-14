@@ -9,19 +9,27 @@
  */
 
 /** Speed class by (effective) parameter count – drives the speed rating. */
-export type ModelTier = 'mini' | 'small' | 'medium' | 'large' | 'xl' | 'xxl';
+export type ModelTier = 'mini' | 'small' | 'medium' | 'large' | 'xl' | 'xxl' | 'cloud';
 
 export type PromptTemplate = 'chatml' | 'gemma' | 'llama3' | 'phi';
+
+/** Where inference runs: on this machine or via the user's Claude account. */
+export type ModelProvider = 'local' | 'claude';
 
 export interface ModelLicense {
   name: string;
   url: string;
-  /** UI must show a license notice ('llama') or ask for consent ('gemma-consent'). */
-  notice?: 'llama' | 'gemma-consent';
+  /**
+   * UI must show a license notice ('llama'), ask for consent
+   * ('gemma-consent') or explain the Anthropic-account terms
+   * ('claude-account').
+   */
+  notice?: 'llama' | 'gemma-consent' | 'claude-account';
 }
 
 export interface ModelDef {
   id: string;
+  provider: ModelProvider;
   tier: ModelTier;
   label: string;
   sizeBytes: number;
@@ -35,6 +43,8 @@ export interface ModelDef {
   idealForKey: string;
   /** MoE models: active parameters in billions (speed of a small model). */
   moeActiveB?: number;
+  /** provider 'claude': the value passed to the CLI's --model flag. */
+  cliModel?: string;
 }
 
 const APACHE: ModelLicense = {
@@ -57,22 +67,51 @@ const GEMMA: ModelLicense = {
   url: 'https://ai.google.dev/gemma/terms',
   notice: 'gemma-consent',
 };
+const CLAUDE_ACCOUNT: ModelLicense = {
+  name: 'Anthropic account (subscription)',
+  url: 'https://www.anthropic.com/legal/consumer-terms',
+  notice: 'claude-account',
+};
 
 /** Model ids contain dots (qwen3-0.6b) – i18next uses '.' as separator. */
 export function modelI18nId(id: string): string {
   return id.replace(/\./g, '-');
 }
 
-type DefInput = Omit<ModelDef, 'strengthsKey' | 'weaknessesKey' | 'idealForKey'>;
+type DefInput = Omit<ModelDef, 'strengthsKey' | 'weaknessesKey' | 'idealForKey' | 'provider'> & {
+  provider?: ModelProvider;
+};
 
 function def(input: DefInput): ModelDef {
   const base = `assistant.model.${modelI18nId(input.id)}`;
   return {
     ...input,
+    provider: input.provider ?? 'local',
     strengthsKey: `${base}.strengths`,
     weaknessesKey: `${base}.weaknesses`,
     idealForKey: `${base}.idealFor`,
   };
+}
+
+/**
+ * Cloud entries backed by the user's Claude Code CLI login (subscription).
+ * Nothing is downloaded: sizeBytes/ramNeedMb are 0 and the template is an
+ * inert placeholder – generation goes through the `claude` CLI, not
+ * llama.cpp. `url` is informational only (never fetched).
+ */
+function claudeDef(id: string, label: string, cliModel: string): ModelDef {
+  return def({
+    id,
+    provider: 'claude',
+    tier: 'cloud',
+    label,
+    sizeBytes: 0,
+    ramNeedMb: 0,
+    template: 'chatml',
+    license: CLAUDE_ACCOUNT,
+    cliModel,
+    url: 'https://claude.com/claude-code',
+  });
 }
 
 export const MODEL_CATALOG: ModelDef[] = [
@@ -262,15 +301,19 @@ export const MODEL_CATALOG: ModelDef[] = [
     license: GEMMA,
     url: 'https://huggingface.co/unsloth/gemma-3-27b-it-GGUF/resolve/main/gemma-3-27b-it-Q4_K_M.gguf',
   }),
+  claudeDef('claude-fable-5', 'Claude Fable 5', 'fable-5'),
+  claudeDef('claude-opus-4-8', 'Claude Opus 4.8', 'opus'),
+  claudeDef('claude-sonnet-5', 'Claude Sonnet 5', 'sonnet'),
+  claudeDef('claude-haiku-4-5', 'Claude Haiku 4.5', 'haiku'),
 ];
 
 export function modelById(id: string): ModelDef | null {
   return MODEL_CATALOG.find((m) => m.id === id) ?? null;
 }
 
-export type ModelRating = 'great' | 'ok' | 'slow' | 'tooBig';
+export type ModelRating = 'great' | 'ok' | 'slow' | 'tooBig' | 'needsSetup';
 /** Coarse speed estimate for the UI ("~how snappy will it feel"). */
-export type ModelSpeed = 'veryFast' | 'fast' | 'moderate' | 'slow' | 'na';
+export type ModelSpeed = 'veryFast' | 'fast' | 'moderate' | 'slow' | 'na' | 'cloud';
 
 export interface RatedModel {
   model: ModelDef;
@@ -291,6 +334,9 @@ const TIER_ORDER: Record<ModelTier, number> = {
   large: 3,
   xl: 4,
   xxl: 5,
+  // Cloud entries never enter the RAM/tier heuristics – listed for
+  // exhaustiveness only.
+  cloud: 6,
 };
 
 function tierForParamsB(b: number): ModelTier {
@@ -337,7 +383,7 @@ function speedFor(rating: ModelRating, tier: ModelTier): ModelSpeed {
 
 /**
  * Rates every catalog model against the machine.
- * Heuristic:
+ * Heuristic (local models):
  * - tooBig when the model's working RAM exceeds a safe share of total RAM
  *   (Apple Silicon gets more headroom thanks to unified memory). MoE models
  *   are checked by ramNeedMb like everyone else – the full expert weights
@@ -345,12 +391,20 @@ function speedFor(rating: ModelRating, tier: ModelTier): ModelSpeed {
  * - Speed is rated by the *effective* tier: MoE models rate like their
  *   active parameter count (Qwen3 30B A3B ≈ a 3B model).
  * - x86: everything one step worse; 7B+ never rates better than 'slow'.
- * recommended = biggest (by sizeBytes) 'great' model, else biggest 'ok'.
+ * Provider 'claude' entries are RAM-independent: 'great' with speed 'cloud'
+ * when the Claude Code CLI is available, else 'needsSetup'.
+ * recommended = biggest (by sizeBytes) 'great' LOCAL model, else biggest
+ * 'ok' – the private local recommendation never points at the cloud.
  */
-export function rateModels(hw: HwSummary): RatedModel[] {
+export function rateModels(hw: HwSummary, claudeAvailable = false): RatedModel[] {
   const ramBudget = hw.totalRamMb * (hw.appleSilicon ? 0.85 : 0.7);
 
   const rated: RatedModel[] = MODEL_CATALOG.map((model) => {
+    if (model.provider === 'claude') {
+      return claudeAvailable
+        ? { model, rating: 'great' as const, speed: 'cloud' as const, recommended: false }
+        : { model, rating: 'needsSetup' as const, speed: 'na' as const, recommended: false };
+    }
     const speedTier = effectiveSpeedTier(model);
     let rating: ModelRating;
     if (model.ramNeedMb > ramBudget) {
@@ -367,7 +421,7 @@ export function rateModels(hw: HwSummary): RatedModel[] {
 
   const pick = (rating: ModelRating): RatedModel | null =>
     rated
-      .filter((r) => r.rating === rating)
+      .filter((r) => r.rating === rating && r.model.provider === 'local')
       .sort((a, b) => b.model.sizeBytes - a.model.sizeBytes)[0] ?? null;
 
   const recommended = pick('great') ?? pick('ok');
@@ -384,15 +438,27 @@ function effectiveSizeBytes(model: ModelDef): number {
 }
 
 /**
- * Picks the fastest model of the given ids (smallest effective param/size).
- * Unknown ids are ignored; falls back to the first id when none is known.
+ * True for catalog models that run on this machine (and for unknown ids,
+ * which behave like missing local models everywhere else in the app).
  */
-export function fastestModelId(modelIds: string[]): string {
+export function isLocalModel(id: string): boolean {
+  return modelById(id)?.provider !== 'claude';
+}
+
+/**
+ * Picks the fastest model of the given ids (smallest effective param/size).
+ * Provider 'claude' entries count as fastest (sizeBytes 0 – no local
+ * compute); pass `localOnly` when the caller needs a model that can run in
+ * a llama.cpp slot (e.g. team leader routing).
+ * Unknown ids are ignored; falls back to the first id when none is eligible.
+ */
+export function fastestModelId(modelIds: string[], opts?: { localOnly?: boolean }): string {
   let best = modelIds[0] ?? '';
   let bestSize = Number.POSITIVE_INFINITY;
   for (const id of modelIds) {
     const model = modelById(id);
     if (!model) continue;
+    if (opts?.localOnly && model.provider !== 'local') continue;
     const eff = effectiveSizeBytes(model);
     if (eff < bestSize) {
       bestSize = eff;

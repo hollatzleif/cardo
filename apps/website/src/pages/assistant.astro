@@ -476,7 +476,31 @@ import { FORUM_URL, withBase } from '../lib/site';
     </p>
   </section>
 
-  <section class="card" style="margin-top:1.25rem">
+    <section class="card step">
+    <h2>Using Claude (subscription) — optional cloud power</h2>
+    <p>
+      Besides the local models, Cardo can use <strong>Claude</strong> (Fable 5, Opus, Sonnet,
+      Haiku) as an assistant brain — through the Claude Code CLI and your existing Anthropic
+      subscription. No API keys, no extra costs beyond your plan; usage counts against your
+      plan's quota.
+    </p>
+    <p><strong>What you need:</strong> a Claude subscription (Pro/Max), the
+      <a href="https://claude.com/claude-code" rel="noopener">Claude Code CLI</a> installed,
+      and one sign-in (<code>claude</code> in a terminal). Cardo detects the CLI automatically
+      and walks you through it in Settings → Assistant.</p>
+    <p><strong>The honest privacy difference:</strong> local models never send anything
+      anywhere. A Claude assistant needs the internet, and your chat content — plus any
+      workspace files Claude reads — is transmitted to Anthropic. Cardo says this clearly
+      before you enable it, in keeping with the traffic-light principle. Mixing works well:
+      keep a private local assistant for personal things and a Claude assistant for heavy
+      lifting.</p>
+    <p><strong>Files:</strong> Claude works agentically inside your notes folder (create,
+      read, edit — e.g. “draft a packing list as packliste.md”). It cannot touch Cardo's app
+      data, settings or other assistants — its workspace is strictly your own files. Local
+      models can manage files too, via proposal cards; how well depends on their size.</p>
+  </section>
+
+<section class="card" style="margin-top:1.25rem">
     <h2>FAQ</h2>
 
     <details>

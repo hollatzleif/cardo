@@ -51,6 +51,7 @@ const manifest = ToolManifestSchema.parse({
     { id: 'template-known', titleKey: 'tool.assistant.test.templateKnown' },
     { id: 'catalog-sane', titleKey: 'tool.assistant.test.catalogSane' },
     { id: 'scope-enforcement', titleKey: 'tool.assistant.test.scopeEnforcement' },
+    { id: 'claude-catalog', titleKey: 'tool.assistant.test.claudeCatalog' },
   ],
   tourSteps: [
     {
@@ -255,13 +256,42 @@ export function createAssistantTool(): CardoTool {
     for (const m of MODEL_CATALOG) {
       if (ids.has(m.id)) return { status: 'fail', detail: `duplicate id ${m.id}` };
       ids.add(m.id);
-      if (!m.url.startsWith('https://huggingface.co/')) {
-        return { status: 'fail', detail: `${m.id}: non-huggingface url` };
+      // Download/size invariants only apply to local models – claude
+      // entries are cloud-backed (sizeBytes 0, url informational only)
+      // and get their own 'claude-catalog' self-test.
+      if (m.provider === 'local') {
+        if (!m.url.startsWith('https://huggingface.co/')) {
+          return { status: 'fail', detail: `${m.id}: non-huggingface url` };
+        }
+        if (!(m.ramNeedMb > 0)) return { status: 'fail', detail: `${m.id}: ramNeedMb` };
+        if (!(m.sizeBytes > 0)) return { status: 'fail', detail: `${m.id}: sizeBytes` };
       }
-      if (!(m.ramNeedMb > 0)) return { status: 'fail', detail: `${m.id}: ramNeedMb` };
-      if (!(m.sizeBytes > 0)) return { status: 'fail', detail: `${m.id}: sizeBytes` };
       if (!m.license.url.startsWith('https://')) {
         return { status: 'fail', detail: `${m.id}: license url` };
+      }
+    }
+    return { status: 'pass' };
+  }
+
+  /** Claude entries: offline catalog invariants only – no CLI call. */
+  function testClaudeCatalog(): SelfTestResult {
+    const expected = ['claude-fable-5', 'claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-5'];
+    const claude = MODEL_CATALOG.filter((m) => m.provider === 'claude');
+    if (claude.map((m) => m.id).join(',') !== expected.join(',')) {
+      return {
+        status: 'fail',
+        detail: `expected [${expected.join(', ')}], got [${claude.map((m) => m.id).join(', ')}]`,
+      };
+    }
+    for (const m of claude) {
+      if (typeof m.cliModel !== 'string' || m.cliModel === '') {
+        return { status: 'fail', detail: `${m.id}: cliModel missing` };
+      }
+      if (m.sizeBytes !== 0 || m.ramNeedMb !== 0) {
+        return { status: 'fail', detail: `${m.id}: cloud entries must not claim size/RAM` };
+      }
+      if (m.license.notice !== 'claude-account') {
+        return { status: 'fail', detail: `${m.id}: license notice must be 'claude-account'` };
       }
     }
     return { status: 'pass' };
@@ -322,6 +352,8 @@ export function createAssistantTool(): CardoTool {
           return testCatalogSane();
         case 'scope-enforcement':
           return testScopeEnforcement();
+        case 'claude-catalog':
+          return testClaudeCatalog();
         default:
           return { status: 'fail', detail: `unknown test "${testId}"` };
       }

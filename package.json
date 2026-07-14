@@ -1,7 +1,7 @@
 {
   "name": "cardo",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Cardo – your pivot point. A local-first, freely arrangeable dashboard.",
   "type": "module",
   "engines": {

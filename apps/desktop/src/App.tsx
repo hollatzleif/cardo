@@ -4,7 +4,7 @@ import { useAppStore } from './state/appStore';
 import { getHost } from './host';
 import { Canvas } from './canvas/Canvas';
 import { CommandPalette } from './palette/CommandPalette';
-import { SettingsModal } from './settings/SettingsModal';
+import { SettingsPage } from './settings/SettingsPage';
 import { ToolMarket } from './market/ToolMarket';
 import { ProfileModal } from './profile/ProfileModal';
 import { Tour } from './onboarding/Tour';
@@ -228,10 +228,10 @@ export function App() {
             ⊞ {t('market.title')}
           </button>
           <button
-            className="c-btn c-btn--ghost"
+            className={`c-btn c-btn--ghost${settingsOpen ? ' topbar__page--active' : ''}`}
             title={t('settings.title')}
             data-tour-anchor="ui:settings-button"
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => setSettingsOpen(!settingsOpen)}
           >
             ⚙
           </button>
@@ -239,11 +239,10 @@ export function App() {
       </header>
 
       <main className="app__canvas">
-        {marketOpen ? <ToolMarket /> : <Canvas />}
+        {settingsOpen ? <SettingsPage /> : marketOpen ? <ToolMarket /> : <Canvas />}
       </main>
 
       {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
-      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
       {designOpen && editing && <DesignPanel onClose={() => setDesignOpen(false)} />}
       {focusOpen && <FocusMode onClose={() => setFocusOpen(false)} />}
       {inboxOpen && <Inbox onClose={() => setInboxOpen(false)} />}

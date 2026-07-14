@@ -143,6 +143,121 @@ pub fn notes_delete(state: tauri::State<'_, NotesState>, name: String) -> CmdRes
     std::fs::remove_file(path).map_err(|e| e.to_string())
 }
 
+/* ── Workspace files (assistant-facing) ───────────────────────────────────
+ * The notes folder doubles as the assistant workspace. Same folder, wider
+ * (but still strict) name rules: a few plain-text extensions, the same
+ * traversal defenses, plus size caps so an assistant can neither read
+ * huge binaries into a prompt nor flood the disk. */
+
+const WORKSPACE_EXTENSIONS: [&str; 4] = [".md", ".txt", ".csv", ".json"];
+const WORKSPACE_READ_MAX_BYTES: u64 = 256 * 1024;
+const WORKSPACE_WRITE_MAX_BYTES: usize = 512 * 1024;
+
+fn validate_workspace_name(name: &str) -> CmdResult<()> {
+    let ok = !name.is_empty()
+        && name.len() <= 255
+        && WORKSPACE_EXTENSIONS.iter().any(|ext| name.ends_with(ext))
+        && !name.contains('/')
+        && !name.contains('\\')
+        && !name.contains("..")
+        && !name.starts_with('.');
+    if ok {
+        Ok(())
+    } else {
+        Err(format!(
+            "invalid workspace file name \"{name}\" (allowed extensions: {})",
+            WORKSPACE_EXTENSIONS.join(", ")
+        ))
+    }
+}
+
+fn workspace_path(dir: &Path, name: &str) -> CmdResult<PathBuf> {
+    validate_workspace_name(name)?;
+    Ok(dir.join(name))
+}
+
+fn check_read_size(bytes: u64) -> CmdResult<()> {
+    if bytes > WORKSPACE_READ_MAX_BYTES {
+        Err("file too large".to_string())
+    } else {
+        Ok(())
+    }
+}
+
+fn check_write_size(bytes: usize) -> CmdResult<()> {
+    if bytes > WORKSPACE_WRITE_MAX_BYTES {
+        Err("content too large".to_string())
+    } else {
+        Ok(())
+    }
+}
+
+#[tauri::command]
+pub fn workspace_list(state: tauri::State<'_, NotesState>) -> CmdResult<Vec<NoteMeta>> {
+    let dir = current_dir(&state)?;
+    let mut files = Vec::new();
+    for entry in std::fs::read_dir(&dir).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let name = entry.file_name().to_string_lossy().to_string();
+        if validate_workspace_name(&name).is_err() || !entry.path().is_file() {
+            continue;
+        }
+        let meta = entry.metadata().map_err(|e| e.to_string())?;
+        let modified_ms = meta
+            .modified()
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(0);
+        files.push(NoteMeta { name, modified_ms, size: meta.len() });
+    }
+    files.sort_by_key(|f| std::cmp::Reverse(f.modified_ms));
+    Ok(files)
+}
+
+#[tauri::command]
+pub fn workspace_read(state: tauri::State<'_, NotesState>, name: String) -> CmdResult<String> {
+    let path = workspace_path(&current_dir(&state)?, &name)?;
+    let meta = std::fs::metadata(&path).map_err(|e| e.to_string())?;
+    check_read_size(meta.len())?;
+    std::fs::read_to_string(path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn workspace_write(
+    state: tauri::State<'_, NotesState>,
+    name: String,
+    content: String,
+) -> CmdResult<()> {
+    check_write_size(content.len())?;
+    let path = workspace_path(&current_dir(&state)?, &name)?;
+    std::fs::write(path, content).map_err(|e| e.to_string())
+}
+
+/// Appends to the file, creating it first if it doesn't exist yet.
+#[tauri::command]
+pub fn workspace_append(
+    state: tauri::State<'_, NotesState>,
+    name: String,
+    content: String,
+) -> CmdResult<()> {
+    check_write_size(content.len())?;
+    let path = workspace_path(&current_dir(&state)?, &name)?;
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .map_err(|e| e.to_string())?;
+    file.write_all(content.as_bytes()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn workspace_delete(state: tauri::State<'_, NotesState>, name: String) -> CmdResult<()> {
+    let path = workspace_path(&current_dir(&state)?, &name)?;
+    std::fs::remove_file(path).map_err(|e| e.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -203,6 +318,101 @@ mod tests {
             .filter_map(|e| e.ok())
             .collect();
         assert!(leaked.is_empty(), "NUL name must not create any file");
+
+        std::fs::remove_dir_all(&tmp).unwrap();
+    }
+
+    #[test]
+    fn workspace_name_extension_matrix() {
+        for good in [
+            "notes.md",
+            "liste.txt",
+            "daten.csv",
+            "config.json",
+            "hello world.md",
+            "Zusammenfassung 2026.txt",
+        ] {
+            assert!(validate_workspace_name(good).is_ok(), "should accept {good:?}");
+        }
+        for bad in [
+            "run.sh",
+            "app.exe",
+            "model.gguf",
+            "noextension",
+            "script.js",
+            "photo.png",
+            "",
+            ".md",          // extension only (leading dot)
+            ".hidden.txt",  // hidden file
+        ] {
+            assert!(validate_workspace_name(bad).is_err(), "should reject {bad:?}");
+        }
+    }
+
+    #[test]
+    fn workspace_name_traversal_reuses_note_rules() {
+        // Same traversal defenses as validate_name, across all extensions.
+        for bad in [
+            "../x.md",
+            "a/b.txt",
+            "a\\b.csv",
+            "..%2Fx.json",
+            "a/../b.md",
+            "..\\x.txt",
+            "sub/note.csv",
+            "..leading.json",
+        ] {
+            assert!(validate_workspace_name(bad).is_err(), "should reject {bad:?}");
+        }
+        let too_long = format!("{}.md", "a".repeat(256));
+        assert!(validate_workspace_name(&too_long).is_err(), "over 255 chars rejected");
+    }
+
+    #[test]
+    fn workspace_size_caps() {
+        // Read cap: 256 KB inclusive.
+        assert!(check_read_size(0).is_ok());
+        assert!(check_read_size(WORKSPACE_READ_MAX_BYTES).is_ok());
+        assert!(check_read_size(WORKSPACE_READ_MAX_BYTES + 1).is_err());
+        assert_eq!(
+            check_read_size(WORKSPACE_READ_MAX_BYTES + 1).unwrap_err(),
+            "file too large"
+        );
+        // Write cap: 512 KB inclusive.
+        assert!(check_write_size(0).is_ok());
+        assert!(check_write_size(WORKSPACE_WRITE_MAX_BYTES).is_ok());
+        assert!(check_write_size(WORKSPACE_WRITE_MAX_BYTES + 1).is_err());
+        assert_eq!(
+            check_write_size(WORKSPACE_WRITE_MAX_BYTES + 1).unwrap_err(),
+            "content too large"
+        );
+    }
+
+    #[test]
+    fn workspace_append_creates_and_appends() {
+        let tmp = std::env::temp_dir()
+            .join(format!("cardo-workspace-append-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(&tmp).unwrap();
+        let dir = tmp.canonicalize().unwrap();
+
+        let path = workspace_path(&dir, "log.txt").unwrap();
+        assert!(!path.exists());
+
+        // Same open options as workspace_append: create if missing, append.
+        use std::io::Write;
+        for chunk in ["erste Zeile\n", "zweite Zeile\n"] {
+            let mut file = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&path)
+                .unwrap();
+            file.write_all(chunk.as_bytes()).unwrap();
+        }
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap(),
+            "erste Zeile\nzweite Zeile\n"
+        );
 
         std::fs::remove_dir_all(&tmp).unwrap();
     }

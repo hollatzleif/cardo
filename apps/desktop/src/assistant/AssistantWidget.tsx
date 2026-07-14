@@ -20,7 +20,7 @@ import {
 } from './chats';
 import { requestPaletteEdit } from './hostBridge';
 import { appendMemory, forgetLines } from './memory';
-import { modelById, type PromptTemplate } from './models';
+import { fastestModelId, isLocalModel, modelById, type PromptTemplate } from './models';
 import * as profilesModule from './profiles';
 import {
   getActive,
@@ -174,8 +174,10 @@ export function AssistantWidget(props: WidgetProps) {
   const [resultMsgs, setResultMsgs] = useState<Record<string, string>>({});
   const [lastByOwner, setLastByOwner] = useState<Record<string, { text: string; at: string }>>({});
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('chat');
+  const [claudeInstalled, setClaudeInstalled] = useState(false);
   const nextKeyRef = useRef(1);
   const installedRef = useRef<Set<string>>(new Set());
+  const claudeInstalledRef = useRef(false);
   const contextHintShownRef = useRef<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -195,6 +197,11 @@ export function AssistantWidget(props: WidgetProps) {
       const installed = await api.listModels().catch(() => []);
       installedRef.current = new Set(installed.map((m) => m.id));
       setInstalledIds(installed.map((m) => m.id));
+      // Claude profiles count as "installed" iff the CLI is detected –
+      // one cached probe (60 s) keeps the switcher cheap.
+      const claude = await api.claudeCheckCached();
+      claudeInstalledRef.current = claude.installed;
+      setClaudeInstalled(claude.installed);
       if (state.profiles.length === 0) {
         setSelection(null);
         setSetup('noProfiles');
@@ -207,7 +214,11 @@ export function AssistantWidget(props: WidgetProps) {
         return;
       }
       const needed = requiredModelIds(active, state.profiles);
-      const usable = needed.length > 0 && needed.every((id) => installedRef.current.has(id));
+      const usable =
+        needed.length > 0 &&
+        needed.every((id) =>
+          isLocalModel(id) ? installedRef.current.has(id) : claudeInstalledRef.current,
+        );
       setSetup(usable ? 'ready' : 'noModel');
     } catch {
       setSetup('noModel');
@@ -408,7 +419,26 @@ export function AssistantWidget(props: WidgetProps) {
     chatOwnerId: string,
   ): Promise<boolean> {
     const speaker = speakerOf(profile);
-    await ensureModel(profile.modelId, slot);
+    const modelEntry = modelById(profile.modelId);
+    const claudeEntry = modelEntry?.provider === 'claude' ? modelEntry : null;
+    if (claudeEntry) {
+      // Claude profiles never touch llama.cpp slots – no model loading.
+      // Cheap pre-flight (cached 60 s): fail with a helpful card instead of
+      // a cryptic CLI error when Claude Code isn't installed.
+      const check = await api.claudeCheckCached();
+      claudeInstalledRef.current = check.installed;
+      setClaudeInstalled(check.installed);
+      if (!check.installed) {
+        pushItem({
+          key: ephemeralKey(),
+          kind: 'hint',
+          text: String(t('assistant.claude.notInstalled')),
+        });
+        return false;
+      }
+    } else {
+      await ensureModel(profile.modelId, slot);
+    }
     setStatus(String(t('assistant.widget.thinking')));
 
     const [instructions, personality, memory, competencesDoc] = await Promise.all([
@@ -446,14 +476,49 @@ export function AssistantWidget(props: WidgetProps) {
       },
     });
 
-    const raw = await api.generate({
-      system,
-      user: promptUser,
-      maxTokens: 1024,
-      jsonOnly: true,
-      template: templateFor(profile.modelId),
-      slot,
-    });
+    let raw: string;
+    if (claudeEntry) {
+      // Same system prompt + history-augmented user message as local models;
+      // the response feeds the identical parseProposals pipeline.
+      const files = host.services.files;
+      let workspaceDir: string | null = files ? await files.getFolder().catch(() => null) : null;
+      if (workspaceDir === null && files) {
+        workspaceDir = await files.ensureDefaultFolder().catch(() => null);
+      }
+      try {
+        raw = await api.claudeGenerate({
+          system,
+          user: promptUser,
+          model: claudeEntry.cliModel ?? claudeEntry.id,
+          workspaceDir: workspaceDir ?? '',
+          maxTurns: 10,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes(api.CLAUDE_ERROR_MARKER)) {
+          // Auth problem – inline card with the login hint.
+          pushItem({
+            key: ephemeralKey(),
+            kind: 'hint',
+            text: String(t('assistant.claude.authError')),
+          });
+        } else if (msg.includes('timed out')) {
+          setError(String(t('assistant.claude.timeout')));
+        } else {
+          setError(String(t('assistant.claude.generateError')));
+        }
+        return false;
+      }
+    } else {
+      raw = await api.generate({
+        system,
+        user: promptUser,
+        maxTokens: 1024,
+        jsonOnly: true,
+        template: templateFor(profile.modelId),
+        slot,
+      });
+    }
     const parsed = parseProposals(
       raw,
       (id: string) => host.commands.has(id),
@@ -547,15 +612,28 @@ export function AssistantWidget(props: WidgetProps) {
       return false;
     }
 
+    // Routing runs in a llama.cpp slot, so it needs a LOCAL model: a Claude
+    // leader falls back to the fastest local member model. All-Claude teams
+    // are unusable (the switcher already disables them – this is the guard).
+    let routerModelId = leader.modelId;
+    if (!isLocalModel(routerModelId)) {
+      const localIds = members.map((m) => m.modelId).filter((id) => isLocalModel(id));
+      if (localIds.length === 0) {
+        setError(String(t('assistant.claude.teamNeedsLocalLeader')));
+        return false;
+      }
+      routerModelId = fastestModelId(localIds, { localOnly: true });
+    }
+
     setStatus(String(t('assistant.team.routing', { leader: leader.name })));
     let routerSlot: 'router' | 'main' = 'router';
     try {
-      await ensureModel(leader.modelId, 'router');
+      await ensureModel(routerModelId, 'router');
     } catch (err) {
       if (!api.isInsufficientRam(err)) throw err;
       // Not enough RAM for a dedicated router slot – run sequentially on main.
       routerSlot = 'main';
-      await ensureModel(leader.modelId, 'main');
+      await ensureModel(routerModelId, 'main');
     }
 
     setStatus(String(t('assistant.team.routing', { leader: leader.name })));
@@ -565,7 +643,7 @@ export function AssistantWidget(props: WidgetProps) {
       user: routerPrompt.user,
       maxTokens: 32,
       jsonOnly: false,
-      template: templateFor(leader.modelId),
+      template: templateFor(routerModelId),
       slot: routerSlot,
     });
     const chosenId = parseRouterAnswer(
@@ -668,8 +746,10 @@ export function AssistantWidget(props: WidgetProps) {
           : active
             ? getProfilesState().profiles.find((p) => p.id === active.team.leaderId)?.modelId
             : undefined;
+      // Claude profiles have nothing to load – warm-up is local-only.
       if (
         modelId !== undefined &&
+        isLocalModel(modelId) &&
         installedRef.current.has(modelId) &&
         (await api.loadedModel('main')) !== modelId
       ) {
@@ -750,7 +830,10 @@ export function AssistantWidget(props: WidgetProps) {
     const promptUser = composeUserPrompt(item.question, entriesOf(feed));
     try {
       const memoryId = target.memoryId;
-      if ((await api.loadedModel('main')) === target.modelId) {
+      if (!isLocalModel(target.modelId)) {
+        // Claude target: nothing to load, no slot juggling.
+        await runAsProfile(target, item.question, promptUser, memoryId, 'main', chatOwnerId);
+      } else if ((await api.loadedModel('main')) === target.modelId) {
         // Same model – instant handover, only the docs change.
         await runAsProfile(target, item.question, promptUser, memoryId, 'main', chatOwnerId);
       } else {
@@ -805,17 +888,28 @@ export function AssistantWidget(props: WidgetProps) {
     }
   }
 
-  /* ── Usability (installed models) ─────────────────────────────────── */
+  /* ── Usability (installed models / detected Claude CLI) ──────────── */
+
+  function modelAvailable(modelId: string): boolean {
+    return isLocalModel(modelId) ? installedSet.has(modelId) : claudeInstalled;
+  }
 
   function profileUsable(p: AssistantProfile): boolean {
-    return installedSet.has(p.modelId);
+    return modelAvailable(p.modelId);
   }
 
   function teamUsable(team: AssistantTeam): boolean {
     const members = team.memberIds
       .map((id) => profiles.find((p) => p.id === id))
       .filter((p): p is AssistantProfile => p !== undefined);
-    return members.length > 0 && members.every((m) => installedSet.has(m.modelId));
+    if (members.length === 0 || !members.every((m) => modelAvailable(m.modelId))) return false;
+    // Routing needs a local model: a Claude leader falls back to the
+    // fastest local member – without any local member the team is unusable.
+    const leader = members.find((m) => m.id === team.leaderId) ?? members[0];
+    if (leader && !isLocalModel(leader.modelId)) {
+      return members.some((m) => isLocalModel(m.modelId));
+    }
+    return true;
   }
 
   const firstUsableProfile = profiles.find((p) => profileUsable(p)) ?? null;

@@ -17,6 +17,7 @@ import { generateInstructions, generatePersonality, resolveDocLanguage } from '.
 import {
   MODEL_CATALOG,
   fastestModelId,
+  isLocalModel,
   modelById,
   rateModels,
   type ModelDef,
@@ -121,6 +122,22 @@ async function setDelegationAsk(value: boolean): Promise<void> {
 }
 
 /**
+ * Per-app one-time Claude consent (core.settings 'assistant.claudeConsent',
+ * {value:true}): a claude model can only be chosen after the user has
+ * acknowledged what leaves the device (mirrors the Gemma consent pattern).
+ */
+async function getClaudeConsentSetting(): Promise<boolean> {
+  const doc = (await getHost().backend.get(NS, 'assistant.claudeConsent')) as {
+    value?: boolean;
+  } | null;
+  return doc?.value === true;
+}
+
+async function setClaudeConsentSetting(): Promise<void> {
+  await getHost().backend.set(NS, 'assistant.claudeConsent', { value: true });
+}
+
+/**
  * (Re)writes the global team competences doc (scope 'team-competences',
  * id 'global') from every profile's MODEL-derived competences (strengths,
  * weaknesses, ideal-for), preserving the user-maintained '## Notizen'
@@ -148,11 +165,13 @@ function RatingBadge({ rated }: { rated: RatedModel }) {
     ok: 'assistant-badge--ok',
     slow: 'assistant-badge--slow',
     tooBig: 'assistant-badge--toobig',
+    needsSetup: 'assistant-badge--needssetup',
   };
+  const withSpeed = rated.rating !== 'tooBig' && rated.rating !== 'needsSetup';
   return (
     <span className={`assistant-badge ${cls[rated.rating]}`}>
       {t(`assistant.rating.${rated.rating}`)}
-      {rated.rating !== 'tooBig' && ` · ${t(`assistant.speed.${rated.speed}`)}`}
+      {withSpeed && ` · ${t(`assistant.speed.${rated.speed}`)}`}
     </span>
   );
 }
@@ -375,6 +394,79 @@ function GemmaConsent({
   );
 }
 
+/* ── Claude (Anthropic account) status + consent ─────────────────────── */
+
+/** Live CLI status for the Claude group header + first-time setup guide. */
+function ClaudeStatus({
+  check,
+  checking,
+  onRecheck,
+}: {
+  check: api.ClaudeCheckResult | null;
+  checking: boolean;
+  onRecheck(): void;
+}) {
+  const { t } = useTranslation();
+  const installed = check?.installed === true;
+  return (
+    <div className="as-claude-status">
+      <div className="as-claude-status__line">
+        <span className={installed ? 'as-claude-status__ok' : 'as-claude-status__missing'}>
+          {installed
+            ? check?.version
+              ? t('assistant.claude.detected', { version: check.version })
+              : t('assistant.claude.detectedNoVersion')
+            : t('assistant.claude.notFound')}
+        </span>
+        <Button disabled={checking} onClick={onRecheck}>
+          {t('assistant.claude.recheck')}
+        </Button>
+      </div>
+      {!installed && (
+        <details className="as-claude-guide">
+          <summary>{t('assistant.claude.guideTitle')}</summary>
+          <ol className="as-claude-guide__steps">
+            <li>{t('assistant.claude.guideStep1')}</li>
+            <li>{t('assistant.claude.guideStep2')}</li>
+            <li>{t('assistant.claude.guideStep3')}</li>
+          </ol>
+        </details>
+      )}
+    </div>
+  );
+}
+
+/**
+ * One-time consent before the FIRST claude model can be chosen: plain
+ * language about internet/subscription, data leaving the device and quota.
+ * Mirrors the Gemma consent pattern (checkbox + explicit confirm).
+ */
+function ClaudeConsent({ onConfirm, onCancel }: { onConfirm(): void; onCancel(): void }) {
+  const { t } = useTranslation();
+  const [checked, setChecked] = useState(false);
+  return (
+    <div className="as-consent c-card">
+      <strong>{t('assistant.claude.consentTitle')}</strong>
+      <p>{t('assistant.claude.consentText')}</p>
+      <a href="https://www.anthropic.com/legal/consumer-terms" target="_blank" rel="noreferrer">
+        {t('assistant.license.view')}
+      </a>
+      <label className="awizard-choice">
+        <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} />
+        {t('assistant.claude.consentCheckbox')}
+      </label>
+      <div className="awizard-actions">
+        <Button variant="primary" disabled={!checked} onClick={onConfirm}>
+          {t('assistant.claude.consentConfirm')}
+        </Button>
+        <Button variant="ghost" onClick={onCancel}>
+          {t('common.cancel')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Model picker card (creation flow) ───────────────────────────────── */
 
 function ModelPickerCard({
@@ -391,12 +483,16 @@ function ModelPickerCard({
   onSelect(): void;
 }) {
   const { t } = useTranslation();
-  const disabled = rated?.rating === 'tooBig';
-  const meta = [
-    gb(entry.sizeBytes),
-    t('assistant.model.ramNeed', { ram: ramGb(entry.ramNeedMb) }),
-    ...(entry.moeActiveB ? [t('assistant.model.moeActive', { b: entry.moeActiveB })] : []),
-  ].join(' · ');
+  const isClaude = entry.provider === 'claude';
+  const disabled = rated?.rating === 'tooBig' || rated?.rating === 'needsSetup';
+  // Claude entries have no download/size/RAM – they run via the account.
+  const meta = isClaude
+    ? String(t('assistant.claude.cloudMeta'))
+    : [
+        gb(entry.sizeBytes),
+        t('assistant.model.ramNeed', { ram: ramGb(entry.ramNeedMb) }),
+        ...(entry.moeActiveB ? [t('assistant.model.moeActive', { b: entry.moeActiveB })] : []),
+      ].join(' · ');
   return (
     <button
       type="button"
@@ -428,7 +524,13 @@ function ModelPickerCard({
         <span className="c-muted">{t('assistant.model.builtWithLlama')}</span>
       )}
       <span className="c-muted awizard-model__meta">
-        {installed ? t('assistant.model.installed') : t('assistant.flow.willDownload')}
+        {isClaude
+          ? installed
+            ? t('assistant.claude.ready')
+            : t('assistant.claude.notReady')
+          : installed
+            ? t('assistant.model.installed')
+            : t('assistant.flow.willDownload')}
       </span>
     </button>
   );
@@ -554,6 +656,11 @@ function NewAssistantFlow({
   rated,
   hw,
   toolOptions,
+  claude,
+  claudeChecking,
+  onClaudeRecheck,
+  claudeConsent,
+  onClaudeConsent,
   firstRun,
   onClose,
 }: {
@@ -562,6 +669,11 @@ function NewAssistantFlow({
   rated: RatedModel[];
   hw: api.AssistantHwInfo | null;
   toolOptions: ToolOption[];
+  claude: api.ClaudeCheckResult | null;
+  claudeChecking: boolean;
+  onClaudeRecheck(): void;
+  claudeConsent: boolean;
+  onClaudeConsent(): Promise<void>;
   firstRun?: boolean;
   onClose(): void;
 }) {
@@ -573,6 +685,8 @@ function NewAssistantFlow({
   const [emoji, setEmoji] = useState('🤖');
   const [color, setColor] = useState('accent-2');
   const [modelId, setModelId] = useState<string | null>(recommendedId);
+  /** Claude model waiting for the one-time consent before selection. */
+  const [pendingClaudeId, setPendingClaudeId] = useState<string | null>(null);
   const [memMode, setMemMode] = useState<'share' | 'own'>(memories.length > 0 ? 'share' : 'own');
   const [shareId, setShareId] = useState(memories[0]?.id ?? '');
   const [ownName, setOwnName] = useState('');
@@ -696,21 +810,50 @@ function NewAssistantFlow({
               })}
             </p>
           )}
+          <h5 className="as-group-title">{t('assistant.claude.localGroup')}</h5>
           <div className="awizard-models">
-            {rated.map((r) => {
-              const e = r.model;
-              return (
+            {rated
+              .filter((r) => r.model.provider === 'local')
+              .map((r) => (
                 <ModelPickerCard
                   key={r.model.id}
-                  entry={e}
+                  entry={r.model}
                   rated={r}
                   installed={installedIds.includes(r.model.id)}
                   selected={modelId === r.model.id}
                   onSelect={() => setModelId(r.model.id)}
                 />
-              );
-            })}
+              ))}
           </div>
+          <h5 className="as-group-title">{t('assistant.claude.cloudGroup')}</h5>
+          <ClaudeStatus check={claude} checking={claudeChecking} onRecheck={onClaudeRecheck} />
+          <div className="awizard-models">
+            {rated
+              .filter((r) => r.model.provider === 'claude')
+              .map((r) => (
+                <ModelPickerCard
+                  key={r.model.id}
+                  entry={r.model}
+                  rated={r}
+                  installed={claude?.installed === true}
+                  selected={modelId === r.model.id}
+                  onSelect={() => {
+                    if (claudeConsent) setModelId(r.model.id);
+                    else setPendingClaudeId(r.model.id);
+                  }}
+                />
+              ))}
+          </div>
+          {pendingClaudeId !== null && (
+            <ClaudeConsent
+              onConfirm={() => {
+                const id = pendingClaudeId;
+                setPendingClaudeId(null);
+                void onClaudeConsent().then(() => setModelId(id));
+              }}
+              onCancel={() => setPendingClaudeId(null)}
+            />
+          )}
           <div className="awizard-actions">
             <Button variant="ghost" onClick={() => setStep('persona')}>
               {t('assistant.wizard.back')}
@@ -831,7 +974,8 @@ function NewAssistantFlow({
       {step === 'install' && entry && (
         <InstallAndCreate
           entry={entry}
-          needsDownload={!installedIds.includes(entry.id)}
+          // Claude models are never downloaded – the profile is created directly.
+          needsDownload={entry.provider === 'local' && !installedIds.includes(entry.id)}
           create={create}
           onDone={handleCreated}
           onBack={() => setStep('look')}
@@ -859,11 +1003,17 @@ function ProfileEditor({
   profile,
   toolOptions,
   installedIds,
+  claudeInstalled,
+  claudeConsent,
+  onClaudeConsent,
   onClose,
 }: {
   profile: AssistantProfile;
   toolOptions: ToolOption[];
   installedIds: string[];
+  claudeInstalled: boolean;
+  claudeConsent: boolean;
+  onClaudeConsent(): Promise<void>;
   onClose(): void;
 }) {
   const { t, i18n } = useTranslation();
@@ -876,7 +1026,12 @@ function ProfileEditor({
   const [allTools, setAllTools] = useState(profile.toolScope === null);
   const [toolIds, setToolIds] = useState<Set<string>>(new Set(scope));
 
+  // First-time Claude selection also asks for consent here (same per-app
+  // one-time setting as the picker) – Save stays blocked until confirmed.
+  const needsClaudeConsent = !claudeConsent && !isLocalModel(modelId);
+
   async function saveIt() {
+    if (needsClaudeConsent) return;
     await updateProfile(profile.id, {
       name: name.trim() || profile.name,
       emoji,
@@ -909,14 +1064,31 @@ function ProfileEditor({
           value={modelId}
           onChange={(e) => setModelId(e.target.value)}
         >
-          {MODEL_CATALOG.map((m: ModelDef) => (
-            <option key={m.id} value={m.id}>
-              {m.label}
-              {installedIds.includes(m.id) ? '' : ` – ${t('assistant.profiles.modelMissing')}`}
-            </option>
-          ))}
+          {MODEL_CATALOG.map((m: ModelDef) => {
+            const available = m.provider === 'claude' ? claudeInstalled : installedIds.includes(m.id);
+            const suffix =
+              m.provider === 'claude'
+                ? available
+                  ? ''
+                  : ` – ${t('assistant.rating.needsSetup')}`
+                : available
+                  ? ''
+                  : ` – ${t('assistant.profiles.modelMissing')}`;
+            return (
+              <option key={m.id} value={m.id} disabled={m.provider === 'claude' && !available}>
+                {m.label}
+                {suffix}
+              </option>
+            );
+          })}
         </select>
       </label>
+      {needsClaudeConsent && (
+        <ClaudeConsent
+          onConfirm={() => void onClaudeConsent()}
+          onCancel={() => setModelId(profile.modelId)}
+        />
+      )}
       <div className="awizard-field">
         <span>{t('assistant.profiles.competencesFromModel')}</span>
         <p className="c-muted as-competences-line">{modelCompetences(modelId, i18n.language)}</p>
@@ -932,7 +1104,7 @@ function ProfileEditor({
         <Button variant="ghost" onClick={onClose}>
           {t('common.cancel')}
         </Button>
-        <Button variant="primary" onClick={() => void saveIt()}>
+        <Button variant="primary" disabled={needsClaudeConsent} onClick={() => void saveIt()}>
           {t('common.save')}
         </Button>
       </div>
@@ -967,11 +1139,22 @@ function TeamForm({
   const [saving, setSaving] = useState(false);
 
   const members = profiles.filter((p) => memberIds.includes(p.id));
-  const fastest = members.length > 0 ? fastestModelId(members.map((m) => m.modelId)) : null;
-  const recommendedLeaderId = members.find((m) => m.modelId === fastest)?.id ?? null;
-  const effectiveLeaderId = memberIds.includes(leaderId)
+  // Leader routing runs on a local llama.cpp slot – Claude profiles can be
+  // members but never lead, so the select and the recommendation only ever
+  // offer local-model members.
+  const leaderCandidates = members.filter((m) => isLocalModel(m.modelId));
+  const hasClaudeMembers = members.some((m) => !isLocalModel(m.modelId));
+  const fastest =
+    leaderCandidates.length > 0
+      ? fastestModelId(
+          leaderCandidates.map((m) => m.modelId),
+          { localOnly: true },
+        )
+      : null;
+  const recommendedLeaderId = leaderCandidates.find((m) => m.modelId === fastest)?.id ?? null;
+  const effectiveLeaderId = leaderCandidates.some((m) => m.id === leaderId)
     ? leaderId
-    : (recommendedLeaderId ?? memberIds[0] ?? '');
+    : (recommendedLeaderId ?? leaderCandidates[0]?.id ?? '');
 
   function toggleMember(id: string) {
     setMemberIds((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]));
@@ -1055,13 +1238,16 @@ function TeamForm({
             value={effectiveLeaderId}
             onChange={(e) => setLeaderId(e.target.value)}
           >
-            {members.map((m) => (
+            {leaderCandidates.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name} ({modelLabel(m)})
                 {m.id === recommendedLeaderId ? ` ${t('assistant.teams.leaderFastest')}` : ''}
               </option>
             ))}
           </select>
+          {hasClaudeMembers && (
+            <p className="c-muted">{t('assistant.claude.teamNeedsLocalLeader')}</p>
+          )}
         </label>
       )}
       <div className="awizard-field">
@@ -1244,6 +1430,79 @@ function ModelManageRow({
           entry={entry}
           confirmLabel={t('assistant.manage.install')}
           onConfirm={() => void doDownload()}
+          onCancel={() => setConsentOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * Management row for a claude entry: no download, no size/RAM, no delete –
+ * "Verwenden" applies the model to the active profile directly (behind the
+ * one-time consent) and is disabled until the CLI is detected.
+ */
+function ClaudeModelRow({
+  rated,
+  entry,
+  claudeInstalled,
+  isActiveModel,
+  usedByNames,
+  canUse,
+  consent,
+  onConsent,
+  onUse,
+}: {
+  rated: RatedModel;
+  entry: ModelDef;
+  claudeInstalled: boolean;
+  isActiveModel: boolean;
+  usedByNames: string[];
+  canUse: boolean;
+  consent: boolean;
+  onConsent(): Promise<void>;
+  onUse(): void;
+}) {
+  const { t } = useTranslation();
+  const [consentOpen, setConsentOpen] = useState(false);
+
+  function use() {
+    if (consent) onUse();
+    else setConsentOpen(true);
+  }
+
+  return (
+    <>
+      <div className="assistant-modelrow c-card">
+        <div className="assistant-modelrow__info">
+          <strong>{entry.label}</strong>
+          {isActiveModel && (
+            <span className="assistant-badge assistant-badge--great">
+              {t('assistant.manage.active')}
+            </span>
+          )}
+          <span className="c-muted">{t('assistant.claude.cloudMeta')}</span>
+          <RatingBadge rated={rated} />
+          {usedByNames.length > 0 && (
+            <span className="c-muted">
+              {t('assistant.claude.usedBy', { names: usedByNames.join(', ') })}
+            </span>
+          )}
+        </div>
+        <div className="assistant-modelrow__actions">
+          {canUse && (
+            <Button disabled={!claudeInstalled} onClick={use}>
+              {t('assistant.manage.use')}
+            </Button>
+          )}
+        </div>
+      </div>
+      {consentOpen && (
+        <ClaudeConsent
+          onConfirm={() => {
+            setConsentOpen(false);
+            void onConsent().then(onUse);
+          }}
           onCancel={() => setConsentOpen(false)}
         />
       )}
@@ -1470,6 +1729,9 @@ export function AssistantSettings() {
   const [ready, setReady] = useState(false);
   const [hw, setHw] = useState<api.AssistantHwInfo | null>(null);
   const [installed, setInstalled] = useState<api.InstalledModel[]>([]);
+  const [claude, setClaude] = useState<api.ClaudeCheckResult | null>(null);
+  const [claudeChecking, setClaudeChecking] = useState(false);
+  const [claudeConsent, setClaudeConsentState] = useState(false);
   const [pstate, setPState] = useState<ProfilesState>(() => getProfilesState());
   const [ask, setAsk] = useState(true);
   const [deleg, setDeleg] = useState(true);
@@ -1494,6 +1756,21 @@ export function AssistantSettings() {
     setInstalled(await api.listModels().catch(() => []));
   }, []);
 
+  /** "Erneut prüfen": bypasses the 60 s cache. */
+  const recheckClaude = useCallback(async () => {
+    setClaudeChecking(true);
+    try {
+      setClaude(await api.claudeCheckCached({ force: true }));
+    } finally {
+      setClaudeChecking(false);
+    }
+  }, []);
+
+  const grantClaudeConsent = useCallback(async () => {
+    await setClaudeConsentSetting();
+    setClaudeConsentState(true);
+  }, []);
+
   useEffect(() => {
     let alive = true;
     const off = onProfilesChange((s) => {
@@ -1504,17 +1781,21 @@ export function AssistantSettings() {
       await initProfiles();
       if (!alive) return;
       syncProfiles();
-      const [hwInfo, models, askValue, delegValue] = await Promise.all([
+      const [hwInfo, models, askValue, delegValue, claudeCheck, consentValue] = await Promise.all([
         api.fetchHwInfo(),
         api.listModels().catch(() => []),
         getAskBeforeExecute(),
         getDelegationAsk(),
+        api.claudeCheckCached(),
+        getClaudeConsentSetting().catch(() => false),
       ]);
       if (!alive) return;
       setHw(hwInfo);
       setInstalled(models);
       setAsk(askValue);
       setDeleg(delegValue);
+      setClaude(claudeCheck);
+      setClaudeConsentState(consentValue);
       setReady(true);
     })();
     return () => {
@@ -1523,7 +1804,10 @@ export function AssistantSettings() {
     };
   }, [syncProfiles]);
 
-  const rated = useMemo(() => (hw ? rateModels(hw) : []), [hw]);
+  const rated = useMemo(
+    () => (hw ? rateModels(hw, claude?.installed === true) : []),
+    [hw, claude],
+  );
   const installedIds = useMemo(() => installed.map((m) => m.id), [installed]);
 
   const active: ActiveSelection = pstate.active;
@@ -1647,6 +1931,11 @@ export function AssistantSettings() {
           rated={rated}
           hw={hw}
           toolOptions={toolOptions}
+          claude={claude}
+          claudeChecking={claudeChecking}
+          onClaudeRecheck={() => void recheckClaude()}
+          claudeConsent={claudeConsent}
+          onClaudeConsent={grantClaudeConsent}
           onClose={() => {
             syncProfiles();
             void refreshModels();
@@ -1873,6 +2162,11 @@ export function AssistantSettings() {
               rated={rated}
               hw={hw}
               toolOptions={toolOptions}
+              claude={claude}
+              claudeChecking={claudeChecking}
+              onClaudeRecheck={() => void recheckClaude()}
+              claudeConsent={claudeConsent}
+              onClaudeConsent={grantClaudeConsent}
               onClose={() => {
                 closeView();
                 void refreshModels();
@@ -1885,6 +2179,9 @@ export function AssistantSettings() {
               profile={editingProfile}
               toolOptions={toolOptions}
               installedIds={installedIds}
+              claudeInstalled={claude?.installed === true}
+              claudeConsent={claudeConsent}
+              onClaudeConsent={grantClaudeConsent}
               onClose={closeView}
             />
           )}
@@ -1909,28 +2206,59 @@ export function AssistantSettings() {
         </div>
       </details>
 
-      {/* 3 ── global model management */}
+      {/* 3 ── global model management (local + Claude groups) */}
       <div className="settings__row settings__row--block">
         <span>{t('assistant.manage.models')}</span>
-        {rated.map((r) => {
-          const entry = r.model;
-          const usedByNames = pstate.profiles
-            .filter((p) => p.modelId === entry.id)
-            .map((p) => p.name);
-          return (
-            <ModelManageRow
-              key={entry.id}
-              rated={r}
-              entry={entry}
-              installed={installedIds.includes(entry.id)}
-              isActiveModel={activeProfile?.modelId === entry.id}
-              usedByNames={usedByNames}
-              canUse={activeProfile !== null && activeProfile.modelId !== entry.id}
-              onUse={() => void applyModel(entry.id)}
-              onChanged={() => void refreshModels()}
-            />
-          );
-        })}
+        <h5 className="as-group-title">{t('assistant.claude.localGroup')}</h5>
+        {rated
+          .filter((r) => r.model.provider === 'local')
+          .map((r) => {
+            const entry = r.model;
+            const usedByNames = pstate.profiles
+              .filter((p) => p.modelId === entry.id)
+              .map((p) => p.name);
+            return (
+              <ModelManageRow
+                key={entry.id}
+                rated={r}
+                entry={entry}
+                installed={installedIds.includes(entry.id)}
+                isActiveModel={activeProfile?.modelId === entry.id}
+                usedByNames={usedByNames}
+                canUse={activeProfile !== null && activeProfile.modelId !== entry.id}
+                onUse={() => void applyModel(entry.id)}
+                onChanged={() => void refreshModels()}
+              />
+            );
+          })}
+        <h5 className="as-group-title">{t('assistant.claude.cloudGroup')}</h5>
+        <ClaudeStatus
+          check={claude}
+          checking={claudeChecking}
+          onRecheck={() => void recheckClaude()}
+        />
+        {rated
+          .filter((r) => r.model.provider === 'claude')
+          .map((r) => {
+            const entry = r.model;
+            const usedByNames = pstate.profiles
+              .filter((p) => p.modelId === entry.id)
+              .map((p) => p.name);
+            return (
+              <ClaudeModelRow
+                key={entry.id}
+                rated={r}
+                entry={entry}
+                claudeInstalled={claude?.installed === true}
+                isActiveModel={activeProfile?.modelId === entry.id}
+                usedByNames={usedByNames}
+                canUse={activeProfile !== null && activeProfile.modelId !== entry.id}
+                consent={claudeConsent}
+                onConsent={grantClaudeConsent}
+                onUse={() => void applyModel(entry.id)}
+              />
+            );
+          })}
       </div>
 
       {/* 4 ── global toggles */}

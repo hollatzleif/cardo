@@ -39,6 +39,10 @@ async function bootstrap(): Promise<void> {
     if (!inactive.has(id)) await host.registry.activate(id);
   }
 
+  // Workspace file commands – every assistant can propose file work.
+  const { registerWorkspaceCommands } = await import('./host/workspaceCommands');
+  registerWorkspaceCommands(host);
+
   await useAppStore.getState().init();
   void initGlobalShortcuts(host);
   // Re-arm persisted schedules; overdue ones (missed while closed) fire now.

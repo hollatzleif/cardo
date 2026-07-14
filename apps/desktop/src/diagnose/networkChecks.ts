@@ -88,7 +88,11 @@ export function buildNetworkChecks(): DiagnoseCheck[] {
     };
   }
 
-  const smallestModel = [...MODEL_CATALOG].sort((a, b) => a.sizeBytes - b.sizeBytes)[0];
+  // Downloadability probe: local models only – claude entries (provider
+  // 'claude', sizeBytes 0) are never downloaded.
+  const smallestModel = MODEL_CATALOG.filter((m) => m.provider === 'local').sort(
+    (a, b) => a.sizeBytes - b.sizeBytes,
+  )[0];
 
   return [
     netCheck('update-server', 'diagnose.check.netUpdateServer', async () => {

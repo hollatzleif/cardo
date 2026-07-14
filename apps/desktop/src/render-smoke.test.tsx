@@ -17,7 +17,7 @@ import { createMemoryDocStore } from './assistant/api';
 import { instantiateTools, liveTools, toolFactories } from './host/tools';
 import { initI18n } from './i18n';
 import { useAppStore } from './state/appStore';
-import { SettingsModal } from './settings/SettingsModal';
+import { SettingsPage } from './settings/SettingsPage';
 import { ToolMarket } from './market/ToolMarket';
 import { AddWidgetMenu } from './canvas/AddWidgetMenu';
 import { TemplatePicker } from './onboarding/TemplatePicker';
@@ -266,24 +266,39 @@ describe('tool widgets render without crashing (network down)', () => {
 /* ── Surfaces ───────────────────────────────────────────────────────────── */
 
 describe('surfaces render and take basic interaction (network down)', () => {
-  it('SettingsModal: renders and every tab opens its panel', async () => {
-    const { container, unmount } = await render(<SettingsModal onClose={() => {}} />);
-    const tabs = [...container.querySelectorAll('.settings__tabs button')];
-    expect(tabs).toHaveLength(5);
+  it('SettingsPage: renders and every sidebar section opens', async () => {
+    const { container, unmount } = await render(<SettingsPage />);
+    const items = [...container.querySelectorAll('.settings-page__nav-item')];
+    expect(items).toHaveLength(9);
 
-    // Order mirrors the Tab union in SettingsModal.
-    const panelSelectors = [
-      '.settings__section', // general
-      '.assistant-settings', // assistant
-      '.settings__section', // polls
-      '.diagnose-panel', // diagnostics
-      '.settings__section', // about
+    // Order mirrors the SECTIONS list in SettingsPage: label key that must
+    // show up as the section title + one section-identifying element.
+    const sections: Array<[labelKey: string, probe: string]> = [
+      ['settings.general', '.settings-page__card'], // general
+      ['settings.section.appearance', '[data-tour-anchor="ui:theme-picker"]'], // appearance
+      ['settings.assistant', '.assistant-settings'], // assistant
+      ['settings.section.inboxPolls', '.settings-page__card'], // inbox & polls
+      ['settings.section.data', '.settings-page__card'], // data & backup
+      ['settings.updates', 'input[name="update-mode"]'], // updates
+      ['settings.diagnostics', '.diagnose-panel'], // diagnostics
+      ['settings.help', '.settings-page__url'], // help (docs link row)
+      ['settings.about', '.settings-page__licenses'], // about
     ];
-    for (let i = 0; i < tabs.length; i++) {
-      await click(tabs[i]!);
+    expect(sections).toHaveLength(items.length);
+
+    for (let i = 0; i < items.length; i++) {
+      const [labelKey, probe] = sections[i]!;
+      await click(items[i]!);
+      expect(items[i]!.className, `item #${i} did not become active`).toContain(
+        'settings-page__nav-item--active',
+      );
       expect(
-        container.querySelector(panelSelectors[i]!),
-        `tab #${i} did not render its panel (${panelSelectors[i]})`,
+        container.querySelector('.settings-page__section-title')?.textContent,
+        `section #${i} title`,
+      ).toBe(String(i18next.t(labelKey)));
+      expect(
+        container.querySelector(probe),
+        `section #${i} did not render its content (${probe})`,
       ).not.toBeNull();
     }
     await unmount();

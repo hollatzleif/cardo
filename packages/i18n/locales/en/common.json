@@ -62,7 +62,36 @@
     "backupImportConfirm": "Restore this backup? Entries with the same ID will be overwritten. Cardo restarts afterwards.",
     "backupError": "That didn't work. The file may not be a Cardo backup.",
     "assistant": "Assistant",
-    "aiLicenses": "AI models & licenses"
+    "aiLicenses": "AI models & licenses",
+    "back": "Back",
+    "version": "Version",
+    "languageDesc": "Language of the user interface.",
+    "profile": "Profile",
+    "profileDesc": "Your name and the greeting in the top bar.",
+    "appearanceEditHint": "You style individual widgets in edit mode via 🎨 Design.",
+    "notesFolder": "Notes folder",
+    "notesFolderNone": "No folder selected yet.",
+    "notesFolderChange": "Change folder",
+    "updateStatusIdle": "Not checked yet.",
+    "tour": "Guided tour",
+    "docsLink": "Documentation",
+    "docsLinkDesc": "You can find the manual and guides at this address:",
+    "section": {
+      "appearance": "Appearance",
+      "inboxPolls": "Inbox & polls",
+      "data": "Data & backup"
+    },
+    "sectionDesc": {
+      "general": "Language and your profile.",
+      "appearance": "Theme, colors, and accents.",
+      "assistant": "AI models, competences, and how the assistant behaves.",
+      "inboxPolls": "Announcements and polls from the Cardo community.",
+      "data": "Backups and where your notes are stored.",
+      "updates": "How Cardo installs new versions.",
+      "diagnostics": "The self-test checks the whole app and gives you a report.",
+      "help": "Restart the tour and find the documentation.",
+      "about": "Version, licenses, and transparency."
+    }
   },
   "diagnose": {
     "start": "Run self-test",
@@ -822,7 +851,8 @@
         "templateKnown": "Every model uses a known prompt template",
         "catalogSane": "Model catalog entries are complete and valid",
         "scopeEnforcement": "Out-of-scope commands are blocked",
-        "modelCompetences": "Model competences resolve for every model (en/de)"
+        "modelCompetences": "Model competences resolve for every model (en/de)",
+        "claudeCatalog": "Claude catalog"
       },
       "tour": {
         "title": "Braindump instead of busywork",
@@ -972,14 +1002,16 @@
       "great": "Great",
       "ok": "Okay",
       "slow": "Slow",
-      "tooBig": "Too big"
+      "tooBig": "Too big",
+      "needsSetup": "not set up"
     },
     "speed": {
       "veryFast": "instant replies",
       "fast": "fast",
       "moderate": "moderate",
       "slow": "very slow",
-      "na": "–"
+      "na": "–",
+      "cloud": "cloud"
     },
     "model": {
       "ramNeed": "needs {{ram}} RAM",
@@ -1078,7 +1110,27 @@
       "idealFor": "Ideal for",
       "installed": "Installed",
       "builtWithLlama": "Built with Llama",
-      "moeActive": "≈{{b}}B active parameters"
+      "moeActive": "≈{{b}}B active parameters",
+      "claude-fable-5": {
+        "strengths": "The most capable Claude model – strongest on complex, multi-step and agentic work.",
+        "weaknesses": "Needs internet and an active Claude subscription. Your chat content and the workspace files Claude reads are sent to Anthropic, and every request uses your plan's quota – not local, not private.",
+        "idealFor": "The hardest tasks, where quality matters more than speed."
+      },
+      "claude-opus-4-8": {
+        "strengths": "Very strong all-round model with high quality across almost every kind of task.",
+        "weaknesses": "Needs internet and an active Claude subscription. Your chat content and the workspace files Claude reads are sent to Anthropic, and every request uses your plan's quota – not local, not private.",
+        "idealFor": "Demanding everyday work that needs consistently high quality."
+      },
+      "claude-sonnet-5": {
+        "strengths": "Fast and strong at the same time – handles everyday tasks quickly and reliably.",
+        "weaknesses": "Needs internet and an active Claude subscription. Your chat content and the workspace files Claude reads are sent to Anthropic, and every request uses your plan's quota – not local, not private.",
+        "idealFor": "The brisk default for day-to-day work."
+      },
+      "claude-haiku-4-5": {
+        "strengths": "The fastest Claude model – answers almost instantly.",
+        "weaknesses": "Needs internet and an active Claude subscription. Your chat content and the workspace files Claude reads are sent to Anthropic, and every request uses your plan's quota – not local, not private.",
+        "idealFor": "Light tasks, short questions and quick commands."
+      }
     },
     "wizard": {
       "checkTitle": "Step 1: System check",
@@ -1278,6 +1330,45 @@
         "days_one": "{{count}} day ago",
         "days_other": "{{count}} days ago"
       }
+    },
+    "claude": {
+      "localGroup": "Local models",
+      "cloudGroup": "Claude (your Anthropic account)",
+      "detected": "✓ Claude Code CLI detected (v{{version}})",
+      "detectedNoVersion": "✓ Claude Code CLI detected",
+      "notFound": "Claude Code CLI not found",
+      "recheck": "Check again",
+      "guideTitle": "Set up Claude in three steps",
+      "guideStep1": "Install Claude Code from claude.com/claude-code (macOS: curl installer or Homebrew).",
+      "guideStep2": "Open a terminal, run `claude` once and sign in with your Anthropic account (Pro or Max subscription).",
+      "guideStep3": "Come back here and press “Check again”.",
+      "cloudMeta": "Cloud model · runs via your Anthropic account · nothing to download",
+      "ready": "Ready – Claude Code CLI detected",
+      "notReady": "Not set up – Claude Code CLI missing",
+      "usedBy": "Used by: {{names}}",
+      "consentTitle": "Before you use Claude",
+      "consentText": "Claude does not run on your device: it needs an internet connection and an active Claude subscription (Pro/Max). Your chat content AND the workspace files Claude reads are transmitted to Anthropic, and every request uses your plan's quota. The local models remain the private choice – with them, nothing leaves your device.",
+      "consentCheckbox": "I understand that content is transmitted to Anthropic and that my subscription quota is used.",
+      "consentConfirm": "Got it, use Claude",
+      "notInstalled": "Claude Code was not found on this machine. Set it up under Settings → Assistant (Claude section), then try again.",
+      "authError": "Claude could not sign in. Open a terminal, run `claude` once and sign in with your Anthropic account – then it will work here again.",
+      "timeout": "Claude took too long and the request was cancelled. Try again – for long conversations /clearchat helps.",
+      "generateError": "The request to Claude failed. Check your internet connection and the Claude status under Settings → Assistant.",
+      "teamNeedsLocalLeader": "Teams need a local model for routing – Claude assistants can be members but not team leaders. Add at least one member with a local model."
+    }
+  },
+  "workspace": {
+    "command": {
+      "createFile": "Create a file",
+      "append": "Append to a file",
+      "read": "Read a file",
+      "list": "List workspace files"
+    },
+    "msg": {
+      "created": "File saved to your notes folder.",
+      "appended": "Text appended.",
+      "notFound": "This file doesn't exist (yet).",
+      "failed": "That didn't work – check the file name (.md/.txt/.csv/.json)."
     }
   }
 }

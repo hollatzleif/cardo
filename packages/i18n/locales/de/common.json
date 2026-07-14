@@ -62,7 +62,36 @@
     "backupImportConfirm": "Dieses Backup wiederherstellen? Einträge mit gleicher ID werden überschrieben. Cardo startet danach neu.",
     "backupError": "Das hat nicht geklappt. Die Datei ist womöglich kein Cardo-Backup.",
     "assistant": "Assistent",
-    "aiLicenses": "KI-Modelle & Lizenzen"
+    "aiLicenses": "KI-Modelle & Lizenzen",
+    "back": "Zurück",
+    "version": "Version",
+    "languageDesc": "Sprache der Benutzeroberfläche.",
+    "profile": "Profil",
+    "profileDesc": "Dein Name und die Begrüßung in der Kopfzeile.",
+    "appearanceEditHint": "Das Design einzelner Widgets passt du im Bearbeiten-Modus über 🎨 Design an.",
+    "notesFolder": "Notiz-Ordner",
+    "notesFolderNone": "Noch kein Ordner gewählt.",
+    "notesFolderChange": "Ordner ändern",
+    "updateStatusIdle": "Noch nicht geprüft.",
+    "tour": "Einführungstour",
+    "docsLink": "Dokumentation",
+    "docsLinkDesc": "Handbuch und Anleitungen findest du unter dieser Adresse:",
+    "section": {
+      "appearance": "Erscheinungsbild",
+      "inboxPolls": "Postfach & Umfragen",
+      "data": "Daten & Backup"
+    },
+    "sectionDesc": {
+      "general": "Sprache und dein Profil.",
+      "appearance": "Design, Farben und Akzente.",
+      "assistant": "KI-Modelle, Kompetenzen und Verhalten des Assistenten.",
+      "inboxPolls": "Ankündigungen und Umfragen aus der Cardo-Community.",
+      "data": "Backups und der Speicherort deiner Notizen.",
+      "updates": "So installiert Cardo neue Versionen.",
+      "diagnostics": "Der Selbsttest prüft die ganze App und erstellt dir einen Report.",
+      "help": "Tour neu starten und Dokumentation finden.",
+      "about": "Version, Lizenzen und Transparenz."
+    }
   },
   "diagnose": {
     "start": "Selbsttest starten",
@@ -822,7 +851,8 @@
         "templateKnown": "Jedes Modell nutzt ein bekanntes Prompt-Template",
         "catalogSane": "Modellkatalog-Einträge sind vollständig und gültig",
         "scopeEnforcement": "Befehle außerhalb des Tool-Umfangs werden blockiert",
-        "modelCompetences": "Modell-Kompetenzen werden für jedes Modell aufgelöst (en/de)"
+        "modelCompetences": "Modell-Kompetenzen werden für jedes Modell aufgelöst (en/de)",
+        "claudeCatalog": "Claude-Katalog"
       },
       "tour": {
         "title": "Braindump statt Verwaltungsarbeit",
@@ -972,14 +1002,16 @@
       "great": "Sehr gut",
       "ok": "Gut",
       "slow": "Langsam",
-      "tooBig": "Zu groß"
+      "tooBig": "Zu groß",
+      "needsSetup": "nicht eingerichtet"
     },
     "speed": {
       "veryFast": "antwortet sofort",
       "fast": "flott",
       "moderate": "gemächlich",
       "slow": "sehr langsam",
-      "na": "–"
+      "na": "–",
+      "cloud": "Cloud"
     },
     "model": {
       "ramNeed": "braucht {{ram}} RAM",
@@ -1078,7 +1110,27 @@
       "idealFor": "Ideal für",
       "installed": "Installiert",
       "builtWithLlama": "Built with Llama",
-      "moeActive": "≈{{b}} Mrd. aktive Parameter"
+      "moeActive": "≈{{b}} Mrd. aktive Parameter",
+      "claude-fable-5": {
+        "strengths": "Das leistungsfähigste Claude-Modell – am stärksten bei komplexen, mehrstufigen und agentischen Aufgaben.",
+        "weaknesses": "Braucht Internet und ein aktives Claude-Abo. Deine Chat-Inhalte und die Workspace-Dateien, die Claude liest, werden an Anthropic übertragen, und jede Anfrage verbraucht Kontingent deines Abos – nicht lokal, nicht privat.",
+        "idealFor": "Die schwierigsten Aufgaben, bei denen Qualität vor Geschwindigkeit geht."
+      },
+      "claude-opus-4-8": {
+        "strengths": "Sehr starkes Allround-Modell mit hoher Qualität bei fast allen Aufgaben.",
+        "weaknesses": "Braucht Internet und ein aktives Claude-Abo. Deine Chat-Inhalte und die Workspace-Dateien, die Claude liest, werden an Anthropic übertragen, und jede Anfrage verbraucht Kontingent deines Abos – nicht lokal, nicht privat.",
+        "idealFor": "Anspruchsvolle Alltagsarbeit, die durchgehend hohe Qualität braucht."
+      },
+      "claude-sonnet-5": {
+        "strengths": "Schnell und stark zugleich – erledigt Alltagsaufgaben zügig und zuverlässig.",
+        "weaknesses": "Braucht Internet und ein aktives Claude-Abo. Deine Chat-Inhalte und die Workspace-Dateien, die Claude liest, werden an Anthropic übertragen, und jede Anfrage verbraucht Kontingent deines Abos – nicht lokal, nicht privat.",
+        "idealFor": "Der flotte Standard für die tägliche Arbeit."
+      },
+      "claude-haiku-4-5": {
+        "strengths": "Das schnellste Claude-Modell – antwortet fast sofort.",
+        "weaknesses": "Braucht Internet und ein aktives Claude-Abo. Deine Chat-Inhalte und die Workspace-Dateien, die Claude liest, werden an Anthropic übertragen, und jede Anfrage verbraucht Kontingent deines Abos – nicht lokal, nicht privat.",
+        "idealFor": "Leichte Aufgaben, kurze Fragen und schnelle Kommandos."
+      }
     },
     "wizard": {
       "checkTitle": "Schritt 1: System-Check",
@@ -1278,6 +1330,45 @@
         "days_one": "vor {{count}} Tag",
         "days_other": "vor {{count}} Tagen"
       }
+    },
+    "claude": {
+      "localGroup": "Lokale Modelle",
+      "cloudGroup": "Claude (dein Anthropic-Konto)",
+      "detected": "✓ Claude Code CLI erkannt (v{{version}})",
+      "detectedNoVersion": "✓ Claude Code CLI erkannt",
+      "notFound": "Claude Code CLI nicht gefunden",
+      "recheck": "Erneut prüfen",
+      "guideTitle": "Claude in drei Schritten einrichten",
+      "guideStep1": "Installiere Claude Code von claude.com/claude-code (macOS: curl-Installer oder Homebrew).",
+      "guideStep2": "Öffne ein Terminal, führe einmal `claude` aus und melde dich mit deinem Anthropic-Konto an (Pro- oder Max-Abo).",
+      "guideStep3": "Komm hierher zurück und drücke „Erneut prüfen“.",
+      "cloudMeta": "Cloud-Modell · läuft über dein Anthropic-Konto · nichts herunterzuladen",
+      "ready": "Bereit – Claude Code CLI erkannt",
+      "notReady": "Nicht eingerichtet – Claude Code CLI fehlt",
+      "usedBy": "Wird genutzt von: {{names}}",
+      "consentTitle": "Bevor du Claude nutzt",
+      "consentText": "Claude läuft nicht auf deinem Gerät: Es braucht eine Internetverbindung und ein aktives Claude-Abo (Pro/Max). Deine Chat-Inhalte UND die Workspace-Dateien, die Claude liest, werden an Anthropic übertragen, und jede Anfrage verbraucht Kontingent deines Abos. Die lokalen Modelle bleiben die private Wahl – bei ihnen verlässt nichts dein Gerät.",
+      "consentCheckbox": "Ich habe verstanden, dass Inhalte an Anthropic übertragen werden und mein Abo-Kontingent genutzt wird.",
+      "consentConfirm": "Verstanden, Claude nutzen",
+      "notInstalled": "Claude Code wurde auf diesem Gerät nicht gefunden. Richte es unter Einstellungen → Assistent (Bereich „Claude“) ein und versuch es dann noch einmal.",
+      "authError": "Claude konnte sich nicht anmelden. Öffne ein Terminal, führe einmal `claude` aus und melde dich mit deinem Anthropic-Konto an – danach klappt es hier wieder.",
+      "timeout": "Claude hat zu lange gebraucht, die Anfrage wurde abgebrochen. Versuch es noch einmal – bei langen Verläufen hilft /clearchat.",
+      "generateError": "Die Anfrage an Claude ist fehlgeschlagen. Prüfe deine Internetverbindung und den Claude-Status unter Einstellungen → Assistent.",
+      "teamNeedsLocalLeader": "Teams brauchen ein lokales Modell für die Aufgabenverteilung – Claude-Assistenten können Mitglied sein, aber nicht Teamleiter. Füge mindestens ein Mitglied mit lokalem Modell hinzu."
+    }
+  },
+  "workspace": {
+    "command": {
+      "createFile": "Datei anlegen",
+      "append": "An Datei anhängen",
+      "read": "Datei lesen",
+      "list": "Workspace-Dateien auflisten"
+    },
+    "msg": {
+      "created": "Datei im Notiz-Ordner gespeichert.",
+      "appended": "Text angehängt.",
+      "notFound": "Diese Datei gibt es (noch) nicht.",
+      "failed": "Das hat nicht geklappt – prüfe den Dateinamen (.md/.txt/.csv/.json)."
     }
   }
 }
