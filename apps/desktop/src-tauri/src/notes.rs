@@ -278,9 +278,182 @@ pub fn workspace_delete(state: tauri::State<'_, NotesState>, name: String) -> Cm
     std::fs::remove_file(path).map_err(|e| e.to_string())
 }
 
+/* ── File browser (files-explorer widget) ─────────────────────────────────
+ * A read/preview view over the notes folder: text files stay editable via the
+ * workspace_* commands; images are read as base64 for an in-app preview; PDF
+ * and HTML are handed to the OS default app. Same traversal defenses, a wider
+ * extension allowlist, and a larger (but bounded) size cap for binaries. */
+
+const IMAGE_EXTENSIONS: [&str; 6] = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"];
+const FILES_READ_MAX_BYTES: u64 = 12 * 1024 * 1024;
+
+/// Kind hint for the widget: "text" | "image" | "pdf" | "html".
+fn file_kind(name: &str) -> Option<&'static str> {
+    let lower = name.to_lowercase();
+    if WORKSPACE_EXTENSIONS.iter().any(|e| lower.ends_with(e)) {
+        Some("text")
+    } else if IMAGE_EXTENSIONS.iter().any(|e| lower.ends_with(e)) {
+        Some("image")
+    } else if lower.ends_with(".pdf") {
+        Some("pdf")
+    } else if lower.ends_with(".html") || lower.ends_with(".htm") {
+        Some("html")
+    } else {
+        None
+    }
+}
+
+fn validate_browse_name(name: &str) -> CmdResult<()> {
+    let ok = !name.is_empty()
+        && name.len() <= 255
+        && file_kind(name).is_some()
+        && !name.contains('/')
+        && !name.contains('\\')
+        && !name.contains("..")
+        && !name.starts_with('.');
+    if ok {
+        Ok(())
+    } else {
+        Err(format!("cannot browse \"{name}\""))
+    }
+}
+
+#[derive(serde::Serialize)]
+pub struct BrowseEntry {
+    pub name: String,
+    pub kind: String,
+    pub modified_ms: u64,
+    pub size: u64,
+}
+
+/// Minimal std-base64 (no dependency) for image data URLs.
+fn base64_encode(bytes: &[u8]) -> String {
+    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
+    for chunk in bytes.chunks(3) {
+        let b0 = chunk[0] as u32;
+        let b1 = *chunk.get(1).unwrap_or(&0) as u32;
+        let b2 = *chunk.get(2).unwrap_or(&0) as u32;
+        let n = (b0 << 16) | (b1 << 8) | b2;
+        out.push(T[((n >> 18) & 63) as usize] as char);
+        out.push(T[((n >> 12) & 63) as usize] as char);
+        out.push(if chunk.len() > 1 { T[((n >> 6) & 63) as usize] as char } else { '=' });
+        out.push(if chunk.len() > 2 { T[(n & 63) as usize] as char } else { '=' });
+    }
+    out
+}
+
+/// Lists browsable files (text/image/pdf/html) in the notes folder.
+#[tauri::command]
+pub fn files_browse(state: tauri::State<'_, NotesState>) -> CmdResult<Vec<BrowseEntry>> {
+    let dir = current_dir(&state)?;
+    let mut files = Vec::new();
+    for entry in std::fs::read_dir(&dir).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let name = entry.file_name().to_string_lossy().to_string();
+        let Some(kind) = file_kind(&name) else { continue };
+        if !entry.path().is_file() {
+            continue;
+        }
+        let meta = entry.metadata().map_err(|e| e.to_string())?;
+        let modified_ms = meta
+            .modified()
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(0);
+        files.push(BrowseEntry { name, kind: kind.to_string(), modified_ms, size: meta.len() });
+    }
+    files.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    Ok(files)
+}
+
+/// Reads an image file as a base64 data URL for in-app preview.
+#[tauri::command]
+pub fn files_read_data_url(state: tauri::State<'_, NotesState>, name: String) -> CmdResult<String> {
+    validate_browse_name(&name)?;
+    if file_kind(&name) != Some("image") {
+        return Err("not an image".to_string());
+    }
+    let path = current_dir(&state)?.join(&name);
+    let meta = std::fs::metadata(&path).map_err(|e| e.to_string())?;
+    if meta.len() > FILES_READ_MAX_BYTES {
+        return Err("file too large".to_string());
+    }
+    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
+    let lower = name.to_lowercase();
+    let mime = if lower.ends_with(".png") {
+        "image/png"
+    } else if lower.ends_with(".jpg") || lower.ends_with(".jpeg") {
+        "image/jpeg"
+    } else if lower.ends_with(".gif") {
+        "image/gif"
+    } else if lower.ends_with(".webp") {
+        "image/webp"
+    } else {
+        "image/svg+xml"
+    };
+    Ok(format!("data:{mime};base64,{}", base64_encode(&bytes)))
+}
+
+/// Opens a file (e.g. PDF/HTML) in the OS default application. Args are passed
+/// directly to the launcher (no shell), on a validated in-folder path only.
+#[tauri::command]
+pub fn files_open_external(state: tauri::State<'_, NotesState>, name: String) -> CmdResult<()> {
+    validate_browse_name(&name)?;
+    let path = current_dir(&state)?.join(&name);
+    if !path.is_file() {
+        return Err("file not found".to_string());
+    }
+    let launcher = if cfg!(target_os = "macos") {
+        "open"
+    } else if cfg!(target_os = "windows") {
+        "explorer"
+    } else {
+        "xdg-open"
+    };
+    std::process::Command::new(launcher)
+        .arg(path.as_os_str())
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn file_kind_classifies_by_extension() {
+        assert_eq!(file_kind("notiz.md"), Some("text"));
+        assert_eq!(file_kind("data.CSV"), Some("text")); // case-insensitive
+        assert_eq!(file_kind("foto.PNG"), Some("image"));
+        assert_eq!(file_kind("scan.jpeg"), Some("image"));
+        assert_eq!(file_kind("brief.pdf"), Some("pdf"));
+        assert_eq!(file_kind("seite.html"), Some("html"));
+        assert_eq!(file_kind("seite.htm"), Some("html"));
+        assert_eq!(file_kind("archiv.zip"), None);
+        assert_eq!(file_kind("noext"), None);
+    }
+
+    #[test]
+    fn browse_rejects_traversal_and_unknown_types() {
+        for bad in ["../x.png", "a/b.pdf", "a\\b.md", ".hidden.png", "x.zip", ""] {
+            assert!(validate_browse_name(bad).is_err(), "should reject {bad:?}");
+        }
+        assert!(validate_browse_name("urlaub.png").is_ok());
+        assert!(validate_browse_name("bericht.pdf").is_ok());
+    }
+
+    #[test]
+    fn base64_matches_known_vectors() {
+        assert_eq!(base64_encode(b""), "");
+        assert_eq!(base64_encode(b"f"), "Zg==");
+        assert_eq!(base64_encode(b"fo"), "Zm8=");
+        assert_eq!(base64_encode(b"foo"), "Zm9v");
+        assert_eq!(base64_encode(b"foobar"), "Zm9vYmFy");
+        assert_eq!(base64_encode(&[0, 255, 128]), "AP+A");
+    }
 
     #[test]
     fn rejects_traversal_and_non_md() {
