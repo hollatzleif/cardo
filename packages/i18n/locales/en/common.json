@@ -1820,79 +1820,224 @@
       }
     },
     "flashcards": {
-      "name": "Flashcards",
-      "description": "TODO: describe Flashcards.",
-      "privacy": "Works fully local. Nothing leaves your device.",
-      "widget": {
-        "empty": "Nothing here yet."
-      },
-      "command": {
-        "context": "Flashcards: current state"
-      },
-      "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
-      },
-      "tour": {
-        "title": "Flashcards",
-        "body": "TODO: one-line tour hint for Flashcards."
+      "tool": {
+        "flashcards": {
+          "name": "Flashcards",
+          "description": "Spaced-repetition flashcards (SM-2): decks, daily reviews and learning stats – fully local.",
+          "privacy": "Works fully local. Your cards and learning progress never leave this device.",
+          "widget": {
+            "empty": "No cards yet – add your first one above."
+          },
+          "study": {
+            "reveal": "Show answer",
+            "backSide": "Back to the question",
+            "dueCount": "{{count}} due",
+            "done": "All caught up – nothing due right now.",
+            "checkAgain": "Check again"
+          },
+          "grade": {
+            "again": "Again",
+            "hard": "Hard",
+            "good": "Good",
+            "easy": "Easy"
+          },
+          "grid": {
+            "deckPlaceholder": "Deck",
+            "frontPlaceholder": "Front",
+            "backPlaceholder": "Back",
+            "add": "Add card",
+            "cards": "{{count}} cards",
+            "due": "{{count}} due"
+          },
+          "stats": {
+            "title": "{{count}} reviews in the last 14 days",
+            "empty": "No reviews yet – study a few cards first."
+          },
+          "command": {
+            "addCard": "Flashcards: add a card",
+            "addCardDesc": "Adds a flashcard (front/back) to a deck; the deck is created by name when missing.",
+            "reviewDue": "Flashcards: review due cards",
+            "reviewDueDesc": "Counts the cards due today and starts a study session in the widget.",
+            "context": "Flashcards: current state",
+            "contextDesc": "Summarizes decks, card counts and today's due cards for the assistant."
+          },
+          "msg": {
+            "cardAdded": "Card added.",
+            "invalidCard": "Deck, front and back must not be empty.",
+            "dueReady": "There are cards due – time to study!",
+            "nothingDue": "Nothing due right now – all caught up."
+          },
+          "test": {
+            "sm2": "SM-2 math (grades, intervals, ease floor)",
+            "crud": "Deck and card roundtrip works",
+            "dueFlow": "Add → review → due date advances",
+            "render": "Widget renders"
+          },
+          "tour": {
+            "title": "Flashcards",
+            "body": "Add cards to decks and grade yourself daily – the SM-2 algorithm schedules every card exactly when you are about to forget it."
+          }
+        }
       }
     },
     "mood": {
-      "name": "Mood Journal",
-      "description": "TODO: describe Mood Journal.",
-      "privacy": "Works fully local. Nothing leaves your device.",
-      "widget": {
-        "empty": "Nothing here yet."
-      },
-      "command": {
-        "context": "Mood Journal: current state"
-      },
-      "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
-      },
-      "tour": {
-        "title": "Mood Journal",
-        "body": "TODO: one-line tour hint for Mood Journal."
+      "tool": {
+        "mood": {
+          "name": "Mood Journal",
+          "description": "One mood (1-5) and one journal line per day, with calendar, trend and streaks – fully local.",
+          "privacy": "Works fully local. Your moods and notes never leave this device.",
+          "widget": {
+            "empty": "No mood entries yet.",
+            "settingsToggle": "Show or hide settings"
+          },
+          "today": {
+            "question": "How are you feeling today?",
+            "moodLabel": "Mood {{mood}} of 5",
+            "notePlaceholder": "One line about today (optional)",
+            "streak": "{{count}} day streak"
+          },
+          "trend": {
+            "average": "14-day average: {{avg}}/5",
+            "empty": "No entries in the last 14 days.",
+            "chartLabel": "Mood of the last 14 days"
+          },
+          "settings": {
+            "weekStart": "Week starts on",
+            "weekStartMon": "Monday",
+            "weekStartSun": "Sunday",
+            "scaleStyle": "Scale style",
+            "scaleEmoji": "Emoji",
+            "scaleNumbers": "Numbers"
+          },
+          "command": {
+            "log": "Mood: log today",
+            "logDesc": "Logs today's mood (1-5) with an optional one-line note; logging again updates the day.",
+            "context": "Mood: current state",
+            "contextDesc": "Summarizes today's mood, the streak and the 7-day average for the assistant."
+          },
+          "msg": {
+            "logged": "Mood saved."
+          },
+          "test": {
+            "crud": "Daily entry roundtrip and same-day upsert work",
+            "streakMath": "Streak and average math is correct",
+            "render": "Widget renders"
+          },
+          "tour": {
+            "title": "Mood Journal",
+            "body": "Tap the face that matches your day and add one line if you like – the calendar and trend show how your weeks really felt."
+          }
+        }
       }
     },
     "sleep-log": {
-      "name": "Sleep Log",
-      "description": "TODO: describe Sleep Log.",
-      "privacy": "Works fully local. Nothing leaves your device.",
-      "widget": {
-        "empty": "Nothing here yet."
-      },
-      "command": {
-        "context": "Sleep Log: current state"
-      },
-      "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
-      },
-      "tour": {
-        "title": "Sleep Log",
-        "body": "TODO: one-line tour hint for Sleep Log."
+      "tool": {
+        "sleep-log": {
+          "name": "Sleep Log",
+          "description": "Bed and wake times per night with weekly bars, averages and consistency – fully local.",
+          "privacy": "Works fully local. Your sleep data never leaves this device.",
+          "widget": {
+            "empty": "No nights logged yet.",
+            "settingsToggle": "Show or hide settings"
+          },
+          "log": {
+            "dateLabel": "Wake-up date",
+            "bedLabel": "Bedtime",
+            "wakeLabel": "Wake time",
+            "add": "Log night",
+            "delete": "Delete night of {{date}}"
+          },
+          "weekly": {
+            "title": "Last 7 nights (goal {{goal}} h)"
+          },
+          "summary": {
+            "average": "7-day average",
+            "consistency": "Consistency (± stdev)",
+            "goalStreak": "Nights at goal in a row"
+          },
+          "settings": {
+            "goalHours": "Goal (hours)",
+            "timeFormat": "Time display",
+            "format24": "24-hour",
+            "format12": "12-hour (AM/PM)"
+          },
+          "command": {
+            "log": "Sleep: log a night",
+            "logDesc": "Logs bed and wake time (HH:MM) for a wake-up date (default: today); nights crossing midnight are handled.",
+            "context": "Sleep: current state",
+            "contextDesc": "Summarizes last night, the 7-day average and the goal streak for the assistant."
+          },
+          "msg": {
+            "logged": "Night saved.",
+            "invalidTime": "Times must be HH:MM (e.g. 23:30).",
+            "invalidDate": "The date must be a real day (YYYY-MM-DD)."
+          },
+          "test": {
+            "midnightMath": "Duration math across midnight is correct",
+            "crud": "Night roundtrip and same-day upsert work",
+            "render": "Widget renders"
+          },
+          "tour": {
+            "title": "Sleep Log",
+            "body": "Log when you went to bed and when you woke up – the weekly bars show at a glance how close you get to your sleep goal."
+          }
+        }
       }
     },
     "workout": {
-      "name": "Workout Log",
-      "description": "TODO: describe Workout Log.",
-      "privacy": "Works fully local. Nothing leaves your device.",
-      "widget": {
-        "empty": "Nothing here yet."
-      },
-      "command": {
-        "context": "Workout Log: current state"
-      },
-      "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
-      },
-      "tour": {
-        "title": "Workout Log",
-        "body": "TODO: one-line tour hint for Workout Log."
+      "tool": {
+        "workout": {
+          "name": "Workout Log",
+          "description": "Training sessions with sets, reps and weight, weekly volume and personal records – fully local.",
+          "privacy": "Works fully local. Your training data never leaves this device.",
+          "widget": {
+            "empty": "No workouts logged yet.",
+            "settingsToggle": "Show or hide settings"
+          },
+          "log": {
+            "kindPlaceholder": "New session (e.g. Push, Legs, Run)",
+            "addSession": "Log session",
+            "toggleSession": "Show or hide exercises of {{kind}}",
+            "deleteSession": "Delete session {{kind}}",
+            "exerciseCount": "{{count}} exercises",
+            "exercisePlaceholder": "Exercise",
+            "sets": "Sets",
+            "reps": "Reps",
+            "weight": "Weight ({{unit}}, empty = bodyweight)",
+            "addExercise": "Add exercise",
+            "deleteExercise": "Remove {{name}}",
+            "sessionVolume": "Session volume: {{volume}}"
+          },
+          "weekly": {
+            "title": "This week: {{count}} sessions, volume {{volume}}"
+          },
+          "records": {
+            "empty": "No records yet – log an exercise with weight first."
+          },
+          "settings": {
+            "unit": "Weight unit"
+          },
+          "command": {
+            "log": "Workout: log a session",
+            "logDesc": "Creates an empty training session (kind, date defaults to today) and returns its id; exercises are added in the widget.",
+            "context": "Workout: current state",
+            "contextDesc": "Summarizes this week's sessions, the volume and the latest personal record for the assistant."
+          },
+          "msg": {
+            "logged": "Session logged.",
+            "invalidKind": "The session needs a name (e.g. Push).",
+            "invalidDate": "The date must be a real day (YYYY-MM-DD)."
+          },
+          "test": {
+            "crud": "Session and exercise roundtrip works",
+            "volumeMath": "Volume and week-window math is correct",
+            "render": "Widget renders"
+          },
+          "tour": {
+            "title": "Workout Log",
+            "body": "Log a session, open it and add your exercises with sets, reps and weight – weekly volume and personal records take care of themselves."
+          }
+        }
       }
     },
     "meal-planner": {

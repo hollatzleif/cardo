@@ -21,20 +21,29 @@
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "today",
+        "calendar",
+        "trend"
+      ]
     }
   ],
   "commands": [
+    "mood.log",
     "mood.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.mood.test.render"
+      "id": "crud",
+      "titleKey": "tool.mood.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.mood.test.storage"
+      "id": "streak-math",
+      "titleKey": "tool.mood.test.streakMath"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.mood.test.render"
     }
   ],
   "tourSteps": [

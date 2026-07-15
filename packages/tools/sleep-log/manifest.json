@@ -21,20 +21,29 @@
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "log",
+        "weekly-bar",
+        "summary"
+      ]
     }
   ],
   "commands": [
+    "sleep-log.log",
     "sleep-log.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.sleep-log.test.render"
+      "id": "midnight-math",
+      "titleKey": "tool.sleep-log.test.midnightMath"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.sleep-log.test.storage"
+      "id": "crud",
+      "titleKey": "tool.sleep-log.test.crud"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.sleep-log.test.render"
     }
   ],
   "tourSteps": [

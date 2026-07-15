@@ -1820,79 +1820,224 @@
       }
     },
     "flashcards": {
-      "name": "Karteikarten",
-      "description": "TODO: Karteikarten beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
-      "widget": {
-        "empty": "Noch nichts hier."
-      },
-      "command": {
-        "context": "Karteikarten: aktueller Stand"
-      },
-      "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
-      },
-      "tour": {
-        "title": "Karteikarten",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Karteikarten."
+      "tool": {
+        "flashcards": {
+          "name": "Karteikarten",
+          "description": "Karteikarten mit Spaced Repetition (SM-2): Stapel, tägliche Wiederholungen und Lernstatistik – komplett lokal.",
+          "privacy": "Arbeitet komplett lokal. Deine Karten und dein Lernfortschritt verlassen dieses Gerät nie.",
+          "widget": {
+            "empty": "Noch keine Karten – leg oben deine erste an."
+          },
+          "study": {
+            "reveal": "Antwort zeigen",
+            "backSide": "Zurück zur Frage",
+            "dueCount": "{{count}} fällig",
+            "done": "Alles gelernt – gerade ist nichts fällig.",
+            "checkAgain": "Nochmal prüfen"
+          },
+          "grade": {
+            "again": "Nochmal",
+            "hard": "Schwer",
+            "good": "Gut",
+            "easy": "Leicht"
+          },
+          "grid": {
+            "deckPlaceholder": "Stapel",
+            "frontPlaceholder": "Vorderseite",
+            "backPlaceholder": "Rückseite",
+            "add": "Karte hinzufügen",
+            "cards": "{{count}} Karten",
+            "due": "{{count}} fällig"
+          },
+          "stats": {
+            "title": "{{count}} Wiederholungen in den letzten 14 Tagen",
+            "empty": "Noch keine Wiederholungen – lern erst ein paar Karten."
+          },
+          "command": {
+            "addCard": "Karteikarten: Karte hinzufügen",
+            "addCardDesc": "Fügt eine Karteikarte (Vorder-/Rückseite) zu einem Stapel hinzu; fehlende Stapel werden per Name angelegt.",
+            "reviewDue": "Karteikarten: Fällige lernen",
+            "reviewDueDesc": "Zählt die heute fälligen Karten und startet eine Lernrunde im Widget.",
+            "context": "Karteikarten: aktueller Stand",
+            "contextDesc": "Fasst Stapel, Kartenzahlen und die heute fälligen Karten für den Assistenten zusammen."
+          },
+          "msg": {
+            "cardAdded": "Karte hinzugefügt.",
+            "invalidCard": "Stapel, Vorder- und Rückseite dürfen nicht leer sein.",
+            "dueReady": "Es sind Karten fällig – Zeit zu lernen!",
+            "nothingDue": "Gerade ist nichts fällig – alles gelernt."
+          },
+          "test": {
+            "sm2": "SM-2-Mathematik (Noten, Intervalle, Ease-Untergrenze)",
+            "crud": "Stapel- und Karten-Roundtrip funktioniert",
+            "dueFlow": "Anlegen → Lernen → Fälligkeit wandert",
+            "render": "Widget rendert"
+          },
+          "tour": {
+            "title": "Karteikarten",
+            "body": "Leg Karten in Stapeln an und bewerte dich täglich – der SM-2-Algorithmus plant jede Karte genau dann ein, wenn du sie fast vergessen hättest."
+          }
+        }
       }
     },
     "mood": {
-      "name": "Stimmungstagebuch",
-      "description": "TODO: Stimmungstagebuch beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
-      "widget": {
-        "empty": "Noch nichts hier."
-      },
-      "command": {
-        "context": "Stimmungstagebuch: aktueller Stand"
-      },
-      "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
-      },
-      "tour": {
-        "title": "Stimmungstagebuch",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Stimmungstagebuch."
+      "tool": {
+        "mood": {
+          "name": "Stimmungstagebuch",
+          "description": "Eine Stimmung (1-5) und eine Tagebuchzeile pro Tag, mit Kalender, Trend und Serien – komplett lokal.",
+          "privacy": "Arbeitet komplett lokal. Deine Stimmungen und Notizen verlassen dieses Gerät nie.",
+          "widget": {
+            "empty": "Noch keine Stimmungseinträge.",
+            "settingsToggle": "Einstellungen ein- oder ausblenden"
+          },
+          "today": {
+            "question": "Wie fühlst du dich heute?",
+            "moodLabel": "Stimmung {{mood}} von 5",
+            "notePlaceholder": "Eine Zeile zu heute (optional)",
+            "streak": "{{count}} Tage in Serie"
+          },
+          "trend": {
+            "average": "14-Tage-Schnitt: {{avg}}/5",
+            "empty": "Keine Einträge in den letzten 14 Tagen.",
+            "chartLabel": "Stimmung der letzten 14 Tage"
+          },
+          "settings": {
+            "weekStart": "Woche beginnt am",
+            "weekStartMon": "Montag",
+            "weekStartSun": "Sonntag",
+            "scaleStyle": "Skalen-Stil",
+            "scaleEmoji": "Emoji",
+            "scaleNumbers": "Zahlen"
+          },
+          "command": {
+            "log": "Stimmung: heute eintragen",
+            "logDesc": "Trägt die heutige Stimmung (1-5) mit optionaler Notizzeile ein; erneutes Eintragen aktualisiert den Tag.",
+            "context": "Stimmung: aktueller Stand",
+            "contextDesc": "Fasst heutige Stimmung, Serie und 7-Tage-Schnitt für den Assistenten zusammen."
+          },
+          "msg": {
+            "logged": "Stimmung gespeichert."
+          },
+          "test": {
+            "crud": "Tageseintrag-Roundtrip und Same-Day-Upsert funktionieren",
+            "streakMath": "Serien- und Durchschnittsrechnung stimmt",
+            "render": "Widget rendert"
+          },
+          "tour": {
+            "title": "Stimmungstagebuch",
+            "body": "Tipp auf das Gesicht, das zu deinem Tag passt, und ergänze bei Bedarf eine Zeile – Kalender und Trend zeigen dir, wie sich deine Wochen wirklich angefühlt haben."
+          }
+        }
       }
     },
     "sleep-log": {
-      "name": "Schlaf-Log",
-      "description": "TODO: Schlaf-Log beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
-      "widget": {
-        "empty": "Noch nichts hier."
-      },
-      "command": {
-        "context": "Schlaf-Log: aktueller Stand"
-      },
-      "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
-      },
-      "tour": {
-        "title": "Schlaf-Log",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Schlaf-Log."
+      "tool": {
+        "sleep-log": {
+          "name": "Schlafprotokoll",
+          "description": "Zubettgeh- und Aufwachzeiten pro Nacht mit Wochenbalken, Durchschnitt und Konstanz – komplett lokal.",
+          "privacy": "Arbeitet komplett lokal. Deine Schlafdaten verlassen dieses Gerät nie.",
+          "widget": {
+            "empty": "Noch keine Nächte erfasst.",
+            "settingsToggle": "Einstellungen ein- oder ausblenden"
+          },
+          "log": {
+            "dateLabel": "Aufwachdatum",
+            "bedLabel": "Zubettgehzeit",
+            "wakeLabel": "Aufwachzeit",
+            "add": "Nacht eintragen",
+            "delete": "Nacht vom {{date}} löschen"
+          },
+          "weekly": {
+            "title": "Letzte 7 Nächte (Ziel {{goal}} h)"
+          },
+          "summary": {
+            "average": "7-Tage-Schnitt",
+            "consistency": "Konstanz (± Streuung)",
+            "goalStreak": "Nächte am Ziel in Serie"
+          },
+          "settings": {
+            "goalHours": "Ziel (Stunden)",
+            "timeFormat": "Zeitanzeige",
+            "format24": "24 Stunden",
+            "format12": "12 Stunden (AM/PM)"
+          },
+          "command": {
+            "log": "Schlaf: Nacht eintragen",
+            "logDesc": "Trägt Zubettgeh- und Aufwachzeit (HH:MM) für ein Aufwachdatum ein (Standard: heute); Nächte über Mitternacht werden korrekt gerechnet.",
+            "context": "Schlaf: aktueller Stand",
+            "contextDesc": "Fasst die letzte Nacht, den 7-Tage-Schnitt und die Ziel-Serie für den Assistenten zusammen."
+          },
+          "msg": {
+            "logged": "Nacht gespeichert.",
+            "invalidTime": "Zeiten müssen HH:MM sein (z. B. 23:30).",
+            "invalidDate": "Das Datum muss ein echter Tag sein (JJJJ-MM-TT)."
+          },
+          "test": {
+            "midnightMath": "Dauerberechnung über Mitternacht stimmt",
+            "crud": "Nacht-Roundtrip und Same-Day-Upsert funktionieren",
+            "render": "Widget rendert"
+          },
+          "tour": {
+            "title": "Schlafprotokoll",
+            "body": "Trag ein, wann du ins Bett gegangen und aufgewacht bist – die Wochenbalken zeigen dir auf einen Blick, wie nah du deinem Schlafziel kommst."
+          }
+        }
       }
     },
     "workout": {
-      "name": "Trainingslog",
-      "description": "TODO: Trainingslog beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
-      "widget": {
-        "empty": "Noch nichts hier."
-      },
-      "command": {
-        "context": "Trainingslog: aktueller Stand"
-      },
-      "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
-      },
-      "tour": {
-        "title": "Trainingslog",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Trainingslog."
+      "tool": {
+        "workout": {
+          "name": "Trainingslog",
+          "description": "Trainingseinheiten mit Sätzen, Wiederholungen und Gewicht, Wochenvolumen und persönlichen Rekorden – komplett lokal.",
+          "privacy": "Arbeitet komplett lokal. Deine Trainingsdaten verlassen dieses Gerät nie.",
+          "widget": {
+            "empty": "Noch keine Workouts erfasst.",
+            "settingsToggle": "Einstellungen ein- oder ausblenden"
+          },
+          "log": {
+            "kindPlaceholder": "Neue Einheit (z. B. Push, Beine, Lauf)",
+            "addSession": "Einheit anlegen",
+            "toggleSession": "Übungen von {{kind}} ein- oder ausblenden",
+            "deleteSession": "Einheit {{kind}} löschen",
+            "exerciseCount": "{{count}} Übungen",
+            "exercisePlaceholder": "Übung",
+            "sets": "Sätze",
+            "reps": "Wdh.",
+            "weight": "Gewicht ({{unit}}, leer = Körpergewicht)",
+            "addExercise": "Übung hinzufügen",
+            "deleteExercise": "{{name}} entfernen",
+            "sessionVolume": "Volumen der Einheit: {{volume}}"
+          },
+          "weekly": {
+            "title": "Diese Woche: {{count}} Einheiten, Volumen {{volume}}"
+          },
+          "records": {
+            "empty": "Noch keine Rekorde – trag erst eine Übung mit Gewicht ein."
+          },
+          "settings": {
+            "unit": "Gewichtseinheit"
+          },
+          "command": {
+            "log": "Workout: Einheit anlegen",
+            "logDesc": "Legt eine leere Trainingseinheit an (Art, Datum standardmäßig heute) und liefert ihre Id; Übungen ergänzt du im Widget.",
+            "context": "Workout: aktueller Stand",
+            "contextDesc": "Fasst die Einheiten dieser Woche, das Volumen und den letzten persönlichen Rekord für den Assistenten zusammen."
+          },
+          "msg": {
+            "logged": "Einheit angelegt.",
+            "invalidKind": "Die Einheit braucht einen Namen (z. B. Push).",
+            "invalidDate": "Das Datum muss ein echter Tag sein (JJJJ-MM-TT)."
+          },
+          "test": {
+            "crud": "Einheiten- und Übungs-Roundtrip funktioniert",
+            "volumeMath": "Volumen- und Wochenfenster-Rechnung stimmt",
+            "render": "Widget rendert"
+          },
+          "tour": {
+            "title": "Trainingslog",
+            "body": "Leg eine Einheit an, öffne sie und ergänze deine Übungen mit Sätzen, Wiederholungen und Gewicht – Wochenvolumen und Rekorde ergeben sich von selbst."
+          }
+        }
       }
     },
     "meal-planner": {

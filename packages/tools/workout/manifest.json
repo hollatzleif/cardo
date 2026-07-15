@@ -15,26 +15,35 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "log",
+        "weekly",
+        "records"
+      ]
     }
   ],
   "commands": [
+    "workout.log",
     "workout.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.workout.test.render"
+      "id": "crud",
+      "titleKey": "tool.workout.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.workout.test.storage"
+      "id": "volume-math",
+      "titleKey": "tool.workout.test.volumeMath"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.workout.test.render"
     }
   ],
   "tourSteps": [

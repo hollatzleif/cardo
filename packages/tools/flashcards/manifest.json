@@ -15,26 +15,40 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "study",
+        "grid",
+        "stats"
+      ]
     }
   ],
   "commands": [
+    "flashcards.add-card",
+    "flashcards.review-due",
     "flashcards.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.flashcards.test.render"
+      "id": "sm2",
+      "titleKey": "tool.flashcards.test.sm2"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.flashcards.test.storage"
+      "id": "crud",
+      "titleKey": "tool.flashcards.test.crud"
+    },
+    {
+      "id": "due-flow",
+      "titleKey": "tool.flashcards.test.dueFlow"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.flashcards.test.render"
     }
   ],
   "tourSteps": [
