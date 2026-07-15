@@ -47,6 +47,8 @@ async function bootstrap(): Promise<void> {
   registerWorkspaceCommands(host);
   const { registerSyncCommands } = await import('./host/syncCommands');
   registerSyncCommands(host);
+  const { registerLayoutCommands } = await import('./host/layoutCommands');
+  registerLayoutCommands(host);
 
   await useAppStore.getState().init();
   void initGlobalShortcuts(host);

@@ -191,19 +191,22 @@ export async function saveDesign(d: DesignOverrides): Promise<void> {
  * The host calls this once at startup and again after every theme switch
  * (AFTER applyTheme), so user design survives theme changes.
  */
-export async function loadAndApplyStoredDesign(): Promise<DesignOverrides> {
+export async function loadDesign(): Promise<DesignOverrides> {
   const [namespace, id] = DESIGN_DOC;
-  let overrides: DesignOverrides = {};
   try {
     const raw = await getHost().backend.get(namespace, id);
     if (raw && typeof raw === 'object' && 'value' in raw) {
       const value = (raw as { value?: unknown }).value;
-      if (value && typeof value === 'object') overrides = value as DesignOverrides;
+      if (value && typeof value === 'object') return value as DesignOverrides;
     }
   } catch {
     // Corrupt/missing document – fall back to theme defaults.
-    overrides = {};
   }
+  return {};
+}
+
+export async function loadAndApplyStoredDesign(): Promise<DesignOverrides> {
+  const overrides = await loadDesign();
   applyDesign(overrides);
   return overrides;
 }

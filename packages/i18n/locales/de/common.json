@@ -1783,5 +1783,22 @@
       "disabled": "Sync: Schlüssel vorhanden, aber auf diesem Gerät ausgeschaltet.",
       "active": "Sync: an über {{transport}} · {{pending}} Änderungen wartend · {{devices}} Gerät(e) · letzte Runde: {{last}}."
     }
+  },
+  "layout": {
+    "command": {
+      "export": "Board exportieren…",
+      "exportDesc": "Speichert alle Dashboard-Seiten (und optional das Design) als teilbare JSON-Datei.",
+      "import": "Board importieren…",
+      "importDesc": "Hängt die Seiten einer exportierten Board-Datei an. Parameter: json (Inline-Board-JSON, optional), applyDesign (boolean, optional)."
+    },
+    "msg": {
+      "exported": "Board exportiert.",
+      "imported": "Board importiert.",
+      "importedPartial": "Board importiert – einige Tools der Datei sind unbekannt und wurden übersprungen.",
+      "invalid": "Das ist keine Cardo-Board-Datei.",
+      "cancelled": "Abgebrochen.",
+      "failed": "Das hat nicht geklappt.",
+      "desktopOnly": "Import aus Datei funktioniert in der Desktop-App."
+    }
   }
 }

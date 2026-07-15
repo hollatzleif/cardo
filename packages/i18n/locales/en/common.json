@@ -1783,5 +1783,22 @@
       "disabled": "Sync: key present, but turned off on this device.",
       "active": "Sync: on via {{transport}} · {{pending}} changes waiting · {{devices}} device(s) · last round: {{last}}."
     }
+  },
+  "layout": {
+    "command": {
+      "export": "Export board…",
+      "exportDesc": "Saves all dashboard pages (and optionally the design) as a shareable JSON file.",
+      "import": "Import board…",
+      "importDesc": "Appends the pages of an exported board file. Params: json (inline board JSON, optional), applyDesign (boolean, optional)."
+    },
+    "msg": {
+      "exported": "Board exported.",
+      "imported": "Board imported.",
+      "importedPartial": "Board imported – some tools in the file are unknown and were skipped.",
+      "invalid": "That is not a Cardo board file.",
+      "cancelled": "Cancelled.",
+      "failed": "That didn't work.",
+      "desktopOnly": "Import from file works in the desktop app."
+    }
   }
 }

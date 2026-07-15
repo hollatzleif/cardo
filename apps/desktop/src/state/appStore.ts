@@ -79,6 +79,8 @@ interface AppState {
   addWidget(toolId: string, widgetId: string, size: { w: number; h: number }): Promise<void>;
   /** Fill the CURRENT page with a starter layout (onboarding templates). */
   applyTemplate(widgets: Array<Omit<WidgetInstance, 'instanceId'>>): Promise<void>;
+  /** Appends already-id-minted pages (layout import). */
+  importPages(pages: Page[]): Promise<void>;
   setWidgetVariant(instanceId: string, variant: string | undefined): Promise<void>;
   removeWidget(instanceId: string): Promise<void>;
   updateWidgetPositions(
@@ -329,6 +331,14 @@ export const useAppStore = create<AppState>((set, get) => {
       const updated = { ...page, widgets: [...page.widgets, widget] };
       set({ pages: pages.map((p) => (p.id === page.id ? updated : p)) });
       await persistPage(updated);
+    },
+
+    async importPages(imported) {
+      for (const page of imported) {
+        await persistPage(page);
+      }
+      const pages = [...get().pages, ...imported].sort((a, b) => a.order - b.order);
+      set({ pages, currentPageId: imported[0]?.id ?? get().currentPageId });
     },
 
     async applyTemplate(widgets) {

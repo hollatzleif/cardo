@@ -254,6 +254,27 @@ fn backup_marker_ok(parsed: &Value) -> bool {
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+/// Writes a board-export file to a user-chosen path (comes from the OS save
+/// dialog). Only .json targets are accepted.
+#[tauri::command]
+fn layout_write_file(path: String, content: String) -> CmdResult<()> {
+    if !path.to_lowercase().ends_with(".json") {
+        return Err("only .json files".into());
+    }
+    std::fs::write(&path, content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn layout_read_file(path: String) -> CmdResult<String> {
+    if !path.to_lowercase().ends_with(".json") {
+        return Err("only .json files".into());
+    }
+    if std::fs::metadata(&path).map(|m| m.len()).unwrap_or(u64::MAX) > 5_000_000 {
+        return Err("file too large for a board export".into());
+    }
+    std::fs::read_to_string(&path).map_err(|e| e.to_string())
+}
+
 pub fn run() {
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -335,6 +356,8 @@ pub fn run() {
             sync::sync_remove_device,
             sync_gdrive::sync_gdrive_connect,
             sync_gdrive::sync_gdrive_disconnect,
+            layout_write_file,
+            layout_read_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Cardo");
