@@ -125,6 +125,7 @@
       "storagePath": "App data folder writable",
       "widgetRender": "Widget \"{{widget}}\" of \"{{tool}}\" renders",
       "commandForms": "All command forms can be built",
+      "assistantCatalog": "All tools are visible to the assistant",
       "tourAnchors": "All tour steps point to existing anchors",
       "themeRoundtrip": "Every theme applies and restores cleanly",
       "languageRoundtrip": "Language switch works and switches back",
@@ -165,6 +166,8 @@
     "title": "Tool market",
     "activate": "Activate",
     "deactivate": "Deactivate",
+    "setupGuide": "Setup",
+    "setupGuideTitle": "Setting up {{tool}}",
     "active": "Active",
     "privacy": {
       "green": "Works fully offline – your data never leaves this device.",
@@ -908,6 +911,25 @@
       "variant": {
         "classic": "Classic",
         "messenger": "Messenger"
+      }
+    },
+    "eisenhower": {
+      "name": "Eisenhower Matrix",
+      "description": "TODO: describe Eisenhower Matrix.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Eisenhower Matrix: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Eisenhower Matrix",
+        "body": "TODO: one-line tour hint for Eisenhower Matrix."
       }
     }
   },

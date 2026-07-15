@@ -13,24 +13,57 @@
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 6, "h": 7 },
-      "minSize": { "w": 3, "h": 4 },
+      "defaultSize": {
+        "w": 6,
+        "h": 7
+      },
+      "minSize": {
+        "w": 3,
+        "h": 4
+      },
       "variants": []
     },
     {
       "id": "board",
-      "defaultSize": { "w": 9, "h": 7 },
-      "minSize": { "w": 6, "h": 4 },
+      "defaultSize": {
+        "w": 9,
+        "h": 7
+      },
+      "minSize": {
+        "w": 6,
+        "h": 4
+      },
       "variants": []
     }
   ],
-  "commands": ["todo.create", "todo.complete", "todo.delete", "todo.query-today", "todo.context"],
+  "commands": [
+    "todo.create",
+    "todo.complete",
+    "todo.delete",
+    "todo.query-today",
+    "todo.context"
+  ],
   "selfTests": [
-    { "id": "create-roundtrip", "titleKey": "tool.todo.test.createRoundtrip" },
-    { "id": "complete-flow", "titleKey": "tool.todo.test.completeFlow" },
-    { "id": "query-by-list", "titleKey": "tool.todo.test.queryByList" },
-    { "id": "board-status", "titleKey": "tool.todo.test.boardStatus" },
-    { "id": "query-today", "titleKey": "tool.todo.test.queryToday" }
+    {
+      "id": "create-roundtrip",
+      "titleKey": "tool.todo.test.createRoundtrip"
+    },
+    {
+      "id": "complete-flow",
+      "titleKey": "tool.todo.test.completeFlow"
+    },
+    {
+      "id": "query-by-list",
+      "titleKey": "tool.todo.test.queryByList"
+    },
+    {
+      "id": "board-status",
+      "titleKey": "tool.todo.test.boardStatus"
+    },
+    {
+      "id": "query-today",
+      "titleKey": "tool.todo.test.queryToday"
+    }
   ],
   "tourSteps": [
     {
@@ -48,5 +81,6 @@
       "titleKey": "tool.todo.tour.board.title",
       "bodyKey": "tool.todo.tour.board.body"
     }
-  ]
+  ],
+  "setupSteps": []
 }

@@ -13,17 +13,39 @@
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 4, "h": 4 },
-      "minSize": { "w": 2, "h": 2 },
+      "defaultSize": {
+        "w": 4,
+        "h": 4
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
       "variants": []
     }
   ],
-  "commands": ["workclock.start", "workclock.stop", "workclock.toggle"],
+  "commands": [
+    "workclock.start",
+    "workclock.stop",
+    "workclock.toggle"
+  ],
   "selfTests": [
-    { "id": "day-roundtrip", "titleKey": "tool.workclock.test.dayRoundtrip" },
-    { "id": "start-stop", "titleKey": "tool.workclock.test.startStop" },
-    { "id": "coupling-setting", "titleKey": "tool.workclock.test.couplingSetting" },
-    { "id": "format", "titleKey": "tool.workclock.test.format" }
+    {
+      "id": "day-roundtrip",
+      "titleKey": "tool.workclock.test.dayRoundtrip"
+    },
+    {
+      "id": "start-stop",
+      "titleKey": "tool.workclock.test.startStop"
+    },
+    {
+      "id": "coupling-setting",
+      "titleKey": "tool.workclock.test.couplingSetting"
+    },
+    {
+      "id": "format",
+      "titleKey": "tool.workclock.test.format"
+    }
   ],
   "tourSteps": [
     {
@@ -31,5 +53,6 @@
       "titleKey": "tool.workclock.tour.title",
       "bodyKey": "tool.workclock.tour.body"
     }
-  ]
+  ],
+  "setupSteps": []
 }

@@ -13,18 +13,42 @@
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 6, "h": 6 },
-      "minSize": { "w": 4, "h": 4 },
+      "defaultSize": {
+        "w": 6,
+        "h": 6
+      },
+      "minSize": {
+        "w": 4,
+        "h": 4
+      },
       "variants": []
     }
   ],
-  "commands": ["habits.add", "habits.check", "habits.query-status"],
+  "commands": [
+    "habits.add",
+    "habits.check",
+    "habits.query-status"
+  ],
   "selfTests": [
-    { "id": "habit-roundtrip", "titleKey": "tool.habits.test.habitRoundtrip" },
-    { "id": "streak-calc", "titleKey": "tool.habits.test.streakCalc" },
-    { "id": "heatmap-range", "titleKey": "tool.habits.test.heatmapRange" }
+    {
+      "id": "habit-roundtrip",
+      "titleKey": "tool.habits.test.habitRoundtrip"
+    },
+    {
+      "id": "streak-calc",
+      "titleKey": "tool.habits.test.streakCalc"
+    },
+    {
+      "id": "heatmap-range",
+      "titleKey": "tool.habits.test.heatmapRange"
+    }
   ],
   "tourSteps": [
-    { "anchor": "widget:habits:main", "titleKey": "tool.habits.tour.title", "bodyKey": "tool.habits.tour.body" }
-  ]
+    {
+      "anchor": "widget:habits:main",
+      "titleKey": "tool.habits.tour.title",
+      "bodyKey": "tool.habits.tour.body"
+    }
+  ],
+  "setupSteps": []
 }

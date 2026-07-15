@@ -97,6 +97,12 @@ for (const tool of tools) {
     checkKey(tool, s.titleKey, `tourStep[${s.anchor ?? '?'}].titleKey`);
     checkKey(tool, s.bodyKey, `tourStep[${s.anchor ?? '?'}].bodyKey`);
   }
+
+  // Setup guides (optional): every step needs resolvable title/body keys.
+  m.setupSteps?.forEach((s, i) => {
+    checkKey(tool, s.titleKey, `setupStep[${i}].titleKey`);
+    checkKey(tool, s.bodyKey, `setupStep[${i}].bodyKey`);
+  });
 }
 
 if (failed) process.exit(1);

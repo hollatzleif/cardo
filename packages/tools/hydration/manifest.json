@@ -4,7 +4,10 @@
   "descriptionKey": "tool.hydration.description",
   "version": "1.0.0",
   "minAppVersion": "0.1.0",
-  "permissions": ["notifications", "scheduler"],
+  "permissions": [
+    "notifications",
+    "scheduler"
+  ],
   "privacy": {
     "level": "green",
     "network": [],
@@ -13,16 +16,34 @@
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 3, "h": 4 },
-      "minSize": { "w": 2, "h": 2 },
+      "defaultSize": {
+        "w": 3,
+        "h": 4
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
       "variants": []
     }
   ],
-  "commands": ["hydration.drink", "hydration.remind"],
+  "commands": [
+    "hydration.drink",
+    "hydration.remind"
+  ],
   "selfTests": [
-    { "id": "day-roundtrip", "titleKey": "tool.hydration.test.dayRoundtrip" },
-    { "id": "window-logic", "titleKey": "tool.hydration.test.windowLogic" },
-    { "id": "drink-command", "titleKey": "tool.hydration.test.drinkCommand" }
+    {
+      "id": "day-roundtrip",
+      "titleKey": "tool.hydration.test.dayRoundtrip"
+    },
+    {
+      "id": "window-logic",
+      "titleKey": "tool.hydration.test.windowLogic"
+    },
+    {
+      "id": "drink-command",
+      "titleKey": "tool.hydration.test.drinkCommand"
+    }
   ],
   "tourSteps": [
     {
@@ -30,5 +51,6 @@
       "titleKey": "tool.hydration.tour.title",
       "bodyKey": "tool.hydration.tour.body"
     }
-  ]
+  ],
+  "setupSteps": []
 }

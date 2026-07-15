@@ -13,17 +13,37 @@
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 3, "h": 3 },
-      "minSize": { "w": 2, "h": 2 },
+      "defaultSize": {
+        "w": 3,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
       "variants": []
     }
   ],
-  "commands": ["counter.increment", "counter.reset"],
+  "commands": [
+    "counter.increment",
+    "counter.reset"
+  ],
   "selfTests": [
-    { "id": "storage", "titleKey": "tool.counter.test.storage" },
-    { "id": "commands", "titleKey": "tool.counter.test.commands" }
+    {
+      "id": "storage",
+      "titleKey": "tool.counter.test.storage"
+    },
+    {
+      "id": "commands",
+      "titleKey": "tool.counter.test.commands"
+    }
   ],
   "tourSteps": [
-    { "anchor": "widget:counter:main", "titleKey": "tool.counter.tour.title", "bodyKey": "tool.counter.tour.body" }
-  ]
+    {
+      "anchor": "widget:counter:main",
+      "titleKey": "tool.counter.tour.title",
+      "bodyKey": "tool.counter.tour.body"
+    }
+  ],
+  "setupSteps": []
 }

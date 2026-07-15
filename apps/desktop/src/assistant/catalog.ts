@@ -13,11 +13,15 @@ export interface CatalogParam {
   name: string;
   kind: ParamKind;
   required: boolean;
+  /** Allowed literal values when the underlying schema is an enum. */
+  values?: string[];
 }
 
 export interface CatalogEntry {
   id: string;
   title: string;
+  /** Translated one-line usage description (from CommandSpec.descriptionKey). */
+  description?: string;
   params: CatalogParam[];
 }
 
@@ -25,8 +29,10 @@ export interface CatalogEntry {
 export interface CatalogSource {
   id: string;
   titleKey: string;
+  descriptionKey?: string;
   params: z.ZodType;
   palette?: boolean;
+  assistant?: boolean;
 }
 
 /**
@@ -49,18 +55,31 @@ export function commandParamFields(schema: z.ZodType): CatalogParam[] {
     }
     const kind: ParamKind =
       inner instanceof z.ZodNumber ? 'number' : inner instanceof z.ZodBoolean ? 'boolean' : 'string';
+    // Enums stay kind:'string' but carry their literal values so the model
+    // proposes valid params instead of guessing.
+    if (inner instanceof z.ZodEnum) {
+      return { name, kind, required, values: [...(inner.options as string[])] };
+    }
     return { name, kind, required };
   });
 }
 
-/** Builds the catalog from registered commands; palette:false commands are excluded. */
+/**
+ * Builds the catalog from registered commands. Visibility: the explicit
+ * `assistant` flag wins; otherwise palette visibility applies (legacy rule).
+ */
 export function buildCommandCatalog(
   commands: ReadonlyArray<CatalogSource>,
   t: (key: string) => string,
 ): CatalogEntry[] {
   return commands
-    .filter((c) => c.palette !== false)
-    .map((c) => ({ id: c.id, title: t(c.titleKey), params: commandParamFields(c.params) }));
+    .filter((c) => c.assistant ?? c.palette !== false)
+    .map((c) => ({
+      id: c.id,
+      title: t(c.titleKey),
+      ...(c.descriptionKey ? { description: t(c.descriptionKey) } : {}),
+      params: commandParamFields(c.params),
+    }));
 }
 
 /* ── Tool scope ──────────────────────────────────────────────────────── */

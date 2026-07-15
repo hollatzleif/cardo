@@ -13,17 +13,36 @@
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 3, "h": 3 },
-      "minSize": { "w": 2, "h": 2 },
+      "defaultSize": {
+        "w": 3,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
       "variants": []
     }
   ],
-  "commands": ["countdown.create"],
+  "commands": [
+    "countdown.create"
+  ],
   "selfTests": [
-    { "id": "storage-roundtrip", "titleKey": "tool.countdown.test.storageRoundtrip" },
-    { "id": "days-calc", "titleKey": "tool.countdown.test.daysCalc" }
+    {
+      "id": "storage-roundtrip",
+      "titleKey": "tool.countdown.test.storageRoundtrip"
+    },
+    {
+      "id": "days-calc",
+      "titleKey": "tool.countdown.test.daysCalc"
+    }
   ],
   "tourSteps": [
-    { "anchor": "widget:countdown:main", "titleKey": "tool.countdown.tour.title", "bodyKey": "tool.countdown.tour.body" }
-  ]
+    {
+      "anchor": "widget:countdown:main",
+      "titleKey": "tool.countdown.tour.title",
+      "bodyKey": "tool.countdown.tour.body"
+    }
+  ],
+  "setupSteps": []
 }

@@ -1,0 +1,48 @@
+{
+  "id": "eisenhower",
+  "nameKey": "tool.eisenhower.name",
+  "descriptionKey": "tool.eisenhower.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.eisenhower.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "eisenhower.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.eisenhower.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.eisenhower.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:eisenhower:main",
+      "titleKey": "tool.eisenhower.tour.title",
+      "bodyKey": "tool.eisenhower.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

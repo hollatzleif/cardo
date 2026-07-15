@@ -69,11 +69,23 @@ export interface CommandSpec<P = unknown> {
   /** "<toolId>.<action>", e.g. "todo.create" */
   id: string;
   titleKey: string;
+  /**
+   * i18n key of a one-line usage description for the AI assistant's command
+   * catalog (what the command does, when to use it). Optional but strongly
+   * recommended for every palette/assistant-visible command.
+   */
+  descriptionKey?: string;
   /** Zod schema of the parameters. Exportable as JSON Schema → future AI function-calling. */
   params: z.ZodType<P>;
   run(params: P): Promise<CommandResult>;
   /** Show in the command palette (default true). */
   palette?: boolean;
+  /**
+   * Expose in the AI assistant's command catalog. Defaults to the palette
+   * visibility – set explicitly to decouple the two (e.g. a palette-hidden
+   * command the assistant may still propose, or vice versa).
+   */
+  assistant?: boolean;
   icon?: string;
   /** Example parameters for the diagnostics run against the scratch database. */
   selfTestParams?: P;

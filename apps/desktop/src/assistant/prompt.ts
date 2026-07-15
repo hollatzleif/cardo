@@ -79,9 +79,13 @@ function catalogLine(entry: CatalogEntry): string {
     entry.params.length === 0
       ? 'keine Parameter'
       : entry.params
-          .map((p) => `${p.name}: ${p.kind}${p.required ? ' (required)' : ' (optional)'}`)
+          .map((p) => {
+            const values = p.values && p.values.length > 0 ? `, einer von: ${p.values.join('|')}` : '';
+            return `${p.name}: ${p.kind}${p.required ? ' (required' : ' (optional'}${values})`;
+          })
           .join(', ');
-  return `- ${entry.id} — "${entry.title}" — Parameter: ${params}`;
+  const description = entry.description ? ` — ${entry.description}` : '';
+  return `- ${entry.id} — "${entry.title}"${description} — Parameter: ${params}`;
 }
 
 export function buildSystemPrompt(input: PromptInput): string {

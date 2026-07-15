@@ -230,6 +230,58 @@ describe('buildSystemPrompt', () => {
   });
 });
 
+describe('buildCommandCatalog extras', () => {
+  it('renders enum values, descriptions and honors the assistant flag', () => {
+    const specs: CatalogSource[] = [
+      {
+        id: 'mood.log',
+        titleKey: 'mood.log.title',
+        descriptionKey: 'mood.log.desc',
+        params: z.object({
+          mood: z.enum(['great', 'ok', 'bad']),
+          note: z.string().optional(),
+        }) as z.ZodType,
+      },
+      {
+        // palette-hidden but explicitly assistant-visible
+        id: 'mood.context',
+        titleKey: 'mood.context.title',
+        params: z.object({}) as z.ZodType,
+        palette: false,
+        assistant: true,
+      },
+      {
+        // palette-visible but explicitly hidden from the assistant
+        id: 'mood.internal',
+        titleKey: 'mood.internal.title',
+        params: z.object({}) as z.ZodType,
+        assistant: false,
+      },
+    ];
+    const catalog = buildCommandCatalog(specs, (key) => `T(${key})`);
+    expect(catalog.map((e) => e.id)).toEqual(['mood.log', 'mood.context']);
+    expect(catalog[0]?.description).toBe('T(mood.log.desc)');
+    expect(catalog[0]?.params[0]).toEqual({
+      name: 'mood',
+      kind: 'string',
+      required: true,
+      values: ['great', 'ok', 'bad'],
+    });
+
+    const prompt = buildSystemPrompt({
+      instructions: '',
+      personality: '',
+      memory: '',
+      catalog,
+      language: 'de',
+      now: new Date(2026, 6, 12),
+    });
+    expect(prompt).toContain('T(mood.log.desc)');
+    expect(prompt).toContain('mood: string (required, einer von: great|ok|bad)');
+    expect(prompt).toContain('note: string (optional)');
+  });
+});
+
 describe('filterCatalogByScope', () => {
   const specs: CatalogSource[] = [
     { id: 'todo.create', titleKey: 'k', params: z.object({}) as z.ZodType },

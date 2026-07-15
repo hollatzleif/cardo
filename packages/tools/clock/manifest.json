@@ -13,17 +13,42 @@
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 4, "h": 3 },
-      "minSize": { "w": 2, "h": 2 },
-      "variants": ["digital", "analog", "minimal", "words", "mono"]
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": [
+        "digital",
+        "analog",
+        "minimal",
+        "words",
+        "mono"
+      ]
     }
   ],
-  "commands": ["clock.show-time"],
+  "commands": [
+    "clock.show-time"
+  ],
   "selfTests": [
-    { "id": "render", "titleKey": "tool.clock.test.render" },
-    { "id": "time", "titleKey": "tool.clock.test.time" }
+    {
+      "id": "render",
+      "titleKey": "tool.clock.test.render"
+    },
+    {
+      "id": "time",
+      "titleKey": "tool.clock.test.time"
+    }
   ],
   "tourSteps": [
-    { "anchor": "widget:clock:main", "titleKey": "tool.clock.tour.title", "bodyKey": "tool.clock.tour.body" }
-  ]
+    {
+      "anchor": "widget:clock:main",
+      "titleKey": "tool.clock.tour.title",
+      "bodyKey": "tool.clock.tour.body"
+    }
+  ],
+  "setupSteps": []
 }

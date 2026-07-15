@@ -4,28 +4,53 @@
   "descriptionKey": "tool.weather.description",
   "version": "1.0.0",
   "minAppVersion": "0.1.0",
-  "permissions": ["network"],
+  "permissions": [
+    "network"
+  ],
   "privacy": {
     "level": "yellow",
     "network": [
-      { "host": "geocoding-api.open-meteo.com", "dataKey": "tool.weather.privacy.geo" },
-      { "host": "api.open-meteo.com", "dataKey": "tool.weather.privacy.forecast" }
+      {
+        "host": "geocoding-api.open-meteo.com",
+        "dataKey": "tool.weather.privacy.geo"
+      },
+      {
+        "host": "api.open-meteo.com",
+        "dataKey": "tool.weather.privacy.forecast"
+      }
     ],
     "summaryKey": "tool.weather.privacy.summary"
   },
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 4, "h": 4 },
-      "minSize": { "w": 2, "h": 2 },
+      "defaultSize": {
+        "w": 4,
+        "h": 4
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
       "variants": []
     }
   ],
-  "commands": ["weather.refresh"],
+  "commands": [
+    "weather.refresh"
+  ],
   "selfTests": [
-    { "id": "cache-roundtrip", "titleKey": "tool.weather.test.cacheRoundtrip" },
-    { "id": "wmo-mapping", "titleKey": "tool.weather.test.wmoMapping" },
-    { "id": "url-building", "titleKey": "tool.weather.test.urlBuilding" }
+    {
+      "id": "cache-roundtrip",
+      "titleKey": "tool.weather.test.cacheRoundtrip"
+    },
+    {
+      "id": "wmo-mapping",
+      "titleKey": "tool.weather.test.wmoMapping"
+    },
+    {
+      "id": "url-building",
+      "titleKey": "tool.weather.test.urlBuilding"
+    }
   ],
   "tourSteps": [
     {
@@ -33,5 +58,6 @@
       "titleKey": "tool.weather.tour.title",
       "bodyKey": "tool.weather.tour.body"
     }
-  ]
+  ],
+  "setupSteps": []
 }

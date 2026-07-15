@@ -13,15 +13,27 @@
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 5, "h": 7 },
-      "minSize": { "w": 3, "h": 4 },
+      "defaultSize": {
+        "w": 5,
+        "h": 7
+      },
+      "minSize": {
+        "w": 3,
+        "h": 4
+      },
       "variants": []
     }
   ],
   "commands": [],
   "selfTests": [
-    { "id": "aggregate-graceful", "titleKey": "tool.today.test.aggregateGraceful" },
-    { "id": "aggregate-with-todo", "titleKey": "tool.today.test.aggregateWithTodo" }
+    {
+      "id": "aggregate-graceful",
+      "titleKey": "tool.today.test.aggregateGraceful"
+    },
+    {
+      "id": "aggregate-with-todo",
+      "titleKey": "tool.today.test.aggregateWithTodo"
+    }
   ],
   "tourSteps": [
     {
@@ -29,5 +41,6 @@
       "titleKey": "tool.today.tour.title",
       "bodyKey": "tool.today.tour.body"
     }
-  ]
+  ],
+  "setupSteps": []
 }

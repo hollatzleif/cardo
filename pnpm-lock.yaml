@@ -74,6 +74,9 @@ importers:
       '@cardo/tool-counter':
         specifier: workspace:*
         version: link:../../packages/tools/counter
+      '@cardo/tool-eisenhower':
+        specifier: workspace:*
+        version: link:../../packages/tools/eisenhower
       '@cardo/tool-files-explorer':
         specifier: workspace:*
         version: link:../../packages/tools/files-explorer
@@ -271,6 +274,18 @@ importers:
         version: 3.25.76
 
   packages/tools/counter:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/eisenhower:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*

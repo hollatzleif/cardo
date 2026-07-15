@@ -125,6 +125,7 @@
       "storagePath": "App-Datenordner beschreibbar",
       "widgetRender": "Widget „{{widget}}“ von „{{tool}}“ wird dargestellt",
       "commandForms": "Alle Befehlsformulare lassen sich aufbauen",
+      "assistantCatalog": "Alle Werkzeuge sind für den Assistenten sichtbar",
       "tourAnchors": "Alle Tour-Schritte zeigen auf vorhandene Anker",
       "themeRoundtrip": "Jedes Design lässt sich anwenden und zurücksetzen",
       "languageRoundtrip": "Sprachwechsel funktioniert und stellt zurück",
@@ -165,6 +166,8 @@
     "title": "Tool-Market",
     "activate": "Aktivieren",
     "deactivate": "Deaktivieren",
+    "setupGuide": "Einrichtung",
+    "setupGuideTitle": "{{tool}} einrichten",
     "active": "Aktiv",
     "privacy": {
       "green": "Arbeitet komplett offline – deine Daten verlassen dieses Gerät nie.",
@@ -908,6 +911,25 @@
       "variant": {
         "classic": "Klassisch",
         "messenger": "Messenger"
+      }
+    },
+    "eisenhower": {
+      "name": "Eisenhower-Matrix",
+      "description": "TODO: Eisenhower-Matrix beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Eisenhower-Matrix: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Eisenhower-Matrix",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Eisenhower-Matrix."
       }
     }
   },

@@ -13,16 +13,33 @@
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 6, "h": 5 },
-      "minSize": { "w": 3, "h": 3 },
+      "defaultSize": {
+        "w": 6,
+        "h": 5
+      },
+      "minSize": {
+        "w": 3,
+        "h": 3
+      },
       "variants": []
     }
   ],
-  "commands": ["stats.summary"],
+  "commands": [
+    "stats.summary"
+  ],
   "selfTests": [
-    { "id": "aggregate-roundtrip", "titleKey": "tool.stats.test.aggregateRoundtrip" },
-    { "id": "event-count", "titleKey": "tool.stats.test.eventCount" },
-    { "id": "range-keys", "titleKey": "tool.stats.test.rangeKeys" }
+    {
+      "id": "aggregate-roundtrip",
+      "titleKey": "tool.stats.test.aggregateRoundtrip"
+    },
+    {
+      "id": "event-count",
+      "titleKey": "tool.stats.test.eventCount"
+    },
+    {
+      "id": "range-keys",
+      "titleKey": "tool.stats.test.rangeKeys"
+    }
   ],
   "tourSteps": [
     {
@@ -30,5 +47,6 @@
       "titleKey": "tool.stats.tour.title",
       "bodyKey": "tool.stats.tour.body"
     }
-  ]
+  ],
+  "setupSteps": []
 }

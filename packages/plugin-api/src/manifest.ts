@@ -59,6 +59,17 @@ export const TourStepSchema = z.object({
   bodyKey: z.string().min(1),
 });
 
+/**
+ * One numbered step of a tool's in-app setup guide. Tools that need user
+ * configuration (accounts, imports, folders …) declare their guide here;
+ * the market shows it before activation and the tool's empty state renders
+ * it via the shared <SetupGuide> component.
+ */
+export const SetupStepSchema = z.object({
+  titleKey: z.string().min(1),
+  bodyKey: z.string().min(1),
+});
+
 export const ToolManifestSchema = z.object({
   id: z.string().regex(/^[a-z][a-z0-9-]*$/, 'tool id must be kebab-case'),
   nameKey: z.string().min(1),
@@ -73,9 +84,12 @@ export const ToolManifestSchema = z.object({
   /** Mandatory: every tool must ship self-tests (quality gate, also for future community tools). */
   selfTests: z.array(SelfTestDeclarationSchema).min(1),
   tourSteps: z.array(TourStepSchema).default([]),
+  /** In-app setup guide for tools that need configuration/imports. */
+  setupSteps: z.array(SetupStepSchema).default([]),
   settingsSchema: z.record(z.unknown()).optional(),
 });
 
 export type ToolManifest = z.infer<typeof ToolManifestSchema>;
 export type WidgetDeclaration = z.infer<typeof WidgetDeclarationSchema>;
 export type PrivacyDeclaration = z.infer<typeof PrivacyDeclarationSchema>;
+export type SetupStep = z.infer<typeof SetupStepSchema>;

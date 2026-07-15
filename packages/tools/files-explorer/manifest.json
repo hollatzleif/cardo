@@ -4,7 +4,10 @@
   "descriptionKey": "tool.files-explorer.description",
   "version": "1.0.0",
   "minAppVersion": "0.6.0",
-  "permissions": ["file-read", "file-write"],
+  "permissions": [
+    "file-read",
+    "file-write"
+  ],
   "privacy": {
     "level": "green",
     "network": [],
@@ -13,15 +16,28 @@
   "widgets": [
     {
       "id": "main",
-      "defaultSize": { "w": 8, "h": 8 },
-      "minSize": { "w": 4, "h": 4 },
+      "defaultSize": {
+        "w": 8,
+        "h": 8
+      },
+      "minSize": {
+        "w": 4,
+        "h": 4
+      },
       "variants": []
     }
   ],
   "commands": [],
   "selfTests": [
-    { "id": "browse", "titleKey": "tool.files-explorer.test.browse" },
-    { "id": "markdown", "titleKey": "tool.files-explorer.test.markdown" }
+    {
+      "id": "browse",
+      "titleKey": "tool.files-explorer.test.browse"
+    },
+    {
+      "id": "markdown",
+      "titleKey": "tool.files-explorer.test.markdown"
+    }
   ],
-  "tourSteps": []
+  "tourSteps": [],
+  "setupSteps": []
 }

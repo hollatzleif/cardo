@@ -13,6 +13,7 @@ import { toolFactories } from '../host/tools';
 import { useAppStore } from '../state/appStore';
 import { DESIGN_DOC, loadAndApplyStoredDesign } from '../design/design';
 import { paramFields } from '../palette/paramFields';
+import { buildCommandCatalog, type CatalogSource } from '../assistant/catalog';
 
 /**
  * UI checks (category "ui"): every widget renders, command forms build,
@@ -184,6 +185,60 @@ function commandFormsCheck(): DiagnoseCheck {
   };
 }
 
+/**
+ * Assistant integration: every tool that declares commands must surface at
+ * least one entry in the assistant's command catalog, and every `.context`
+ * provider must execute against the scratch context and yield contextText.
+ */
+function assistantCatalogCheck(): DiagnoseCheck {
+  return {
+    id: 'ui:assistant-catalog',
+    titleKey: 'diagnose.check.assistantCatalog',
+    category: 'ui',
+    async run() {
+      const host = getHost();
+      const problems: string[] = [];
+      for (const factory of Object.values(toolFactories)) {
+        const { registry, commands } = createScratchContext(host.services);
+        const instance = factory();
+        const toolId = instance.manifest.id;
+        registry.register(instance);
+        try {
+          await registry.activate(toolId);
+        } catch (err) {
+          problems.push(`${toolId}: ${String(err)}`);
+          continue;
+        }
+        try {
+          if (instance.manifest.commands.length > 0) {
+            const catalog = buildCommandCatalog(
+              commands.list() as unknown as CatalogSource[],
+              (key) => String(i18next.t(key)),
+            );
+            if (catalog.length === 0) {
+              problems.push(`${toolId}: commands declared but none assistant-visible`);
+            }
+          }
+          for (const id of instance.manifest.commands) {
+            if (!id.endsWith('.context')) continue;
+            const result = await commands.execute(id, {});
+            const contextText = (result.data as { contextText?: unknown } | undefined)
+              ?.contextText;
+            if (!result.ok || typeof contextText !== 'string') {
+              problems.push(`${id}: no contextText from scratch run`);
+            }
+          }
+        } finally {
+          await registry.deactivate(toolId).catch(() => {});
+        }
+      }
+      return problems.length > 0
+        ? { status: 'fail', detail: problems.join('; ').slice(0, 500) }
+        : { status: 'pass' };
+    },
+  };
+}
+
 function tourAnchorsCheck(): DiagnoseCheck {
   return {
     id: 'ui:tour-anchors',
@@ -314,6 +369,7 @@ export function buildUiChecks(): DiagnoseCheck[] {
   return [
     ...widgetRenderChecks(),
     commandFormsCheck(),
+    assistantCatalogCheck(),
     tourAnchorsCheck(),
     themeRoundtripCheck(),
     languageRoundtripCheck(),

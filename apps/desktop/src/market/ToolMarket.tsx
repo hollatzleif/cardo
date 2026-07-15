@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, PrivacyBadge } from '@cardo/ui';
+import { Button, Input, PrivacyBadge, SetupGuide } from '@cardo/ui';
 import { liveTools } from '../host/tools';
 import { useAppStore } from '../state/appStore';
 
@@ -22,6 +22,16 @@ export function ToolMarket() {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [privacy, setPrivacy] = useState<PrivacyFilter>('all');
+  /** Tool ids whose setup guide is currently expanded on the card. */
+  const [openGuides, setOpenGuides] = useState<ReadonlySet<string>>(new Set());
+
+  const toggleGuide = (id: string) =>
+    setOpenGuides((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const tools = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -119,6 +129,26 @@ export function ToolMarket() {
                 <p className="c-muted market-page__item-privacy">
                   {t(tool.manifest.privacy.summaryKey)}
                 </p>
+                {tool.manifest.setupSteps.length > 0 && (
+                  <div className="market-page__item-setup">
+                    <button
+                      className="c-btn c-btn--ghost market-page__setup-toggle"
+                      aria-expanded={openGuides.has(id)}
+                      onClick={() => toggleGuide(id)}
+                    >
+                      {openGuides.has(id) ? '▾' : '▸'} {t('market.setupGuide')}
+                    </button>
+                    {openGuides.has(id) && (
+                      <SetupGuide
+                        title={t('market.setupGuideTitle', { tool: t(tool.manifest.nameKey) })}
+                        steps={tool.manifest.setupSteps.map((step) => ({
+                          title: t(step.titleKey),
+                          body: t(step.bodyKey),
+                        }))}
+                      />
+                    )}
+                  </div>
+                )}
                 <div className="market-page__item-actions">
                   {active && <span className="market-page__active-badge">✓ {t('market.active')}</span>}
                   <button

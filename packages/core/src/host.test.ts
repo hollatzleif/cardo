@@ -19,6 +19,7 @@ const testManifest: ToolManifest = {
   commands: ['probe.echo'],
   selfTests: [{ id: 'basic', titleKey: 'tool.probe.test.basic' }],
   tourSteps: [],
+  setupSteps: [],
 };
 
 function createProbeTool(): CardoTool {

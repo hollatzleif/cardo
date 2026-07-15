@@ -17,6 +17,7 @@ import { createAssistantTool } from '../assistant';
 import { createTool as createWeatherTool } from '@cardo/tool-weather';
 import { createTool as createHydrationTool } from '@cardo/tool-hydration';
 import { createTool as createFilesExplorerTool } from '@cardo/tool-files-explorer';
+import { createTool as createEisenhowerTool } from '@cardo/tool-eisenhower';
 
 /**
  * First-party tool catalog. Every tool ships with the app; "installing" in
@@ -42,6 +43,7 @@ export const toolFactories: Record<string, () => CardoTool> = {
   hydration: createHydrationTool,
   clock: createClockTool,
   counter: createCounterTool,
+  eisenhower: createEisenhowerTool,
 };
 
 /** Live instances (widgets render from these). */
