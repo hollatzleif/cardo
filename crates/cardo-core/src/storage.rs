@@ -300,14 +300,29 @@ impl SqliteStorage {
     /* ── Sync ─────────────────────────────────────────────────────────── */
 
     /// Unsynced local ops in log order, ready for encryption + push.
-    pub async fn unsynced_ops(&self, limit: i64) -> Result<Vec<SyncOp>> {
-        let rows = sqlx::query(
+    /// `exclude` filters whole namespaces (e.g. "core.layout" while layout
+    /// sync is opt-out); excluded ops stay unsynced and flow the moment the
+    /// user enables that namespace.
+    pub async fn unsynced_ops(&self, limit: i64, exclude: &[String]) -> Result<Vec<SyncOp>> {
+        // Namespace names are validated on write; still, bind them instead
+        // of interpolating values.
+        let placeholders = std::iter::repeat_n("?", exclude.len()).collect::<Vec<_>>().join(", ");
+        let sql = if exclude.is_empty() {
             "SELECT op_id, device_id, hlc, namespace, doc_id, op, field, value, created_at
-             FROM change_log WHERE synced = 0 ORDER BY seq LIMIT ?",
-        )
-        .bind(limit)
-        .fetch_all(&self.pool)
-        .await?;
+             FROM change_log WHERE synced = 0 ORDER BY seq LIMIT ?"
+                .to_string()
+        } else {
+            format!(
+                "SELECT op_id, device_id, hlc, namespace, doc_id, op, field, value, created_at
+                 FROM change_log WHERE synced = 0 AND namespace NOT IN ({placeholders})
+                 ORDER BY seq LIMIT ?"
+            )
+        };
+        let mut query = sqlx::query(&sql);
+        for ns in exclude {
+            query = query.bind(ns);
+        }
+        let rows = query.bind(limit).fetch_all(&self.pool).await?;
         rows.into_iter()
             .map(|row| {
                 Ok(SyncOp {

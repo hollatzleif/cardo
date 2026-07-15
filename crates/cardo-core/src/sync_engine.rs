@@ -13,6 +13,8 @@ pub struct SyncEngine<'a> {
     cipher: SyncCipher,
     /// Stable id for the cursor row, e.g. "folder:<path>" or "gdrive".
     transport_id: String,
+    /// Namespaces that stay local (e.g. "core.layout" until opted in).
+    exclude_namespaces: Vec<String>,
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -35,7 +37,20 @@ const PUSH_BATCH: i64 = 500;
 
 impl<'a> SyncEngine<'a> {
     pub fn new(storage: &'a SqliteStorage, data_key: &[u8; 32], transport_id: impl Into<String>) -> Self {
-        Self { storage, cipher: SyncCipher::new(data_key), transport_id: transport_id.into() }
+        Self {
+            storage,
+            cipher: SyncCipher::new(data_key),
+            transport_id: transport_id.into(),
+            exclude_namespaces: Vec::new(),
+        }
+    }
+
+    /// Keeps whole namespaces off the wire in BOTH directions: local ops are
+    /// not pushed (they stay pending until opted in) and remote ops for the
+    /// namespace are recorded but not applied.
+    pub fn with_excluded_namespaces(mut self, namespaces: Vec<String>) -> Self {
+        self.exclude_namespaces = namespaces;
+        self
     }
 
     /// One full round: pull-then-push (pulling first shrinks the conflict
@@ -75,6 +90,10 @@ impl<'a> SyncEngine<'a> {
                         continue;
                     }
                 };
+                if self.exclude_namespaces.contains(&sync_op.namespace) {
+                    report.skipped += 1;
+                    continue;
+                }
                 match self.storage.apply_remote_op(&sync_op).await? {
                     Some(notice) => {
                         report.applied += 1;
@@ -98,7 +117,7 @@ impl<'a> SyncEngine<'a> {
         report: &mut SyncReport,
     ) -> Result<()> {
         loop {
-            let pending = self.storage.unsynced_ops(PUSH_BATCH).await?;
+            let pending = self.storage.unsynced_ops(PUSH_BATCH, &self.exclude_namespaces).await?;
             if pending.is_empty() {
                 break;
             }

@@ -5,6 +5,8 @@
 mod assistant;
 mod claude;
 mod notes;
+mod sync;
+mod sync_gdrive;
 
 use cardo_core::diagnose::CoreCheckResult;
 use cardo_core::identity::{IdentityProvider, LicenseKeyIdentity};
@@ -265,6 +267,7 @@ pub fn run() {
     builder
         .manage(notes::NotesState::default())
         .manage(assistant::AssistantState::default())
+        .manage(sync::SyncState::default())
         .setup(|app| {
             let app_data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&app_data_dir)?;
@@ -272,6 +275,7 @@ pub fn run() {
             let storage = tauri::async_runtime::block_on(SqliteStorage::open(&db_path))?;
             let identity = LicenseKeyIdentity::new(storage.device_id());
             app.manage(AppState { storage, identity, app_data_dir });
+            sync::start_background_loop(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -321,6 +325,16 @@ pub fn run() {
             assistant::assistant_delete_docs,
             assistant::assistant_list_doc_ids,
             assistant::assistant_migrate_v1,
+            sync::sync_generate_key,
+            sync::sync_set_key,
+            sync::sync_reveal_key,
+            sync::sync_status,
+            sync::sync_configure,
+            sync::sync_now,
+            sync::sync_forget_key,
+            sync::sync_remove_device,
+            sync_gdrive::sync_gdrive_connect,
+            sync_gdrive::sync_gdrive_disconnect,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Cardo");
