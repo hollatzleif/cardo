@@ -86,6 +86,9 @@ importers:
       '@cardo/tool-counter':
         specifier: workspace:*
         version: link:../../packages/tools/counter
+      '@cardo/tool-currency':
+        specifier: workspace:*
+        version: link:../../packages/tools/currency
       '@cardo/tool-decision-log':
         specifier: workspace:*
         version: link:../../packages/tools/decision-log
@@ -143,6 +146,9 @@ importers:
       '@cardo/tool-routine':
         specifier: workspace:*
         version: link:../../packages/tools/routine
+      '@cardo/tool-rss':
+        specifier: workspace:*
+        version: link:../../packages/tools/rss
       '@cardo/tool-savings-jar':
         specifier: workspace:*
         version: link:../../packages/tools/savings-jar
@@ -158,6 +164,9 @@ importers:
       '@cardo/tool-snippets':
         specifier: workspace:*
         version: link:../../packages/tools/snippets
+      '@cardo/tool-soundscapes':
+        specifier: workspace:*
+        version: link:../../packages/tools/soundscapes
       '@cardo/tool-stats':
         specifier: workspace:*
         version: link:../../packages/tools/stats
@@ -411,6 +420,18 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/currency:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/decision-log:
     dependencies:
       '@cardo/plugin-api':
@@ -648,6 +669,18 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/rss:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/savings-jar:
     dependencies:
       '@cardo/plugin-api':
@@ -700,6 +733,18 @@ importers:
         version: 3.25.76
 
   packages/tools/snippets:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/soundscapes:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*

@@ -1906,6 +1906,63 @@
         "title": "Code Snippets",
         "body": "TODO: one-line tour hint for Code Snippets."
       }
+    },
+    "currency": {
+      "name": "Currency Converter",
+      "description": "TODO: describe Currency Converter.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Currency Converter: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Currency Converter",
+        "body": "TODO: one-line tour hint for Currency Converter."
+      }
+    },
+    "rss": {
+      "name": "RSS Reader",
+      "description": "TODO: describe RSS Reader.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "RSS Reader: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "RSS Reader",
+        "body": "TODO: one-line tour hint for RSS Reader."
+      }
+    },
+    "soundscapes": {
+      "name": "Soundscapes",
+      "description": "TODO: describe Soundscapes.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Soundscapes: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Soundscapes",
+        "body": "TODO: one-line tour hint for Soundscapes."
+      }
     }
   },
   "theme": {

@@ -44,6 +44,9 @@ import { createTool as createSharedExpensesTool } from '@cardo/tool-shared-expen
 import { createTool as createCalculatorTool } from '@cardo/tool-calculator';
 import { createTool as createColorToolTool } from '@cardo/tool-color-tool';
 import { createTool as createSnippetsTool } from '@cardo/tool-snippets';
+import { createTool as createCurrencyTool } from '@cardo/tool-currency';
+import { createTool as createRssTool } from '@cardo/tool-rss';
+import { createTool as createSoundscapesTool } from '@cardo/tool-soundscapes';
 
 /**
  * First-party tool catalog. Every tool ships with the app; "installing" in
@@ -96,6 +99,9 @@ export const toolFactories: Record<string, () => CardoTool> = {
   calculator: createCalculatorTool,
   'color-tool': createColorToolTool,
   snippets: createSnippetsTool,
+  currency: createCurrencyTool,
+  rss: createRssTool,
+  soundscapes: createSoundscapesTool,
 };
 
 /** Live instances (widgets render from these). */

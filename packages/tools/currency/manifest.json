@@ -1,0 +1,48 @@
+{
+  "id": "currency",
+  "nameKey": "tool.currency.name",
+  "descriptionKey": "tool.currency.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.currency.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "currency.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.currency.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.currency.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:currency:main",
+      "titleKey": "tool.currency.tour.title",
+      "bodyKey": "tool.currency.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

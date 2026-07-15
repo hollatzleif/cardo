@@ -1,0 +1,48 @@
+{
+  "id": "rss",
+  "nameKey": "tool.rss.name",
+  "descriptionKey": "tool.rss.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.rss.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "rss.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.rss.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.rss.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:rss:main",
+      "titleKey": "tool.rss.tour.title",
+      "bodyKey": "tool.rss.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

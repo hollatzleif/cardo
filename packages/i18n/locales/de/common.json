@@ -1906,6 +1906,63 @@
         "title": "Code-Schnipsel",
         "body": "TODO: Ein-Zeilen-Tour-Hinweis für Code-Schnipsel."
       }
+    },
+    "currency": {
+      "name": "Währungsrechner",
+      "description": "TODO: Währungsrechner beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Währungsrechner: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Währungsrechner",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Währungsrechner."
+      }
+    },
+    "rss": {
+      "name": "RSS-Leser",
+      "description": "TODO: RSS-Leser beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "RSS-Leser: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "RSS-Leser",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für RSS-Leser."
+      }
+    },
+    "soundscapes": {
+      "name": "Klangkulissen",
+      "description": "TODO: Klangkulissen beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Klangkulissen: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Klangkulissen",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Klangkulissen."
+      }
     }
   },
   "theme": {

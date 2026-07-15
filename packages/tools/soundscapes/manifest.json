@@ -1,0 +1,48 @@
+{
+  "id": "soundscapes",
+  "nameKey": "tool.soundscapes.name",
+  "descriptionKey": "tool.soundscapes.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.soundscapes.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "soundscapes.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.soundscapes.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.soundscapes.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:soundscapes:main",
+      "titleKey": "tool.soundscapes.tour.title",
+      "bodyKey": "tool.soundscapes.tour.body"
+    }
+  ],
+  "setupSteps": []
+}
