@@ -288,6 +288,10 @@
       "privacy": {
         "title": "Deine Daten gehören dir",
         "body": "Cardo arbeitet zu 100 % offline. Kein Konto, keine Cloud, keine Telemetrie. Alles liegt in einer lokalen Datenbank und in Dateien, die dir gehören."
+      },
+      "sync": {
+        "title": "Deine Daten auf jedem Gerät",
+        "body": "Optional: Einstellungen → Sync erzeugt einen Schlüssel, der in deinem Schlüsselbund bleibt. Alles wird Ende-zu-Ende verschlüsselt, bevor es über dein eigenes Drive, deinen Ordner oder Server reist. Standardmäßig aus — Cardo bleibt 100 % offline, bis du es anders willst."
       }
     },
     "templates": {

@@ -288,6 +288,10 @@
       "privacy": {
         "title": "Your data stays yours",
         "body": "Cardo works 100% offline. No account, no cloud, no telemetry. Everything lives in one local database and in plain files you own."
+      },
+      "sync": {
+        "title": "Your data on every device",
+        "body": "Optional: Settings → Sync generates a key that stays in your keychain. Everything is end-to-end encrypted before it travels via your own Drive, folder or server. Off by default — Cardo stays 100% offline until you say otherwise."
       }
     },
     "templates": {

@@ -30,6 +30,7 @@ const CORE_STEPS: TourStep[] = [
     bodyKey: 'onboarding.step.market.body',
   },
   { titleKey: 'onboarding.step.palette.title', bodyKey: 'onboarding.step.palette.body' },
+  { titleKey: 'onboarding.step.sync.title', bodyKey: 'onboarding.step.sync.body' },
   { titleKey: 'onboarding.step.privacy.title', bodyKey: 'onboarding.step.privacy.body' },
 ];
 
