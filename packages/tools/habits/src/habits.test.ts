@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addDays,
   currentStreak,
+  currentWeekDays,
   dateFromKey,
   HEATMAP_DAYS,
   heatLevel,
@@ -110,6 +111,48 @@ describe('heatmapDays', () => {
     const days = heatmapDays('2026-07-11');
     const idx = days.indexOf('2026-07-01');
     expect(days[idx - 1]).toBe('2026-06-30');
+  });
+});
+
+describe('currentWeekDays (week-grid variant)', () => {
+  it('returns the Monday–Sunday week containing a midweek day', () => {
+    // 2026-07-15 is a Wednesday.
+    expect(currentWeekDays('2026-07-15')).toEqual([
+      '2026-07-13',
+      '2026-07-14',
+      '2026-07-15',
+      '2026-07-16',
+      '2026-07-17',
+      '2026-07-18',
+      '2026-07-19',
+    ]);
+  });
+
+  it('starts the week on the day itself for a Monday', () => {
+    const week = currentWeekDays('2026-07-13'); // Monday
+    expect(week[0]).toBe('2026-07-13');
+    expect(week[6]).toBe('2026-07-19');
+  });
+
+  it('treats Sunday as the LAST day of the week (Mo–So)', () => {
+    const week = currentWeekDays('2026-07-19'); // Sunday
+    expect(week[0]).toBe('2026-07-13');
+    expect(week[6]).toBe('2026-07-19');
+  });
+
+  it('crosses month boundaries', () => {
+    const week = currentWeekDays('2026-08-01'); // Saturday
+    expect(week[0]).toBe('2026-07-27');
+    expect(week[6]).toBe('2026-08-02');
+    expect(week).toHaveLength(7);
+  });
+
+  it('yields consecutive Monday-first days', () => {
+    const week = currentWeekDays('2026-07-15');
+    expect(dateFromKey(week[0] ?? '').getDay()).toBe(1); // Monday
+    for (let i = 1; i < week.length; i += 1) {
+      expect(week[i]).toBe(addDays(week[i - 1] ?? '', 1));
+    }
   });
 });
 

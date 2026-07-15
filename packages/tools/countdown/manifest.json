@@ -21,7 +21,11 @@
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "card",
+        "big",
+        "ring"
+      ]
     }
   ],
   "commands": [
@@ -35,6 +39,10 @@
     {
       "id": "days-calc",
       "titleKey": "tool.countdown.test.daysCalc"
+    },
+    {
+      "id": "variants",
+      "titleKey": "tool.countdown.test.variants"
     }
   ],
   "tourSteps": [

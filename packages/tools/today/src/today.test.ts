@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   aggregateToday,
+  countTodayItems,
   emptyToday,
   hasAnySection,
   parseCalendar,
@@ -162,5 +163,38 @@ describe('parsing and sorting helpers', () => {
       { id: '3', title: 'early', time: '08:15' },
     ]);
     expect(sorted.map((e) => e.id)).toEqual(['2', '3', '1']);
+  });
+});
+
+describe('countTodayItems (compact variant)', () => {
+  it('sums events and open tasks', () => {
+    expect(
+      countTodayItems({
+        todo: {
+          open: [
+            { id: 'a', title: 'A', overdue: false },
+            { id: 'b', title: 'B', overdue: true },
+          ],
+          dueToday: 1,
+          overdue: 1,
+          completedToday: 0,
+        },
+        calendar: { events: [{ id: 'e1', title: 'Standup', time: '09:30' }], count: 1 },
+        routine: null,
+        habits: null,
+      }),
+    ).toBe(3);
+  });
+
+  it('treats missing sections as 0 items', () => {
+    expect(countTodayItems(emptyToday())).toBe(0);
+    expect(
+      countTodayItems({
+        todo: null,
+        calendar: { events: [], count: 0 },
+        routine: { total: 4, done: 1 },
+        habits: { total: 2, doneToday: 0, bestStreak: 3 },
+      }),
+    ).toBe(0);
   });
 });

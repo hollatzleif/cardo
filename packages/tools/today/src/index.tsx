@@ -3,6 +3,7 @@ import type { CardoTool, ToolContext, WidgetProps } from '@cardo/plugin-api';
 import manifest from '../manifest.json';
 import {
   aggregateToday,
+  countTodayItems,
   hasAnySection,
   PROVIDER_COMMANDS,
   type CalendarSummary,
@@ -204,29 +205,8 @@ export function createTool(): CardoTool {
 
   /* ── Widget ──────────────────────────────────────────────────────── */
 
-  function TodayWidget(_props: WidgetProps) {
-    const [data, setData] = useState<TodayData | null>(null);
-
-    const load = useCallback(() => {
-      const context = ctx;
-      if (!context) return;
-      aggregateToday(context)
-        .then(setData)
-        .catch(() => {
-          // aggregateToday guards every provider; this is belt-and-braces.
-        });
-    }, []);
-
-    useEffect(() => {
-      load();
-      const timer = window.setInterval(load, REFRESH_INTERVAL_MS);
-      const unsubs = REFRESH_EVENTS.map((event) => ctx?.events.on(event, load));
-      return () => {
-        window.clearInterval(timer);
-        for (const unsub of unsubs) unsub?.();
-      };
-    }, [load]);
-
+  /** Variant "standard" – the classic sectioned overview (default look). */
+  function StandardView({ data, onReload }: { data: TodayData | null; onReload: () => void }) {
     const heading = new Intl.DateTimeFormat(ctx?.i18n.language, {
       weekday: 'long',
       day: 'numeric',
@@ -262,7 +242,7 @@ export function createTool(): CardoTool {
           ) : (
             <>
               {data.calendar && <EventsSection calendar={data.calendar} />}
-              {data.todo && <TasksSection todo={data.todo} onReload={load} />}
+              {data.todo && <TasksSection todo={data.todo} onReload={onReload} />}
               {data.routine && <RoutineSection routine={data.routine} />}
               {data.habits && <HabitsSection habits={data.habits} />}
             </>
@@ -270,6 +250,106 @@ export function createTool(): CardoTool {
         </div>
       </div>
     );
+  }
+
+  /** Variant "compact" – one line: date + how many items today holds. */
+  function CompactView({ data }: { data: TodayData | null }) {
+    const date = new Intl.DateTimeFormat(ctx?.i18n.language, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    }).format(new Date());
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          height: '100%',
+          gap: 'var(--space-2)',
+          padding: 'var(--space-3)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+        }}
+      >
+        <span style={{ fontWeight: 600, flexShrink: 0 }}>{date}</span>
+        <span className="c-muted" style={{ fontVariantNumeric: 'tabular-nums', minWidth: 0 }}>
+          {data === null
+            ? t('common.loading')
+            : t('tool.today.widget.compactItems', { count: countTodayItems(data) })}
+        </span>
+      </div>
+    );
+  }
+
+  /** Variant "agenda" – today's events chronologically, no greeting header. */
+  function AgendaView({ data }: { data: TodayData | null }) {
+    return (
+      <div
+        style={{
+          height: '100%',
+          overflowY: 'auto',
+          padding: 'var(--space-3)',
+          overflowWrap: 'break-word',
+        }}
+      >
+        {data === null ? (
+          <MutedLine>{t('common.loading')}</MutedLine>
+        ) : data.calendar === null ? (
+          <MutedLine>{t('tool.today.widget.emptyHint')}</MutedLine>
+        ) : data.calendar.events.length === 0 ? (
+          <MutedLine>{t('tool.today.widget.noEvents')}</MutedLine>
+        ) : (
+          <ul style={listStyle}>
+            {data.calendar.events.map((event) => (
+              <li key={event.id} style={{ ...rowStyle, alignItems: 'baseline' }}>
+                <span
+                  className="c-muted"
+                  style={{ fontSize: '0.85em', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}
+                >
+                  {event.time ?? t('tool.today.widget.allDay')}
+                </span>
+                <span style={{ minWidth: 0 }}>{event.title}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
+  function TodayWidget(props: WidgetProps) {
+    const [data, setData] = useState<TodayData | null>(null);
+
+    const load = useCallback(() => {
+      const context = ctx;
+      if (!context) return;
+      aggregateToday(context)
+        .then(setData)
+        .catch(() => {
+          // aggregateToday guards every provider; this is belt-and-braces.
+        });
+    }, []);
+
+    useEffect(() => {
+      load();
+      const timer = window.setInterval(load, REFRESH_INTERVAL_MS);
+      const unsubs = REFRESH_EVENTS.map((event) => ctx?.events.on(event, load));
+      return () => {
+        window.clearInterval(timer);
+        for (const unsub of unsubs) unsub?.();
+      };
+    }, [load]);
+
+    switch (props.variant) {
+      case 'compact':
+        return <CompactView data={data} />;
+      case 'agenda':
+        return <AgendaView data={data} />;
+      case 'standard':
+      default:
+        return <StandardView data={data} onReload={load} />;
+    }
   }
 
   /* ── Tool ────────────────────────────────────────────────────────── */
@@ -348,6 +428,18 @@ export function createTool(): CardoTool {
           return data.todo !== null
             ? { status: 'pass', detail: 'aggregated the live todo provider' }
             : { status: 'fail', detail: 'todo.query-today exists but section is missing' };
+        }
+        case 'variants': {
+          // Uses hooks, so it cannot be invoked outside React here – the
+          // host's ping check covers mounting. This verifies the export
+          // contract plus the declared variant list.
+          const variants = manifest.widgets[0]?.variants ?? [];
+          if (variants.length < 2) {
+            return { status: 'fail', detail: `expected >= 2 variants, got ${variants.length}` };
+          }
+          return typeof TodayWidget === 'function' && TodayWidget.length <= 1
+            ? { status: 'pass' }
+            : { status: 'fail', detail: 'Widget is not a render function' };
         }
         default:
           return { status: 'fail', detail: `unknown test "${testId}"` };

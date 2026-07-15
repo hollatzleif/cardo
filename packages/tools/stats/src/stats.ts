@@ -92,6 +92,34 @@ export function rangeKeys(window: WindowKind, now: Date): string[] {
   return keys;
 }
 
+/**
+ * The LOCAL day keys of the last `weeks` full weeks, oldest first, ending
+ * with today – `weeks * 7` keys. Powers the "heatmap" widget variant
+ * (12 weeks → 84 cells, rendered column-major as a 7×12 grid).
+ */
+export function heatmapKeys(weeks: number, now: Date): string[] {
+  const days = Math.max(1, Math.floor(weeks)) * 7;
+  const keys: string[] = [];
+  for (let i = days - 1; i >= 0; i -= 1) {
+    keys.push(localDateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)));
+  }
+  return keys;
+}
+
+/**
+ * Maps a day's completed-task count onto 4 accent-intensity steps (plus 0
+ * for "nothing happened"), relative to the busiest day in the window.
+ * Rendered via color-mix of the accent token – colors stay theme-driven.
+ */
+export function heatStep(count: number, max: number): 0 | 1 | 2 | 3 | 4 {
+  if (count <= 0 || max <= 0) return 0;
+  const ratio = count / max;
+  if (ratio <= 0.25) return 1;
+  if (ratio <= 0.5) return 2;
+  if (ratio <= 0.75) return 3;
+  return 4;
+}
+
 /** Sums a set of day aggregates into window totals. */
 export function sumDays(days: readonly DayDoc[]): Totals {
   return days.reduce<Totals>(

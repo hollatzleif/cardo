@@ -21,7 +21,11 @@
         "w": 3,
         "h": 3
       },
-      "variants": []
+      "variants": [
+        "overview",
+        "heatmap",
+        "numbers"
+      ]
     }
   ],
   "commands": [
@@ -39,6 +43,10 @@
     {
       "id": "range-keys",
       "titleKey": "tool.stats.test.rangeKeys"
+    },
+    {
+      "id": "variants",
+      "titleKey": "tool.stats.test.variants"
     }
   ],
   "tourSteps": [

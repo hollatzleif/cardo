@@ -21,7 +21,11 @@
         "w": 3,
         "h": 4
       },
-      "variants": []
+      "variants": [
+        "standard",
+        "compact",
+        "agenda"
+      ]
     }
   ],
   "commands": [],
@@ -33,6 +37,10 @@
     {
       "id": "aggregate-with-todo",
       "titleKey": "tool.today.test.aggregateWithTodo"
+    },
+    {
+      "id": "variants",
+      "titleKey": "tool.today.test.variants"
     }
   ],
   "tourSteps": [

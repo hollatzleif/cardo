@@ -11,6 +11,7 @@ import {
   parseGeocodingResponse,
   weekdayInitial,
   wmoInfo,
+  type DailyDay,
   type DataDoc,
   type GeoResult,
   type PlaceDoc,
@@ -69,7 +70,34 @@ export function createTool(): CardoTool {
     return { place, data };
   }
 
-  function WeatherWidget(_props: WidgetProps) {
+  /** One day of the daily strip (shared by the "full" and "week" variants). */
+  function DayColumn({ day, big }: { day: DailyDay; big?: boolean }) {
+    const info = wmoInfo(day.weatherCode);
+    return (
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '2px',
+          fontSize: big ? '1em' : '0.85em',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+        title={t(info.labelKey)}
+      >
+        <span className="c-muted">{weekdayInitial(day.date, ctx?.i18n.language ?? 'en')}</span>
+        <span role="img" aria-hidden="true" style={big ? { fontSize: '1.4em' } : undefined}>
+          {info.emoji}
+        </span>
+        <span>{Math.round(day.tempMax)}°</span>
+        <span className="c-muted">{Math.round(day.tempMin)}°</span>
+      </div>
+    );
+  }
+
+  function WeatherWidget(props: WidgetProps) {
     const [place, setPlace] = useState<PlaceDoc | null | undefined>(undefined);
     const [data, setData] = useState<DataDoc | null>(null);
     const [picking, setPicking] = useState(false);
@@ -251,6 +279,112 @@ export function createTool(): CardoTool {
     const current = data ? wmoInfo(data.current.weatherCode) : null;
     const ageMinutes = data ? dataAgeMinutes(data.fetchedAt, new Date()) : null;
 
+    const body = !data ? (
+      <div className="c-muted" style={{ flex: 1 }}>
+        {offline ? t('tool.weather.noData') : '…'}
+      </div>
+    ) : props.variant === 'now' ? (
+      /* Variant "now": place is in the header – here just temp + icon, big. */
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 'var(--space-1)',
+          textAlign: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        <span style={{ fontSize: '2.8em', lineHeight: 1 }} role="img" aria-hidden="true">
+          {current?.emoji}
+        </span>
+        <div
+          style={{
+            fontSize: '3em',
+            fontWeight: 700,
+            lineHeight: 1.05,
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {Math.round(data.current.temperature)}°
+        </div>
+        <div
+          className="c-muted"
+          style={{
+            maxWidth: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {current ? t(current.labelKey) : ''}
+        </div>
+      </div>
+    ) : props.variant === 'week' ? (
+      /* Variant "week": only the daily strip (every cached forecast day). */
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-1)',
+          overflow: 'hidden',
+        }}
+      >
+        {data.daily.slice(0, 7).map((day) => (
+          <DayColumn key={day.date} day={day} big />
+        ))}
+      </div>
+    ) : (
+      /* Variant "full" (default): the classic complete view. */
+      <>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <span style={{ fontSize: '2.4em', lineHeight: 1 }} role="img" aria-hidden="true">
+            {current?.emoji}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: '2em',
+                fontWeight: 700,
+                lineHeight: 1.1,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {Math.round(data.current.temperature)}°
+            </div>
+            <div
+              className="c-muted"
+              style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            >
+              {current ? t(current.labelKey) : ''}
+            </div>
+          </div>
+        </div>
+        <div className="c-muted" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          <span title={t('tool.weather.wind')}>💨 {Math.round(data.current.windSpeed)} km/h</span>
+          {' · '}
+          <span title={t('tool.weather.humidity')}>💧 {Math.round(data.current.humidity)} %</span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--space-1)',
+            marginTop: 'auto',
+            overflow: 'hidden',
+          }}
+        >
+          {data.daily.slice(0, 5).map((day) => (
+            <DayColumn key={day.date} day={day} />
+          ))}
+        </div>
+      </>
+    );
+
     return (
       <div
         style={{
@@ -296,79 +430,7 @@ export function createTool(): CardoTool {
           </button>
         </div>
 
-        {!data ? (
-          <div className="c-muted" style={{ flex: 1 }}>
-            {offline ? t('tool.weather.noData') : '…'}
-          </div>
-        ) : (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-              <span style={{ fontSize: '2.4em', lineHeight: 1 }} role="img" aria-hidden="true">
-                {current?.emoji}
-              </span>
-              <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: '2em',
-                    fontWeight: 700,
-                    lineHeight: 1.1,
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {Math.round(data.current.temperature)}°
-                </div>
-                <div
-                  className="c-muted"
-                  style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                >
-                  {current ? t(current.labelKey) : ''}
-                </div>
-              </div>
-            </div>
-            <div className="c-muted" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              <span title={t('tool.weather.wind')}>💨 {Math.round(data.current.windSpeed)} km/h</span>
-              {' · '}
-              <span title={t('tool.weather.humidity')}>💧 {Math.round(data.current.humidity)} %</span>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-1)',
-                marginTop: 'auto',
-                overflow: 'hidden',
-              }}
-            >
-              {data.daily.slice(0, 5).map((day) => {
-                const info = wmoInfo(day.weatherCode);
-                return (
-                  <div
-                    key={day.date}
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '2px',
-                      fontSize: '0.85em',
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                    title={t(info.labelKey)}
-                  >
-                    <span className="c-muted">
-                      {weekdayInitial(day.date, ctx?.i18n.language ?? 'en')}
-                    </span>
-                    <span role="img" aria-hidden="true">
-                      {info.emoji}
-                    </span>
-                    <span>{Math.round(day.tempMax)}°</span>
-                    <span className="c-muted">{Math.round(day.tempMin)}°</span>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
+        {body}
 
         <div
           className="c-muted"
@@ -476,6 +538,18 @@ export function createTool(): CardoTool {
             return { status: 'fail', detail: `URL mismatch: ${actual}` };
           }
           return { status: 'pass' };
+        }
+        case 'variants': {
+          // Uses hooks, so it cannot be invoked outside React here – the
+          // host's ping check covers mounting. This verifies the export
+          // contract plus the declared variant list.
+          const variants = manifest.widgets[0]?.variants ?? [];
+          if (variants.length < 2) {
+            return { status: 'fail', detail: `expected >= 2 variants, got ${variants.length}` };
+          }
+          return typeof WeatherWidget === 'function' && WeatherWidget.length <= 1
+            ? { status: 'pass' }
+            : { status: 'fail', detail: 'Widget is not a render function' };
         }
         default:
           return { status: 'fail', detail: `unknown test "${testId}"` };

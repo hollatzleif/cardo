@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import type { CardoTool, ToolContext, WidgetProps } from '@cardo/plugin-api';
 import manifest from '../manifest.json';
-import { daysUntil } from './countdown';
+import { daysUntil, pickUpcoming, ringProgress } from './countdown';
 
 type CountdownDoc = {
   /** Stored inside the doc – query() returns bodies without ids. */
@@ -50,7 +50,190 @@ export function createTool(): CardoTool {
     return doc;
   }
 
-  function CountdownWidget(_props: WidgetProps) {
+  /** Day-count label shared by all variants ("today" / "day" / "days"). */
+  function daysLabel(days: number): string {
+    return days === 0
+      ? t('tool.countdown.today')
+      : days === 1
+        ? t('tool.countdown.day')
+        : t('tool.countdown.days');
+  }
+
+  /** Variant "big": the next upcoming countdown, number as huge as it gets. */
+  function BigView({ countdowns, now }: { countdowns: CountdownDoc[] | null; now: Date }) {
+    const next = countdowns ? pickUpcoming(countdowns, now) : null;
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          gap: 'var(--space-1)',
+          padding: 'var(--space-2)',
+          textAlign: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        {countdowns === null ? (
+          <div className="c-muted">…</div>
+        ) : next === null ? (
+          <div className="c-muted">
+            {countdowns.length === 0 ? t('tool.countdown.empty') : t('tool.countdown.done')}
+          </div>
+        ) : (
+          (() => {
+            const days = daysUntil(next.targetDate, now);
+            return (
+              <>
+                <div
+                  style={{
+                    fontSize: '3.4em',
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    fontVariantNumeric: 'tabular-nums',
+                    color: 'var(--accent)',
+                  }}
+                >
+                  {days}
+                </div>
+                <div className="c-muted">{daysLabel(days)}</div>
+                <div
+                  style={{
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {next.title}
+                </div>
+              </>
+            );
+          })()
+        )}
+      </div>
+    );
+  }
+
+  /** Variant "ring": progress ring of the time between creation and target. */
+  function RingView({ countdowns, now }: { countdowns: CountdownDoc[] | null; now: Date }) {
+    const next = countdowns ? pickUpcoming(countdowns, now) : null;
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (countdowns === null) {
+      return (
+        <div className="c-muted" style={{ padding: 'var(--space-2)' }}>
+          …
+        </div>
+      );
+    }
+    if (next === null) {
+      return (
+        <div
+          className="c-muted"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            padding: 'var(--space-2)',
+            textAlign: 'center',
+          }}
+        >
+          {countdowns.length === 0 ? t('tool.countdown.empty') : t('tool.countdown.done')}
+        </div>
+      );
+    }
+
+    const days = daysUntil(next.targetDate, now);
+    // Old docs may lack createdAt – ringProgress falls back to a full ring.
+    const progress = ringProgress(next.createdAt, next.targetDate, now);
+    const radius = 42;
+    const circumference = 2 * Math.PI * radius;
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          gap: 'var(--space-1)',
+          padding: 'var(--space-2)',
+          overflow: 'hidden',
+        }}
+      >
+        <svg
+          viewBox="0 0 100 100"
+          role="img"
+          aria-label={`${next.title}: ${days} ${daysLabel(days)}`}
+          style={{ flex: 1, minHeight: 0, maxWidth: '100%' }}
+        >
+          <circle
+            cx={50}
+            cy={50}
+            r={radius}
+            fill="none"
+            stroke="var(--border-subtle)"
+            strokeWidth={6}
+          />
+          <circle
+            cx={50}
+            cy={50}
+            r={radius}
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth={6}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference * (1 - progress)}
+            transform="rotate(-90 50 50)"
+            style={reduceMotion ? undefined : { transition: 'stroke-dashoffset 0.4s ease' }}
+          />
+          <text
+            x={50}
+            y={50}
+            textAnchor="middle"
+            style={{
+              fontSize: '26px',
+              fontWeight: 700,
+              fontVariantNumeric: 'tabular-nums',
+              fill: 'var(--text-primary)',
+            }}
+          >
+            {days}
+          </text>
+          <text
+            x={50}
+            y={64}
+            textAnchor="middle"
+            style={{ fontSize: '9px', fill: 'var(--text-muted)' }}
+          >
+            {daysLabel(days)}
+          </text>
+        </svg>
+        <div
+          style={{
+            maxWidth: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontSize: '0.9em',
+          }}
+        >
+          {next.title}
+        </div>
+      </div>
+    );
+  }
+
+  function CountdownWidget(props: WidgetProps) {
     const [countdowns, setCountdowns] = useState<CountdownDoc[] | null>(null);
     const [title, setTitle] = useState('');
     const [date, setDate] = useState('');
@@ -79,6 +262,14 @@ export function createTool(): CardoTool {
 
     const now = new Date();
 
+    if (props.variant === 'big') {
+      return <BigView countdowns={countdowns} now={now} />;
+    }
+    if (props.variant === 'ring') {
+      return <RingView countdowns={countdowns} now={now} />;
+    }
+
+    /* Variant "card" (default): the classic list + add form. */
     return (
       <div
         style={{
@@ -271,6 +462,18 @@ export function createTool(): CardoTool {
             }
           }
           return { status: 'pass' };
+        }
+        case 'variants': {
+          // Uses hooks, so it cannot be invoked outside React here – the
+          // host's ping check covers mounting. This verifies the export
+          // contract plus the declared variant list.
+          const variants = manifest.widgets[0]?.variants ?? [];
+          if (variants.length < 2) {
+            return { status: 'fail', detail: `expected >= 2 variants, got ${variants.length}` };
+          }
+          return typeof CountdownWidget === 'function' && CountdownWidget.length <= 1
+            ? { status: 'pass' }
+            : { status: 'fail', detail: 'Widget is not a render function' };
         }
         default:
           return { status: 'fail', detail: `unknown test "${testId}"` };

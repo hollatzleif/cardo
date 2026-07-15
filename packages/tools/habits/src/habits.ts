@@ -67,6 +67,21 @@ export function longestStreak(doneDates: Iterable<string>): number {
   return best;
 }
 
+/**
+ * The 7 date keys of the CURRENT week (Monday–Sunday) containing `todayKey`.
+ * Monday-based, matching the "week-grid" widget variant's Mo–So columns.
+ */
+export function currentWeekDays(todayKey: string): string[] {
+  // getDay(): 0 = Sunday … 6 = Saturday → distance back to Monday.
+  const backToMonday = (dateFromKey(todayKey).getDay() + 6) % 7;
+  const monday = addDays(todayKey, -backToMonday);
+  const keys: string[] = [];
+  for (let i = 0; i < 7; i += 1) {
+    keys.push(addDays(monday, i));
+  }
+  return keys;
+}
+
 export const HEATMAP_WEEKS = 26;
 export const HEATMAP_DAYS = HEATMAP_WEEKS * 7; // 182 cells → 7 rows × 26 columns
 

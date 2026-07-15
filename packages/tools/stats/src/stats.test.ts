@@ -4,6 +4,8 @@ import {
   dayDocId,
   emptyDay,
   formatHours,
+  heatStep,
+  heatmapKeys,
   localDateKey,
   rangeKeys,
   sumDays,
@@ -120,5 +122,47 @@ describe('formatHours', () => {
     expect(formatHours(3599)).toBe('1 h'); // 0.9997 h → 1.0
     expect(formatHours(3780)).toBe('1.1 h'); // 1.05 h → 1.1
     expect(formatHours(-42)).toBe('0 h');
+  });
+});
+
+describe('heatmapKeys (heatmap variant)', () => {
+  const now = new Date(2026, 0, 15, 12, 0, 0);
+
+  it('yields weeks × 7 local day keys, oldest first, ending today', () => {
+    const keys = heatmapKeys(12, now);
+    expect(keys).toHaveLength(84);
+    expect(keys[83]).toBe('2026-01-15');
+    expect(keys[0]).toBe(localDateKey(new Date(2026, 0, 15 - 83, 12, 0, 0)));
+    expect(new Set(keys).size).toBe(84);
+  });
+
+  it('crosses month and year boundaries consecutively', () => {
+    const keys = heatmapKeys(12, now);
+    const idx = keys.indexOf('2026-01-01');
+    expect(keys[idx - 1]).toBe('2025-12-31');
+  });
+
+  it('clamps degenerate week counts to at least one week', () => {
+    expect(heatmapKeys(0, now)).toHaveLength(7);
+    expect(heatmapKeys(-3, now)).toHaveLength(7);
+  });
+});
+
+describe('heatStep (heatmap variant)', () => {
+  it('maps counts onto 4 accent steps relative to the window maximum', () => {
+    expect(heatStep(0, 8)).toBe(0);
+    expect(heatStep(1, 8)).toBe(1);
+    expect(heatStep(2, 8)).toBe(1);
+    expect(heatStep(3, 8)).toBe(2);
+    expect(heatStep(4, 8)).toBe(2);
+    expect(heatStep(6, 8)).toBe(3);
+    expect(heatStep(7, 8)).toBe(4);
+    expect(heatStep(8, 8)).toBe(4);
+  });
+
+  it('is 0 for empty windows and never exceeds 4', () => {
+    expect(heatStep(5, 0)).toBe(0);
+    expect(heatStep(-1, 4)).toBe(0);
+    expect(heatStep(100, 4)).toBe(4);
   });
 });

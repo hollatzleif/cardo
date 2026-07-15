@@ -8,6 +8,8 @@ import {
   dayDocId,
   emptyDay,
   formatHours,
+  heatStep,
+  heatmapKeys,
   localDateKey,
   rangeKeys,
   sumDays,
@@ -69,16 +71,196 @@ export function createTool(): CardoTool {
     await c.storage.set(id, applyEvent(existing ?? emptyDay(key), event));
   }
 
-  /** The day docs covered by a window, oldest first, gaps filled with zeros. */
-  async function readRange(c: ToolContext, win: WindowKind, now: Date): Promise<DayDoc[]> {
-    const keys = rangeKeys(win, now);
+  /** The day docs for a list of date keys, oldest first, gaps filled with zeros. */
+  async function readKeys(c: ToolContext, keys: string[]): Promise<DayDoc[]> {
     const docs = await Promise.all(keys.map((k) => c.storage.get<DayDoc>(dayDocId(k))));
     return keys.map((k, i) => docs[i] ?? emptyDay(k));
   }
 
+  /** The day docs covered by a window, oldest first, gaps filled with zeros. */
+  async function readRange(c: ToolContext, win: WindowKind, now: Date): Promise<DayDoc[]> {
+    return readKeys(c, rangeKeys(win, now));
+  }
+
   /* ── Widget ───────────────────────────────────────────────────────────── */
 
-  function StatsWidget(_props: WidgetProps) {
+  const HEATMAP_WEEKS = 12;
+
+  /** Variant "heatmap" – 12 weeks of completed tasks, GitHub-style 7×12 grid. */
+  function HeatmapView() {
+    const [days, setDays] = useState<DayDoc[] | null>(null);
+
+    useEffect(() => {
+      let mounted = true;
+      const load = () => {
+        const c = ctx;
+        if (!c) return;
+        void readKeys(c, heatmapKeys(HEATMAP_WEEKS, new Date())).then((docs) => {
+          if (mounted) setDays(docs);
+        });
+      };
+      load();
+      const unsub = ctx?.storage.subscribe(load);
+      return () => {
+        mounted = false;
+        unsub?.();
+      };
+    }, []);
+
+    const max = useMemo(() => Math.max(0, ...(days ?? []).map((d) => d.tasksCompleted)), [days]);
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          gap: 'var(--space-2)',
+          padding: 'var(--space-3)',
+        }}
+      >
+        <div className="c-muted" style={{ fontSize: '0.75em' }}>
+          {t('tool.stats.metric.tasks')}
+        </div>
+        {days === null ? (
+          <div className="c-muted">…</div>
+        ) : (
+          <div
+            role="group"
+            aria-label={t('tool.stats.chart.title')}
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              overflowX: 'auto',
+            }}
+          >
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateRows: 'repeat(7, 12px)',
+                gridAutoFlow: 'column',
+                gridAutoColumns: '12px',
+                gap: '3px',
+                width: 'max-content',
+              }}
+            >
+              {days.map((d) => {
+                const step = heatStep(d.tasksCompleted, max);
+                const cellLabel = t('tool.stats.chart.bar', {
+                  date: d.date,
+                  count: d.tasksCompleted,
+                });
+                return (
+                  <div
+                    key={d.date}
+                    role="img"
+                    aria-label={cellLabel}
+                    title={cellLabel}
+                    style={{
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '2px',
+                      background:
+                        step === 0
+                          ? 'var(--border-subtle)'
+                          : `color-mix(in srgb, var(--accent) ${step * 25}%, var(--bg-widget))`,
+                      opacity: step === 0 ? 0.45 : 1,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /** Variant "numbers" – big KPI tiles: tasks completed today / week / month. */
+  function NumbersView() {
+    const [days, setDays] = useState<DayDoc[] | null>(null);
+
+    useEffect(() => {
+      let mounted = true;
+      const load = () => {
+        const c = ctx;
+        if (!c) return;
+        // The month window (last 30 days, today last) covers day and week too.
+        void readRange(c, 'month', new Date()).then((docs) => {
+          if (mounted) setDays(docs);
+        });
+      };
+      load();
+      const unsub = ctx?.storage.subscribe(load);
+      return () => {
+        mounted = false;
+        unsub?.();
+      };
+    }, []);
+
+    const tiles = useMemo(() => {
+      if (days === null) return null;
+      return WINDOWS.map((w) => {
+        const span = w === 'day' ? 1 : w === 'week' ? 7 : 30;
+        return { window: w, count: sumDays(days.slice(-span)).tasksCompleted };
+      });
+    }, [days]);
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'stretch',
+          gap: 'var(--space-2)',
+          height: '100%',
+          padding: 'var(--space-3)',
+        }}
+      >
+        {tiles === null ? (
+          <div className="c-muted">…</div>
+        ) : (
+          tiles.map((tile) => (
+            <div
+              key={tile.window}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 'var(--space-1)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-subtle)',
+                padding: 'var(--space-2)',
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '2em',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  fontVariantNumeric: 'tabular-nums',
+                  color: 'var(--chart-1)',
+                }}
+              >
+                {tile.count}
+              </div>
+              <div className="c-muted" style={{ fontSize: '0.75em' }}>
+                {t(`tool.stats.window.${tile.window}`)}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  }
+
+  /** Variant "overview" – the classic metrics + bar chart (default look). */
+  function OverviewView() {
     const [win, setWin] = useState<WindowKind>('day');
     const [days, setDays] = useState<DayDoc[] | null>(null);
 
@@ -225,6 +407,18 @@ export function createTool(): CardoTool {
     );
   }
 
+  function StatsWidget(props: WidgetProps) {
+    switch (props.variant) {
+      case 'heatmap':
+        return <HeatmapView />;
+      case 'numbers':
+        return <NumbersView />;
+      case 'overview':
+      default:
+        return <OverviewView />;
+    }
+  }
+
   /* ── Tool ─────────────────────────────────────────────────────────────── */
 
   return {
@@ -324,6 +518,18 @@ export function createTool(): CardoTool {
                 status: 'fail',
                 detail: `unexpected ranges: day=${JSON.stringify(day)}, week=${JSON.stringify(week)}, month(first/last)=${month[0]}/${month[29]}`,
               };
+        }
+        case 'variants': {
+          // Uses hooks, so it cannot be invoked outside React here – the
+          // host's ping check covers mounting. This verifies the export
+          // contract plus the declared variant list.
+          const variants = manifest.widgets[0]?.variants ?? [];
+          if (variants.length < 2) {
+            return { status: 'fail', detail: `expected >= 2 variants, got ${variants.length}` };
+          }
+          return typeof StatsWidget === 'function' && StatsWidget.length <= 1
+            ? { status: 'pass' }
+            : { status: 'fail', detail: 'Widget is not a render function' };
         }
         default:
           return { status: 'fail', detail: `unknown test "${testId}"` };

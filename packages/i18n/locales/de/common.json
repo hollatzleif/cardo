@@ -414,11 +414,17 @@
       },
       "test": {
         "storageRoundtrip": "Countdowns lassen sich speichern und löschen",
-        "daysCalc": "Verbleibende Tage werden korrekt berechnet"
+        "daysCalc": "Verbleibende Tage werden korrekt berechnet",
+        "variants": "Widget deklariert seine Ansichts-Varianten"
       },
       "tour": {
         "title": "Deine Countdowns",
         "body": "Füge ein Ereignis mit Datum hinzu und Cardo zeigt dir, wie viele Tage noch bleiben – täglich aktuell, komplett lokal."
+      },
+      "variant": {
+        "card": "Karte",
+        "big": "Große Zahl",
+        "ring": "Ring"
       }
     },
     "calendar": {
@@ -673,11 +679,17 @@
       "test": {
         "aggregateRoundtrip": "Tages-Aggregate bleiben erhalten",
         "eventCount": "Ereignisse werden korrekt gezählt",
-        "rangeKeys": "Zeiträume werden korrekt berechnet"
+        "rangeKeys": "Zeiträume werden korrekt berechnet",
+        "variants": "Widget deklariert seine Ansichts-Varianten"
       },
       "tour": {
         "title": "Deine Zahlen",
         "body": "Hier siehst du, was du geschafft hast: Aufgaben, Arbeitszeit und Pomodoros – pro Tag, Woche oder Monat. Alles wird lokal auf deinem Gerät gezählt."
+      },
+      "variant": {
+        "overview": "Übersicht",
+        "heatmap": "Heatmap",
+        "numbers": "Zahlen"
       }
     },
     "todo": {
@@ -817,11 +829,17 @@
       "test": {
         "habitRoundtrip": "Gewohnheiten lassen sich speichern und löschen",
         "streakCalc": "Streaks werden korrekt berechnet",
-        "heatmapRange": "Heatmap umfasst genau 26 Wochen"
+        "heatmapRange": "Heatmap umfasst genau 26 Wochen",
+        "variants": "Widget deklariert seine Ansichts-Varianten"
       },
       "tour": {
         "title": "Deine Gewohnheiten",
         "body": "Hake deine Gewohnheiten jeden Tag ab und sieh zu, wie deine Streaks wachsen. Die Heatmap zeigt dir deine letzten 26 Wochen – und alles bleibt auf diesem Gerät."
+      },
+      "variant": {
+        "list": "Liste",
+        "week-grid": "Wochenraster",
+        "streaks": "Serien"
       }
     },
     "today": {
@@ -841,15 +859,22 @@
         "completedToday": "{{count}} erledigt heute",
         "habitsLine": "{{done}}/{{total}} heute · beste Serie: {{streak}}",
         "completeTask": "Aufgabe als erledigt markieren",
-        "emptyHint": "Heute zeigt dir deinen Tag auf einen Blick, sobald To-Do, Kalender, Routine oder Gewohnheiten aktiv sind."
+        "emptyHint": "Heute zeigt dir deinen Tag auf einen Blick, sobald To-Do, Kalender, Routine oder Gewohnheiten aktiv sind.",
+        "compactItems": "{{count}} Einträge heute"
       },
       "test": {
         "aggregateGraceful": "Aggregation bleibt ohne Anbieter stabil",
-        "aggregateWithTodo": "Aggregation übernimmt To-Do-Daten"
+        "aggregateWithTodo": "Aggregation übernimmt To-Do-Daten",
+        "variants": "Widget deklariert seine Ansichts-Varianten"
       },
       "tour": {
         "title": "Dein Tag auf einen Blick",
         "body": "Heute sammelt Termine, Aufgaben, Routine und Gewohnheiten aus deinen anderen Tools – immer über die Kommando-API, nie direkt aus deren Daten."
+      },
+      "variant": {
+        "standard": "Standard",
+        "compact": "Kompakt",
+        "agenda": "Agenda"
       }
     },
     "weather": {
@@ -896,11 +921,17 @@
       "test": {
         "cacheRoundtrip": "Wetter-Cache lässt sich speichern und löschen",
         "wmoMapping": "Wettercodes werden den richtigen Symbolen zugeordnet",
-        "urlBuilding": "Vorhersage-URL wird korrekt gebaut"
+        "urlBuilding": "Vorhersage-URL wird korrekt gebaut",
+        "variants": "Widget deklariert seine Ansichts-Varianten"
       },
       "tour": {
         "title": "Wetter auf einen Blick",
         "body": "Such einmal deine Stadt und Cardo zeigt dir das aktuelle Wetter plus fünf Tage Vorschau. Du siehst immer, wie alt die Daten sind – und offline bleibt einfach die letzte Vorhersage stehen."
+      },
+      "variant": {
+        "full": "Komplett",
+        "now": "Jetzt gerade",
+        "week": "Woche"
       }
     },
     "hydration": {

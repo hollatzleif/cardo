@@ -32,7 +32,11 @@
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "full",
+        "now",
+        "week"
+      ]
     }
   ],
   "commands": [
@@ -50,6 +54,10 @@
     {
       "id": "url-building",
       "titleKey": "tool.weather.test.urlBuilding"
+    },
+    {
+      "id": "variants",
+      "titleKey": "tool.weather.test.variants"
     }
   ],
   "tourSteps": [

@@ -414,11 +414,17 @@
       },
       "test": {
         "storageRoundtrip": "Countdowns can be stored and removed",
-        "daysCalc": "Remaining days are computed correctly"
+        "daysCalc": "Remaining days are computed correctly",
+        "variants": "Widget declares its view variants"
       },
       "tour": {
         "title": "Your countdowns",
         "body": "Add an event with a date and Cardo shows you how many days are left – updated daily, fully local."
+      },
+      "variant": {
+        "card": "Card",
+        "big": "Big number",
+        "ring": "Ring"
       }
     },
     "calendar": {
@@ -673,11 +679,17 @@
       "test": {
         "aggregateRoundtrip": "Day aggregates persist",
         "eventCount": "Events are counted correctly",
-        "rangeKeys": "Time ranges are computed correctly"
+        "rangeKeys": "Time ranges are computed correctly",
+        "variants": "Widget declares its view variants"
       },
       "tour": {
         "title": "Your numbers",
         "body": "See what you've accomplished: tasks, work time and pomodoros – per day, week or month. Everything is counted locally on this device."
+      },
+      "variant": {
+        "overview": "Overview",
+        "heatmap": "Heatmap",
+        "numbers": "Numbers"
       }
     },
     "todo": {
@@ -817,11 +829,17 @@
       "test": {
         "habitRoundtrip": "Habits can be stored and deleted",
         "streakCalc": "Streaks are computed correctly",
-        "heatmapRange": "Heatmap covers exactly 26 weeks"
+        "heatmapRange": "Heatmap covers exactly 26 weeks",
+        "variants": "Widget declares its view variants"
       },
       "tour": {
         "title": "Your habits",
         "body": "Check off your habits every day and watch your streaks grow. The heatmap shows your last 26 weeks – and everything stays on this device."
+      },
+      "variant": {
+        "list": "List",
+        "week-grid": "Week grid",
+        "streaks": "Streaks"
       }
     },
     "today": {
@@ -841,15 +859,22 @@
         "completedToday": "{{count}} done today",
         "habitsLine": "{{done}}/{{total}} today · best streak: {{streak}}",
         "completeTask": "Mark task as done",
-        "emptyHint": "Today shows your day at a glance as soon as To-Do, Calendar, Routine or Habits are active."
+        "emptyHint": "Today shows your day at a glance as soon as To-Do, Calendar, Routine or Habits are active.",
+        "compactItems": "{{count}} items today"
       },
       "test": {
         "aggregateGraceful": "Aggregation degrades gracefully without providers",
-        "aggregateWithTodo": "Aggregation picks up to-do data"
+        "aggregateWithTodo": "Aggregation picks up to-do data",
+        "variants": "Widget declares its view variants"
       },
       "tour": {
         "title": "Your day at a glance",
         "body": "Today gathers events, tasks, routine and habits from your other tools – always via the command API, never by touching their data directly."
+      },
+      "variant": {
+        "standard": "Standard",
+        "compact": "Compact",
+        "agenda": "Agenda"
       }
     },
     "weather": {
@@ -896,11 +921,17 @@
       "test": {
         "cacheRoundtrip": "Weather cache can be stored and removed",
         "wmoMapping": "Weather codes map to the right icons",
-        "urlBuilding": "Forecast URL is built correctly"
+        "urlBuilding": "Forecast URL is built correctly",
+        "variants": "Widget declares its view variants"
       },
       "tour": {
         "title": "Weather at a glance",
         "body": "Search for your city once and Cardo shows the current weather plus five days ahead. You always see how old the data is – and offline, the last forecast simply stays put."
+      },
+      "variant": {
+        "full": "Full",
+        "now": "Right now",
+        "week": "Week"
       }
     },
     "hydration": {

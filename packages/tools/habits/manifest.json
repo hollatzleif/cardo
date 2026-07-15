@@ -21,7 +21,11 @@
         "w": 4,
         "h": 4
       },
-      "variants": []
+      "variants": [
+        "list",
+        "week-grid",
+        "streaks"
+      ]
     }
   ],
   "commands": [
@@ -41,6 +45,10 @@
     {
       "id": "heatmap-range",
       "titleKey": "tool.habits.test.heatmapRange"
+    },
+    {
+      "id": "variants",
+      "titleKey": "tool.habits.test.variants"
     }
   ],
   "tourSteps": [

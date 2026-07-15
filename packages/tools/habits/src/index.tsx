@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { z } from 'zod';
 import type { CardoTool, CommandResult, ToolContext, WidgetProps } from '@cardo/plugin-api';
 import manifest from '../manifest.json';
 import {
   currentStreak,
+  currentWeekDays,
+  dateFromKey,
   heatLevel,
   heatmapDays,
   localDateKey,
@@ -116,7 +118,7 @@ export function createTool(): CardoTool {
 
   /* ── Widget ──────────────────────────────────────────────────────── */
 
-  function HabitsWidget(_props: WidgetProps) {
+  function HabitsWidget(props: WidgetProps) {
     const [habits, setHabits] = useState<HabitDoc[] | null>(null);
     const [days, setDays] = useState<DayDoc[]>([]);
     const [dateKey, setDateKey] = useState(() => localDateKey(new Date()));
@@ -167,6 +169,196 @@ export function createTool(): CardoTool {
       await addHabit(title);
     }
 
+    /* ── Variant "week-grid": habits × Mo–So matrix of the current week ── */
+    if (props.variant === 'week-grid') {
+      const weekKeys = currentWeekDays(dateKey);
+      const doneByDate = new Map(days.map((d) => [d.date, new Set(d.done)]));
+      const lang = ctx?.i18n.language ?? 'en';
+      const weekdayFmt = new Intl.DateTimeFormat(lang, { weekday: 'narrow' });
+
+      return (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            gap: 'var(--space-2)',
+            padding: 'var(--space-3)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)' }}>
+            <span style={{ fontWeight: 600 }}>{t('tool.habits.widget.heading')}</span>
+            <span
+              className="c-muted"
+              style={{ fontSize: '0.85em', fontVariantNumeric: 'tabular-nums' }}
+            >
+              {doneTodayCount}/{total}
+            </span>
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {habits !== null && total === 0 ? (
+              <div className="c-muted" style={{ fontSize: '0.9em' }}>
+                {t('tool.habits.widget.empty')}
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(0, 1fr) repeat(7, minmax(22px, auto))',
+                  alignItems: 'center',
+                  columnGap: 'var(--space-1)',
+                  rowGap: '2px',
+                }}
+              >
+                <span aria-hidden />
+                {weekKeys.map((key) => (
+                  <span
+                    key={key}
+                    className="c-muted"
+                    style={{
+                      fontSize: '0.75em',
+                      textAlign: 'center',
+                      fontWeight: key === dateKey ? 700 : 400,
+                    }}
+                    title={key}
+                  >
+                    {weekdayFmt.format(dateFromKey(key))}
+                  </span>
+                ))}
+                {(habits ?? []).map((habit) => (
+                  <Fragment key={habit.id}>
+                    <span
+                      style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontSize: '0.9em',
+                      }}
+                      title={habit.title}
+                    >
+                      {habit.title}
+                    </span>
+                    {weekKeys.map((key) => {
+                      const checked = doneByDate.get(key)?.has(habit.id) ?? false;
+                      if (key === dateKey) {
+                        return (
+                          <span key={`${habit.id}:${key}`} style={{ textAlign: 'center' }}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              aria-label={t('tool.habits.widget.check', { title: habit.title })}
+                              onChange={() =>
+                                void (checked ? uncheckHabit(habit.id) : checkHabit(habit.id))
+                              }
+                              style={{ accentColor: 'var(--success)', margin: 0 }}
+                            />
+                          </span>
+                        );
+                      }
+                      return (
+                        <span
+                          key={`${habit.id}:${key}`}
+                          aria-hidden
+                          className={checked ? undefined : 'c-muted'}
+                          style={{
+                            textAlign: 'center',
+                            fontSize: '0.85em',
+                            color: checked ? 'var(--success)' : undefined,
+                            opacity: checked ? 1 : 0.6,
+                          }}
+                          title={`${habit.title} · ${key}`}
+                        >
+                          {checked ? '✓' : '·'}
+                        </span>
+                      );
+                    })}
+                  </Fragment>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Variant "streaks": habits ranked by current streak, number big ── */
+    if (props.variant === 'streaks') {
+      const ranked = [...(habits ?? [])]
+        .map((habit) => ({ habit, streak: currentStreak(doneDatesOf(habit.id, days), dateKey) }))
+        .sort((a, b) => b.streak - a.streak || a.habit.order - b.habit.order);
+
+      return (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            gap: 'var(--space-2)',
+            padding: 'var(--space-3)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)' }}>
+            <span style={{ fontWeight: 600 }}>{t('tool.habits.widget.heading')}</span>
+            <span
+              className="c-muted"
+              style={{ fontSize: '0.85em', fontVariantNumeric: 'tabular-nums' }}
+            >
+              {doneTodayCount}/{total}
+            </span>
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {habits !== null && total === 0 && (
+              <div className="c-muted" style={{ fontSize: '0.9em' }}>
+                {t('tool.habits.widget.empty')}
+              </div>
+            )}
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {ranked.map(({ habit, streak }) => (
+                <li
+                  key={habit.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 'var(--space-3)',
+                    padding: 'var(--space-1) 0',
+                  }}
+                >
+                  <span
+                    className={streak === 0 ? 'c-muted' : undefined}
+                    title={t('tool.habits.widget.streak', { days: streak })}
+                    style={{
+                      fontSize: '1.6em',
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      fontVariantNumeric: 'tabular-nums',
+                      minWidth: '2ch',
+                      textAlign: 'right',
+                      flexShrink: 0,
+                      color: streak > 0 ? 'var(--accent)' : undefined,
+                    }}
+                  >
+                    {streak}
+                  </span>
+                  <span
+                    style={{
+                      minWidth: 0,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {streak >= 3 ? '🔥 ' : ''}
+                    {habit.title}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Variant "list" (default): the classic checklist + heatmap ── */
     return (
       <div
         style={{
@@ -457,6 +649,18 @@ export function createTool(): CardoTool {
           return startWeekday === expected
             ? { status: 'pass' }
             : { status: 'fail', detail: `start weekday ${startWeekday} ≠ ${expected}` };
+        }
+        case 'variants': {
+          // Uses hooks, so it cannot be invoked outside React here – the
+          // host's ping check covers mounting. This verifies the export
+          // contract plus the declared variant list.
+          const variants = manifest.widgets[0]?.variants ?? [];
+          if (variants.length < 2) {
+            return { status: 'fail', detail: `expected >= 2 variants, got ${variants.length}` };
+          }
+          return typeof HabitsWidget === 'function' && HabitsWidget.length <= 1
+            ? { status: 'pass' }
+            : { status: 'fail', detail: 'Widget is not a render function' };
         }
         default:
           return { status: 'fail', detail: `unknown test "${testId}"` };

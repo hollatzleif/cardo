@@ -74,6 +74,15 @@ export function hasAnySection(data: TodayData): boolean {
   );
 }
 
+/**
+ * Number of concrete items on today's plate: events + open tasks.
+ * Missing sections simply contribute 0 (graceful degradation, as everywhere).
+ * Powers the "compact" widget variant's single-line summary.
+ */
+export function countTodayItems(data: TodayData): number {
+  return (data.calendar?.events.length ?? 0) + (data.todo?.open.length ?? 0);
+}
+
 /* ── Defensive parsing (provider payloads are foreign data) ──────────── */
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
