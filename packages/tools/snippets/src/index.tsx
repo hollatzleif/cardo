@@ -623,7 +623,7 @@ export function createTool(): CardoTool {
             await addSnippetIn(testCtx.storage, {
               title: 'selftest fetch helper',
               language: 'js',
-              body: 'fetch(url)',
+              body: 'console.log(url)',
               tags: 'selftest-filter, http',
             }),
             await addSnippetIn(testCtx.storage, {

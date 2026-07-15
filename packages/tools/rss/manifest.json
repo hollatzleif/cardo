@@ -4,37 +4,55 @@
   "descriptionKey": "tool.rss.description",
   "version": "1.0.0",
   "minAppVersion": "0.1.0",
-  "permissions": [],
+  "permissions": [
+    "network"
+  ],
   "privacy": {
-    "level": "green",
-    "network": [],
-    "summaryKey": "tool.rss.privacy"
+    "level": "yellow",
+    "network": [
+      {
+        "host": "user-configured-feeds",
+        "dataKey": "tool.rss.privacy.feeds"
+      }
+    ],
+    "summaryKey": "tool.rss.privacy.summary"
   },
   "widgets": [
     {
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "list",
+        "cards",
+        "headlines"
+      ]
     }
   ],
   "commands": [
+    "rss.refresh",
+    "rss.add-feed",
+    "rss.mark-read",
     "rss.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.rss.test.render"
+      "id": "parser",
+      "titleKey": "tool.rss.test.parser"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.rss.test.storage"
+      "id": "crud",
+      "titleKey": "tool.rss.test.crud"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.rss.test.render"
     }
   ],
   "tourSteps": [

@@ -281,6 +281,7 @@ describe('surfaces render and take basic interaction (network down)', () => {
       ['settings.general', '.settings-page__card'], // general
       ['settings.section.appearance', '.settings-page__card'], // appearance (design pointer)
       ['settings.assistant', '.assistant-settings'], // assistant
+      ['settings.sync.title', '.settings-page__card'], // sync (browser: desktop-only hint card)
       ['settings.section.inboxPolls', '.settings-page__card'], // inbox & polls
       ['settings.section.data', '.settings-page__card'], // data & backup
       ['settings.updates', 'input[name="update-mode"]'], // updates

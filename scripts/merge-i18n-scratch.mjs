@@ -53,7 +53,16 @@ for (const file of files.sort()) {
       console.error(`❌ ${file}: missing "${locale}"`);
       process.exit(1);
     }
-    const block = unflatten(scratch[locale]);
+    // Tolerate agents writing full paths ("tool.<id>.name") instead of
+    // relative keys ("name") – strip the redundant prefix.
+    const prefix = `tool.${toolId}.`;
+    const normalized = Object.fromEntries(
+      Object.entries(scratch[locale]).map(([key, value]) => [
+        key.startsWith(prefix) ? key.slice(prefix.length) : key,
+        value,
+      ]),
+    );
+    const block = unflatten(normalized);
     const tools = (catalogs[locale].tool ??= {});
     if (partial) {
       tools[toolId] = deepMerge(tools[toolId] ?? {}, block);

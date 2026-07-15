@@ -4,11 +4,13 @@
   "descriptionKey": "tool.soundscapes.description",
   "version": "1.0.0",
   "minAppVersion": "0.1.0",
-  "permissions": [],
+  "permissions": [
+    "audio"
+  ],
   "privacy": {
     "level": "green",
     "network": [],
-    "summaryKey": "tool.soundscapes.privacy"
+    "summaryKey": "tool.soundscapes.privacy.summary"
   },
   "widgets": [
     {
@@ -21,20 +23,30 @@
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "mixer",
+        "minimal",
+        "single"
+      ]
     }
   ],
   "commands": [
+    "soundscapes.play",
+    "soundscapes.stop",
     "soundscapes.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.soundscapes.test.render"
+      "id": "mixer-logic",
+      "titleKey": "tool.soundscapes.test.mixerLogic"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.soundscapes.test.storage"
+      "id": "commands",
+      "titleKey": "tool.soundscapes.test.commands"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.soundscapes.test.render"
     }
   ],
   "tourSteps": [

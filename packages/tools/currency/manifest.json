@@ -4,11 +4,18 @@
   "descriptionKey": "tool.currency.description",
   "version": "1.0.0",
   "minAppVersion": "0.1.0",
-  "permissions": [],
+  "permissions": [
+    "network"
+  ],
   "privacy": {
-    "level": "green",
-    "network": [],
-    "summaryKey": "tool.currency.privacy"
+    "level": "yellow",
+    "network": [
+      {
+        "host": "open.er-api.com",
+        "dataKey": "tool.currency.privacy.rates"
+      }
+    ],
+    "summaryKey": "tool.currency.privacy.summary"
   },
   "widgets": [
     {
@@ -21,20 +28,30 @@
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "converter",
+        "rate-board",
+        "single-pair"
+      ]
     }
   ],
   "commands": [
+    "currency.convert",
+    "currency.refresh",
     "currency.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.currency.test.render"
+      "id": "convert-math",
+      "titleKey": "tool.currency.test.convertMath"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.currency.test.storage"
+      "id": "cache-roundtrip",
+      "titleKey": "tool.currency.test.cacheRoundtrip"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.currency.test.render"
     }
   ],
   "tourSteps": [

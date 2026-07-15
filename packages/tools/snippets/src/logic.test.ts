@@ -27,7 +27,6 @@ function snippet(partial: Partial<SnippetDoc>): SnippetDoc {
 }
 
 const joinLine = (spans: Span[]) => spans.map((s) => s.text).join('');
-const kindsOf = (spans: Span[]) => spans.map((s) => s.kind);
 const textOf = (spans: Span[], kind: string) =>
   spans
     .filter((s) => s.kind === kind)

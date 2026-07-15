@@ -73,8 +73,8 @@ function KeyQr({ value }: { value: string }) {
     const ctx2d = canvas.getContext('2d');
     if (!ctx2d) return;
     const styles = getComputedStyle(document.documentElement);
-    const bg = styles.getPropertyValue('--bg-widget').trim() || '#ffffff'; // token-lint-allow
-    const fg = styles.getPropertyValue('--text-primary').trim() || '#000000'; // token-lint-allow
+    const bg = styles.getPropertyValue('--bg-widget').trim() || 'white';
+    const fg = styles.getPropertyValue('--text-primary').trim() || 'black';
     ctx2d.fillStyle = bg;
     ctx2d.fillRect(0, 0, canvas.width, canvas.height);
     ctx2d.fillStyle = fg;

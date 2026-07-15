@@ -1824,224 +1824,208 @@
       }
     },
     "flashcards": {
-      "tool": {
-        "flashcards": {
-          "name": "Karteikarten",
-          "description": "Karteikarten mit Spaced Repetition (SM-2): Stapel, tägliche Wiederholungen und Lernstatistik – komplett lokal.",
-          "privacy": "Arbeitet komplett lokal. Deine Karten und dein Lernfortschritt verlassen dieses Gerät nie.",
-          "widget": {
-            "empty": "Noch keine Karten – leg oben deine erste an."
-          },
-          "study": {
-            "reveal": "Antwort zeigen",
-            "backSide": "Zurück zur Frage",
-            "dueCount": "{{count}} fällig",
-            "done": "Alles gelernt – gerade ist nichts fällig.",
-            "checkAgain": "Nochmal prüfen"
-          },
-          "grade": {
-            "again": "Nochmal",
-            "hard": "Schwer",
-            "good": "Gut",
-            "easy": "Leicht"
-          },
-          "grid": {
-            "deckPlaceholder": "Stapel",
-            "frontPlaceholder": "Vorderseite",
-            "backPlaceholder": "Rückseite",
-            "add": "Karte hinzufügen",
-            "cards": "{{count}} Karten",
-            "due": "{{count}} fällig"
-          },
-          "stats": {
-            "title": "{{count}} Wiederholungen in den letzten 14 Tagen",
-            "empty": "Noch keine Wiederholungen – lern erst ein paar Karten."
-          },
-          "command": {
-            "addCard": "Karteikarten: Karte hinzufügen",
-            "addCardDesc": "Fügt eine Karteikarte (Vorder-/Rückseite) zu einem Stapel hinzu; fehlende Stapel werden per Name angelegt.",
-            "reviewDue": "Karteikarten: Fällige lernen",
-            "reviewDueDesc": "Zählt die heute fälligen Karten und startet eine Lernrunde im Widget.",
-            "context": "Karteikarten: aktueller Stand",
-            "contextDesc": "Fasst Stapel, Kartenzahlen und die heute fälligen Karten für den Assistenten zusammen."
-          },
-          "msg": {
-            "cardAdded": "Karte hinzugefügt.",
-            "invalidCard": "Stapel, Vorder- und Rückseite dürfen nicht leer sein.",
-            "dueReady": "Es sind Karten fällig – Zeit zu lernen!",
-            "nothingDue": "Gerade ist nichts fällig – alles gelernt."
-          },
-          "test": {
-            "sm2": "SM-2-Mathematik (Noten, Intervalle, Ease-Untergrenze)",
-            "crud": "Stapel- und Karten-Roundtrip funktioniert",
-            "dueFlow": "Anlegen → Lernen → Fälligkeit wandert",
-            "render": "Widget rendert"
-          },
-          "tour": {
-            "title": "Karteikarten",
-            "body": "Leg Karten in Stapeln an und bewerte dich täglich – der SM-2-Algorithmus plant jede Karte genau dann ein, wenn du sie fast vergessen hättest."
-          }
-        }
+      "name": "Karteikarten",
+      "description": "Karteikarten mit Spaced Repetition (SM-2): Stapel, tägliche Wiederholungen und Lernstatistik – komplett lokal.",
+      "privacy": "Arbeitet komplett lokal. Deine Karten und dein Lernfortschritt verlassen dieses Gerät nie.",
+      "widget": {
+        "empty": "Noch keine Karten – leg oben deine erste an."
+      },
+      "study": {
+        "reveal": "Antwort zeigen",
+        "backSide": "Zurück zur Frage",
+        "dueCount": "{{count}} fällig",
+        "done": "Alles gelernt – gerade ist nichts fällig.",
+        "checkAgain": "Nochmal prüfen"
+      },
+      "grade": {
+        "again": "Nochmal",
+        "hard": "Schwer",
+        "good": "Gut",
+        "easy": "Leicht"
+      },
+      "grid": {
+        "deckPlaceholder": "Stapel",
+        "frontPlaceholder": "Vorderseite",
+        "backPlaceholder": "Rückseite",
+        "add": "Karte hinzufügen",
+        "cards": "{{count}} Karten",
+        "due": "{{count}} fällig"
+      },
+      "stats": {
+        "title": "{{count}} Wiederholungen in den letzten 14 Tagen",
+        "empty": "Noch keine Wiederholungen – lern erst ein paar Karten."
+      },
+      "command": {
+        "addCard": "Karteikarten: Karte hinzufügen",
+        "addCardDesc": "Fügt eine Karteikarte (Vorder-/Rückseite) zu einem Stapel hinzu; fehlende Stapel werden per Name angelegt.",
+        "reviewDue": "Karteikarten: Fällige lernen",
+        "reviewDueDesc": "Zählt die heute fälligen Karten und startet eine Lernrunde im Widget.",
+        "context": "Karteikarten: aktueller Stand",
+        "contextDesc": "Fasst Stapel, Kartenzahlen und die heute fälligen Karten für den Assistenten zusammen."
+      },
+      "msg": {
+        "cardAdded": "Karte hinzugefügt.",
+        "invalidCard": "Stapel, Vorder- und Rückseite dürfen nicht leer sein.",
+        "dueReady": "Es sind Karten fällig – Zeit zu lernen!",
+        "nothingDue": "Gerade ist nichts fällig – alles gelernt."
+      },
+      "test": {
+        "sm2": "SM-2-Mathematik (Noten, Intervalle, Ease-Untergrenze)",
+        "crud": "Stapel- und Karten-Roundtrip funktioniert",
+        "dueFlow": "Anlegen → Lernen → Fälligkeit wandert",
+        "render": "Widget rendert"
+      },
+      "tour": {
+        "title": "Karteikarten",
+        "body": "Leg Karten in Stapeln an und bewerte dich täglich – der SM-2-Algorithmus plant jede Karte genau dann ein, wenn du sie fast vergessen hättest."
       }
     },
     "mood": {
-      "tool": {
-        "mood": {
-          "name": "Stimmungstagebuch",
-          "description": "Eine Stimmung (1-5) und eine Tagebuchzeile pro Tag, mit Kalender, Trend und Serien – komplett lokal.",
-          "privacy": "Arbeitet komplett lokal. Deine Stimmungen und Notizen verlassen dieses Gerät nie.",
-          "widget": {
-            "empty": "Noch keine Stimmungseinträge.",
-            "settingsToggle": "Einstellungen ein- oder ausblenden"
-          },
-          "today": {
-            "question": "Wie fühlst du dich heute?",
-            "moodLabel": "Stimmung {{mood}} von 5",
-            "notePlaceholder": "Eine Zeile zu heute (optional)",
-            "streak": "{{count}} Tage in Serie"
-          },
-          "trend": {
-            "average": "14-Tage-Schnitt: {{avg}}/5",
-            "empty": "Keine Einträge in den letzten 14 Tagen.",
-            "chartLabel": "Stimmung der letzten 14 Tage"
-          },
-          "settings": {
-            "weekStart": "Woche beginnt am",
-            "weekStartMon": "Montag",
-            "weekStartSun": "Sonntag",
-            "scaleStyle": "Skalen-Stil",
-            "scaleEmoji": "Emoji",
-            "scaleNumbers": "Zahlen"
-          },
-          "command": {
-            "log": "Stimmung: heute eintragen",
-            "logDesc": "Trägt die heutige Stimmung (1-5) mit optionaler Notizzeile ein; erneutes Eintragen aktualisiert den Tag.",
-            "context": "Stimmung: aktueller Stand",
-            "contextDesc": "Fasst heutige Stimmung, Serie und 7-Tage-Schnitt für den Assistenten zusammen."
-          },
-          "msg": {
-            "logged": "Stimmung gespeichert."
-          },
-          "test": {
-            "crud": "Tageseintrag-Roundtrip und Same-Day-Upsert funktionieren",
-            "streakMath": "Serien- und Durchschnittsrechnung stimmt",
-            "render": "Widget rendert"
-          },
-          "tour": {
-            "title": "Stimmungstagebuch",
-            "body": "Tipp auf das Gesicht, das zu deinem Tag passt, und ergänze bei Bedarf eine Zeile – Kalender und Trend zeigen dir, wie sich deine Wochen wirklich angefühlt haben."
-          }
-        }
+      "name": "Stimmungstagebuch",
+      "description": "Eine Stimmung (1-5) und eine Tagebuchzeile pro Tag, mit Kalender, Trend und Serien – komplett lokal.",
+      "privacy": "Arbeitet komplett lokal. Deine Stimmungen und Notizen verlassen dieses Gerät nie.",
+      "widget": {
+        "empty": "Noch keine Stimmungseinträge.",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "today": {
+        "question": "Wie fühlst du dich heute?",
+        "moodLabel": "Stimmung {{mood}} von 5",
+        "notePlaceholder": "Eine Zeile zu heute (optional)",
+        "streak": "{{count}} Tage in Serie"
+      },
+      "trend": {
+        "average": "14-Tage-Schnitt: {{avg}}/5",
+        "empty": "Keine Einträge in den letzten 14 Tagen.",
+        "chartLabel": "Stimmung der letzten 14 Tage"
+      },
+      "settings": {
+        "weekStart": "Woche beginnt am",
+        "weekStartMon": "Montag",
+        "weekStartSun": "Sonntag",
+        "scaleStyle": "Skalen-Stil",
+        "scaleEmoji": "Emoji",
+        "scaleNumbers": "Zahlen"
+      },
+      "command": {
+        "log": "Stimmung: heute eintragen",
+        "logDesc": "Trägt die heutige Stimmung (1-5) mit optionaler Notizzeile ein; erneutes Eintragen aktualisiert den Tag.",
+        "context": "Stimmung: aktueller Stand",
+        "contextDesc": "Fasst heutige Stimmung, Serie und 7-Tage-Schnitt für den Assistenten zusammen."
+      },
+      "msg": {
+        "logged": "Stimmung gespeichert."
+      },
+      "test": {
+        "crud": "Tageseintrag-Roundtrip und Same-Day-Upsert funktionieren",
+        "streakMath": "Serien- und Durchschnittsrechnung stimmt",
+        "render": "Widget rendert"
+      },
+      "tour": {
+        "title": "Stimmungstagebuch",
+        "body": "Tipp auf das Gesicht, das zu deinem Tag passt, und ergänze bei Bedarf eine Zeile – Kalender und Trend zeigen dir, wie sich deine Wochen wirklich angefühlt haben."
       }
     },
     "sleep-log": {
-      "tool": {
-        "sleep-log": {
-          "name": "Schlafprotokoll",
-          "description": "Zubettgeh- und Aufwachzeiten pro Nacht mit Wochenbalken, Durchschnitt und Konstanz – komplett lokal.",
-          "privacy": "Arbeitet komplett lokal. Deine Schlafdaten verlassen dieses Gerät nie.",
-          "widget": {
-            "empty": "Noch keine Nächte erfasst.",
-            "settingsToggle": "Einstellungen ein- oder ausblenden"
-          },
-          "log": {
-            "dateLabel": "Aufwachdatum",
-            "bedLabel": "Zubettgehzeit",
-            "wakeLabel": "Aufwachzeit",
-            "add": "Nacht eintragen",
-            "delete": "Nacht vom {{date}} löschen"
-          },
-          "weekly": {
-            "title": "Letzte 7 Nächte (Ziel {{goal}} h)"
-          },
-          "summary": {
-            "average": "7-Tage-Schnitt",
-            "consistency": "Konstanz (± Streuung)",
-            "goalStreak": "Nächte am Ziel in Serie"
-          },
-          "settings": {
-            "goalHours": "Ziel (Stunden)",
-            "timeFormat": "Zeitanzeige",
-            "format24": "24 Stunden",
-            "format12": "12 Stunden (AM/PM)"
-          },
-          "command": {
-            "log": "Schlaf: Nacht eintragen",
-            "logDesc": "Trägt Zubettgeh- und Aufwachzeit (HH:MM) für ein Aufwachdatum ein (Standard: heute); Nächte über Mitternacht werden korrekt gerechnet.",
-            "context": "Schlaf: aktueller Stand",
-            "contextDesc": "Fasst die letzte Nacht, den 7-Tage-Schnitt und die Ziel-Serie für den Assistenten zusammen."
-          },
-          "msg": {
-            "logged": "Nacht gespeichert.",
-            "invalidTime": "Zeiten müssen HH:MM sein (z. B. 23:30).",
-            "invalidDate": "Das Datum muss ein echter Tag sein (JJJJ-MM-TT)."
-          },
-          "test": {
-            "midnightMath": "Dauerberechnung über Mitternacht stimmt",
-            "crud": "Nacht-Roundtrip und Same-Day-Upsert funktionieren",
-            "render": "Widget rendert"
-          },
-          "tour": {
-            "title": "Schlafprotokoll",
-            "body": "Trag ein, wann du ins Bett gegangen und aufgewacht bist – die Wochenbalken zeigen dir auf einen Blick, wie nah du deinem Schlafziel kommst."
-          }
-        }
+      "name": "Schlafprotokoll",
+      "description": "Zubettgeh- und Aufwachzeiten pro Nacht mit Wochenbalken, Durchschnitt und Konstanz – komplett lokal.",
+      "privacy": "Arbeitet komplett lokal. Deine Schlafdaten verlassen dieses Gerät nie.",
+      "widget": {
+        "empty": "Noch keine Nächte erfasst.",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "log": {
+        "dateLabel": "Aufwachdatum",
+        "bedLabel": "Zubettgehzeit",
+        "wakeLabel": "Aufwachzeit",
+        "add": "Nacht eintragen",
+        "delete": "Nacht vom {{date}} löschen"
+      },
+      "weekly": {
+        "title": "Letzte 7 Nächte (Ziel {{goal}} h)"
+      },
+      "summary": {
+        "average": "7-Tage-Schnitt",
+        "consistency": "Konstanz (± Streuung)",
+        "goalStreak": "Nächte am Ziel in Serie"
+      },
+      "settings": {
+        "goalHours": "Ziel (Stunden)",
+        "timeFormat": "Zeitanzeige",
+        "format24": "24 Stunden",
+        "format12": "12 Stunden (AM/PM)"
+      },
+      "command": {
+        "log": "Schlaf: Nacht eintragen",
+        "logDesc": "Trägt Zubettgeh- und Aufwachzeit (HH:MM) für ein Aufwachdatum ein (Standard: heute); Nächte über Mitternacht werden korrekt gerechnet.",
+        "context": "Schlaf: aktueller Stand",
+        "contextDesc": "Fasst die letzte Nacht, den 7-Tage-Schnitt und die Ziel-Serie für den Assistenten zusammen."
+      },
+      "msg": {
+        "logged": "Nacht gespeichert.",
+        "invalidTime": "Zeiten müssen HH:MM sein (z. B. 23:30).",
+        "invalidDate": "Das Datum muss ein echter Tag sein (JJJJ-MM-TT)."
+      },
+      "test": {
+        "midnightMath": "Dauerberechnung über Mitternacht stimmt",
+        "crud": "Nacht-Roundtrip und Same-Day-Upsert funktionieren",
+        "render": "Widget rendert"
+      },
+      "tour": {
+        "title": "Schlafprotokoll",
+        "body": "Trag ein, wann du ins Bett gegangen und aufgewacht bist – die Wochenbalken zeigen dir auf einen Blick, wie nah du deinem Schlafziel kommst."
       }
     },
     "workout": {
-      "tool": {
-        "workout": {
-          "name": "Trainingslog",
-          "description": "Trainingseinheiten mit Sätzen, Wiederholungen und Gewicht, Wochenvolumen und persönlichen Rekorden – komplett lokal.",
-          "privacy": "Arbeitet komplett lokal. Deine Trainingsdaten verlassen dieses Gerät nie.",
-          "widget": {
-            "empty": "Noch keine Workouts erfasst.",
-            "settingsToggle": "Einstellungen ein- oder ausblenden"
-          },
-          "log": {
-            "kindPlaceholder": "Neue Einheit (z. B. Push, Beine, Lauf)",
-            "addSession": "Einheit anlegen",
-            "toggleSession": "Übungen von {{kind}} ein- oder ausblenden",
-            "deleteSession": "Einheit {{kind}} löschen",
-            "exerciseCount": "{{count}} Übungen",
-            "exercisePlaceholder": "Übung",
-            "sets": "Sätze",
-            "reps": "Wdh.",
-            "weight": "Gewicht ({{unit}}, leer = Körpergewicht)",
-            "addExercise": "Übung hinzufügen",
-            "deleteExercise": "{{name}} entfernen",
-            "sessionVolume": "Volumen der Einheit: {{volume}}"
-          },
-          "weekly": {
-            "title": "Diese Woche: {{count}} Einheiten, Volumen {{volume}}"
-          },
-          "records": {
-            "empty": "Noch keine Rekorde – trag erst eine Übung mit Gewicht ein."
-          },
-          "settings": {
-            "unit": "Gewichtseinheit"
-          },
-          "command": {
-            "log": "Workout: Einheit anlegen",
-            "logDesc": "Legt eine leere Trainingseinheit an (Art, Datum standardmäßig heute) und liefert ihre Id; Übungen ergänzt du im Widget.",
-            "context": "Workout: aktueller Stand",
-            "contextDesc": "Fasst die Einheiten dieser Woche, das Volumen und den letzten persönlichen Rekord für den Assistenten zusammen."
-          },
-          "msg": {
-            "logged": "Einheit angelegt.",
-            "invalidKind": "Die Einheit braucht einen Namen (z. B. Push).",
-            "invalidDate": "Das Datum muss ein echter Tag sein (JJJJ-MM-TT)."
-          },
-          "test": {
-            "crud": "Einheiten- und Übungs-Roundtrip funktioniert",
-            "volumeMath": "Volumen- und Wochenfenster-Rechnung stimmt",
-            "render": "Widget rendert"
-          },
-          "tour": {
-            "title": "Trainingslog",
-            "body": "Leg eine Einheit an, öffne sie und ergänze deine Übungen mit Sätzen, Wiederholungen und Gewicht – Wochenvolumen und Rekorde ergeben sich von selbst."
-          }
-        }
+      "name": "Trainingslog",
+      "description": "Trainingseinheiten mit Sätzen, Wiederholungen und Gewicht, Wochenvolumen und persönlichen Rekorden – komplett lokal.",
+      "privacy": "Arbeitet komplett lokal. Deine Trainingsdaten verlassen dieses Gerät nie.",
+      "widget": {
+        "empty": "Noch keine Workouts erfasst.",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "log": {
+        "kindPlaceholder": "Neue Einheit (z. B. Push, Beine, Lauf)",
+        "addSession": "Einheit anlegen",
+        "toggleSession": "Übungen von {{kind}} ein- oder ausblenden",
+        "deleteSession": "Einheit {{kind}} löschen",
+        "exerciseCount": "{{count}} Übungen",
+        "exercisePlaceholder": "Übung",
+        "sets": "Sätze",
+        "reps": "Wdh.",
+        "weight": "Gewicht ({{unit}}, leer = Körpergewicht)",
+        "addExercise": "Übung hinzufügen",
+        "deleteExercise": "{{name}} entfernen",
+        "sessionVolume": "Volumen der Einheit: {{volume}}"
+      },
+      "weekly": {
+        "title": "Diese Woche: {{count}} Einheiten, Volumen {{volume}}"
+      },
+      "records": {
+        "empty": "Noch keine Rekorde – trag erst eine Übung mit Gewicht ein."
+      },
+      "settings": {
+        "unit": "Gewichtseinheit"
+      },
+      "command": {
+        "log": "Workout: Einheit anlegen",
+        "logDesc": "Legt eine leere Trainingseinheit an (Art, Datum standardmäßig heute) und liefert ihre Id; Übungen ergänzt du im Widget.",
+        "context": "Workout: aktueller Stand",
+        "contextDesc": "Fasst die Einheiten dieser Woche, das Volumen und den letzten persönlichen Rekord für den Assistenten zusammen."
+      },
+      "msg": {
+        "logged": "Einheit angelegt.",
+        "invalidKind": "Die Einheit braucht einen Namen (z. B. Push).",
+        "invalidDate": "Das Datum muss ein echter Tag sein (JJJJ-MM-TT)."
+      },
+      "test": {
+        "crud": "Einheiten- und Übungs-Roundtrip funktioniert",
+        "volumeMath": "Volumen- und Wochenfenster-Rechnung stimmt",
+        "render": "Widget rendert"
+      },
+      "tour": {
+        "title": "Trainingslog",
+        "body": "Leg eine Einheit an, öffne sie und ergänze deine Übungen mit Sätzen, Wiederholungen und Gewicht – Wochenvolumen und Rekorde ergeben sich von selbst."
       }
     },
     "meal-planner": {
@@ -2214,260 +2198,332 @@
       }
     },
     "shared-expenses": {
-      "tool": {
-        "shared-expenses": {
-          "name": "Gruppenkasse",
-          "description": "Erfasse Gruppenausgaben, sieh, wer wem was schuldet, und gleiche mit möglichst wenigen Überweisungen aus.",
-          "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
-          "command": {
-            "add": "Gruppenkasse: Ausgabe hinzufügen",
-            "addDesc": "Fügt einer Gruppe (wird bei Bedarf angelegt) eine Ausgabe hinzu: wer gezahlt hat, wie viel, wofür und optional, wer sie teilt (kommagetrennt; Standard: alle Mitglieder).",
-            "context": "Gruppenkasse: aktueller Stand",
-            "contextDesc": "Fasst alle Gruppen mit ihren offenen Salden zusammen (wer bekommt, wer schuldet)."
-          },
-          "msg": {
-            "added": "Ausgabe hinzugefügt."
-          },
-          "widget": {
-            "groupLabel": "Gruppe",
-            "noGroups": "Keine Gruppen",
-            "newGroup": "Neue Gruppe",
-            "groupNamePlaceholder": "Gruppenname",
-            "membersPlaceholder": "Mitglieder, kommagetrennt",
-            "createGroup": "Anlegen",
-            "emptyGroups": "Lege zuerst eine Gruppe mit ihren Mitgliedern an.",
-            "emptyExpenses": "Noch keine Ausgaben.",
-            "payerLabel": "Bezahlt von",
-            "amountLabel": "Betrag",
-            "descriptionPlaceholder": "Wofür?",
-            "participantsPlaceholder": "Beteiligte (optional)",
-            "participantsHint": "Kommagetrennt; leer = alle Mitglieder",
-            "addExpense": "Ausgabe hinzufügen",
-            "deleteExpense": "„{description}“ löschen",
-            "allSettled": "Alles ausgeglichen – niemand schuldet etwas.",
-            "markSettled": "Erledigt",
-            "settlementDescription": "Ausgleich {from} → {to}"
-          },
-          "test": {
-            "balance-math": "Centgenaue Aufteilung, Salden summieren zu null",
-            "settle-clears": "Ausgleichsvorschläge tilgen alle Salden",
-            "crud": "Speicher-Roundtrip für Gruppe & Ausgabe funktioniert",
-            "render": "Widget wird gerendert"
-          },
-          "tour": {
-            "title": "Gruppenkasse",
-            "body": "Erfasse Gruppenausgaben und lass Cardo ausrechnen, wer wem was schuldet – ausgleichen mit möglichst wenigen Überweisungen."
-          }
-        }
+      "name": "Gruppenkasse",
+      "description": "Erfasse Gruppenausgaben, sieh, wer wem was schuldet, und gleiche mit möglichst wenigen Überweisungen aus.",
+      "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
+      "command": {
+        "add": "Gruppenkasse: Ausgabe hinzufügen",
+        "addDesc": "Fügt einer Gruppe (wird bei Bedarf angelegt) eine Ausgabe hinzu: wer gezahlt hat, wie viel, wofür und optional, wer sie teilt (kommagetrennt; Standard: alle Mitglieder).",
+        "context": "Gruppenkasse: aktueller Stand",
+        "contextDesc": "Fasst alle Gruppen mit ihren offenen Salden zusammen (wer bekommt, wer schuldet)."
+      },
+      "msg": {
+        "added": "Ausgabe hinzugefügt."
+      },
+      "widget": {
+        "groupLabel": "Gruppe",
+        "noGroups": "Keine Gruppen",
+        "newGroup": "Neue Gruppe",
+        "groupNamePlaceholder": "Gruppenname",
+        "membersPlaceholder": "Mitglieder, kommagetrennt",
+        "createGroup": "Anlegen",
+        "emptyGroups": "Lege zuerst eine Gruppe mit ihren Mitgliedern an.",
+        "emptyExpenses": "Noch keine Ausgaben.",
+        "payerLabel": "Bezahlt von",
+        "amountLabel": "Betrag",
+        "descriptionPlaceholder": "Wofür?",
+        "participantsPlaceholder": "Beteiligte (optional)",
+        "participantsHint": "Kommagetrennt; leer = alle Mitglieder",
+        "addExpense": "Ausgabe hinzufügen",
+        "deleteExpense": "„{description}“ löschen",
+        "allSettled": "Alles ausgeglichen – niemand schuldet etwas.",
+        "markSettled": "Erledigt",
+        "settlementDescription": "Ausgleich {from} → {to}"
+      },
+      "test": {
+        "balance-math": "Centgenaue Aufteilung, Salden summieren zu null",
+        "settle-clears": "Ausgleichsvorschläge tilgen alle Salden",
+        "crud": "Speicher-Roundtrip für Gruppe & Ausgabe funktioniert",
+        "render": "Widget wird gerendert"
+      },
+      "tour": {
+        "title": "Gruppenkasse",
+        "body": "Erfasse Gruppenausgaben und lass Cardo ausrechnen, wer wem was schuldet – ausgleichen mit möglichst wenigen Überweisungen."
       }
     },
     "calculator": {
-      "tool": {
-        "calculator": {
-          "name": "Taschenrechner",
-          "description": "Ausdrucks-Rechner mit Funktionen, Grad/Bogenmaß und Verlauf – garantiert ohne eval.",
-          "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
-          "command": {
-            "calc": "Taschenrechner: berechnen",
-            "calcDesc": "Wertet einen Mathe-Ausdruck aus (z. B. \"2+3*4\", \"sin(90)\", \"sqrt(2)^2\") und liefert das Ergebnis – auch der Assistent kann damit rechnen.",
-            "context": "Taschenrechner: aktueller Stand",
-            "contextDesc": "Liefert die letzten Berechnungen aus dem Verlauf."
-          },
-          "msg": {
-            "calculated": "Berechnet."
-          },
-          "error": {
-            "syntax": "Ungültiger Ausdruck",
-            "divisionByZero": "Division durch null",
-            "unknownToken": "Unbekanntes Zeichen",
-            "math": "Ergebnis ist keine endliche Zahl"
-          },
-          "widget": {
-            "placeholder": "2+3*4, sin(90), sqrt(2)…",
-            "inputLabel": "Ausdruck",
-            "settingsToggle": "Einstellungen",
-            "deg": "Grad",
-            "rad": "Bogenmaß",
-            "angleToggle": "Grad/Bogenmaß umschalten",
-            "emptyHistory": "Noch keine Berechnungen.",
-            "reuse": "In die Eingabe übernehmen"
-          },
-          "settings": {
-            "angleMode": "Standard-Winkelmodus",
-            "thousands": "Tausendertrennzeichen",
-            "historyLength": "Verlaufslänge"
-          },
-          "test": {
-            "parser": "Parser beherrscht Vorrang, Funktionen und Fehler",
-            "calc-command": "Rechen-Befehl rechnet und schreibt den Verlauf",
-            "history-crud": "Verlaufs-Roundtrip mit Begrenzung funktioniert",
-            "render": "Widget wird gerendert"
-          },
-          "tour": {
-            "title": "Taschenrechner",
-            "body": "Tippe einen Ausdruck oder nutze das Tastenfeld – Ergebnisse landen im Verlauf, und auch der Assistent kann für dich rechnen."
-          }
-        }
+      "name": "Taschenrechner",
+      "description": "Ausdrucks-Rechner mit Funktionen, Grad/Bogenmaß und Verlauf – garantiert ohne eval.",
+      "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
+      "command": {
+        "calc": "Taschenrechner: berechnen",
+        "calcDesc": "Wertet einen Mathe-Ausdruck aus (z. B. \"2+3*4\", \"sin(90)\", \"sqrt(2)^2\") und liefert das Ergebnis – auch der Assistent kann damit rechnen.",
+        "context": "Taschenrechner: aktueller Stand",
+        "contextDesc": "Liefert die letzten Berechnungen aus dem Verlauf."
+      },
+      "msg": {
+        "calculated": "Berechnet."
+      },
+      "error": {
+        "syntax": "Ungültiger Ausdruck",
+        "divisionByZero": "Division durch null",
+        "unknownToken": "Unbekanntes Zeichen",
+        "math": "Ergebnis ist keine endliche Zahl"
+      },
+      "widget": {
+        "placeholder": "2+3*4, sin(90), sqrt(2)…",
+        "inputLabel": "Ausdruck",
+        "settingsToggle": "Einstellungen",
+        "deg": "Grad",
+        "rad": "Bogenmaß",
+        "angleToggle": "Grad/Bogenmaß umschalten",
+        "emptyHistory": "Noch keine Berechnungen.",
+        "reuse": "In die Eingabe übernehmen"
+      },
+      "settings": {
+        "angleMode": "Standard-Winkelmodus",
+        "thousands": "Tausendertrennzeichen",
+        "historyLength": "Verlaufslänge"
+      },
+      "test": {
+        "parser": "Parser beherrscht Vorrang, Funktionen und Fehler",
+        "calc-command": "Rechen-Befehl rechnet und schreibt den Verlauf",
+        "history-crud": "Verlaufs-Roundtrip mit Begrenzung funktioniert",
+        "render": "Widget wird gerendert"
+      },
+      "tour": {
+        "title": "Taschenrechner",
+        "body": "Tippe einen Ausdruck oder nutze das Tastenfeld – Ergebnisse landen im Verlauf, und auch der Assistent kann für dich rechnen."
       }
     },
     "color-tool": {
-      "tool": {
-        "color-tool": {
-          "name": "Farben & Paletten",
-          "description": "Wähle Farben, baue Harmonien, speichere Paletten und prüfe WCAG-Kontrast.",
-          "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
-          "command": {
-            "contrast": "Farben: Kontrast prüfen",
-            "contrastDesc": "Berechnet das WCAG-Kontrastverhältnis zweier Farben (Hex/RGB/HSL) mit AA/AAA-Urteil für normalen und großen Text.",
-            "savePalette": "Farben: Palette speichern",
-            "savePaletteDesc": "Speichert eine benannte Palette aus einer kommagetrennten Farbliste (Hex/RGB/HSL).",
-            "context": "Farben: aktueller Stand",
-            "contextDesc": "Listet die gespeicherten Paletten mit ihrer Farbanzahl."
-          },
-          "msg": {
-            "invalidColor": "Eine der Farben konnte nicht gelesen werden.",
-            "invalidColors": "Die Farbliste enthält einen ungültigen Eintrag.",
-            "paletteSaved": "Palette gespeichert."
-          },
-          "harmony": {
-            "complementary": "Komplementär",
-            "analogous": "Analog",
-            "triadic": "Triadisch",
-            "shades": "Abstufungen"
-          },
-          "widget": {
-            "baseColor": "Grundfarbe",
-            "harmonyLabel": "Harmonie-Regel",
-            "paletteNamePlaceholder": "Palettenname",
-            "savePalette": "Speichern",
-            "emptyPalettes": "Noch keine Paletten gespeichert.",
-            "deletePalette": "Palette „{name}“ löschen",
-            "copyColor": "{hex} kopieren",
-            "copied": "{hex} kopiert.",
-            "foreground": "Textfarbe",
-            "background": "Hintergrundfarbe",
-            "sampleText": "Beispieltext",
-            "aaNormal": "AA",
-            "aaaNormal": "AAA",
-            "aaLarge": "AA groß",
-            "aaaLarge": "AAA groß"
-          },
-          "test": {
-            "conversion-roundtrip": "Farbkonvertierungen laufen exakt im Kreis",
-            "contrast-math": "WCAG-Kontrastrechnung stimmt",
-            "palette-crud": "Paletten-Speicher-Roundtrip funktioniert",
-            "render": "Widget wird gerendert"
-          },
-          "tour": {
-            "title": "Farben & Paletten",
-            "body": "Wähle eine Farbe, entdecke Harmonien, speichere Paletten – und prüfe Textkontrast direkt gegen WCAG."
-          }
-        }
+      "name": "Farben & Paletten",
+      "description": "Wähle Farben, baue Harmonien, speichere Paletten und prüfe WCAG-Kontrast.",
+      "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
+      "command": {
+        "contrast": "Farben: Kontrast prüfen",
+        "contrastDesc": "Berechnet das WCAG-Kontrastverhältnis zweier Farben (Hex/RGB/HSL) mit AA/AAA-Urteil für normalen und großen Text.",
+        "savePalette": "Farben: Palette speichern",
+        "savePaletteDesc": "Speichert eine benannte Palette aus einer kommagetrennten Farbliste (Hex/RGB/HSL).",
+        "context": "Farben: aktueller Stand",
+        "contextDesc": "Listet die gespeicherten Paletten mit ihrer Farbanzahl."
+      },
+      "msg": {
+        "invalidColor": "Eine der Farben konnte nicht gelesen werden.",
+        "invalidColors": "Die Farbliste enthält einen ungültigen Eintrag.",
+        "paletteSaved": "Palette gespeichert."
+      },
+      "harmony": {
+        "complementary": "Komplementär",
+        "analogous": "Analog",
+        "triadic": "Triadisch",
+        "shades": "Abstufungen"
+      },
+      "widget": {
+        "baseColor": "Grundfarbe",
+        "harmonyLabel": "Harmonie-Regel",
+        "paletteNamePlaceholder": "Palettenname",
+        "savePalette": "Speichern",
+        "emptyPalettes": "Noch keine Paletten gespeichert.",
+        "deletePalette": "Palette „{name}“ löschen",
+        "copyColor": "{hex} kopieren",
+        "copied": "{hex} kopiert.",
+        "foreground": "Textfarbe",
+        "background": "Hintergrundfarbe",
+        "sampleText": "Beispieltext",
+        "aaNormal": "AA",
+        "aaaNormal": "AAA",
+        "aaLarge": "AA groß",
+        "aaaLarge": "AAA groß"
+      },
+      "test": {
+        "conversion-roundtrip": "Farbkonvertierungen laufen exakt im Kreis",
+        "contrast-math": "WCAG-Kontrastrechnung stimmt",
+        "palette-crud": "Paletten-Speicher-Roundtrip funktioniert",
+        "render": "Widget wird gerendert"
+      },
+      "tour": {
+        "title": "Farben & Paletten",
+        "body": "Wähle eine Farbe, entdecke Harmonien, speichere Paletten – und prüfe Textkontrast direkt gegen WCAG."
       }
     },
     "snippets": {
-      "tool": {
-        "snippets": {
-          "name": "Code-Snippets",
-          "description": "Speichere, durchsuche und kopiere Code-Snippets mit leichtem Syntax-Highlighting für 8 Sprachen.",
-          "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
-          "command": {
-            "add": "Snippets: Snippet hinzufügen",
-            "addDesc": "Speichert ein Code-Snippet mit Titel, Sprache, Inhalt und optionalen kommagetrennten Tags.",
-            "context": "Snippets: aktueller Stand",
-            "contextDesc": "Meldet, wie viele Snippets es gibt, und nennt die neuesten."
-          },
-          "msg": {
-            "added": "Snippet gespeichert."
-          },
-          "widget": {
-            "searchPlaceholder": "Snippets durchsuchen…",
-            "tagFilterLabel": "Nach Tag filtern",
-            "allTags": "Alle Tags",
-            "addToggle": "Neues Snippet",
-            "settingsToggle": "Einstellungen",
-            "titlePlaceholder": "Titel",
-            "languageLabel": "Sprache",
-            "tagsPlaceholder": "Tags, kommagetrennt",
-            "bodyPlaceholder": "Füge deinen Code hier ein…",
-            "save": "Snippet speichern",
-            "empty": "Noch keine Snippets – leg dein erstes an.",
-            "noMatches": "Nichts passt zu deiner Suche.",
-            "copy": "„{title}“ kopieren",
-            "delete": "„{title}“ löschen"
-          },
-          "settings": {
-            "fontSize": "Code-Schriftgröße",
-            "wrap": "Lange Zeilen umbrechen"
-          },
-          "test": {
-            "crud": "Snippet-Speicher-Roundtrip funktioniert",
-            "highlight-logic": "Highlighter trennt Code, Strings und Kommentare",
-            "filter-logic": "Suche und Tag-Filter funktionieren",
-            "render": "Widget wird gerendert"
-          },
-          "tour": {
-            "title": "Code-Snippets",
-            "body": "Deine lokale Snippet-Bibliothek: suchen, aufklappen, kopieren – mit Syntax-Highlighting und Tags."
-          }
-        }
+      "name": "Code-Snippets",
+      "description": "Speichere, durchsuche und kopiere Code-Snippets mit leichtem Syntax-Highlighting für 8 Sprachen.",
+      "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
+      "command": {
+        "add": "Snippets: Snippet hinzufügen",
+        "addDesc": "Speichert ein Code-Snippet mit Titel, Sprache, Inhalt und optionalen kommagetrennten Tags.",
+        "context": "Snippets: aktueller Stand",
+        "contextDesc": "Meldet, wie viele Snippets es gibt, und nennt die neuesten."
+      },
+      "msg": {
+        "added": "Snippet gespeichert."
+      },
+      "widget": {
+        "searchPlaceholder": "Snippets durchsuchen…",
+        "tagFilterLabel": "Nach Tag filtern",
+        "allTags": "Alle Tags",
+        "addToggle": "Neues Snippet",
+        "settingsToggle": "Einstellungen",
+        "titlePlaceholder": "Titel",
+        "languageLabel": "Sprache",
+        "tagsPlaceholder": "Tags, kommagetrennt",
+        "bodyPlaceholder": "Füge deinen Code hier ein…",
+        "save": "Snippet speichern",
+        "empty": "Noch keine Snippets – leg dein erstes an.",
+        "noMatches": "Nichts passt zu deiner Suche.",
+        "copy": "„{title}“ kopieren",
+        "delete": "„{title}“ löschen"
+      },
+      "settings": {
+        "fontSize": "Code-Schriftgröße",
+        "wrap": "Lange Zeilen umbrechen"
+      },
+      "test": {
+        "crud": "Snippet-Speicher-Roundtrip funktioniert",
+        "highlight-logic": "Highlighter trennt Code, Strings und Kommentare",
+        "filter-logic": "Suche und Tag-Filter funktionieren",
+        "render": "Widget wird gerendert"
+      },
+      "tour": {
+        "title": "Code-Snippets",
+        "body": "Deine lokale Snippet-Bibliothek: suchen, aufklappen, kopieren – mit Syntax-Highlighting und Tags."
       }
     },
     "currency": {
       "name": "Währungsrechner",
-      "description": "TODO: Währungsrechner beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
-      "widget": {
-        "empty": "Noch nichts hier."
+      "description": "Rechne zwischen ~30 Währungen um – mit täglich gecachten Kursen, ehrlicher Altersanzeige und voll offline nutzbar.",
+      "privacy": {
+        "summary": "Dieses Tool kontaktiert höchstens einmal am Tag den kostenlosen Kursdienst open.er-api.com. Das Einzige, was dabei jemals dein Gerät verlässt, ist der Drei-Buchstaben-Code deiner Basiswährung (z. B. „EUR“) in der Anfrage-URL – nie ein Betrag, nie etwas Persönliches. Alle Umrechnungen laufen gegen die lokal gespeicherte Tabelle.",
+        "rates": "Nur der Drei-Buchstaben-Code deiner Basiswährung (z. B. „EUR“) – nie Beträge, nie etwas über dich."
+      },
+      "baseLabel": "Kursbasis: {{base}}",
+      "settingsToggle": "Einstellungen",
+      "refresh": "Kurse aktualisieren",
+      "amountLabel": "Betrag",
+      "fromLabel": "Ausgangswährung",
+      "toLabel": "Zielwährung",
+      "swap": "Währungen tauschen",
+      "unknownCode": "Diese Währung ist nicht in der gespeicherten Tabelle.",
+      "noRates": "Noch keine Kurse – Cardo holt sie, sobald du online bist.",
+      "noPairs": "Noch keine Lieblingspaare – füge welche über ⚙ hinzu.",
+      "offlineHint": "offline – gespeicherte Kurse",
+      "updated": "Kurse von {{age}}",
+      "settings": {
+        "base": "Basiswährung",
+        "decimals": "Nachkommastellen",
+        "pairs": "Lieblingspaare",
+        "addPair": "Paar hinzufügen",
+        "removePair": "Paar {{pair}} entfernen"
       },
       "command": {
-        "context": "Währungsrechner: aktueller Stand"
+        "convert": "Währung umrechnen",
+        "convertDesc": "Rechnet einen Betrag zwischen zwei ISO-Währungscodes um (z. B. 100 EUR in USD) – mit den lokal gecachten Tageskursen, funktioniert offline und kontaktiert nie das Netz.",
+        "refresh": "Wechselkurse aktualisieren",
+        "refreshDesc": "Holt jetzt die heutigen Wechselkurse für die Basiswährung. Offline bleibt einfach die gespeicherte Tabelle stehen.",
+        "context": "Währungsrechner: aktueller Stand",
+        "contextDesc": "Fasst die gespeicherte Kurstabelle, ihr Alter und die letzte Umrechnung für den Assistenten zusammen."
+      },
+      "msg": {
+        "converted": "Umgerechnet.",
+        "refreshed": "Wechselkurse aktualisiert.",
+        "offline": "Gerade keine Verbindung – die gespeicherten Kurse bleiben stehen.",
+        "noRatesYet": "Noch keine Kurse gespeichert – führ einmal online „Wechselkurse aktualisieren“ aus.",
+        "unknownCode": "Unbekannter Währungscode – nutz ISO-Codes wie EUR, USD, GBP."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "convertMath": "Kreuzkurs-Mathematik stimmt",
+        "cacheRoundtrip": "Kurs-Cache lässt sich speichern und löschen",
+        "render": "Widget wird dargestellt"
       },
       "tour": {
-        "title": "Währungsrechner",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Währungsrechner."
+        "title": "Währungen auf einen Blick",
+        "body": "Rechne Beträge um, pinne Lieblingspaare und lies große Einzelkurse ab. Kurse werden einmal täglich geholt und gespeichert – du siehst immer, wie alt sie sind, und offline funktioniert alles weiter."
       }
     },
     "rss": {
       "name": "RSS-Leser",
-      "description": "TODO: RSS-Leser beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Folge deinen liebsten RSS- und Atom-Feeds – mit Ungelesen-Zählern, Leselisten-Übergabe und lokalem Cache fürs Offline-Lesen.",
+      "privacy": {
+        "summary": "Dieses Tool kontaktiert genau die Feed-Server, die DU hinzufügst – nicht mehr, nicht weniger. Jede Anfrage ist ein schlichter Abruf dieser Feed-Adresse; nichts über dich, dein Dashboard oder dein Leseverhalten wird jemals mitgeschickt. Geladene Artikel werden lokal gespeichert, Lesen funktioniert also auch offline.",
+        "feeds": "Cardo kontaktiert nur die Feed-URLs, die du selbst hinzufügst, und schickt nichts außer dem schlichten Abruf dieser Adresse – nie etwas über dich."
+      },
       "widget": {
-        "empty": "Noch nichts hier."
+        "urlPlaceholder": "Feed-URL (RSS oder Atom)…",
+        "addFeed": "Feed hinzufügen",
+        "refresh": "Feeds aktualisieren",
+        "invalidUrl": "Das sieht nicht nach einer gültigen http(s)-URL aus.",
+        "empty": "Noch keine Feeds. Füg oben eine Feed-URL ein, um loszulegen.",
+        "allRead": "Alles gelesen – keine ungelesenen Artikel.",
+        "noItems": "Keine Artikel in diesem Feed.",
+        "notFetchedYet": "Noch nicht abgerufen – kommt mit der nächsten Aktualisierung.",
+        "feedBroken": "nicht erreichbar",
+        "removeFeed": "Feed {{title}} entfernen",
+        "sendToReadingList": "An Leseliste senden",
+        "offlineHint": "{{count}} Feed(s) nicht erreichbar – zeige gespeicherte Artikel"
       },
       "command": {
-        "context": "RSS-Leser: aktueller Stand"
+        "refresh": "Feeds aktualisieren",
+        "refreshDesc": "Ruft jetzt alle abonnierten Feeds ab. Offline bleiben einfach die gespeicherten Artikel stehen.",
+        "addFeed": "RSS-Feed hinzufügen",
+        "addFeedDesc": "Abonniert einen RSS-/Atom-Feed per URL. Abgerufen wird der Feed erst später – das funktioniert also auch offline.",
+        "markRead": "Artikel als gelesen markieren",
+        "markReadDesc": "Markiert alle Artikel als gelesen – oder nur die eines Feeds, wenn du einen Feed-Titel angibst.",
+        "context": "RSS-Leser: aktueller Stand",
+        "contextDesc": "Fasst abonnierte Feeds und Ungelesen-Zähler für den Assistenten zusammen."
+      },
+      "msg": {
+        "refreshed": "Feeds aktualisiert.",
+        "offline": "Gerade keine Verbindung – die gespeicherten Artikel bleiben stehen.",
+        "noFeeds": "Noch keine Feeds abonniert – füg erst einen hinzu.",
+        "feedAdded": "Feed hinzugefügt – Artikel kommen mit der nächsten Aktualisierung.",
+        "feedExists": "Diesen Feed hast du schon abonniert.",
+        "invalidUrl": "Das sieht nicht nach einer gültigen http(s)-URL aus.",
+        "feedNotFound": "Keinen Feed mit diesem Namen gefunden.",
+        "markedRead": "Als gelesen markiert."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "parser": "RSS-2.0- und Atom-Feeds werden korrekt geparst",
+        "crud": "Feed- und Artikel-Speicher funktioniert",
+        "render": "Widget wird dargestellt"
       },
       "tour": {
-        "title": "RSS-Leser",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für RSS-Leser."
+        "title": "Deine Feeds, deine Regeln",
+        "body": "Füg beliebige RSS- oder Atom-Feeds hinzu – Cardo hält die neuesten Artikel lokal vor. Ungelesenes ist fett, ein Klick öffnet den Artikel und markiert ihn als gelesen – und offline bleibt einfach stehen, was schon da ist."
       }
     },
     "soundscapes": {
       "name": "Klangkulissen",
-      "description": "TODO: Klangkulissen beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
-      "widget": {
-        "empty": "Noch nichts hier."
+      "description": "Ein Ambiente-Mixer mit mitgelieferten Loops – Regen, weißes Rauschen, braunes Rauschen, Bachlauf – für konzentriertes Arbeiten.",
+      "privacy": {
+        "summary": "Arbeitet vollständig lokal. Alle Klang-Loops werden mit Cardo mitgeliefert; nichts wird gestreamt, nichts verlässt dein Gerät."
+      },
+      "play": "Abspielen",
+      "stop": "Stoppen",
+      "master": "Gesamt",
+      "trackLabel": "Track",
+      "toggleTrack": "{{track}} umschalten",
+      "volumeLabel": "Lautstärke {{track}}",
+      "track": {
+        "rain": "Regen",
+        "white-noise": "Weißes Rauschen",
+        "brown-noise": "Braunes Rauschen",
+        "stream": "Bachlauf"
+      },
+      "settings": {
+        "autoWithPomodoro": "Pomodoro folgen: in Arbeitsphasen spielen, in Pausen stoppen"
       },
       "command": {
-        "context": "Klangkulissen: aktueller Stand"
+        "play": "Klangkulisse abspielen",
+        "playDesc": "Startet die Ambiente-Mischung – oder einen einzelnen Track (rain, white-noise, brown-noise, stream). Ohne Track läuft die letzte Mischung weiter.",
+        "stop": "Klangkulisse stoppen",
+        "stopDesc": "Stoppt die gesamte Ambiente-Wiedergabe. Die Mischung selbst bleibt fürs nächste Abspielen erhalten.",
+        "context": "Klangkulissen: aktueller Stand",
+        "contextDesc": "Meldet dem Assistenten, welche Tracks bei welcher Gesamtlautstärke laufen."
+      },
+      "msg": {
+        "playing": "Klangkulisse läuft.",
+        "stopped": "Klangkulisse gestoppt."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "mixerLogic": "Mixer-Zustandsmaschine und Lautstärke-Mathematik stimmen",
+        "commands": "Abspielen/Stoppen speichern ihren Zustand lautlos",
+        "render": "Widget wird dargestellt"
       },
       "tour": {
-        "title": "Klangkulissen",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Klangkulissen."
+        "title": "Dein Klang im Hintergrund",
+        "body": "Misch dir aus Regen, Rauschen und Bachlauf deine persönliche Kulisse. Alles wird mit Cardo mitgeliefert – nichts wird gestreamt. Auf Wunsch folgt der Klang deinen Pomodoro-Phasen."
       }
     }
   },
