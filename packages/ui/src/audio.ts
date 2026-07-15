@@ -61,50 +61,104 @@ export interface LoopPlayer {
   /** 0–1; applied live. */
   setVolume(volume: number): void;
   readonly playing: boolean;
-  /** Releases the audio context and element. The player is unusable after. */
+  /** Releases the audio context and buffers. The player is unusable after. */
   dispose(): void;
 }
 
 /**
- * Gapless-ish loop player for a bundled audio asset (soundscapes). Uses a
- * plain HTMLAudioElement with `loop` – good enough for ambience tracks with
- * loop-friendly edges – plus a gain node for live volume control.
+ * Sample-accurate gapless loop player for a bundled audio asset
+ * (soundscapes). Decodes the file once into an AudioBuffer and loops it via
+ * an AudioBufferSourceNode – unlike HTMLAudioElement.loop this has NO gap
+ * or hitch at the seam. A GainNode carries live volume.
  */
 export function createLoopPlayer(url: string, initialVolume = 0.5): LoopPlayer {
-  const supported = typeof Audio !== 'undefined';
-  const element = supported ? new Audio(url) : null;
-  if (element) {
-    element.loop = true;
-    element.volume = Math.min(1, Math.max(0, initialVolume));
-  }
+  const Ctx = typeof AudioContext !== 'undefined' ? AudioContext : undefined;
+  let audio: AudioContext | null = null;
+  let gain: GainNode | null = null;
+  let source: AudioBufferSourceNode | null = null;
+  let buffer: AudioBuffer | null = null;
+  let loading: Promise<AudioBuffer | null> | null = null;
+  let volume = Math.min(1, Math.max(0, initialVolume));
   let disposed = false;
+  let playing = false;
+
+  async function loadBuffer(): Promise<AudioBuffer | null> {
+    if (buffer) return buffer;
+    if (!loading) {
+      loading = (async () => {
+        try {
+          const response = await fetch(url); // same-origin bundled asset
+          const bytes = await response.arrayBuffer();
+          if (!audio) return null;
+          buffer = await audio.decodeAudioData(bytes);
+          return buffer;
+        } catch {
+          return null; // missing codec/asset: stay silent, never throw
+        }
+      })();
+    }
+    return loading;
+  }
 
   return {
     async play() {
-      if (!element || disposed) return;
-      try {
-        await element.play();
-      } catch {
-        // Autoplay policies / missing codec: stay silent rather than throw.
-      }
+      if (!Ctx || disposed || playing) return;
+      audio ??= new Ctx();
+      gain ??= (() => {
+        const node = audio.createGain();
+        node.gain.value = volume;
+        node.connect(audio.destination);
+        return node;
+      })();
+      const decoded = await loadBuffer();
+      if (!decoded || disposed || playing || !audio || !gain) return;
+      if (audio.state === 'suspended') await audio.resume().catch(() => {});
+      source = audio.createBufferSource();
+      source.buffer = decoded;
+      source.loop = true; // sample-accurate, gapless
+      source.connect(gain);
+      source.start();
+      playing = true;
     },
     stop() {
-      if (!element || disposed) return;
-      element.pause();
-      element.currentTime = 0;
+      if (source) {
+        try {
+          source.stop();
+        } catch {
+          /* already stopped */
+        }
+        source.disconnect();
+        source = null;
+      }
+      playing = false;
     },
-    setVolume(volume: number) {
-      if (!element || disposed) return;
-      element.volume = Math.min(1, Math.max(0, volume));
+    setVolume(next: number) {
+      volume = Math.min(1, Math.max(0, next));
+      if (gain && audio) {
+        // Short ramp avoids zipper noise on slider drags.
+        gain.gain.setTargetAtTime(volume, audio.currentTime, 0.03);
+      }
     },
     get playing() {
-      return element !== null && !disposed && !element.paused;
+      return playing && !disposed;
     },
     dispose() {
-      if (!element || disposed) return;
-      element.pause();
-      element.src = '';
+      if (disposed) return;
       disposed = true;
+      if (source) {
+        try {
+          source.stop();
+        } catch {
+          /* already stopped */
+        }
+        source.disconnect();
+        source = null;
+      }
+      playing = false;
+      buffer = null;
+      if (audio) void audio.close().catch(() => {});
+      audio = null;
+      gain = null;
     },
   };
 }
