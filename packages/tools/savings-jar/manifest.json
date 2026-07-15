@@ -15,26 +15,36 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "jar",
+        "bar",
+        "cards"
+      ]
     }
   ],
   "commands": [
+    "savings-jar.add-goal",
+    "savings-jar.contribute",
     "savings-jar.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.savings-jar.test.render"
+      "id": "crud",
+      "titleKey": "tool.savings-jar.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.savings-jar.test.storage"
+      "id": "contribute-command",
+      "titleKey": "tool.savings-jar.test.contributeCommand"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.savings-jar.test.render"
     }
   ],
   "tourSteps": [

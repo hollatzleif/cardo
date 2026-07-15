@@ -14,27 +14,37 @@
     {
       "id": "main",
       "defaultSize": {
-        "w": 4,
-        "h": 3
+        "w": 6,
+        "h": 5
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "matrix",
+        "list"
+      ]
     }
   ],
   "commands": [
+    "eisenhower.add",
+    "eisenhower.move",
+    "eisenhower.complete",
     "eisenhower.context"
   ],
   "selfTests": [
+    {
+      "id": "crud",
+      "titleKey": "tool.eisenhower.test.crud"
+    },
     {
       "id": "render",
       "titleKey": "tool.eisenhower.test.render"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.eisenhower.test.storage"
+      "id": "context",
+      "titleKey": "tool.eisenhower.test.context"
     }
   ],
   "tourSteps": [

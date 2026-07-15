@@ -4,7 +4,10 @@
   "descriptionKey": "tool.reading-list.description",
   "version": "1.0.0",
   "minAppVersion": "0.1.0",
-  "permissions": [],
+  "permissions": [
+    "file-read",
+    "file-write"
+  ],
   "privacy": {
     "level": "green",
     "network": [],
@@ -14,27 +17,37 @@
     {
       "id": "main",
       "defaultSize": {
-        "w": 4,
-        "h": 3
+        "w": 5,
+        "h": 6
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "list",
+        "cards",
+        "kanban"
+      ]
     }
   ],
   "commands": [
+    "reading-list.add",
+    "reading-list.set-status",
     "reading-list.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.reading-list.test.render"
+      "id": "crud",
+      "titleKey": "tool.reading-list.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.reading-list.test.storage"
+      "id": "status-flow",
+      "titleKey": "tool.reading-list.test.statusFlow"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.reading-list.test.render"
     }
   ],
   "tourSteps": [

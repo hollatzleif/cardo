@@ -14,27 +14,36 @@
     {
       "id": "main",
       "defaultSize": {
-        "w": 4,
-        "h": 3
+        "w": 6,
+        "h": 4
       },
       "minSize": {
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "grid",
+        "list",
+        "speed-dial"
+      ]
     }
   ],
   "commands": [
+    "bookmarks.add",
     "bookmarks.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.bookmarks.test.render"
+      "id": "crud",
+      "titleKey": "tool.bookmarks.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.bookmarks.test.storage"
+      "id": "url-validation",
+      "titleKey": "tool.bookmarks.test.urlValidation"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.bookmarks.test.render"
     }
   ],
   "tourSteps": [

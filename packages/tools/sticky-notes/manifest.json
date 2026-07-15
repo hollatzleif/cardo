@@ -14,27 +14,35 @@
     {
       "id": "main",
       "defaultSize": {
-        "w": 4,
-        "h": 3
+        "w": 6,
+        "h": 5
       },
       "minSize": {
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "wall",
+        "grid"
+      ]
     }
   ],
   "commands": [
+    "sticky-notes.add",
     "sticky-notes.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.sticky-notes.test.render"
+      "id": "crud",
+      "titleKey": "tool.sticky-notes.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.sticky-notes.test.storage"
+      "id": "zorder",
+      "titleKey": "tool.sticky-notes.test.zorder"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.sticky-notes.test.render"
     }
   ],
   "tourSteps": [

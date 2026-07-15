@@ -364,7 +364,7 @@ pub fn files_browse(state: tauri::State<'_, NotesState>) -> CmdResult<Vec<Browse
             .unwrap_or(0);
         files.push(BrowseEntry { name, kind: kind.to_string(), modified_ms, size: meta.len() });
     }
-    files.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    files.sort_by_key(|f| f.name.to_lowercase());
     Ok(files)
 }
 
