@@ -345,6 +345,34 @@ function schedulerRoundtripCheck(): DiagnoseCheck {
   };
 }
 
+/** Every stored custom theme must satisfy the full 18-token contract. */
+function customThemesCheck(): DiagnoseCheck {
+  return {
+    id: 'ui:custom-themes',
+    titleKey: 'diagnose.check.customThemes',
+    category: 'ui',
+    async run() {
+      const { backend } = getHost();
+      const doc = await backend.get('core.design', 'custom-themes');
+      const list = (doc as { themes?: unknown } | null)?.themes;
+      if (!Array.isArray(list) || list.length === 0) {
+        return { status: 'pass', detail: '0 custom themes' };
+      }
+      const { validateTheme } = await import('@cardo/themes');
+      const problems = list
+        .map((theme) => {
+          const candidate = theme as { id?: string };
+          const missing = validateTheme(theme as Parameters<typeof validateTheme>[0]);
+          return missing.length > 0 ? `${candidate.id ?? '?'}: ${missing.join(', ')}` : null;
+        })
+        .filter((p): p is string => p !== null);
+      return problems.length > 0
+        ? { status: 'fail', detail: problems.join('; ') }
+        : { status: 'pass', detail: `${list.length} custom theme(s) valid` };
+    },
+  };
+}
+
 function designDocRoundtripCheck(): DiagnoseCheck {
   return {
     id: 'ui:design-doc-roundtrip',
@@ -374,6 +402,7 @@ export function buildUiChecks(): DiagnoseCheck[] {
     themeRoundtripCheck(),
     languageRoundtripCheck(),
     schedulerRoundtripCheck(),
+    customThemesCheck(),
     designDocRoundtripCheck(),
   ];
 }

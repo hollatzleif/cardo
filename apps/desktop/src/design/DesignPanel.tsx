@@ -5,6 +5,7 @@ import { Button, Input } from '@cardo/ui';
 import { themes } from '@cardo/themes';
 import { useAppStore } from '../state/appStore';
 import { DESIGN_PRESETS, type DesignPreset } from './presets';
+import { ThemeEditorSection } from './ThemeEditor';
 import {
   applyDesign,
   currentTokenHex,
@@ -228,6 +229,8 @@ export function DesignPanel({ onClose }: { onClose(): void }) {
           </Button>
         </div>
       </Section>
+
+      <ThemeEditorSection />
 
       <Section title={t('design.typography.title')}>
         <label className="design-row">

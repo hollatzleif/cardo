@@ -196,7 +196,8 @@
       "modelUrlAllowlist": "All model downloads come from huggingface.co",
       "namespaceIsolation": "Tools cannot read each other's data",
       "syncCrypto": "Sync encryption seals and verifies correctly",
-      "syncEngine": "Sync engine converges two scratch devices"
+      "syncEngine": "Sync engine converges two scratch devices",
+      "customThemes": "All custom themes are complete"
     },
     "category": {
       "core": "Core",
@@ -2022,6 +2023,20 @@
     },
     "theme": {
       "title": "Theme"
+    },
+    "customThemes": {
+      "title": "Your own themes",
+      "defaultName": "My theme",
+      "new": "Derive from current theme",
+      "import": "Import…",
+      "importApply": "Import theme",
+      "export": "Copy as JSON",
+      "deleteConfirm": "Delete this theme? Widgets using it fall back to the default theme.",
+      "name": "Name",
+      "appearance": "Appearance",
+      "dark": "Dark",
+      "light": "Light",
+      "save": "Save & apply"
     }
   },
   "polls": {

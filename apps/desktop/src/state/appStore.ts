@@ -124,6 +124,11 @@ export const useAppStore = create<AppState>((set, get) => {
     async init() {
       const { backend } = getHost();
 
+      // Custom themes must be registered before the first applyTheme so a
+      // stored custom theme id resolves at startup.
+      const { registerCustomThemes } = await import('../design/customThemes');
+      await registerCustomThemes();
+
       const themeDoc = (await backend.get('core.theme', 'current')) as ThemeDoc | null;
       const themeId = themeDoc?.themeId ?? defaultThemeId;
       const accentToken = themeDoc?.accentToken;

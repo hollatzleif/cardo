@@ -196,7 +196,8 @@
       "modelUrlAllowlist": "Alle Modell-Downloads kommen von huggingface.co",
       "namespaceIsolation": "Tools können gegenseitig keine Daten lesen",
       "syncCrypto": "Sync-Verschlüsselung versiegelt und prüft korrekt",
-      "syncEngine": "Sync-Engine gleicht zwei Test-Geräte ab"
+      "syncEngine": "Sync-Engine gleicht zwei Test-Geräte ab",
+      "customThemes": "Alle eigenen Themes sind vollständig"
     },
     "category": {
       "core": "Kern",
@@ -2022,6 +2023,20 @@
     },
     "theme": {
       "title": "Theme"
+    },
+    "customThemes": {
+      "title": "Eigene Themes",
+      "defaultName": "Mein Theme",
+      "new": "Vom aktuellen Theme ableiten",
+      "import": "Importieren…",
+      "importApply": "Theme importieren",
+      "export": "Als JSON kopieren",
+      "deleteConfirm": "Dieses Theme löschen? Wo es aktiv ist, gilt danach das Standard-Theme.",
+      "name": "Name",
+      "appearance": "Erscheinungsbild",
+      "dark": "Dunkel",
+      "light": "Hell",
+      "save": "Speichern & anwenden"
     }
   },
   "polls": {

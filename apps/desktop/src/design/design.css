@@ -305,3 +305,59 @@ html[data-card-style='paper'] .c-card {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+
+/* ── Theme editor ── */
+.design-custom-themes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.design-custom-theme {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.design-custom-theme .design-theme-swatch {
+  flex: 1;
+}
+.design-custom-theme__actions {
+  display: flex;
+  gap: var(--space-1);
+}
+.design-custom-import {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.design-theme-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+.design-theme-editor__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--space-2);
+}
+.design-theme-editor__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 12px;
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+}
+.design-theme-editor__field input[type='color'] {
+  border: none;
+  background: none;
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+}
