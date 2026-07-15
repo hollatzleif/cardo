@@ -23,7 +23,13 @@
     "moveWidget": "Widget verschieben",
     "enterFullscreen": "Vollbild",
     "exitFullscreen": "Vollbild verlassen",
-    "openFolder": "Notizordner öffnen"
+    "openFolder": "Notizordner öffnen",
+    "widgetHelp": "Hilfe zu diesem Widget",
+    "help": {
+      "how": "So funktioniert’s",
+      "setup": "Einrichtung",
+      "bestFor": "Am besten geeignet für"
+    }
   },
   "palette": {
     "placeholder": "Befehl eingeben oder suchen…",
@@ -386,6 +392,11 @@
         "minimal": "Minimal",
         "words": "In Worten",
         "mono": "Terminal"
+      },
+      "help": {
+        "how": "Zeigt die aktuelle Uhrzeit in fünf Stilen: Digital, Analog, Minimal, In Worten („halb zehn“) und Terminal. Den Stil wechselst du im Bearbeiten-Modus über die Varianten-Auswahl des Widgets.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Ein Zeit-Anker auf deinem Dashboard — besonders im Vollbild oder auf einem Zweitmonitor."
       }
     },
     "counter": {
@@ -403,6 +414,11 @@
       "tour": {
         "title": "Widgets merken sich alles",
         "body": "Dieser Zähler übersteht Neustarts. Alles, was du in Cardo tust, wird lokal auf deinem Gerät gespeichert."
+      },
+      "help": {
+        "how": "Ein Knopf und eine Zahl: Jeder Klick zählt eins hoch, und der Stand übersteht Neustarts, weil er lokal gespeichert wird. Zurücksetzen kannst du jederzeit.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Alles zählen, was von Hand gezählt wird: Kaffeetassen, Sätze im Training, Anrufe, Runden."
       }
     },
     "alarm": {
@@ -436,6 +452,11 @@
       "tour": {
         "title": "Deine Wecker",
         "body": "Füge einen Wecker mit Uhrzeit und Nachricht hinzu. Cardo benachrichtigt dich und spielt einen Klang – alles bleibt auf deinem Gerät."
+      },
+      "help": {
+        "how": "Uhrzeit und optional eine Nachricht festlegen — zu diesem Zeitpunkt benachrichtigt dich Cardo und spielt einen Klingelton. Wecker lassen sich einzeln ein- und ausschalten und löschen, wenn du sie nicht mehr brauchst. Alles bleibt auf diesem Gerät.",
+        "setup": "Keine Einrichtung nötig. Erlaube Cardo Benachrichtigungen in den Systemeinstellungen, damit Wecker dich auch erreichen, wenn die App im Hintergrund läuft.",
+        "bestFor": "Feste Anker im Tag: Pause machen, los zum Bus, der eine Anruf um 15 Uhr."
       }
     },
     "countdown": {
@@ -469,6 +490,11 @@
         "card": "Karte",
         "big": "Große Zahl",
         "ring": "Ring"
+      },
+      "help": {
+        "how": "Leg ein Ereignis mit Datum an und Cardo zählt die Tage bis dahin — und sagt dir, wenn es heute so weit ist. Die Varianten Karte, Große Zahl und Ring reichen von kompakter Liste bis zu einer einzigen riesigen Zahl.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Vorfreude sichtbar machen: Urlaube, Geburtstage, Launches, Prüfungstermine."
       }
     },
     "calendar": {
@@ -507,6 +533,11 @@
       "tour": {
         "title": "Dein Kalender",
         "body": "Klicke auf einen Tag, um seine Termine zu sehen und neue anzulegen. Termine mit Uhrzeit erinnern dich kurz vor Beginn."
+      },
+      "help": {
+        "how": "Ein komplett lokaler Kalender für deine eigenen Termine: Tag in der Monatsansicht anklicken, Eintrag mit Uhrzeit oder ganztägig anlegen und wieder löschen, wenn er vorbei ist. An anstehende Termine kann dich eine Systembenachrichtigung erinnern.",
+        "setup": "Keine Einrichtung nötig. Erlaube Cardo Benachrichtigungen in den Systemeinstellungen, wenn du Terminerinnerungen willst.",
+        "bestFor": "Private Termine und Erinnerungen, die du lieber aus jedem Cloud-Kalender heraushältst."
       }
     },
     "notes": {
@@ -555,6 +586,11 @@
       "footer": {
         "changeFolder": "Ordner wechseln",
         "noFolder": "Kein Ordner ausgewählt"
+      },
+      "help": {
+        "how": "Deine Notizen sind echte Markdown-Dateien (.md) in einem Ordner auf deiner Festplatte — keine Datenbank, kein Lock-in, mit jedem Editor lesbar. In der Listenspalte legst du Notizen an, benennst sie um oder löschst sie; geschrieben wird im Editor mit Markdown-Vorschau. Alles wird direkt in die Dateien gespeichert.",
+        "setup": "Cardo nutzt einen automatisch angelegten Notizordner; über „Ordner wechseln“ in der Fußzeile kannst du jeden beliebigen Ordner wählen — zum Beispiel einen, den eine andere App schon synchronisiert.",
+        "bestFor": "Notizen, die jede App überleben sollen: Journale, Nachschlagewerke, Besprechungsnotizen als schlichte Dateien."
       }
     },
     "files-explorer": {
@@ -587,7 +623,12 @@
       "editorLabel": "Editor für {{name}}",
       "backlinks": "Verlinkt von ({{count}})",
       "loading": "Wird geladen…",
-      "externalHint": "Diese Datei öffnet sich in der Standard-App deines Systems."
+      "externalHint": "Diese Datei öffnet sich in der Standard-App deines Systems.",
+      "help": {
+        "how": "Durchstöbert die Dateien in deinem Cardo-Ordner: Markdown und Text bearbeitest du direkt im Widget, Bilder, PDFs und HTML-Seiten bekommst du als Vorschau. [[Wiki-Links]] im Obsidian-Stil verbinden deine Notizen, und die Backlinks-Ansicht zeigt, welche Dateien auf die gerade geöffnete verweisen. Was Cardo nicht anzeigen kann, öffnet sich in der Standard-App deines Systems.",
+        "setup": "Keine Einrichtung — es arbeitet von Anfang an auf deinem Cardo-Ordner. Alles bleibt in diesem Ordner auf deinem Gerät.",
+        "bestFor": "Eine lokale Wissenssammlung pflegen: verlinkte Notizen, Referenz-PDFs und Projektdateien an einem Ort."
+      }
     },
     "pomodoro": {
       "name": "Pomodoro",
@@ -633,6 +674,11 @@
         "body": "Starte eine Fokusphase und Cardo zählt für dich runter. Nach jeder Phase hast du dir eine Pause verdient – nach einem vollen Zyklus-Set eine lange.",
         "settingsTitle": "Mach ihn zu deinem",
         "settingsBody": "Tippe auf das Zahnrad, um Fokus- und Pausenlängen anzupassen, festzulegen, wie viele Zyklen zur langen Pause führen, und ob ein Ton erklingt."
+      },
+      "help": {
+        "how": "Der klassische Fokus-Rhythmus: eine Arbeitsphase, eine kurze Pause und nach einer festen Zahl von Zyklen eine lange Pause. Du kannst jederzeit starten, pausieren, zurücksetzen oder eine Phase überspringen; am Ende jeder Phase benachrichtigt dich Cardo und spielt auf Wunsch einen Ton. Der Zykluszähler zeigt, wo im Satz du gerade bist.",
+        "setup": "Läuft sofort mit dem klassischen 25/5-Rhythmus. Über die Timer-Einstellungen (Zahnrad) änderst du Fokusdauer, Pausenlängen, Zyklen bis zur langen Pause und den Ton am Phasenende.",
+        "bestFor": "Konzentrierte Arbeit in Scheiben: Schreiben, Lernen, Programmieren — immer wenn erzwungene Pausen dich frisch halten."
       }
     },
     "quickcapture": {
@@ -666,6 +712,11 @@
       "tour": {
         "title": "Deine Inbox für alles",
         "body": "Tippe einen Gedanken und drücke Enter – er landet sofort hier. Später schickst du ihn mit einem Klick an deine To-Do-Liste oder löschst ihn. Ein globales Tastenkürzel holt dieses Eingabefeld von überall hervor."
+      },
+      "help": {
+        "how": "Ein Eingabefeld, null Reibung: Gedanke eintippen, Enter drücken, er landet in deinem Eingang. Später schickst du jeden Eintrag weiter an To-Do oder löschst ihn — erst festhalten, später sortieren. Der globale Shortcut Cmd/Strg+Umschalt+Leertaste holt das Eingabefeld von überall in den Fokus, sogar aus anderen Apps heraus.",
+        "setup": "Keine Einrichtung nötig — der globale Shortcut wird automatisch registriert, sobald das Tool aktiv ist.",
+        "bestFor": "Den GTD-Eingang: flüchtige Gedanken mitten in der Arbeit einfangen, ohne den Fokus zu verlieren."
       }
     },
     "routine": {
@@ -695,6 +746,11 @@
       "tour": {
         "title": "Deine Tagesroutine",
         "body": "Hake hier jeden Tag deine Routine ab. Um Mitternacht startet die Liste frisch – und alles bleibt auf diesem Gerät."
+      },
+      "help": {
+        "how": "Eine Checkliste, die sich jeden Morgen selbst zurücksetzt: Trag deine wiederkehrenden Punkte einmal ein, hake sie über den Tag ab, und morgen sind alle wieder frisch. Wenn alles erledigt ist, feiert das Widget mit dir.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Morgen- und Abendroutinen, das tägliche Arbeitsstart-Ritual — alles, was du jeden einzelnen Tag machst."
       }
     },
     "stats": {
@@ -734,6 +790,11 @@
         "overview": "Übersicht",
         "heatmap": "Heatmap",
         "numbers": "Zahlen"
+      },
+      "help": {
+        "how": "Holt sich deine Zahlen aus den anderen Tools auf diesem Gerät — erledigte Aufgaben (To-Do), erfasste Arbeitszeit (Stechuhr) und geschaffte Pomodoros — und zeigt sie pro Tag, Woche oder Monat. Die Varianten Übersicht, Heatmap und Zahlen präsentieren dieselben Daten als Diagramm, Kalender-Heatmap oder nackte Werte.",
+        "setup": "Keine Einrichtung — die Statistik füllt sich von selbst, sobald du Aufgaben erledigst, die Stechuhr laufen lässt oder Pomodoros abschließt.",
+        "bestFor": "Wochenrückblicke und Muster erkennen: an welchen Tagen du wirklich vorankommst und wohin deine Zeit fließt."
       }
     },
     "todo": {
@@ -803,6 +864,11 @@
         "addPlaceholder": "Aufgabe hinzufügen… (Enter)",
         "allLists": "Alle Listen",
         "listLabel": "Liste"
+      },
+      "help": {
+        "how": "Aufgabe eintippen, Enter drücken — fertig. Du kannst Aufgaben in Listen ordnen (plus dem eingebauten Eingang), ihnen eine Priorität geben (niedrig/mittel/hoch) und sie abhaken; Erledigtes sammelt sich in einem eigenen Bereich, den du mit einem Klick leerst. Das separate Board-Widget zeigt dieselben Aufgaben als Kanban mit den Spalten Zu tun / In Arbeit / Fertig.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Das tägliche Aufgaben-Management — von der einfachen Einkaufsliste bis zum Kanban-Board pro Projekt."
       }
     },
     "workclock": {
@@ -840,6 +906,11 @@
       "settings": {
         "toggle": "Einstellungen",
         "couplePomodoro": "Mit Pomodoro koppeln"
+      },
+      "help": {
+        "how": "Ein Knopf: Start, wenn du produktiv loslegst, Stopp, wenn du fertig bist. Cardo summiert deine erfasste Zeit pro Tag und zeigt die laufende Wochensumme. In den Einstellungen kannst du die Uhr mit dem Pomodoro-Timer koppeln, sodass nur echte Fokusphasen zählen.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Eine ehrliche Antwort auf „Wie viel habe ich heute wirklich gearbeitet?“ — Freelancing, Homeoffice, Lernsessions."
       }
     },
     "habits": {
@@ -884,6 +955,11 @@
         "list": "Liste",
         "week-grid": "Wochenraster",
         "streaks": "Serien"
+      },
+      "help": {
+        "how": "Leg die Gewohnheiten an, die du aufbauen willst, und hake sie einmal pro Tag ab. Cardo zählt deine aktuelle Serie pro Gewohnheit und zeichnet eine Heatmap der letzten 26 Wochen. Die Varianten Liste, Wochenraster und Serien zeigen dieselben Daten aus verschiedenen Blickwinkeln.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Tägliche Gewohnheiten aufbauen — Sport, Lesen, Üben — überall dort, wo die ununterbrochene Serie die Motivation ist."
       }
     },
     "today": {
@@ -919,6 +995,11 @@
         "standard": "Standard",
         "compact": "Kompakt",
         "agenda": "Agenda"
+      },
+      "help": {
+        "how": "Heute sammelt deinen Tag aus den anderen Tools auf dem Board: Termine aus dem Kalender, fällige Aufgaben aus To-Do, deine Routine-Checkliste und die heutigen Gewohnheiten — alles auf einen Blick. Aufgaben kannst du direkt hier abhaken. Die Varianten Standard, Kompakt und Agenda tauschen Detailgrad gegen Platz.",
+        "setup": "Keine eigene Einrichtung — es füllt sich, sobald To-Do, Kalender, Routine oder Gewohnheiten aktiv sind. Ohne sie bleibt es leer.",
+        "bestFor": "Den Überblick am Morgen: ein Ort, der die Frage „Was steht heute an?“ beantwortet, bevor du loslegst."
       }
     },
     "weather": {
@@ -976,6 +1057,11 @@
         "full": "Komplett",
         "now": "Jetzt gerade",
         "week": "Woche"
+      },
+      "help": {
+        "how": "Zeigt das aktuelle Wetter und eine 5-Tage-Vorhersage für einen Ort deiner Wahl, inklusive Wind und Luftfeuchtigkeit — und ist ehrlich dabei, wie alt die Daten sind. Die Daten kommen vom freien Open-Meteo-Dienst und werden zwischengespeichert, offline siehst du also den letzten Stand. Die Varianten Komplett, Jetzt gerade und Woche passen sich verschiedenen Widget-Größen an.",
+        "setup": "Einmal deine Stadt suchen — das war’s. Dieses Tool geht ins Internet: An Open-Meteo gehen nur der Stadtname, den du eintippst, und die Koordinaten deines gewählten Orts — nichts über dich.",
+        "bestFor": "Der erweiterte Blick aus dem Fenster: Brauche ich heute eine Jacke, und wie wird die Woche?"
       }
     },
     "hydration": {
@@ -1015,6 +1101,11 @@
       "tour": {
         "title": "Bleib hydriert",
         "body": "Tippe +1 für jedes Glas, das du trinkst. Cardo erinnert dich in deinem Zeitfenster, bis du dein Ziel erreichst – alles bleibt auf diesem Gerät."
+      },
+      "help": {
+        "how": "Jedes Glas Wasser ist ein Klick; das Widget zeigt deinen Fortschritt zum Tagesziel und feiert, wenn du es erreichst. Auf Wunsch erinnert dich Cardo im selbstgewählten Abstand ans Trinken, innerhalb eines Zeitfensters (etwa 9:00–18:00).",
+        "setup": "Funktioniert sofort. In den Einstellungen (Zahnrad) legst du Tagesziel und Erinnerungsabstand fest — 0 schaltet Erinnerungen aus; erlaube Cardo Benachrichtigungen, wenn du sie nutzt.",
+        "bestFor": "Genug trinken an Schreibtischtagen — wenn dir sonst erst um 16 Uhr auffällt, dass es bisher ein Kaffee und kein Wasser war."
       }
     },
     "assistant": {
@@ -1042,6 +1133,11 @@
       "variant": {
         "classic": "Klassisch",
         "messenger": "Messenger"
+      },
+      "help": {
+        "how": "Kipp deine Gedanken einfach ins Eingabefeld — der Assistent liest deinen Braindump und antwortet mit einer Nachricht plus Vorschlagskarten, jede davon eine konkrete Aktion wie ein neues To-do oder ein Termin. Ausgeführt wird nichts, bevor du eine Karte mit Ja bestätigst; du kannst sie auch bearbeiten oder verwerfen. Das KI-Modell läuft komplett auf deinem Gerät, und der Assistent kann sich Fakten merken, die du ihm erzählst. Du kannst mehrere Assistenten mit eigener Persönlichkeit anlegen und sogar Teams, die Aufgaben an das beste Mitglied weiterreichen.",
+        "setup": "Öffne Einstellungen → Assistent und folge dem Einrichtungsassistenten: Er prüft deine Hardware, empfiehlt ein Modell und lädt es von huggingface.co herunter — dieser Download ist der einzige Netzwerkverkehr der lokalen Modelle. Optional kannst du stattdessen Claude-Cloud-Modelle nutzen; die brauchen die Claude-Code-CLI, ein Abo und Internet, und deine Chat-Inhalte gehen dann an Anthropic.",
+        "bestFor": "Aus wirren Gedanken konkrete Aufgaben, Termine und Notizen machen — und dein ganzes Dashboard in normaler Sprache steuern."
       }
     },
     "eisenhower": {
@@ -1089,6 +1185,11 @@
       "tour": {
         "title": "Eisenhower-Matrix",
         "body": "Tippe eine Aufgabe, wähle den Quadranten und drücke Enter. Das Häkchen erledigt eine Aufgabe, das Dropdown verschiebt sie – im Bearbeiten-Modus kannst du auch löschen."
+      },
+      "help": {
+        "how": "Sortiere jede Aufgabe in einen von vier Quadranten: dringend & wichtig, wichtig aber nicht dringend, dringend aber nicht wichtig, oder keins von beidem. Aufgaben legst du mit Quadrant an, verschiebst sie, wenn sich Prioritäten ändern, und hakst sie ab. Die Matrix-Variante zeigt das klassische 2×2-Raster, Liste gruppiert nach Quadrant.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Tage, an denen alles gleichzeitig ruft: entscheiden, was du jetzt machst, terminierst, abgibst oder streichst."
       }
     },
     "sticky-notes": {
@@ -1123,6 +1224,11 @@
       "tour": {
         "title": "Haftnotizen",
         "body": "Schreibe eine Notiz und drücke Enter. Ziehe Notizen frei umher, bearbeite den Text per Doppelklick und wähle eine neue Farbe – im Bearbeiten-Modus kannst du auch löschen."
+      },
+      "help": {
+        "how": "Notiz schreiben und an die Wand kleben: In der freien Wand-Variante ziehst du Zettel beliebig herum, färbst sie um und bearbeitest den Text direkt; die Raster-Variante ordnet sie stattdessen ordentlich an. Gelöscht wird ein Zettel, wenn er seinen Zweck erfüllt hat.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Brainstorming, Nicht-vergessen-Zettel und alles, was sonst als Papier-Sticky am Monitor kleben würde."
       }
     },
     "decision-log": {
@@ -1170,6 +1276,11 @@
       "tour": {
         "title": "Entscheidungslog",
         "body": "Halte Entscheidungen mit Kontext und Begründung fest – jede wird eine durchsuchbare Markdown-Datei."
+      },
+      "help": {
+        "how": "Halte eine Entscheidung in dem Moment fest, in dem du sie triffst: Titel, Kontext, die abgewogenen Optionen, die Entscheidung und die Begründung. Jeder Eintrag wird als Markdown-Datei in deinem Ordner gespeichert — das Log bleibt für immer durchsuchbar und lesbar. Die Varianten Log, Detail und Kompakt zeigen mehr oder weniger pro Eintrag.",
+        "setup": "Keine Einrichtung — Einträge landen automatisch in deinem Cardo-Ordner.",
+        "bestFor": "Die „Warum haben wir das damals so gemacht?“-Momente Monate später — Architektur-Entscheidungen, Anschaffungen, Team-Beschlüsse."
       }
     },
     "reading-list": {
@@ -1218,6 +1329,11 @@
       "tour": {
         "title": "Leseliste",
         "body": "Sammle Artikel und Bücher, schiebe sie von vorgemerkt bis fertig – und sende jeden Eintrag an deine Notizen."
+      },
+      "help": {
+        "how": "Sammle, was du lesen willst — Titel, optional Link und Notizen — und schiebe jeden Eintrag durch Vorgemerkt, Lese ich und Fertig. Ausgelesenes kannst du samt Notizen als Markdown-Datei an deine Notizen schicken. Die Varianten Liste, Karten und Board zeigen die Warteschlange nach deinem Geschmack.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Den Artikel-Stapel bändigen und Bücher im Blick behalten — eine ehrliche Warteschlange statt 40 offener Tabs."
       }
     },
     "scratchpad": {
@@ -1264,6 +1380,11 @@
       "tour": {
         "title": "Schmierzettel",
         "body": "Eine immer verfügbare Notiz: Tippen genügt, gespeichert wird automatisch – Markdown, Mathe und [[Wiki-Links]] erscheinen in der Vorschau."
+      },
+      "help": {
+        "how": "Ein einziger, immer verfügbarer Markdown-Zettel: Alles, was du tippst, wird automatisch in die Datei scratchpad.md in deinem Ordner gespeichert. Du wechselst zwischen den Varianten Editor, Geteilt und Vorschau, kannst auf Monospace umschalten und den ganzen Zettel mit einem Klick leeren.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Die digitale Rückseite eines Briefumschlags: Telefonnummern mitten im Gespräch, halbfertige Ideen, Text, den du gleich woanders einfügst."
       }
     },
     "savings-jar": {
@@ -1317,6 +1438,11 @@
         "jar": "Spardosen",
         "bar": "Balken",
         "cards": "Karten"
+      },
+      "help": {
+        "how": "Leg ein Ziel mit Zielbetrag und optionalem Zieldatum an — dann trägst du jeden zurückgelegten Betrag ein und siehst das Glas sich füllen. Mit Datum sagt dir Cardo, wie viel pro Tag noch nötig ist und ob du im Plan liegst oder hinterherhängst. Die Varianten Gläser, Balken und Karten ändern die Darstellung.",
+        "setup": "Funktioniert sofort; in den Einstellungen (Zahnrad) änderst du das Währungssymbol.",
+        "bestFor": "Auf etwas Konkretes sparen: das neue Fahrrad, die Reise, den Notgroschen."
       }
     },
     "subscriptions": {
@@ -1371,6 +1497,11 @@
         "list": "Liste",
         "total-first": "Summe zuerst",
         "calendar": "Kalender"
+      },
+      "help": {
+        "how": "Erfasse jede wiederkehrende Ausgabe mit Betrag, Abrechnungszyklus (wöchentlich bis jährlich) und nächster Fälligkeit. Cardo rechnet alles auf eine ungefähre Monatssumme um, zeigt dir, was diesen Monat fällig ist und welche Posten am meisten kosten — und „als bezahlt markieren“ schiebt die Fälligkeit einen Zyklus weiter.",
+        "setup": "Funktioniert sofort; das Währungssymbol stellst du in den Einstellungen (Zahnrad) ein.",
+        "bestFor": "Den jährlichen Abo-Kassensturz und das monatliche „Wo bleibt mein Geld?“ — Streaming, Versicherungen, Mitgliedschaften."
       }
     },
     "unit-converter": {
@@ -1473,6 +1604,11 @@
         "converter": "Umrechner",
         "category-tabs": "Kategorie-Tabs",
         "compact": "Kompakt"
+      },
+      "help": {
+        "how": "Kategorie wählen — Länge, Gewicht, Temperatur, Daten, Geschwindigkeit, Volumen oder Fläche —, Wert eingeben und Von/Nach-Einheiten festlegen; das Ergebnis erscheint sofort, ein Tausch-Knopf dreht die Richtung um. Alle Umrechnungstabellen sind eingebaut, nichts wird online nachgeschlagen.",
+        "setup": "Funktioniert sofort; Nachkommastellen und Standardkategorie änderst du in den Einstellungen (Zahnrad).",
+        "bestFor": "Kochen mit Cups und Gramm, Heimwerken mit Zoll, Dateigrößen, Reisegeschwindigkeiten — die alltägliche Einheiten-Reibung."
       }
     },
     "world-clock": {
@@ -1516,6 +1652,11 @@
         "list": "Liste",
         "grid": "Raster",
         "analog-row": "Analog"
+      },
+      "help": {
+        "how": "Füge bis zu acht Orte über ihre IANA-Zeitzone hinzu (etwa Europe/Berlin), optional mit eigenem Namen, und sieh alle Uhrzeiten nebeneinander — Sommerzeit wird korrekt behandelt, mit Tag/Nacht-Anzeige pro Ort. Die Varianten Liste, Raster und Analog ändern das Layout.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Remote-Teams und Familie im Ausland: auf einen Blick wissen, ob gerade eine gute Zeit zum Anrufen ist."
       }
     },
     "password-gen": {
@@ -1569,6 +1710,11 @@
         "generator": "Generator",
         "passphrase": "Passphrase",
         "compact": "Kompakt"
+      },
+      "help": {
+        "how": "Erzeugt starke Passwörter aus den Zeichensätzen, die du aktivierst (Klein-/Großbuchstaben, Ziffern, Sonderzeichen, auf Wunsch ohne Verwechselbares wie O und 0) oder merkbare Passphrasen aus zufälligen Wörtern mit Trennzeichen. Eine Stärke-Anzeige zeigt die Entropie in Bits; Kopieren legt das Ergebnis in die Zwischenablage. Gespeichert wird nie etwas — der Wert existiert nur auf deinem Bildschirm.",
+        "setup": "Funktioniert sofort; Länge, Zeichensätze und Passphrasen-Wörter stellst du im Zahnrad ein.",
+        "bestFor": "Jeden neuen Account und jedes Router-Login — überall, wo ein frisches, starkes Passwort gebraucht wird."
       }
     },
     "random-picker": {
@@ -1649,6 +1795,11 @@
         "full": "Komplett",
         "compact": "Kompakt",
         "wheel": "Glücksrad"
+      },
+      "help": {
+        "how": "Drei Wege, den Zufall entscheiden zu lassen: das Glücksrad über einer deiner Listen drehen, direkt aus einer Liste ziehen oder Würfel in NdM-Notation werfen (etwa 2d6). Listen nehmen eine Option pro Zeile, und gezogene Einträge können automatisch entfernt werden, damit niemand doppelt gewinnt.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Wo essen wir, wer präsentiert zuerst, Verlosungen und Spieleabende — faire Entscheidungen ohne Diskussion."
       }
     },
     "bookmarks": {
@@ -1687,6 +1838,11 @@
       "tour": {
         "title": "Lesezeichen",
         "body": "Füge einen Link mit URL, Titel und optionalem Ordner hinzu. Ein Klick öffnet ihn im Browser – im Bearbeiten-Modus kannst du Lesezeichen löschen."
+      },
+      "help": {
+        "how": "Speichere deine Lieblingslinks mit Titel und optionalem Ordner; ein Klick öffnet sie im Standardbrowser. Die Varianten Raster, Liste und Schnellwahl machen aus dem Widget alles von der kompakten Liste bis zur Startseiten-Kachelwand.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Eine persönliche Startseite: die zehn Links, die du täglich öffnest, einen Klick entfernt auf deinem Dashboard."
       }
     },
     "qr-generator": {
@@ -1746,6 +1902,11 @@
         "code": "Code",
         "with-caption": "Mit Beschriftung",
         "batch": "Serie"
+      },
+      "help": {
+        "how": "Modus wählen — freier Text, Link oder WLAN-Zugangsdaten (SSID, Passwort, Verschlüsselung) — und der QR-Code erscheint beim Tippen, komplett auf deinem Gerät berechnet. Speichere ihn als PNG oder erzeuge mit der Batch-Variante einen Code pro Zeile. Der Inhalt ist auf 213 Bytes begrenzt; Fehlerkorrektur-Level M hält Codes lesbar, selbst wenn sie teils beschädigt sind.",
+        "setup": "Funktioniert sofort; Größe und ob letzte Eingaben gemerkt werden, stellst du im Zahnrad ein.",
+        "bestFor": "Gäste ins WLAN und Links aufs Handy bringen — nicht abtippen, einfach scannen."
       }
     },
     "time-blocking": {
@@ -1793,6 +1954,11 @@
       "tour": {
         "title": "Zeitblöcke",
         "body": "Gib dem Block einen Titel, wähle Start und Ende und drücke Enter. Überlappende Blöcke werden gelb – die 3-Tage-Ansicht zeigt, was ansteht."
+      },
+      "help": {
+        "how": "Plane deinen Tag als Blöcke auf einer Zeitleiste: Titel, Tag, Start- und Endzeit — überlappende Blöcke werden markiert, Doppelbuchungen schleichen sich also nicht ein. Die Varianten Tag, 3 Tage und Arbeitszeit ändern den sichtbaren Bereich, die Rasterung bestimmst du selbst.",
+        "setup": "Funktioniert sofort; Rasterung, Tagesbeginn/-ende und 12/24-Stunden-Anzeige stellst du im Zahnrad ein.",
+        "bestFor": "Aus einer To-do-Liste einen realistischen Tag machen: Deep-Work-Slots reservieren und sehen, wann der Tag wirklich voll ist."
       }
     },
     "project-tracker": {
@@ -1843,6 +2009,11 @@
       "tour": {
         "title": "Projekt-Tracker",
         "body": "Lege ein Projekt an, klicke auf seinen Namen und plane Meilensteine mit Terminen. Der Balken füllt sich beim Abhaken – die Timeline-Ansicht zeigt alle Termine auf einen Blick."
+      },
+      "help": {
+        "how": "Leg ein Projekt an, zerlege es in Meilensteine (mit optionalen Fälligkeitsdaten) und hake sie nach und nach ab — jedes Projekt zeigt einen Fortschrittsbalken und seinen nächsten offenen Meilenstein. Die Varianten Liste, Zeitleiste und Board betonen Fortschritt, Termine oder Status.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Nebenprojekte und alles mit mehreren Schritten: die Renovierung, die Abschlussarbeit, der Produkt-Launch."
       }
     },
     "okr": {
@@ -1892,6 +2063,11 @@
       "tour": {
         "title": "OKR",
         "body": "Lege ein Objective an, gib ihm messbare Key Results (Zielwert plus Einheit) und trage deine aktuellen Werte ein – Balken und Gesamtprozent aktualisieren sich von selbst."
+      },
+      "help": {
+        "how": "Definiere ein Objective (auf Wunsch mit Quartal) und hänge messbare Key Results mit Zielwert und Einheit daran. Trag den aktuellen Wert ein, sobald du vorankommst, und die Balken füllen sich; Key Results, die Aufmerksamkeit brauchen, werden markiert. Die Varianten Karten, Kompakt und Fokus skalieren von Gesamtübersicht bis zu einem einzelnen Objective.",
+        "setup": "Funktioniert sofort; im Zahnrad wechselst du zwischen Prozent- und Ist/Ziel-Anzeige.",
+        "bestFor": "Quartalsziele mit Zahlen dahinter — persönliche OKRs oder die leichtgewichtige Version des Team-Rituals."
       }
     },
     "flashcards": {
@@ -1949,6 +2125,11 @@
       "tour": {
         "title": "Karteikarten",
         "body": "Leg Karten in Stapeln an und bewerte dich täglich – der SM-2-Algorithmus plant jede Karte genau dann ein, wenn du sie fast vergessen hättest."
+      },
+      "help": {
+        "how": "Erstelle Karten mit Vorder- und Rückseite, geordnet in Stapeln. Die Lernansicht zeigt fällige Karten einzeln: Antwort aufdecken, dann dich selbst bewerten mit Nochmal/Schwer/Gut/Einfach — der SM-2-Algorithmus (Spaced Repetition) terminiert jede Karte so, dass du sie genau dann wiederholst, kurz bevor du sie vergessen würdest. Die Statistik-Variante zeigt deine Wiederholungen der letzten 14 Tage.",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Vokabeln, Prüfungsstoff, alles fürs Langzeitgedächtnis — ein paar Minuten fällige Karten am Tag schlagen jedes Pauken."
       }
     },
     "mood": {
@@ -1995,6 +2176,11 @@
       "tour": {
         "title": "Stimmungstagebuch",
         "body": "Tipp auf das Gesicht, das zu deinem Tag passt, und ergänze bei Bedarf eine Zeile – Kalender und Trend zeigen dir, wie sich deine Wochen wirklich angefühlt haben."
+      },
+      "help": {
+        "how": "Einmal am Tag eine Frage beantworten: Wie geht es dir, auf einer Skala von 1–5 (Emoji oder Zahlen), plus optional eine Zeile Notiz. Die Kalender-Variante färbt deine Monate ein, Trend zeichnet die 14-Tage-Kurve mit Durchschnitt, und Serien belohnen das Dranbleiben.",
+        "setup": "Funktioniert sofort; Wochenstart und Skalenstil (Emoji oder Zahlen) stellst du im Zahnrad ein.",
+        "bestFor": "Leichtes Stimmungstagebuch: Muster erkennen — schlechte Montage, gute Draußen-Tage — ohne Aufsätze zu schreiben."
       }
     },
     "sleep-log": {
@@ -2045,6 +2231,11 @@
       "tour": {
         "title": "Schlafprotokoll",
         "body": "Trag ein, wann du ins Bett gegangen und aufgewacht bist – die Wochenbalken zeigen dir auf einen Blick, wie nah du deinem Schlafziel kommst."
+      },
+      "help": {
+        "how": "Trag jede Nacht mit Zubettgeh- und Aufwachzeit ein; Cardo berechnet die Dauer und zeigt die letzten 7 Nächte als Balken gegen dein Ziel, dazu den 7-Tage-Durchschnitt, einen Konsistenzwert (Standardabweichung) und wie viele Nächte in Folge du dein Ziel erreicht hast.",
+        "setup": "Funktioniert sofort; Schlafziel in Stunden und 12/24-Stunden-Anzeige stellst du im Zahnrad ein.",
+        "bestFor": "Ehrlich werden beim Schlafrhythmus: prüfen, ob „Ich schlafe genug“ den Kontakt mit Daten überlebt."
       }
     },
     "workout": {
@@ -2097,6 +2288,11 @@
       "tour": {
         "title": "Trainingslog",
         "body": "Leg eine Einheit an, öffne sie und ergänze deine Übungen mit Sätzen, Wiederholungen und Gewicht – Wochenvolumen und Rekorde ergeben sich von selbst."
+      },
+      "help": {
+        "how": "Logge eine Einheit (etwa Push, Beine oder Lauf) und ergänze ihre Übungen mit Sätzen, Wiederholungen und Gewicht — lass das Gewicht leer für Körpergewichtsübungen. Cardo berechnet das Volumen pro Einheit und Woche und führt deine persönlichen Rekorde pro Übung.",
+        "setup": "Funktioniert sofort; die Gewichtseinheit (kg/lb) stellst du im Zahnrad ein.",
+        "bestFor": "Krafttraining mit Progression: wissen, was du letztes Mal bewegt hast, um es diesmal zu schlagen."
       }
     },
     "meal-planner": {
@@ -2153,6 +2349,11 @@
         "week-grid": "Wochenraster",
         "day": "Tag",
         "shopping-list": "Einkaufsliste"
+      },
+      "help": {
+        "how": "Fülle das Wochenraster mit Mahlzeiten für Frühstück, Mittag, Abend und optional einen Snack-Slot und notiere je Mahlzeit die Zutaten (Menge, Einheit, Name — kommagetrennt). Die Einkaufslisten-Variante fasst alle Zutaten der Woche zu einer Liste zusammen, die du mit einem Klick als To-do exportierst.",
+        "setup": "Funktioniert sofort; Snack-Slot und Wochenstart stellst du im Zahnrad ein.",
+        "bestFor": "Wochenplanung beim Kochen: einmal entscheiden, was auf den Tisch kommt — und nie wieder einen Einkaufszettel von Hand schreiben."
       }
     },
     "medication": {
@@ -2215,6 +2416,11 @@
         "today": "Heute",
         "schedule": "Plan",
         "adherence": "Einnahmetreue"
+      },
+      "help": {
+        "how": "Leg jedes Medikament mit Dosis und Einnahmezeiten an (etwa 08:00, 20:00) — Cardo plant Erinnerungen automatisch und gibt dir eine Abhak-Liste für heute. Die Plan-Variante zeigt das volle Schema, Adhärenz deine Einnahmequote über die Zeit. Alle Daten bleiben auf diesem Gerät.",
+        "setup": "Medikament mit Name, Dosis und kommagetrennten Zeiten anlegen; erlaube Cardo dann Benachrichtigungen in den Systemeinstellungen, damit Erinnerungen dich auch im Hintergrund erreichen.",
+        "bestFor": "Medikamente und Präparate zuverlässig nehmen — gerade bei mehreren Einnahmezeiten am Tag."
       }
     },
     "breathing": {
@@ -2266,6 +2472,11 @@
         "circle": "Kreis",
         "bar": "Balken",
         "minimal": "Minimal"
+      },
+      "help": {
+        "how": "Muster wählen — Box-Atmung (4-4-4-4) oder 4-7-8 —, Start drücken und dem animierten Taktgeber durch Einatmen, Halten und Ausatmen folgen, so viele Zyklen wie eingestellt. Ein optionaler Ton markiert jeden Phasenwechsel, und das Widget zählt deine heute abgeschlossenen Durchgänge. Die Varianten Kreis, Balken und Minimal ändern den Taktgeber.",
+        "setup": "Funktioniert sofort; Muster, Zyklenzahl und den Ton stellst du im Zahnrad ein.",
+        "bestFor": "Der Zwei-Minuten-Reset: vor dem schwierigen Telefonat, zwischen Meetings oder zum Runterkommen am Abend."
       }
     },
     "shared-expenses": {
@@ -2310,6 +2521,11 @@
       "tour": {
         "title": "Gruppenkasse",
         "body": "Erfasse Gruppenausgaben und lass Cardo ausrechnen, wer wem was schuldet – ausgleichen mit möglichst wenigen Überweisungen."
+      },
+      "help": {
+        "how": "Leg eine Gruppe mit ihren Mitgliedern an und erfasse dann jede Ausgabe mit Zahler, Betrag und optional den Beteiligten. Cardo führt laufend Buch, wer wem wie viel schuldet, und berechnet einen Ausgleichsplan mit möglichst wenigen Überweisungen, den du abhakst, sobald gezahlt wurde.",
+        "setup": "Gruppe anlegen und Mitglieder kommagetrennt eintragen — das ist schon die ganze Einrichtung.",
+        "bestFor": "WGs, Reisen mit Freunden, Team-Mittagessen — überall, wo „Ich übernehm das mal“ später fair verrechnet werden soll."
       }
     },
     "calculator": {
@@ -2355,6 +2571,11 @@
       "tour": {
         "title": "Taschenrechner",
         "body": "Tippe einen Ausdruck oder nutze das Tastenfeld – Ergebnisse landen im Verlauf, und auch der Assistent kann für dich rechnen."
+      },
+      "help": {
+        "how": "Tipp einen ganzen Ausdruck — 2+3*4, sin(90), sqrt(2) — und bekomm das Ergebnis sofort von einem sicheren eingebauten Parser (niemals eval). Trigonometrie rechnet wahlweise in Grad oder Radiant, und der Verlauf hält alte Rechnungen bereit, um sie wieder ins Eingabefeld zu laden. Die Varianten Basis, Wissenschaftlich und Kompakt ändern das Layout.",
+        "setup": "Funktioniert sofort; Standard-Winkelmodus, Tausendertrennzeichen und Verlaufslänge stellst du im Zahnrad ein.",
+        "bestFor": "Schnelles Rechnen ohne das Dashboard zu verlassen: Rechnungen, Kopfrechen-Kontrollen, Hausaufgaben-Checks."
       }
     },
     "color-tool": {
@@ -2406,6 +2627,11 @@
       "tour": {
         "title": "Farben & Paletten",
         "body": "Wähle eine Farbe, entdecke Harmonien, speichere Paletten – und prüfe Textkontrast direkt gegen WCAG."
+      },
+      "help": {
+        "how": "Wähle eine Basisfarbe und baue Harmonien daraus — komplementär, analog, triadisch oder Abstufungen —, speichere die Ergebnisse als benannte Paletten und kopiere jeden Hex-Wert per Klick. Die Kontrast-Variante prüft zwei Farben gegen die WCAG-Schwellen (AA/AAA, normaler und großer Text).",
+        "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
+        "bestFor": "Designarbeit groß und klein: Folien, Websites, Themes — und die Gewissheit, dass dein Text lesbar bleibt."
       }
     },
     "snippets": {
@@ -2450,6 +2676,11 @@
       "tour": {
         "title": "Code-Snippets",
         "body": "Deine lokale Snippet-Bibliothek: suchen, aufklappen, kopieren – mit Syntax-Highlighting und Tags."
+      },
+      "help": {
+        "how": "Speichere Code-Schnipsel mit Titel, Sprache und Tags; leichtes Syntax-Highlighting deckt 8 Sprachen ab. Volltextsuche und Tag-Filter finden jeden Schnipsel in Sekunden, und der Kopieren-Knopf legt ihn in die Zwischenablage.",
+        "setup": "Funktioniert sofort; Code-Schriftgröße und Zeilenumbruch stellst du im Zahnrad ein.",
+        "bestFor": "Die Befehle und Vorlagen, die du immer wieder googelst: Shell-Einzeiler, Config-Blöcke, SQL-Abfragen."
       }
     },
     "currency": {
@@ -2501,6 +2732,11 @@
       "tour": {
         "title": "Währungen auf einen Blick",
         "body": "Rechne Beträge um, pinne Lieblingspaare und lies große Einzelkurse ab. Kurse werden einmal täglich geholt und gespeichert – du siehst immer, wie alt sie sind, und offline funktioniert alles weiter."
+      },
+      "help": {
+        "how": "Rechnet zwischen rund 30 Währungen um — mit einer Kurstabelle, die lokal zwischengespeichert und höchstens einmal pro Tag aktualisiert wird. Das Widget sagt dir immer, wie alt seine Kurse sind, und offline rechnet es einfach mit dem Cache weiter. Die Varianten Umrechner, Kurstafel und Einzelpaar passen zu verschiedenen Bedürfnissen.",
+        "setup": "Wähle deine Basiswährung im Zahnrad. Dieses Tool geht ins Internet: Höchstens einmal täglich kontaktiert es open.er-api.com, und gesendet wird nur der Drei-Buchstaben-Code deiner Basiswährung — nie Beträge, nie etwas Persönliches.",
+        "bestFor": "Reisebudgets, Einkäufe in fremden Shops, Rechnungen in anderen Währungen — schnelle Umrechnung mit ehrlicher Kursangabe."
       }
     },
     "rss": {
@@ -2552,6 +2788,11 @@
       "tour": {
         "title": "Deine Feeds, deine Regeln",
         "body": "Füg beliebige RSS- oder Atom-Feeds hinzu – Cardo hält die neuesten Artikel lokal vor. Ungelesenes ist fett, ein Klick öffnet den Artikel und markiert ihn als gelesen – und offline bleibt einfach stehen, was schon da ist."
+      },
+      "help": {
+        "how": "Füge die URLs der RSS- oder Atom-Feeds ein, denen du folgen willst; Cardo ruft sie ab, zählt ungelesene Artikel und lässt dich Gelesenes markieren oder einen Artikel direkt an deine Leseliste schicken. Alles Abgerufene wird zwischengespeichert, du kannst also offline lesen. Die Varianten Liste, Karten und Schlagzeilen ändern die Dichte.",
+        "setup": "Mindestens eine Feed-URL hinzufügen — mehr nicht. Dieses Tool geht ins Internet: Es kontaktiert genau die Feed-Server, die du hinzufügst, keine anderen, und jede Anfrage ist ein schlichter Abruf dieser Adresse; nichts über dich oder dein Leseverhalten wird mitgesendet.",
+        "bestFor": "Blogs und Nachrichten zu deinen Bedingungen verfolgen: ein chronologischer Feed nach deiner Wahl statt eines Algorithmus."
       }
     },
     "soundscapes": {
@@ -2595,6 +2836,11 @@
       "tour": {
         "title": "Dein Klang im Hintergrund",
         "body": "Misch dir aus Regen, Rauschen und Bachlauf deine persönliche Kulisse. Alles wird mit Cardo mitgeliefert – nichts wird gestreamt. Auf Wunsch folgt der Klang deinen Pomodoro-Phasen."
+      },
+      "help": {
+        "how": "Ein Ambience-Mixer mit vier mitgelieferten Loops — Regen, weißes Rauschen, braunes Rauschen und ein Bach. Schalte beliebige Kombinationen an, regle jede Spur einzeln plus einen Master-Pegel und lass es beim Arbeiten laufen. Alle Klänge sind in Cardo enthalten: Nichts wird gestreamt, nichts geht ins Netz. Auf Wunsch folgt es deinem Pomodoro: Klang in Fokusphasen, Stille in Pausen.",
+        "setup": "Keine Einrichtung nötig — einfach auf Play drücken. Die Pomodoro-Kopplung findest du im Zahnrad.",
+        "bestFor": "Laute Umgebung ausblenden und in den Fokus finden — Großraumbüro, Café, unruhige Abende."
       }
     }
   },

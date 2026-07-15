@@ -95,6 +95,7 @@
 
 /* ── Widgets ── */
 .widget-frame {
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -136,6 +137,82 @@
 .widget-frame__remove {
   padding: 0 var(--space-1);
   color: var(--danger);
+}
+/* Small round "?" – opens the per-tool help modal. Mirrors the muted look of
+   the other frame buttons; sits left of the title in the edit toolbar and
+   floats at the top-left corner in view mode (subtle until hovered). */
+.widget-frame__help {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text-muted);
+}
+.widget-frame__help--floating {
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-1);
+  z-index: 5;
+  opacity: 0;
+}
+.widget-frame:hover .widget-frame__help--floating,
+.widget-frame__help--floating:focus-visible {
+  opacity: 0.55;
+}
+.widget-frame__help--floating:hover {
+  opacity: 1;
+}
+
+/* Per-tool help modal */
+.widget-help {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.widget-help__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.widget-help__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 18px;
+}
+.widget-help__close {
+  padding: 0 var(--space-1);
+}
+.widget-help__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.widget-help__heading {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.widget-help__text {
+  margin: 0;
+  line-height: 1.5;
+}
+.widget-help__privacy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
 }
 .widget-body {
   flex: 1;
