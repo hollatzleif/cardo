@@ -5,7 +5,7 @@ import { CommandRegistry } from './commands';
 import { createEventBus } from './events';
 import { createMemoryBackend, createNamespacedStorage } from './storage';
 import { ToolRegistry, type HostServices } from './registry';
-import { buildToolChecks, runDiagnostics, renderReportMarkdown } from './diagnose';
+import { buildToolChecks, createScratchContext, runDiagnostics, renderReportMarkdown } from './diagnose';
 
 const testManifest: ToolManifest = {
   id: 'probe',
@@ -219,5 +219,40 @@ describe('diagnostics', () => {
     });
     expect(report.summary.failed).toBe(1);
     expect(report.results.find((r) => r.status === 'fail')?.detail).toBe('kaputt');
+  });
+});
+
+describe('createScratchContext isolation', () => {
+  it('never lets self-tests reach the live scheduler or notifications', async () => {
+    const liveScheduleCalls: string[] = [];
+    const liveNotifications: string[] = [];
+    const scratch = createScratchContext({
+      events: createEventBus(),
+      notifications: {
+        notify: async ({ titleKey }) => {
+          liveNotifications.push(titleKey);
+        },
+      },
+      scheduler: {
+        scheduleAt: async (_when, commandId) => {
+          liveScheduleCalls.push(commandId);
+          return 'live-handle';
+        },
+        cancel: async () => {},
+        list: async () => [],
+      },
+      i18n: { t: (k) => k, language: 'en' },
+    });
+
+    // A reminder-style tool schedules its next run and notifies on execute –
+    // exactly what hydration.remind does during the diagnose commands-check.
+    const ctx = scratch.registry.createContext('probe');
+    const handle = await ctx.scheduler.scheduleAt(new Date(Date.now() + 60_000), 'probe.remind', {});
+    await ctx.notifications.notify({ titleKey: 'probe.title' });
+
+    expect(handle).toContain('scratch-');
+    expect(liveScheduleCalls).toEqual([]);
+    expect(liveNotifications).toEqual([]);
+    expect(await ctx.scheduler.list()).toEqual([]);
   });
 });

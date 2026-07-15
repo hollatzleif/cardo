@@ -94,9 +94,25 @@ function createScheduler(commands: CommandRegistry): SchedulerApi & {
         Array<{ id: string; fireAt: number; commandId: string; params: unknown }>
       >('schedule_list');
       const now = Date.now();
+      const overdue = rows.filter((r) => r.fireAt <= now);
+      // Overdue entries fire ONCE per (command, params) – self-chaining
+      // reminders (hydration, medication) can leave a stack of stale or
+      // orphaned entries behind; firing every one of them spammed users
+      // with dozens of identical notifications at launch. The newest entry
+      // wins, the rest is silently cancelled.
+      const newestPerKey = new Map<string, (typeof rows)[number]>();
+      for (const r of overdue) {
+        const key = `${r.commandId}\u0000${JSON.stringify(r.params ?? null)}`;
+        const seen = newestPerKey.get(key);
+        if (!seen || r.fireAt > seen.fireAt) newestPerKey.set(key, r);
+      }
+      const winners = new Set([...newestPerKey.values()].map((r) => r.id));
+      for (const r of overdue) {
+        if (winners.has(r.id)) void fire(r.id, r.commandId, r.params);
+        else void invoke('schedule_cancel', { id: r.id }).catch(() => {});
+      }
       for (const r of rows) {
-        if (r.fireAt <= now) void fire(r.id, r.commandId, r.params);
-        else arm(r.id, r.fireAt, r.commandId, r.params);
+        if (r.fireAt > now) arm(r.id, r.fireAt, r.commandId, r.params);
       }
     },
   };

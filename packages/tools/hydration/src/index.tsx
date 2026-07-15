@@ -125,6 +125,20 @@ export function createTool(): CardoTool {
    */
   async function rearm(c: ToolContext, intervalMinutes: number): Promise<void> {
     const state = await getState(c.storage);
+    // Sweep EVERY pending hydration.remind – not just the one whose handle
+    // we stored. Orphaned duplicates (from crashes, races or historic bugs)
+    // would each self-chain forever and stack identical notifications; the
+    // sweep also heals installations that already accumulated them.
+    try {
+      const pending = await c.scheduler.list();
+      await Promise.all(
+        pending
+          .filter((entry) => entry.commandId === 'hydration.remind')
+          .map((entry) => c.scheduler.cancel(entry.id).catch(() => {})),
+      );
+    } catch {
+      /* list unavailable – fall back to the stored handle below */
+    }
     if (state.scheduleId) {
       try {
         await c.scheduler.cancel(state.scheduleId);

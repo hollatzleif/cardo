@@ -95,7 +95,7 @@ export interface ToolUnderTest {
   factory: () => CardoTool;
 }
 
-/** The services a scratch context borrows from the live host (side-effect free). */
+/** The services a scratch context borrows from the live host. */
 export type ScratchServices = Pick<
   HostServices,
   'events' | 'notifications' | 'scheduler' | 'i18n'
@@ -111,11 +111,26 @@ export interface ScratchContext {
  * Disposable tool environment for diagnose checks: fresh in-memory backend,
  * fresh command registry – user data can never be touched. Shared by the
  * tool checks below and the desktop UI checks.
+ *
+ * Notifications and the scheduler are STUBBED, never the live services:
+ * self-tests execute real command handlers (e.g. hydration.remind), and
+ * borrowing the live services here once flooded users with stacked
+ * reminder chains – every diagnose run persisted a real schedule whose
+ * handle lived only in the throwaway scratch storage (orphaned, self-
+ * chaining, one more per run). Only i18n and events stay live.
  */
 export function createScratchContext(services: ScratchServices): ScratchContext {
   const backend = createMemoryBackend();
   const commands = new CommandRegistry();
-  const registry = new ToolRegistry({ ...services, backend, commands });
+  const inert: Pick<HostServices, 'notifications' | 'scheduler'> = {
+    notifications: { notify: async () => {} },
+    scheduler: {
+      scheduleAt: async () => `scratch-${Math.random().toString(36).slice(2)}`,
+      cancel: async () => {},
+      list: async () => [],
+    },
+  };
+  const registry = new ToolRegistry({ ...services, ...inert, backend, commands });
   return { backend, commands, registry };
 }
 
