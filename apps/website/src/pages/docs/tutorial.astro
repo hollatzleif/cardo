@@ -69,9 +69,12 @@ import { FORUM_URL, withBase } from '../../lib/site';
   <section class="card step">
     <h2>6 · The tools in one minute</h2>
     <ul>
+      <li><strong>Assistant</strong> – a local AI that turns braindumps into proposal cards; optionally powered by your Claude subscription. See <a href={withBase('/assistant')}>Your Assistant</a>.</li>
       <li><strong>To-Do</strong> – tasks with lists, priorities and due dates. Overdue turns red.</li>
-      <li><strong>Notes</strong> – Markdown notes stored as real <code>.md</code> files in a folder you choose. Your files, forever.</li>
+      <li><strong>Notes</strong> – Markdown notes as real <code>.md</code> files, with <code>[[wiki-links]]</code>, backlinks and rendered LaTeX (<code>$…$</code>). Your files, forever.</li>
+      <li><strong>Files</strong> – an Obsidian-style browser for your notes folder: open and edit text and Markdown, preview images, open PDFs and web pages. A folder button jumps to it in Finder/Explorer.</li>
       <li><strong>Calendar</strong> – your own appointments with reminders shortly before they start.</li>
+      <li><strong>Clock</strong> – five styles: digital, analog, minimal, in-words (“quarter past nine”) and a terminal look.</li>
       <li><strong>Pomodoro</strong> – focus sessions with breaks; lengths, cycles and sound are all yours to change.</li>
       <li><strong>Workclock</strong> – one button: start when you begin, stop when you rest. Cardo sums up your day.</li>
       <li><strong>Statistics</strong> – completed tasks, work time and pomodoros per day, week or month.</li>
@@ -82,11 +85,13 @@ import { FORUM_URL, withBase } from '../../lib/site';
   </section>
 
   <section class="card step">
-    <h2>7 · Make it yours: themes</h2>
+    <h2>7 · Make it yours: the design panel</h2>
     <p>
-      <em>Settings → Theme</em> offers ten looks from beloved community palettes (Catppuccin,
-      Nord, Gruvbox, Tokyo Night …). Pick an accent color override if you like – your choices
-      survive theme switches.
+      In edit mode, open <strong>🎨 Design</strong>. Start with a one-click <em>design preset</em>
+      (a whole look at once), then fine-tune: ten themes from beloved community palettes
+      (Catppuccin, Nord, Gruvbox, Tokyo Night …), an accent color, fonts and text size, a card
+      style (soft, flat or paper), corner radius, transparency and even a background image. Your
+      personal tweaks survive every theme switch.
     </p>
   </section>
 
