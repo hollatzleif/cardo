@@ -67,31 +67,51 @@ import { FORUM_URL, withBase } from '../../lib/site';
   </section>
 
   <section class="card step">
-    <h2>6 · The tools in one minute</h2>
+    <h2>6 · The tools: more than 45, all local</h2>
+    <p>
+      Every tool ships with Cardo, runs locally and speaks to the assistant. The highlights,
+      by area – the full catalog lives in <strong>⊞ Tools</strong>:
+    </p>
     <ul>
-      <li><strong>Assistant</strong> – a local AI that turns braindumps into proposal cards; optionally powered by your Claude subscription. See <a href={withBase('/assistant')}>Your Assistant</a>.</li>
-      <li><strong>To-Do</strong> – tasks with lists, priorities and due dates. Overdue turns red.</li>
-      <li><strong>Notes</strong> – Markdown notes as real <code>.md</code> files, with <code>[[wiki-links]]</code>, backlinks and rendered LaTeX (<code>$…$</code>). Your files, forever.</li>
-      <li><strong>Files</strong> – an Obsidian-style browser for your notes folder: open and edit text and Markdown, preview images, open PDFs and web pages. A folder button jumps to it in Finder/Explorer.</li>
-      <li><strong>Calendar</strong> – your own appointments with reminders shortly before they start.</li>
-      <li><strong>Clock</strong> – five styles: digital, analog, minimal, in-words (“quarter past nine”) and a terminal look.</li>
-      <li><strong>Pomodoro</strong> – focus sessions with breaks; lengths, cycles and sound are all yours to change.</li>
-      <li><strong>Workclock</strong> – one button: start when you begin, stop when you rest. Cardo sums up your day.</li>
-      <li><strong>Statistics</strong> – completed tasks, work time and pomodoros per day, week or month.</li>
-      <li><strong>Alarm & Countdown</strong> – wake-up calls with a chime, and “how many days until…?” at a glance.</li>
-      <li><strong>Quick capture</strong> – <kbd>Cmd/Ctrl + Shift + Space</kbd> from anywhere: thought in, sort it later, send it to To-Do with one click.</li>
-      <li><strong>Daily routine</strong> – your morning checklist, fresh every day.</li>
+      <li><strong>Assistant</strong> – a local AI that turns braindumps into proposal cards and can operate every tool below; optionally powered by your Claude subscription. See <a href={withBase('/assistant')}>Your Assistant</a>.</li>
+      <li><strong>Plan</strong> – To-Do &amp; Kanban, Eisenhower matrix, time blocking, projects &amp; milestones, goals/OKRs, calendar, daily routine.</li>
+      <li><strong>Write &amp; collect</strong> – Notes (<code>.md</code> files, <code>[[wiki-links]]</code>, LaTeX), Files browser, scratchpad, sticky notes, decision log, reading list, bookmarks, code snippets.</li>
+      <li><strong>Focus &amp; time</strong> – Pomodoro, workclock, alarm, countdown, clock &amp; world clock (each in several styles), soundscapes, breathing coach.</li>
+      <li><strong>Health &amp; life</strong> – habits, hydration, mood journal, sleep log, workout log, meal planner, medication reminders.</li>
+      <li><strong>Money</strong> – savings goals, subscriptions &amp; bills, shared expenses with settle-up, currency converter.</li>
+      <li><strong>Learn &amp; utilities</strong> – flashcards with spaced repetition, statistics with heatmaps, calculator, unit converter, QR codes, password generator, random picker, colors &amp; palettes, RSS reader, weather.</li>
     </ul>
+    <p class="muted">
+      Most widgets have multiple looks: in edit mode, pick a view (e.g. matrix vs. list) right
+      on the widget frame.
+    </p>
+  </section>
+
+  <section class="card step">
+    <h2>6½ · Sync: your data on every device</h2>
+    <p>
+      Optional and <strong>off by default</strong>. In <em>Settings → Sync</em> you generate a
+      key (it stays in your system keychain), enter it on your other device, pick a transport –
+      your own Google Drive, any synced folder (iCloud, Dropbox, Syncthing) or a WebDAV
+      server – and Cardo keeps to-dos, notes, settings and assistants in step.
+      Everything is <strong>end-to-end encrypted before it leaves your device</strong>: the
+      storage provider only ever sees unreadable blocks. Anyone with your key can read your
+      data, so treat it like a password – and know that losing every device <em>and</em> the
+      key means the synced data is gone, by design.
+    </p>
   </section>
 
   <section class="card step">
     <h2>7 · Make it yours: the design panel</h2>
     <p>
       In edit mode, open <strong>🎨 Design</strong>. Start with a one-click <em>design preset</em>
-      (a whole look at once), then fine-tune: ten themes from beloved community palettes
-      (Catppuccin, Nord, Gruvbox, Tokyo Night …), an accent color, fonts and text size, a card
-      style (soft, flat or paper), corner radius, transparency and even a background image. Your
-      personal tweaks survive every theme switch.
+      (a whole look at once), then fine-tune: twenty themes from beloved community palettes
+      (Catppuccin, Nord, Gruvbox, Tokyo Night, Everforest, Kanagawa …), an accent color, fonts
+      and text size, a card style (soft, flat or paper), corner radius, transparency and even a
+      background image. Want more? The <strong>theme editor</strong> derives your own theme from
+      any palette – all 18 colors are yours to change, export and share. Your personal tweaks
+      survive every theme switch, and whole boards can be exported and imported as files
+      (command palette: “Export board”).
     </p>
   </section>
 

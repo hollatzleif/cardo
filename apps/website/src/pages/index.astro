@@ -14,9 +14,9 @@ const installSh = `curl -fsSL https://${GITHUB_USER}.github.io/cardo-app/install
     <h1>Everything in one place.<br />Arranged the way <em>you</em> want it.</h1>
     <p class="muted">
       Cardo is a freely arrangeable dashboard for macOS, Linux and Windows: to-dos, notes,
-      calendar, files, timers, a local AI assistant and more – as widgets on your personal
-      board. Built for everyone who feels overwhelmed and needs <strong>one</strong> calm place
-      where everything comes together. Your pivot point.
+      calendar, files, timers, a local AI assistant and more than 45 tools – as widgets on your
+      personal board. Built for everyone who feels overwhelmed and needs <strong>one</strong> calm
+      place where everything comes together. Your pivot point.
     </p>
     <div class="hero__install">
       <CopyBlock command={installSh} label="Install (macOS / Linux)" />
@@ -47,6 +47,10 @@ const installSh = `curl -fsSL https://${GITHUB_USER}.github.io/cardo-app/install
       <p>Write Markdown notes with <code>[[wiki-links]]</code>, backlinks and rendered LaTeX, and browse your notes folder – text, images, PDFs – right inside Cardo. Real files in a folder you own, readable with any editor.</p>
     </div>
     <div class="card">
+      <h3>🔑 Sync with your own key</h3>
+      <p>Optional, off by default: your to-dos, notes, settings and assistants on every device – end-to-end encrypted with a key only you hold. Carried by your own Google Drive, iCloud/Dropbox folder or WebDAV server. Whoever stores it sees only unreadable blocks.</p>
+    </div>
+    <div class="card">
       <h3>🚦 Transparency traffic light</h3>
       <p>Every tool carries a privacy light: green means it works fully local. Yellow means it contacts the internet – and Cardo tells you in plain language what it sends and where, before anything happens.</p>
     </div>
@@ -63,9 +67,10 @@ const installSh = `curl -fsSL https://${GITHUB_USER}.github.io/cardo-app/install
   <section class="card honest" style="margin-top:2rem">
     <h3>The honest part</h3>
     <p>
-      There is no cloud and no account – and that's a feature, not a missing one. Sync between
-      your devices comes later as an optional, end-to-end-encrypted feature based on a key you
-      generate yourself. Until then (and after): your data is yours, on your device.
+      There is still no Cardo cloud and no account – and that's a feature. Sync is optional and
+      works with a key you generate yourself: everything is encrypted on your device before it
+      travels through storage <em>you</em> choose (your Drive, your folder, your server).
+      Turn it off and Cardo is 100&nbsp;% offline again. Your data is yours, always.
     </p>
   </section>
 
