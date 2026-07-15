@@ -602,10 +602,11 @@ export function createTool(): CardoTool {
           if (typeof Widget !== 'function' || Widget.length > 1) {
             return { status: 'fail', detail: 'Widget export contract violated' };
           }
-          const sorted = sortItems([
-            makeItem({ title: 'b' }, new Date('2026-01-02')),
-            { ...makeItem({ title: 'a' }, new Date('2026-01-01')), status: 'reading' },
-          ]);
+          const readingProbe: ReadingItem = {
+            ...makeItem({ title: 'a' }, new Date('2026-01-01')),
+            status: 'reading',
+          };
+          const sorted = sortItems([makeItem({ title: 'b' }, new Date('2026-01-02')), readingProbe]);
           if (sorted[0]?.title !== 'a') {
             return { status: 'fail', detail: 'sortItems must put reading items first' };
           }

@@ -45,6 +45,8 @@ async function bootstrap(): Promise<void> {
   // Workspace file commands – every assistant can propose file work.
   const { registerWorkspaceCommands } = await import('./host/workspaceCommands');
   registerWorkspaceCommands(host);
+  const { registerSyncCommands } = await import('./host/syncCommands');
+  registerSyncCommands(host);
 
   await useAppStore.getState().init();
   void initGlobalShortcuts(host);

@@ -94,11 +94,63 @@
       "updates": "So installiert Cardo neue Versionen.",
       "diagnostics": "Der Selbsttest prüft die ganze App und erstellt dir einen Report.",
       "help": "Tour neu starten und Dokumentation finden.",
-      "about": "Version, Lizenzen und Transparenz."
+      "about": "Version, Lizenzen und Transparenz.",
+      "sync": "Deine Daten auf jedem Gerät – Ende-zu-Ende verschlüsselt, mit einem Schlüssel, den nur du hast."
     },
     "designArea": "Design & Themes",
     "designAreaHint": "Vorlagen, Themes, Akzent, Schrift, Kartenstil und mehr findest du im Design-Bereich.",
-    "openDesign": "Design öffnen"
+    "openDesign": "Design öffnen",
+    "sync": {
+      "title": "Sync",
+      "desktopOnly": "Sync ist in der Desktop-App verfügbar.",
+      "keyGroup": "Dein Sync-Schlüssel",
+      "noKey": "Noch kein Sync-Schlüssel",
+      "noKeyHint": "Erzeuge auf deinem ersten Gerät einen Schlüssel. Er bleibt im System-Schlüsselbund – nie in einer Datei.",
+      "generateKey": "Schlüssel erzeugen",
+      "enterKey": "Schon einen Schlüssel?",
+      "enterKeyHint": "Gib den Schlüssel deines anderen Geräts ein, um dessen Sync-Gruppe beizutreten.",
+      "keyPresent": "Sync-Schlüssel im Schlüsselbund gespeichert",
+      "licenseId": "Schlüssel-ID",
+      "showKey": "Schlüssel anzeigen",
+      "hideKey": "Ausblenden",
+      "copyKey": "Kopieren",
+      "keyWarning": "Wer diesen Schlüssel hat, kann deine synchronisierten Daten lesen. Behandle ihn wie ein Passwort.",
+      "forgetKey": "Schlüssel vergessen",
+      "forgetConfirm": "Sync-Schlüssel auf diesem Gerät vergessen? Deine Daten bleiben; Sync stoppt, bis wieder ein Schlüssel eingegeben wird. Zum Rotieren: auf allen Geräten vergessen und einen neuen erzeugen.",
+      "transportGroup": "Wohin deine Daten reisen",
+      "transport": "Sync über",
+      "transportHint": "Jeder Transport trägt ausschließlich Ende-zu-Ende-verschlüsselte Blöcke.",
+      "transportFolder": "Ordner (iCloud / Dropbox / Syncthing)",
+      "folder": "Sync-Ordner",
+      "folderNone": "Noch kein Ordner gewählt.",
+      "chooseFolder": "Ordner wählen",
+      "webdavUser": "Benutzername",
+      "webdavPassword": "Passwort",
+      "webdavPasswordHint": "Wird im System-Schlüsselbund gespeichert.",
+      "gdriveConnected": "Verbunden. Cardo nutzt nur seinen eigenen versteckten App-Ordner – deine Drive-Dateien sieht es nicht.",
+      "gdriveHint": "Mit Google anmelden. Cardo fordert NUR Zugriff auf seinen eigenen versteckten App-Ordner an.",
+      "gdriveConnect": "Google Drive verbinden",
+      "gdriveDisconnect": "Trennen",
+      "enable": "Sync auf diesem Gerät",
+      "enableHint": "Standardmäßig aus. Jedes Gerät entscheidet für sich.",
+      "layouts": "Dashboard-Layouts synchronisieren",
+      "layoutsHint": "Standardmäßig aus – Bildschirme sind verschieden. Einschalten, um auch Layouts zu teilen.",
+      "statusGroup": "Status & Geräte",
+      "lastSync": "Letzter Sync",
+      "never": "Noch nie",
+      "syncNow": "Jetzt synchronisieren",
+      "pending": "Wartet auf Upload",
+      "pendingHint": "Lokale Änderungen, die noch nicht hochgeladen wurden.",
+      "lastReport": "Letzte Runde",
+      "reportLine": "{{pushed}} gesendet · {{applied}} übernommen · {{skipped}} schon bekannt",
+      "devices": "Geräte ({{used}}/{{slots}} Plätze)",
+      "thisDevice": "dieses Gerät",
+      "errorLabel": "Sync-Problem",
+      "trustTitle": "Bevor Sync startet",
+      "trustBody": "Deine Daten werden Ende-zu-Ende verschlüsselt, bevor sie dieses Gerät verlassen – der Speicheranbieter sieht nur unlesbare Blöcke. ABER: Wer deinen Sync-Schlüssel hat, kann alles entschlüsseln. Teile ihn nur mit deinen eigenen Geräten.",
+      "trustRecovery": "Verlierst du alle Geräte UND den Schlüssel, sind die synchronisierten Daten nicht wiederherstellbar. Es gibt keinen Reset – mit Absicht.",
+      "trustConfirm": "Verstanden – Sync einschalten"
+    }
   },
   "diagnose": {
     "start": "Selbsttest starten",
@@ -142,7 +194,9 @@
       "voteAnonymous": "Umfrage-Stimmen sind anonym (gehashte Geräte-ID)",
       "assistantDocTraversal": "Assistent-Dokumente lehnen ungültige IDs ab",
       "modelUrlAllowlist": "Alle Modell-Downloads kommen von huggingface.co",
-      "namespaceIsolation": "Tools können gegenseitig keine Daten lesen"
+      "namespaceIsolation": "Tools können gegenseitig keine Daten lesen",
+      "syncCrypto": "Sync-Verschlüsselung versiegelt und prüft korrekt",
+      "syncEngine": "Sync-Engine gleicht zwei Test-Geräte ab"
     },
     "category": {
       "core": "Kern",
@@ -1700,6 +1754,24 @@
       "appended": "Text angehängt.",
       "notFound": "Diese Datei gibt es (noch) nicht.",
       "failed": "Das hat nicht geklappt – prüfe den Dateinamen (.md/.txt/.csv/.json)."
+    }
+  },
+  "sync": {
+    "command": {
+      "now": "Jetzt synchronisieren",
+      "nowDesc": "Führt eine Sync-Runde mit dem eingerichteten Transport aus.",
+      "status": "Sync-Status",
+      "statusDesc": "Meldet, ob Sync eingerichtet ist, wartende Änderungen und verbundene Geräte."
+    },
+    "msg": {
+      "done": "Sync abgeschlossen.",
+      "failed": "Sync fehlgeschlagen.",
+      "desktopOnly": "Sync läuft nur in der Desktop-App."
+    },
+    "context": {
+      "noKey": "Sync: nicht eingerichtet (kein Schlüssel).",
+      "disabled": "Sync: Schlüssel vorhanden, aber auf diesem Gerät ausgeschaltet.",
+      "active": "Sync: an über {{transport}} · {{pending}} Änderungen wartend · {{devices}} Gerät(e) · letzte Runde: {{last}}."
     }
   }
 }

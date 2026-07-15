@@ -11,6 +11,7 @@ import { AssistantSettings } from '../assistant';
 import { MODEL_CATALOG } from '../assistant/models';
 import { ProfileModal } from '../profile/ProfileModal';
 import { DiagnosePanel } from './DiagnosePanel';
+import { SyncSection } from './SyncSection';
 import { PollsPanel } from './PollsPanel';
 import { BackupSection } from './BackupSection';
 import {
@@ -32,6 +33,7 @@ type SectionId =
   | 'general'
   | 'appearance'
   | 'assistant'
+  | 'sync'
   | 'inboxPolls'
   | 'data'
   | 'updates'
@@ -44,6 +46,7 @@ const SECTIONS: Array<{ id: SectionId; glyph: string; labelKey: string }> = [
   { id: 'general', glyph: '⚙', labelKey: 'settings.general' },
   { id: 'appearance', glyph: '◐', labelKey: 'settings.section.appearance' },
   { id: 'assistant', glyph: '✦', labelKey: 'settings.assistant' },
+  { id: 'sync', glyph: '⇄', labelKey: 'settings.sync.title' },
   { id: 'inboxPolls', glyph: '✉', labelKey: 'settings.section.inboxPolls' },
   { id: 'data', glyph: '⬒', labelKey: 'settings.section.data' },
   { id: 'updates', glyph: '↻', labelKey: 'settings.updates' },
@@ -411,6 +414,7 @@ export function SettingsPage() {
               </Wide>
             </Card>
           )}
+          {section === 'sync' && <SyncSection Card={Card} GroupLabel={GroupLabel} />}
           {section === 'inboxPolls' && <InboxPollsSection />}
           {section === 'data' && <DataSection />}
           {section === 'updates' && <UpdatesSection />}

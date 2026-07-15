@@ -25,6 +25,8 @@ const CORE_CHECK_TITLES: Record<string, string> = {
   'core:db-query': 'diagnose.check.dbQuery',
   'core:change-log': 'diagnose.check.changeLog',
   'core:migrations': 'diagnose.check.migrations',
+  'core:sync-crypto': 'diagnose.check.syncCrypto',
+  'core:sync-engine': 'diagnose.check.syncEngine',
 };
 
 async function coreChecks(): Promise<DiagnoseCheck[]> {

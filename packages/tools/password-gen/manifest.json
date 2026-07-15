@@ -21,20 +21,28 @@
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "generator",
+        "passphrase",
+        "compact"
+      ]
     }
   ],
   "commands": [
-    "password-gen.context"
+    "password-gen.generate"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.password-gen.test.render"
+      "id": "no-persist",
+      "titleKey": "tool.password-gen.test.noPersist"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.password-gen.test.storage"
+      "id": "determinism",
+      "titleKey": "tool.password-gen.test.determinism"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.password-gen.test.render"
     }
   ],
   "tourSteps": [

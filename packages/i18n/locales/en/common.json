@@ -94,11 +94,63 @@
       "updates": "How Cardo installs new versions.",
       "diagnostics": "The self-test checks the whole app and gives you a report.",
       "help": "Restart the tour and find the documentation.",
-      "about": "Version, licenses, and transparency."
+      "about": "Version, licenses, and transparency.",
+      "sync": "Your data on every device – end-to-end encrypted, with a key only you hold."
     },
     "designArea": "Design & themes",
     "designAreaHint": "Presets, themes, accent, fonts, card style and more live in the Design panel.",
-    "openDesign": "Open design"
+    "openDesign": "Open design",
+    "sync": {
+      "title": "Sync",
+      "desktopOnly": "Sync is available in the desktop app.",
+      "keyGroup": "Your sync key",
+      "noKey": "No sync key yet",
+      "noKeyHint": "Generate a key on your first device. It stays in the system keychain – never in a file.",
+      "generateKey": "Generate key",
+      "enterKey": "Already have a key?",
+      "enterKeyHint": "Enter the key from your other device to join its sync group.",
+      "keyPresent": "Sync key stored in the keychain",
+      "licenseId": "Key ID",
+      "showKey": "Show key",
+      "hideKey": "Hide",
+      "copyKey": "Copy",
+      "keyWarning": "Anyone with this key can read your synced data. Treat it like a password.",
+      "forgetKey": "Forget key",
+      "forgetConfirm": "Forget the sync key on this device? Your data stays; sync stops until a key is entered again. To rotate keys, forget it on every device and generate a fresh one.",
+      "transportGroup": "Where your data travels",
+      "transport": "Sync via",
+      "transportHint": "Every transport only ever carries end-to-end encrypted blocks.",
+      "transportFolder": "Folder (iCloud / Dropbox / Syncthing)",
+      "folder": "Sync folder",
+      "folderNone": "No folder chosen yet.",
+      "chooseFolder": "Choose folder",
+      "webdavUser": "Username",
+      "webdavPassword": "Password",
+      "webdavPasswordHint": "Stored in the system keychain.",
+      "gdriveConnected": "Connected. Cardo only uses its own hidden app folder – it cannot see your Drive files.",
+      "gdriveHint": "Sign in with Google. Cardo requests access ONLY to its own hidden app folder.",
+      "gdriveConnect": "Connect Google Drive",
+      "gdriveDisconnect": "Disconnect",
+      "enable": "Sync on this device",
+      "enableHint": "Off by default. Each device decides for itself.",
+      "layouts": "Sync dashboard layouts",
+      "layoutsHint": "Off by default – screens differ. Turn on to share layouts too.",
+      "statusGroup": "Status & devices",
+      "lastSync": "Last sync",
+      "never": "Never",
+      "syncNow": "Sync now",
+      "pending": "Waiting to upload",
+      "pendingHint": "Local changes not yet pushed.",
+      "lastReport": "Last round",
+      "reportLine": "{{pushed}} pushed · {{applied}} applied · {{skipped}} already known",
+      "devices": "Devices ({{used}}/{{slots}} slots)",
+      "thisDevice": "this device",
+      "errorLabel": "Sync problem",
+      "trustTitle": "Before sync starts",
+      "trustBody": "Your data is end-to-end encrypted before it leaves this device – the storage provider only ever sees unreadable blocks. BUT: anyone who has your sync key can decrypt everything. Share it only with your own devices.",
+      "trustRecovery": "If you lose every device AND the key, the synced data cannot be recovered. There is no reset – by design.",
+      "trustConfirm": "I understand – enable sync"
+    }
   },
   "diagnose": {
     "start": "Run self-test",
@@ -142,7 +194,9 @@
       "voteAnonymous": "Poll votes are anonymous (hashed device id)",
       "assistantDocTraversal": "Assistant documents reject invalid ids",
       "modelUrlAllowlist": "All model downloads come from huggingface.co",
-      "namespaceIsolation": "Tools cannot read each other's data"
+      "namespaceIsolation": "Tools cannot read each other's data",
+      "syncCrypto": "Sync encryption seals and verifies correctly",
+      "syncEngine": "Sync engine converges two scratch devices"
     },
     "category": {
       "core": "Core",
@@ -1700,6 +1754,24 @@
       "appended": "Text appended.",
       "notFound": "This file doesn't exist (yet).",
       "failed": "That didn't work – check the file name (.md/.txt/.csv/.json)."
+    }
+  },
+  "sync": {
+    "command": {
+      "now": "Sync now",
+      "nowDesc": "Runs one sync round with the configured transport.",
+      "status": "Sync status",
+      "statusDesc": "Reports whether sync is set up, pending changes and connected devices."
+    },
+    "msg": {
+      "done": "Sync finished.",
+      "failed": "Sync failed.",
+      "desktopOnly": "Sync only runs in the desktop app."
+    },
+    "context": {
+      "noKey": "Sync: not set up (no key).",
+      "disabled": "Sync: key present, but turned off on this device.",
+      "active": "Sync: on via {{transport}} · {{pending}} changes waiting · {{devices}} device(s) · last round: {{last}}."
     }
   }
 }

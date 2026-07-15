@@ -4,7 +4,10 @@
   "descriptionKey": "tool.scratchpad.description",
   "version": "1.0.0",
   "minAppVersion": "0.1.0",
-  "permissions": [],
+  "permissions": [
+    "file-read",
+    "file-write"
+  ],
   "privacy": {
     "level": "green",
     "network": [],
@@ -15,26 +18,36 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "edit",
+        "split",
+        "preview"
+      ]
     }
   ],
   "commands": [
+    "scratchpad.append",
+    "scratchpad.clear",
     "scratchpad.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.scratchpad.test.render"
+      "id": "roundtrip",
+      "titleKey": "tool.scratchpad.test.roundtrip"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.scratchpad.test.storage"
+      "id": "append-command",
+      "titleKey": "tool.scratchpad.test.appendCommand"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.scratchpad.test.render"
     }
   ],
   "tourSteps": [

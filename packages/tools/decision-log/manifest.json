@@ -4,7 +4,10 @@
   "descriptionKey": "tool.decision-log.description",
   "version": "1.0.0",
   "minAppVersion": "0.1.0",
-  "permissions": [],
+  "permissions": [
+    "file-read",
+    "file-write"
+  ],
   "privacy": {
     "level": "green",
     "network": [],
@@ -14,27 +17,36 @@
     {
       "id": "main",
       "defaultSize": {
-        "w": 4,
-        "h": 3
+        "w": 5,
+        "h": 6
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "log",
+        "detail",
+        "compact"
+      ]
     }
   ],
   "commands": [
+    "decision-log.add",
     "decision-log.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.decision-log.test.render"
+      "id": "roundtrip",
+      "titleKey": "tool.decision-log.test.roundtrip"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.decision-log.test.storage"
+      "id": "crud",
+      "titleKey": "tool.decision-log.test.crud"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.decision-log.test.render"
     }
   ],
   "tourSteps": [

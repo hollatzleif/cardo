@@ -93,7 +93,63 @@ pub async fn run_core_checks(app_data_dir: &std::path::Path) -> Vec<CoreCheckRes
         Err(e) => results.push(fail("core:migrations", e.to_string())),
     }
 
+    // Sync crypto: key generate → derive → seal/open roundtrip, tamper check.
+    results.push(match sync_crypto_check() {
+        Ok(()) => pass("core:sync-crypto"),
+        Err(e) => fail("core:sync-crypto", e),
+    });
+
+    // Sync engine: full two-store roundtrip over a scratch folder transport.
+    results.push(match sync_engine_check(scratch_dir.path()).await {
+        Ok(()) => pass("core:sync-engine"),
+        Err(e) => fail("core:sync-engine", e),
+    });
+
     results
+}
+
+fn sync_crypto_check() -> Result<(), String> {
+    let key = crate::SyncKey::generate().map_err(|e| e.to_string())?;
+    let display = key.display();
+    let parsed = crate::SyncKey::parse(&display).map_err(|e| format!("reparse: {e}"))?;
+    let derived = parsed.derive();
+    let cipher = crate::sync_crypto::SyncCipher::new(&derived.data_key);
+    let blob = cipher.encrypt("probe", b"diagnose").map_err(|e| e.to_string())?;
+    let plain = cipher.decrypt("probe", &blob).map_err(|e| e.to_string())?;
+    if plain != b"diagnose" {
+        return Err("decrypt returned different plaintext".into());
+    }
+    let mut tampered = blob;
+    if let Some(last) = tampered.last_mut() {
+        *last ^= 1;
+    }
+    if cipher.decrypt("probe", &tampered).is_ok() {
+        return Err("tampered blob decrypted – AEAD broken".into());
+    }
+    Ok(())
+}
+
+async fn sync_engine_check(scratch: &std::path::Path) -> Result<(), String> {
+    let key = crate::SyncKey::generate().map_err(|e| e.to_string())?.derive();
+    let a = SqliteStorage::open(&scratch.join("sync-a.db")).await.map_err(|e| e.to_string())?;
+    let b = SqliteStorage::open(&scratch.join("sync-b.db")).await.map_err(|e| e.to_string())?;
+    let hub = crate::FolderTransport::new(scratch.join("sync-hub")).map_err(|e| e.to_string())?;
+
+    a.set("diagnose", "sync-probe", json!({"n": 7}))
+        .await
+        .map_err(|e| e.to_string())?;
+    crate::SyncEngine::new(&a, &key.data_key, "diag")
+        .sync_once(&hub)
+        .await
+        .map_err(|e| format!("push: {e}"))?;
+    crate::SyncEngine::new(&b, &key.data_key, "diag")
+        .sync_once(&hub)
+        .await
+        .map_err(|e| format!("pull: {e}"))?;
+    match b.get("diagnose", "sync-probe").await.map_err(|e| e.to_string())? {
+        Some(doc) if doc["n"] == json!(7) => Ok(()),
+        other => Err(format!("device B did not converge: {other:?}")),
+    }
 }
 
 #[cfg(test)]
@@ -104,7 +160,7 @@ mod tests {
     async fn all_core_checks_pass_in_a_healthy_environment() {
         let dir = tempfile::tempdir().unwrap();
         let results = run_core_checks(dir.path()).await;
-        assert_eq!(results.len(), 5);
+        assert_eq!(results.len(), 7);
         for r in &results {
             assert_eq!(r.status, "pass", "check {} failed: {:?}", r.id, r.detail);
         }

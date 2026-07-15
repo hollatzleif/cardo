@@ -36,13 +36,19 @@ type UiDoc = { open?: string; at?: number };
 type LoadedDecision = { name: string; decision: Decision };
 
 async function loadDecisions(store: DecisionStore): Promise<LoadedDecision[]> {
-  const parsed: Array<{ name: string; decision: Decision }> = [];
+  const parsed: LoadedDecision[] = [];
   for (const doc of await store.list()) {
     const decision = parseDecision(doc.markdown);
     if (decision) parsed.push({ name: doc.name, decision });
   }
-  const order = sortByDateDesc(parsed.map((p) => ({ ...p.decision, name: p.name })));
-  return order.map(({ name }) => parsed.find((p) => p.name === name) as LoadedDecision);
+  const order = sortByDateDesc(
+    parsed.map((p) => ({ title: p.decision.title, date: p.decision.date, name: p.name })),
+  );
+  const byName = new Map(parsed.map((p) => [p.name, p]));
+  return order.flatMap((o) => {
+    const hit = byName.get(o.name);
+    return hit ? [hit] : [];
+  });
 }
 
 /** Shared by the add command and self-tests. Returns the document name. */

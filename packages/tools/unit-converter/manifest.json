@@ -21,20 +21,29 @@
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "converter",
+        "category-tabs",
+        "compact"
+      ]
     }
   ],
   "commands": [
+    "unit-converter.convert",
     "unit-converter.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.unit-converter.test.render"
+      "id": "conversions",
+      "titleKey": "tool.unit-converter.test.conversions"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.unit-converter.test.storage"
+      "id": "convert-command",
+      "titleKey": "tool.unit-converter.test.convertCommand"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.unit-converter.test.render"
     }
   ],
   "tourSteps": [
