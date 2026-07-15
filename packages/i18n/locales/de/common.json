@@ -1897,59 +1897,171 @@
     },
     "meal-planner": {
       "name": "Essensplaner",
-      "description": "TODO: Essensplaner beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Plant eine Woche voller Mahlzeiten und macht daraus eine zusammengefasste Einkaufsliste.",
+      "privacy": "Funktioniert komplett offline. Dein Essensplan verlässt dieses Gerät nie.",
+      "slot": {
+        "breakfast": "Frühstück",
+        "lunch": "Mittag",
+        "dinner": "Abend",
+        "snack": "Snack"
+      },
       "widget": {
-        "empty": "Noch nichts hier."
+        "weekTitle": "Diese Woche",
+        "todayTitle": "Heute",
+        "shoppingTitle": "Einkaufsliste",
+        "emptySlot": "Nichts geplant",
+        "editSlot": "{{slot}} am {{date}} bearbeiten",
+        "mealPlaceholder": "Gericht",
+        "ingredientsPlaceholder": "Zutaten (z. B. 200 g Mehl, 2 Eier)",
+        "ingredientsHint": "Kommagetrennt: Menge, Einheit und Name – Menge und Einheit sind optional.",
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "shoppingEmpty": "Keine Zutaten diese Woche – plane zuerst ein paar Mahlzeiten.",
+        "exportButton": "Liste als Todo exportieren",
+        "exported": "Exportiert!",
+        "exportTitle": "Einkauf: {{items}}",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "settings": {
+        "snackSlot": "Zusätzlicher Snack-Slot",
+        "weekStartsMonday": "Woche beginnt am Montag"
       },
       "command": {
-        "context": "Essensplaner: aktueller Stand"
+        "set-meal": "Mahlzeit planen",
+        "set-mealDesc": "Setzt das Gericht eines Slots (breakfast/lunch/dinner/snack) an einem Datum (JJJJ-MM-TT); vorhandene Zutaten des Slots bleiben erhalten.",
+        "context": "Essensplaner-Kontext (intern)",
+        "contextDesc": "Fasst die geplanten Mahlzeiten von heute und morgen für den Assistenten zusammen."
+      },
+      "msg": {
+        "saved": "Mahlzeit gespeichert.",
+        "cleared": "Slot geleert."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Mahlzeiten-Slots lassen sich setzen, lesen und leeren",
+        "aggregate": "Die Einkaufsliste rechnet Mengen korrekt zusammen",
+        "render": "Essensplaner-Widget wird angezeigt"
       },
       "tour": {
-        "title": "Essensplaner",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Essensplaner."
+        "title": "Deine Essenswoche",
+        "body": "Klick auf einen Slot, um ein Gericht mit Zutaten zu planen – die Einkaufslisten-Variante rechnet alles für dich zusammen, komplett offline."
+      },
+      "variant": {
+        "week-grid": "Wochenraster",
+        "day": "Tag",
+        "shopping-list": "Einkaufsliste"
       }
     },
     "medication": {
       "name": "Medikamente",
-      "description": "TODO: Medikamente beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Hält deine Medikamente im Plan – mit Erinnerungen und täglicher Abhak-Liste.",
+      "privacy": "Funktioniert komplett offline. Deine Medikamenten-Daten verlassen dieses Gerät nie.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "empty": "Noch keine Medikamente – lege unten dein erstes an.",
+        "namePlaceholder": "Medikament",
+        "dosePlaceholder": "Dosis",
+        "timesPlaceholder": "Zeiten (08:00, 20:00)",
+        "timesHint": "Kommagetrennte Einnahmezeiten im Format HH:MM.",
+        "add": "Medikament hinzufügen",
+        "delete": "{{name}} löschen",
+        "markTaken": "{{name}} um {{time}} als genommen markieren",
+        "adherenceLabel": "Einnahmetreue: {{percent}} % über {{days}} Tage",
+        "days": "{{days}} Tage",
+        "noData": "In diesem Zeitraum waren noch keine Dosen fällig."
+      },
+      "notification": {
+        "title": "Medikamenten-Erinnerung",
+        "body": "Zeit für {{name}} ({{dose}})."
       },
       "command": {
-        "context": "Medikamente: aktueller Stand"
+        "add": "Medikament hinzufügen",
+        "addDesc": "Legt ein Medikament mit Name, Dosis und kommagetrennten Einnahmezeiten (HH:MM) an und plant die Erinnerungen.",
+        "taken": "Dosis als genommen markieren",
+        "takenDesc": "Markiert die heutige Dosis eines Medikaments (per Name oder Id) als genommen; ohne Zeitangabe wird die nächste offene Dosis abgehakt.",
+        "remind": "Medikamenten-Erinnerung (intern)",
+        "remindDesc": "Löst die Erinnerungs-Benachrichtigung für ein Medikament aus und plant den nächsten Termin.",
+        "context": "Medikamenten-Kontext (intern)",
+        "contextDesc": "Fasst die heute noch offenen Dosen für den Assistenten zusammen."
+      },
+      "msg": {
+        "added": "Medikament angelegt, Erinnerungen geplant.",
+        "invalidTimes": "Die Zeiten müssen eine kommagetrennte HH:MM-Liste sein, z. B. \"08:00, 20:00\".",
+        "taken": "Dosis als genommen markiert.",
+        "allTaken": "Alle Dosen dieses Medikaments sind heute schon genommen.",
+        "notFound": "Dieses Medikament gibt es nicht mehr.",
+        "reminded": "Erinnerung gesendet.",
+        "failed": "Das hat nicht geklappt – bitte versuch es noch einmal."
+      },
+      "setup": {
+        "step1Title": "Medikament anlegen",
+        "step1Body": "Gib den Namen, die Dosis (z. B. 400 mg) und die Einnahmezeiten als HH:MM kommagetrennt ein – die Erinnerungen werden automatisch geplant.",
+        "step2Title": "Erinnerungen erlauben",
+        "step2Body": "Erlaube Cardo Benachrichtigungen in deinen Systemeinstellungen, damit dich Erinnerungen auch erreichen, wenn die App im Hintergrund ist."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Medikamente lassen sich anlegen, lesen und löschen",
+        "next-occurrence": "Die nächste Einnahmezeit wird korrekt berechnet",
+        "adherence-math": "Die Einnahmetreue wird korrekt berechnet",
+        "render": "Medikamenten-Widget wird angezeigt"
       },
       "tour": {
-        "title": "Medikamente",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Medikamente."
+        "title": "Deine Medikamente, pünktlich",
+        "body": "Leg deine Medikamente einmal an und Cardo erinnert dich zu jeder Einnahmezeit – hak Dosen ab und behalte deine Einnahmetreue im Blick, komplett offline."
+      },
+      "variant": {
+        "today": "Heute",
+        "schedule": "Plan",
+        "adherence": "Einnahmetreue"
       }
     },
     "breathing": {
-      "name": "Atemübungen",
-      "description": "TODO: Atemübungen beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "name": "Atmung",
+      "description": "Geführte Box- oder 4-7-8-Atmung mit animiertem Taktgeber.",
+      "privacy": "Funktioniert komplett offline. Nichts über deine Übungen verlässt dieses Gerät.",
+      "phase": {
+        "inhale": "Einatmen",
+        "hold1": "Halten",
+        "exhale": "Ausatmen",
+        "hold2": "Halten"
+      },
+      "pattern": {
+        "478": "4-7-8-Atmung",
+        "box": "Box-Atmung (4-4-4-4)"
+      },
       "widget": {
-        "empty": "Noch nichts hier."
+        "start": "Start",
+        "stop": "Stopp",
+        "cycles": "{{cycles}} Zyklen",
+        "cycleOf": "Zyklus {{cycle}} von {{cycles}}",
+        "completedToday": "Heute {{count}} abgeschlossen",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "settings": {
+        "pattern": "Muster",
+        "cycles": "Zyklen",
+        "sound": "Ton beim Phasenwechsel"
       },
       "command": {
-        "context": "Atemübungen: aktueller Stand"
+        "start": "Atemübung starten",
+        "startDesc": "Startet eine geführte Atemübung; Muster ('box' oder '478') und Zyklenzahl sind optional und folgen sonst den Widget-Einstellungen.",
+        "context": "Atmungs-Kontext (intern)",
+        "contextDesc": "Sagt dem Assistenten, ob gerade eine Übung läuft und wie viele heute abgeschlossen wurden."
+      },
+      "msg": {
+        "started": "Atemübung gestartet."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "phase-math": "Phasenfolge und Zeitplan werden korrekt berechnet",
+        "start-command": "Das Starten einer Übung schreibt das Session-Dokument",
+        "render": "Atmungs-Widget wird angezeigt"
       },
       "tour": {
-        "title": "Atemübungen",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Atemübungen."
+        "title": "Atme durch",
+        "body": "Drück auf Start und folge dem Taktgeber – Box-Atmung zum Fokussieren, 4-7-8 zum Runterkommen. Mit reduzierter Bewegung bekommst du stattdessen einen ruhigen Text-Countdown."
+      },
+      "variant": {
+        "circle": "Kreis",
+        "bar": "Balken",
+        "minimal": "Minimal"
       }
     },
     "shared-expenses": {

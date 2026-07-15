@@ -1896,60 +1896,172 @@
       }
     },
     "meal-planner": {
-      "name": "Meal Planner",
-      "description": "TODO: describe Meal Planner.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "name": "Meal planner",
+      "description": "Plans a week of meals and turns them into one aggregated shopping list.",
+      "privacy": "Works fully offline. Your meal plan never leaves this device.",
+      "slot": {
+        "breakfast": "Breakfast",
+        "lunch": "Lunch",
+        "dinner": "Dinner",
+        "snack": "Snack"
+      },
       "widget": {
-        "empty": "Nothing here yet."
+        "weekTitle": "This week",
+        "todayTitle": "Today",
+        "shoppingTitle": "Shopping list",
+        "emptySlot": "Nothing planned",
+        "editSlot": "Edit {{slot}} on {{date}}",
+        "mealPlaceholder": "Meal",
+        "ingredientsPlaceholder": "Ingredients (e.g. 200 g flour, 2 eggs)",
+        "ingredientsHint": "Comma-separated: quantity, unit and name – quantity and unit are optional.",
+        "save": "Save",
+        "cancel": "Cancel",
+        "shoppingEmpty": "No ingredients this week – plan some meals first.",
+        "exportButton": "Export list as todo",
+        "exported": "Exported!",
+        "exportTitle": "Groceries: {{items}}",
+        "settingsToggle": "Show or hide settings"
+      },
+      "settings": {
+        "snackSlot": "Extra snack slot",
+        "weekStartsMonday": "Week starts on Monday"
       },
       "command": {
-        "context": "Meal Planner: current state"
+        "set-meal": "Plan a meal",
+        "set-mealDesc": "Sets the meal of one slot (breakfast/lunch/dinner/snack) on a date (yyyy-mm-dd); existing ingredients of that slot are kept.",
+        "context": "Meal planner context (internal)",
+        "contextDesc": "Summarizes today's and tomorrow's planned meals for the assistant."
+      },
+      "msg": {
+        "saved": "Meal saved.",
+        "cleared": "Slot cleared."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Meal slots can be set, read and cleared",
+        "aggregate": "Shopping list aggregates quantities correctly",
+        "render": "Meal planner widget renders"
       },
       "tour": {
-        "title": "Meal Planner",
-        "body": "TODO: one-line tour hint for Meal Planner."
+        "title": "Your week of meals",
+        "body": "Click any slot to plan a meal with its ingredients – the shopping-list variant adds everything up for you, fully offline."
+      },
+      "variant": {
+        "week-grid": "Week grid",
+        "day": "Day",
+        "shopping-list": "Shopping list"
       }
     },
     "medication": {
       "name": "Medication",
-      "description": "TODO: describe Medication.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "Keeps your meds on schedule with reminders and a daily tick-off list.",
+      "privacy": "Works fully offline. Your medication data never leaves this device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "empty": "No medications yet – add your first one below.",
+        "namePlaceholder": "Medication",
+        "dosePlaceholder": "Dose",
+        "timesPlaceholder": "Times (08:00, 20:00)",
+        "timesHint": "Comma-separated intake times in HH:MM.",
+        "add": "Add medication",
+        "delete": "Delete {{name}}",
+        "markTaken": "Mark {{name}} at {{time}} as taken",
+        "adherenceLabel": "Adherence: {{percent}}% over {{days}} days",
+        "days": "{{days}} days",
+        "noData": "No doses expected in this period yet."
+      },
+      "notification": {
+        "title": "Medication reminder",
+        "body": "Time for {{name}} ({{dose}})."
       },
       "command": {
-        "context": "Medication: current state"
+        "add": "Add medication",
+        "addDesc": "Creates a medication with name, dose and comma-separated intake times (HH:MM) and schedules its reminders.",
+        "taken": "Mark dose as taken",
+        "takenDesc": "Marks today's dose of a medication (by name or id) as taken; without a time the next open dose is ticked off.",
+        "remind": "Medication reminder (internal)",
+        "remindDesc": "Fires the reminder notification for one medication and schedules the next occurrence.",
+        "context": "Medication context (internal)",
+        "contextDesc": "Summarizes today's remaining doses for the assistant."
+      },
+      "msg": {
+        "added": "Medication added, reminders scheduled.",
+        "invalidTimes": "The times must be a comma-separated HH:MM list, e.g. \"08:00, 20:00\".",
+        "taken": "Dose marked as taken.",
+        "allTaken": "All doses of this medication are already taken today.",
+        "notFound": "This medication no longer exists.",
+        "reminded": "Reminder sent.",
+        "failed": "That did not work – please try again."
+      },
+      "setup": {
+        "step1Title": "Add a medication",
+        "step1Body": "Enter the name, the dose (e.g. 400 mg) and the intake times as HH:MM, comma-separated – reminders are scheduled automatically.",
+        "step2Title": "Allow reminders",
+        "step2Body": "Allow notifications for Cardo in your system settings so reminders can reach you even when the app is in the background."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Medications can be created, read and deleted",
+        "next-occurrence": "The next intake time is computed correctly",
+        "adherence-math": "Adherence percentage is computed correctly",
+        "render": "Medication widget renders"
       },
       "tour": {
-        "title": "Medication",
-        "body": "TODO: one-line tour hint for Medication."
+        "title": "Your meds, on time",
+        "body": "Add your medications once and Cardo reminds you at every intake time – tick off doses and watch your adherence, fully offline."
+      },
+      "variant": {
+        "today": "Today",
+        "schedule": "Schedule",
+        "adherence": "Adherence"
       }
     },
     "breathing": {
       "name": "Breathing",
-      "description": "TODO: describe Breathing.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "Guided box or 4-7-8 breathing with an animated pacer.",
+      "privacy": "Works fully offline. Nothing about your sessions leaves this device.",
+      "phase": {
+        "inhale": "Breathe in",
+        "hold1": "Hold",
+        "exhale": "Breathe out",
+        "hold2": "Hold"
+      },
+      "pattern": {
+        "478": "4-7-8 breathing",
+        "box": "Box breathing (4-4-4-4)"
+      },
       "widget": {
-        "empty": "Nothing here yet."
+        "start": "Start",
+        "stop": "Stop",
+        "cycles": "{{cycles}} cycles",
+        "cycleOf": "Cycle {{cycle}} of {{cycles}}",
+        "completedToday": "{{count}} completed today",
+        "settingsToggle": "Show or hide settings"
+      },
+      "settings": {
+        "pattern": "Pattern",
+        "cycles": "Cycles",
+        "sound": "Sound cue on phase change"
       },
       "command": {
-        "context": "Breathing: current state"
+        "start": "Start breathing session",
+        "startDesc": "Starts a guided breathing session; pattern ('box' or '478') and cycle count are optional and default to the widget settings.",
+        "context": "Breathing context (internal)",
+        "contextDesc": "Tells the assistant whether a session is running and how many were completed today."
+      },
+      "msg": {
+        "started": "Breathing session started."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "phase-math": "Phase sequence and timeline are computed correctly",
+        "start-command": "Starting a session writes the session doc",
+        "render": "Breathing widget renders"
       },
       "tour": {
-        "title": "Breathing",
-        "body": "TODO: one-line tour hint for Breathing."
+        "title": "Take a breath",
+        "body": "Press start and follow the pacer – box breathing to focus, 4-7-8 to wind down. With reduced motion enabled you get a calm text countdown instead."
+      },
+      "variant": {
+        "circle": "Circle",
+        "bar": "Bar",
+        "minimal": "Minimal"
       }
     },
     "shared-expenses": {
