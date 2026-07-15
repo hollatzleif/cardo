@@ -195,7 +195,8 @@
           "title": "If everything is lost",
           "body": "There is no recovery service, no reset — by design, because nobody but you holds the key. If you lose every device AND the key, the encrypted data in the storage is permanently unreadable. Your local data on any surviving device is never affected."
         }
-      }
+      },
+      "enableNeedsFolder": "First choose a sync folder below — then sync can be switched on."
     }
   },
   "diagnose": {

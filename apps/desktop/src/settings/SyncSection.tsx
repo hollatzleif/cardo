@@ -171,6 +171,11 @@ export function SyncSection({
     );
   }
 
+  // Fresh configs carry transport '' – the select DISPLAYS 'folder' as its
+  // fallback, so the conditional rows must use the same normalization or
+  // the folder picker never appears.
+  const transport = status.transport || 'folder';
+
   return (
     <>
       {status.kicked && (
@@ -330,7 +335,7 @@ export function SyncSection({
             <Row label={t('settings.sync.transport')} description={t('settings.sync.transportHint')}>
               <select
                 className="c-input"
-                value={status.transport || 'folder'}
+                value={transport}
                 disabled={busy}
                 onChange={(e) => void call(() => saveConfig({ transport: e.target.value }))}
               >
@@ -340,7 +345,7 @@ export function SyncSection({
               </select>
             </Row>
 
-            {status.transport === 'folder' && (
+            {transport === 'folder' && (
               <Row
                 label={t('settings.sync.folder')}
                 description={status.folderPath ?? t('settings.sync.folderNone')}
@@ -361,7 +366,7 @@ export function SyncSection({
               </Row>
             )}
 
-            {status.transport === 'webdav' && (
+            {transport === 'webdav' && (
               <>
                 <Row label="URL">
                   <Input
@@ -401,7 +406,7 @@ export function SyncSection({
               </>
             )}
 
-            {status.transport === 'gdrive' && (
+            {transport === 'gdrive' && (
               <Row
                 label="Google Drive"
                 description={
@@ -429,16 +434,23 @@ export function SyncSection({
               </Row>
             )}
 
-            <Row label={t('settings.sync.enable')} description={t('settings.sync.enableHint')}>
+            <Row
+              label={t('settings.sync.enable')}
+              description={
+                transport === 'folder' && !status.folderPath
+                  ? t('settings.sync.enableNeedsFolder')
+                  : t('settings.sync.enableHint')
+              }
+            >
               <input
                 type="checkbox"
                 checked={status.enabled}
-                disabled={busy}
+                disabled={busy || (transport === 'folder' && !status.folderPath)}
                 onChange={(e) => {
                   if (e.target.checked && !status.trustConfirmed) {
                     setTrustOpen(true);
                   } else {
-                    void call(() => saveConfig({ enabled: e.target.checked }));
+                    void call(() => saveConfig({ enabled: e.target.checked, transport }));
                   }
                 }}
               />
@@ -560,7 +572,7 @@ export function SyncSection({
                 variant="primary"
                 onClick={() => {
                   setTrustOpen(false);
-                  void call(() => saveConfig({ enabled: true, trustConfirmed: true }));
+                  void call(() => saveConfig({ enabled: true, trustConfirmed: true, transport }));
                 }}
               >
                 {t('settings.sync.trustConfirm')}

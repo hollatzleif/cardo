@@ -195,7 +195,8 @@
           "title": "Wenn alles verloren geht",
           "body": "Es gibt keinen Wiederherstellungsdienst und keinen Reset — mit Absicht, denn niemand außer dir hat den Schlüssel. Verlierst du ALLE Geräte UND den Schlüssel, sind die verschlüsselten Daten im Speicher dauerhaft unlesbar. Deine lokalen Daten auf jedem verbliebenen Gerät sind davon nie betroffen."
         }
-      }
+      },
+      "enableNeedsFolder": "Wähle zuerst unten einen Sync-Ordner — dann lässt sich Sync einschalten."
     }
   },
   "diagnose": {
