@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 import type {
   CardoTool,
@@ -11,61 +11,114 @@ import type {
 } from '@cardo/plugin-api';
 import manifest from '../manifest.json';
 import {
+  MAX_WEIGHT,
+  MIN_WEIGHT,
+  PICKER_MODES,
+  STATE_DOC_ID,
   buildPickerContext,
+  clampWeight,
+  coinFlip,
   defaultRandomInts,
+  mergeOptions,
+  migrateLegacyItems,
   parseItems,
-  pickIndex,
-  removeAt,
+  randomInRange,
   rollDice,
   secureRandomInt,
-  type PickerListDoc,
+  shuffleAll,
+  weightedPickIndex,
+  weightedPickN,
+  yesNo,
+  type LegacyListDoc,
+  type PickerMode,
+  type PickerOption,
+  type PickerStateDoc,
 } from './logic';
 
 /**
- * Random picker – decision wheel, list picker and dice, fully local.
- * Lists live in `list:<id>` docs; picking is uniform (rejection-sampled
- * crypto randomness) and can optionally consume the picked entry.
+ * Random picker – wheel, dice, coin, number range, yes/no, shuffle and
+ * pick-N, fully local. Options are entered right in the widget and live in
+ * ONE ephemeral `state` doc (they survive reloads, but there is no list
+ * management). Picking is weighted (rejection-sampled crypto randomness).
  */
 
 const SPIN_MS = 2000;
 const WHEEL_TURNS = 4;
 
-function makeListId(): string {
-  return `list:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+/** Modes that operate on the entered options (the rest are parameter-only). */
+const OPTION_MODES: readonly PickerMode[] = ['wheel', 'shuffle', 'pick-n'];
+
+function isPickerMode(value: unknown): value is PickerMode {
+  return typeof value === 'string' && (PICKER_MODES as readonly string[]).includes(value);
 }
 
-async function queryLists(storage: ToolStorage): Promise<PickerListDoc[]> {
-  return storage.query<PickerListDoc>({
+function emptyState(): PickerStateDoc {
+  return { id: STATE_DOC_ID, type: 'state', options: [], mode: 'wheel' };
+}
+
+/** Read + sanitize the singleton state doc (junk weights/modes are healed). */
+async function loadState(storage: ToolStorage): Promise<PickerStateDoc> {
+  const doc = await storage.get<Partial<PickerStateDoc>>(STATE_DOC_ID);
+  if (!doc) return emptyState();
+  const options: PickerOption[] = Array.isArray(doc.options)
+    ? doc.options
+        .filter(
+          (o): o is PickerOption =>
+            typeof o === 'object' && o !== null && typeof (o as { text?: unknown }).text === 'string',
+        )
+        .map((o) => ({ text: o.text, weight: clampWeight(o.weight) }))
+        .filter((o) => o.text.trim().length > 0)
+    : [];
+  const state: PickerStateDoc = {
+    id: STATE_DOC_ID,
+    type: 'state',
+    options,
+    mode: isPickerMode(doc.mode) ? doc.mode : 'wheel',
+  };
+  if (typeof doc.lastResult === 'string' && doc.lastResult.length > 0) {
+    state.lastResult = doc.lastResult;
+  }
+  return state;
+}
+
+/**
+ * One-shot migration from the pre-1.1 saved-lists era: the FIRST legacy
+ * list's items become the working options (weight 1, unless a state doc
+ * already exists), then ALL legacy docs are deleted – they are invisible now.
+ */
+async function migrateLegacy(storage: ToolStorage): Promise<void> {
+  const legacy = await storage.query<LegacyListDoc>({
     where: [{ field: 'type', op: '=', value: 'list' }],
     orderBy: 'createdAt',
     direction: 'asc',
   });
-}
-
-/** Resolve a list by name/id (or the first one) and pick one entry from it. */
-async function pickFromListIn(
-  storage: ToolStorage,
-  ref?: string,
-): Promise<{ list: string; index: number; pick: string } | null> {
-  const lists = await queryLists(storage);
-  const list = ref
-    ? lists.find(
-        (l) =>
-          l.id === ref || l.id === `list:${ref}` || l.name.toLowerCase() === ref.toLowerCase(),
-      )
-    : lists[0];
-  if (!list) return null;
-  const index = pickIndex(list.items.length, secureRandomInt);
-  if (index === null) return null;
-  const pick = list.items[index] ?? '';
-  if (list.removeOnPick) {
-    await storage.set<PickerListDoc>(list.id, { ...list, items: removeAt(list.items, index) });
+  if (legacy.length === 0) return;
+  const existing = await storage.get<PickerStateDoc>(STATE_DOC_ID);
+  if (!existing) {
+    await storage.set<PickerStateDoc>(STATE_DOC_ID, {
+      id: STATE_DOC_ID,
+      type: 'state',
+      options: migrateLegacyItems(legacy),
+      mode: 'wheel',
+    });
   }
-  return { list: list.name, index, pick };
+  for (const doc of legacy) {
+    await storage.delete(doc.id);
+  }
 }
 
-/** Draw the wheel; a no-op where the 2D canvas API is unavailable (tests). */
-function drawWheel(canvas: HTMLCanvasElement, items: readonly string[], rotation: number): void {
+/** Weighted pick from stored (or inline) options; null when nothing to pick. */
+function pickWeighted(options: readonly PickerOption[]): { pick: string; index: number } | null {
+  const index = weightedPickIndex(
+    options.map((o) => o.weight),
+    secureRandomInt,
+  );
+  if (index === null) return null;
+  return { pick: options[index]?.text ?? '', index };
+}
+
+/** Draw the wheel with segment arcs ∝ weight; no-op without a 2D context (tests). */
+function drawWheel(canvas: HTMLCanvasElement, options: readonly PickerOption[], rotation: number): void {
   if (typeof CanvasRenderingContext2D === 'undefined') return;
   const g = canvas.getContext('2d');
   if (!g) return;
@@ -79,27 +132,31 @@ function drawWheel(canvas: HTMLCanvasElement, items: readonly string[], rotation
   const color = (name: string, fallback: string): string =>
     styles.getPropertyValue(name).trim() || fallback;
   g.clearRect(0, 0, size, size);
-  if (items.length === 0) return;
-  const seg = (Math.PI * 2) / items.length;
-  for (let i = 0; i < items.length; i++) {
-    const start = rotation + i * seg;
+  const total = options.reduce((sum, o) => sum + o.weight, 0);
+  if (options.length === 0 || total <= 0) return;
+  let cumulative = 0;
+  for (let i = 0; i < options.length; i++) {
+    const weight = options[i]?.weight ?? 0;
+    const start = rotation + (cumulative / total) * Math.PI * 2;
+    cumulative += weight;
+    const end = rotation + (cumulative / total) * Math.PI * 2;
     g.beginPath();
     g.moveTo(cx, cy);
-    g.arc(cx, cy, radius, start, start + seg);
+    g.arc(cx, cy, radius, start, end);
     g.closePath();
     g.fillStyle = color(`--chart-${(i % 8) + 1}`, 'gray');
     g.fill();
     g.strokeStyle = color('--bg-widget', 'white');
     g.lineWidth = 2;
     g.stroke();
-    if (items.length <= 24) {
+    if (options.length <= 24) {
       g.save();
       g.translate(cx, cy);
-      g.rotate(start + seg / 2);
+      g.rotate((start + end) / 2);
       g.textAlign = 'right';
       g.fillStyle = color('--accent-text', 'white');
       g.font = `${Math.max(10, Math.round(size / 22))}px sans-serif`;
-      g.fillText((items[i] ?? '').slice(0, 14), radius - 8, 4);
+      g.fillText((options[i]?.text ?? '').slice(0, 14), radius - 8, 4);
       g.restore();
     }
   }
@@ -118,40 +175,24 @@ export function createTool(): CardoTool {
   const t = (key: string, vars?: Record<string, unknown>): string =>
     ctx?.i18n.t(key, vars) ?? key;
 
-  async function addList(): Promise<void> {
-    const c = ctx;
-    if (!c) return;
-    const existing = await queryLists(c.storage);
-    const doc: PickerListDoc = {
-      id: makeListId(),
-      type: 'list',
-      name: t('tool.random-picker.widget.newListName', { n: existing.length + 1 }),
-      items: [],
-      removeOnPick: false,
-      createdAt: new Date().toISOString(),
-    };
-    await c.storage.set(doc.id, doc);
-  }
-
   function PickerWidget(props: WidgetProps) {
-    const variant = props.variant ?? 'wheel';
-    const [lists, setLists] = useState<PickerListDoc[]>([]);
-    const [activeId, setActiveId] = useState<string | null>(null);
-    const [result, setResult] = useState<string | null>(null);
+    const variant = props.variant ?? 'full';
+    const [state, setState] = useState<PickerStateDoc>(emptyState);
     const [spinning, setSpinning] = useState(false);
-    const [itemsDraft, setItemsDraft] = useState<string | null>(null);
+    const [optionsDraft, setOptionsDraft] = useState<string | null>(null);
     const [diceSpec, setDiceSpec] = useState('2d6');
-    const [diceResult, setDiceResult] = useState<{ rolls: number[]; total: number } | null>(null);
-    const [diceInvalid, setDiceInvalid] = useState(false);
+    const [minDraft, setMinDraft] = useState('1');
+    const [maxDraft, setMaxDraft] = useState('100');
+    const [withMaybe, setWithMaybe] = useState(false);
+    const [countDraft, setCountDraft] = useState('2');
+    const [invalid, setInvalid] = useState<'dice' | 'range' | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const rotationRef = useRef(0);
     const animRef = useRef<number | null>(null);
 
     const reload = useCallback(async () => {
       if (!ctx) return;
-      const next = await queryLists(ctx.storage);
-      setLists(next);
-      setActiveId((prev) => (prev && next.some((l) => l.id === prev) ? prev : (next[0]?.id ?? null)));
+      setState(await loadState(ctx.storage));
     }, []);
 
     useEffect(() => {
@@ -168,260 +209,481 @@ export function createTool(): CardoTool {
       };
     }, [reload]);
 
-    const active = lists.find((l) => l.id === activeId) ?? null;
-    const items = active?.items ?? [];
-
-    const itemsKey = items.join('\n');
-
-    const redraw = (current: readonly string[]): void => {
-      const canvas = canvasRef.current;
-      if (canvas) drawWheel(canvas, current, rotationRef.current);
-    };
+    const mode = state.mode;
+    const options = state.options;
+    const weights = options.map((o) => o.weight);
+    const texts = options.map((o) => o.text);
+    const usesOptions = OPTION_MODES.includes(mode);
 
     useEffect(() => {
-      if (variant !== 'wheel') return;
+      if (variant !== 'wheel' || state.mode !== 'wheel') return;
       const canvas = canvasRef.current;
-      if (canvas) drawWheel(canvas, itemsKey === '' ? [] : itemsKey.split('\n'), rotationRef.current);
-    }, [variant, itemsKey]);
+      if (canvas) drawWheel(canvas, state.options, rotationRef.current);
+    }, [variant, state]);
 
-    async function saveList(patch: Partial<PickerListDoc>): Promise<void> {
-      if (!ctx || !active) return;
-      await ctx.storage.set<PickerListDoc>(active.id, { ...active, ...patch });
+    /** Merge a patch into the STORED state (read-fresh, no stale closure). */
+    const save = useCallback(async (patch: Partial<PickerStateDoc>) => {
+      if (!ctx) return;
+      const current = await loadState(ctx.storage);
+      await ctx.storage.set<PickerStateDoc>(STATE_DOC_ID, {
+        ...current,
+        ...patch,
+        id: STATE_DOC_ID,
+        type: 'state',
+      });
+    }, []);
+
+    function commitResult(text: string): void {
+      setState((prev) => ({ ...prev, lastResult: text }));
+      void save({ lastResult: text });
     }
 
-    function finishPick(index: number): void {
-      setResult(items[index] ?? null);
-      setSpinning(false);
-      if (active?.removeOnPick) void saveList({ items: removeAt(items, index) });
+    function setMode(next: PickerMode): void {
+      setInvalid(null);
+      setState((prev) => ({ ...prev, mode: next }));
+      void save({ mode: next });
+    }
+
+    function setOptions(next: PickerOption[]): void {
+      setState((prev) => ({ ...prev, options: next }));
+      void save({ options: next });
+    }
+
+    function setWeight(index: number, weight: number): void {
+      setOptions(options.map((o, i) => (i === index ? { ...o, weight: clampWeight(weight) } : o)));
+    }
+
+    /** Rotation that parks segment `index`'s CENTER under the pointer (top). */
+    function targetFor(index: number): number {
+      const total = weights.reduce((sum, w) => sum + w, 0);
+      let before = 0;
+      for (let i = 0; i < index; i++) before += weights[i] ?? 0;
+      const center = ((before + (weights[index] ?? 0) / 2) / Math.max(1, total)) * Math.PI * 2;
+      let target = -Math.PI / 2 - center;
+      while (target < rotationRef.current + WHEEL_TURNS * Math.PI * 2) target += Math.PI * 2;
+      return target;
     }
 
     function spin(): void {
-      if (spinning || items.length === 0) return;
-      const index = pickIndex(items.length, secureRandomInt);
-      if (index === null) return;
-      const seg = (Math.PI * 2) / items.length;
-      const current = rotationRef.current;
-      // The chosen segment's center must land under the pointer (top = -π/2).
-      let target = -Math.PI / 2 - (index + 0.5) * seg;
-      while (target < current + WHEEL_TURNS * Math.PI * 2) target += Math.PI * 2;
+      if (spinning) return;
+      const picked = pickWeighted(options);
+      if (!picked) return;
+      const canvas = canvasRef.current;
       const reduced =
         typeof window.matchMedia === 'function' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduced) {
-        rotationRef.current = target;
-        redraw(items);
-        finishPick(index);
+      if (!canvas || reduced) {
+        // No canvas in this variant (or reduced motion): instant result.
+        if (canvas) {
+          rotationRef.current = targetFor(picked.index);
+          drawWheel(canvas, options, rotationRef.current);
+        }
+        commitResult(picked.pick);
         return;
       }
       setSpinning(true);
-      const startRotation = current;
+      const startRotation = rotationRef.current;
+      const target = targetFor(picked.index);
       const startTime = performance.now();
       const step = (now: number): void => {
         const progress = Math.min(1, (now - startTime) / SPIN_MS);
         const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
         rotationRef.current = startRotation + (target - startRotation) * eased;
-        redraw(items);
+        drawWheel(canvas, options, rotationRef.current);
         if (progress < 1) {
           animRef.current = requestAnimationFrame(step);
         } else {
           animRef.current = null;
-          finishPick(index);
+          setSpinning(false);
+          commitResult(picked.pick);
         }
       };
       animRef.current = requestAnimationFrame(step);
     }
 
-    function pickFromList(): void {
-      const index = pickIndex(items.length, secureRandomInt);
-      if (index !== null) finishPick(index);
+    function runAction(): void {
+      setInvalid(null);
+      switch (mode) {
+        case 'wheel':
+          spin();
+          return;
+        case 'dice': {
+          const rolled = rollDice(diceSpec, defaultRandomInts);
+          if (!rolled) {
+            setInvalid('dice');
+            return;
+          }
+          commitResult(`${rolled.total} (${rolled.rolls.join(' + ')})`);
+          return;
+        }
+        case 'coin':
+          commitResult(t(`tool.random-picker.result.${coinFlip(secureRandomInt)}`));
+          return;
+        case 'number': {
+          const value = randomInRange(Number(minDraft), Number(maxDraft), secureRandomInt);
+          if (value === null) {
+            setInvalid('range');
+            return;
+          }
+          commitResult(String(value));
+          return;
+        }
+        case 'yes-no':
+          commitResult(t(`tool.random-picker.result.${yesNo(withMaybe, secureRandomInt)}`));
+          return;
+        case 'shuffle':
+          if (texts.length > 0) commitResult(shuffleAll(texts, defaultRandomInts).join(' → '));
+          return;
+        case 'pick-n': {
+          const n = Math.max(1, Math.floor(Number(countDraft) || 1));
+          const picked = weightedPickN(texts, weights, n, defaultRandomInts);
+          if (picked && picked.length > 0) commitResult(picked.join(', '));
+          return;
+        }
+      }
     }
 
-    function roll(): void {
-      const rolled = rollDice(diceSpec, defaultRandomInts);
-      setDiceInvalid(rolled === null);
-      setDiceResult(rolled ? { rolls: rolled.rolls, total: rolled.total } : null);
-    }
-
-    const listBar = (
-      <div style={{ display: 'flex', gap: 'var(--space-1)', alignItems: 'center', flexShrink: 0 }}>
-        <select
-          className="c-input"
-          style={{ flex: 1, minWidth: 0 }}
-          value={activeId ?? ''}
-          aria-label={t('tool.random-picker.widget.listLabel')}
-          title={t('tool.random-picker.widget.listLabel')}
-          onChange={(e) => setActiveId(e.target.value || null)}
-        >
-          {lists.length === 0 && <option value="">{t('tool.random-picker.widget.noLists')}</option>}
-          {lists.map((list) => (
-            <option key={list.id} value={list.id}>
-              {list.name}
-            </option>
-          ))}
-        </select>
-        <button
-          className="c-btn c-btn--ghost"
-          aria-label={t('tool.random-picker.widget.addList')}
-          title={t('tool.random-picker.widget.addList')}
-          style={{ flexShrink: 0 }}
-          onClick={() => void addList()}
-        >
-          +
-        </button>
-      </div>
+    const modeSelect = (
+      <select
+        className="c-input"
+        style={{ width: '100%', flexShrink: 0 }}
+        value={mode}
+        aria-label={t('tool.random-picker.mode.label')}
+        title={t('tool.random-picker.mode.label')}
+        onChange={(e) => {
+          if (isPickerMode(e.target.value)) setMode(e.target.value);
+        }}
+      >
+        {PICKER_MODES.map((m) => (
+          <option key={m} value={m}>
+            {t(`tool.random-picker.mode.${m}`)}
+          </option>
+        ))}
+      </select>
     );
 
-    const resultLine = result !== null && (
+    /** Per-mode parameter row (null for modes without parameters). */
+    function paramControls(): ReactNode {
+      switch (mode) {
+        case 'dice':
+          return (
+            <input
+              className="c-input"
+              value={diceSpec}
+              style={{ width: '90px', textAlign: 'center', flexShrink: 0 }}
+              aria-label={t('tool.random-picker.widget.diceLabel')}
+              title={t('tool.random-picker.widget.diceLabel')}
+              placeholder="2d6"
+              onChange={(e) => setDiceSpec(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') runAction();
+              }}
+            />
+          );
+        case 'number':
+          return (
+            <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexShrink: 0 }}>
+              <input
+                type="number"
+                className="c-input"
+                value={minDraft}
+                style={{ width: '80px', textAlign: 'center' }}
+                aria-label={t('tool.random-picker.widget.minLabel')}
+                title={t('tool.random-picker.widget.minLabel')}
+                onChange={(e) => setMinDraft(e.target.value)}
+              />
+              <span className="c-muted">–</span>
+              <input
+                type="number"
+                className="c-input"
+                value={maxDraft}
+                style={{ width: '80px', textAlign: 'center' }}
+                aria-label={t('tool.random-picker.widget.maxLabel')}
+                title={t('tool.random-picker.widget.maxLabel')}
+                onChange={(e) => setMaxDraft(e.target.value)}
+              />
+            </div>
+          );
+        case 'yes-no':
+          return (
+            <label
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}
+            >
+              <input
+                type="checkbox"
+                checked={withMaybe}
+                style={{ accentColor: 'var(--accent)' }}
+                onChange={(e) => setWithMaybe(e.target.checked)}
+              />
+              <span className="c-muted" style={{ fontSize: '0.85em' }}>
+                {t('tool.random-picker.widget.allowMaybe')}
+              </span>
+            </label>
+          );
+        case 'pick-n':
+          return (
+            <label
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}
+            >
+              <span className="c-muted" style={{ fontSize: '0.85em' }}>
+                {t('tool.random-picker.widget.countLabel')}
+              </span>
+              <input
+                type="number"
+                className="c-input"
+                min={1}
+                value={countDraft}
+                style={{ width: '70px', textAlign: 'center' }}
+                aria-label={t('tool.random-picker.widget.countLabel')}
+                title={t('tool.random-picker.widget.countLabel')}
+                onChange={(e) => setCountDraft(e.target.value)}
+              />
+            </label>
+          );
+        case 'coin':
+          return (
+            <span style={{ fontSize: '2.4em' }} aria-hidden>
+              🪙
+            </span>
+          );
+        default:
+          return null;
+      }
+    }
+
+    const actionKeys: Record<PickerMode, string> = {
+      wheel: 'spin',
+      dice: 'roll',
+      coin: 'flip',
+      number: 'drawNumber',
+      'yes-no': 'ask',
+      shuffle: 'shuffle',
+      'pick-n': 'drawN',
+    };
+    const actionLabel =
+      mode === 'wheel' && spinning
+        ? t('tool.random-picker.widget.spinning')
+        : t(`tool.random-picker.widget.${actionKeys[mode]}`);
+    const actionDisabled = spinning || (usesOptions && options.length === 0);
+
+    const actionButton = (
+      <button
+        className="c-btn c-btn--primary"
+        style={{ flexShrink: 0 }}
+        disabled={actionDisabled}
+        onClick={runAction}
+      >
+        {actionLabel}
+      </button>
+    );
+
+    const resultLine = state.lastResult ? (
       <div
         aria-live="polite"
         style={{ textAlign: 'center', fontSize: '1.15em', fontWeight: 600, flexShrink: 0 }}
       >
-        🎯 {result}
+        🎯 {state.lastResult}
       </div>
+    ) : null;
+
+    const invalidLine = invalid ? (
+      <div style={{ color: 'var(--danger)', fontSize: '0.85em', flexShrink: 0, textAlign: 'center' }}>
+        {t(
+          invalid === 'dice'
+            ? 'tool.random-picker.widget.invalidDice'
+            : 'tool.random-picker.widget.invalidRange',
+        )}
+      </div>
+    ) : null;
+
+    const emptyHint = (
+      <span className="c-muted" style={{ textAlign: 'center', fontSize: '0.85em' }}>
+        {t('tool.random-picker.widget.empty')}
+      </span>
     );
 
-    if (variant === 'dice') {
+    if (variant === 'compact') {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            height: '100%',
+            gap: 'var(--space-2)',
+            padding: 'var(--space-2)',
+            overflow: 'auto',
+          }}
+        >
+          {modeSelect}
+          {usesOptions && options.length === 0 && emptyHint}
+          {invalidLine}
+          {resultLine}
+          {actionButton}
+        </div>
+      );
+    }
+
+    if (variant === 'wheel') {
       return (
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            gap: 'var(--space-2)',
-            padding: 'var(--space-3)',
-            overflow: 'auto',
-          }}
-        >
-          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-            <input
-              className="c-input"
-              value={diceSpec}
-              style={{ width: '90px', textAlign: 'center' }}
-              aria-label={t('tool.random-picker.widget.diceLabel')}
-              title={t('tool.random-picker.widget.diceLabel')}
-              placeholder="2d6"
-              onChange={(e) => setDiceSpec(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') roll();
-              }}
-            />
-            <button className="c-btn c-btn--primary" onClick={roll}>
-              {t('tool.random-picker.widget.roll')}
-            </button>
-          </div>
-          {diceInvalid && (
-            <div style={{ color: 'var(--danger)', fontSize: '0.85em' }}>
-              {t('tool.random-picker.widget.invalidDice')}
-            </div>
-          )}
-          {diceResult && (
-            <div style={{ textAlign: 'center' }} aria-live="polite">
-              <div style={{ fontSize: '2.4em', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
-                {diceResult.total}
-              </div>
-              <div className="c-muted" style={{ fontSize: '0.85em' }}>
-                {diceResult.rolls.join(' + ')}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (variant === 'list') {
-      return (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
             height: '100%',
             gap: 'var(--space-2)',
             padding: 'var(--space-3)',
           }}
         >
-          {listBar}
-          <textarea
-            className="c-input"
-            style={{ flex: 1, minHeight: 0, resize: 'none', fontFamily: 'inherit' }}
-            value={itemsDraft ?? items.join('\n')}
-            placeholder={t('tool.random-picker.widget.itemsPlaceholder')}
-            aria-label={t('tool.random-picker.widget.itemsPlaceholder')}
-            disabled={!active}
-            onChange={(e) => setItemsDraft(e.target.value)}
-            onBlur={() => {
-              if (itemsDraft !== null) {
-                void saveList({ items: parseItems(itemsDraft) });
-                setItemsDraft(null);
-              }
+          {modeSelect}
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              gap: 'var(--space-2)',
             }}
-          />
-          <label
-            style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}
           >
-            <input
-              type="checkbox"
-              checked={active?.removeOnPick ?? false}
-              disabled={!active}
-              style={{ accentColor: 'var(--accent)' }}
-              onChange={(e) => void saveList({ removeOnPick: e.target.checked })}
-            />
-            <span className="c-muted" style={{ fontSize: '0.85em' }}>
-              {t('tool.random-picker.widget.removeOnPick')}
-            </span>
-          </label>
+            {mode === 'wheel' ? (
+              options.length === 0 ? (
+                emptyHint
+              ) : (
+                <canvas
+                  ref={canvasRef}
+                  width={240}
+                  height={240}
+                  role="img"
+                  aria-label={t('tool.random-picker.widget.wheelLabel')}
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              )
+            ) : (
+              <>
+                {usesOptions && options.length === 0 && emptyHint}
+                {paramControls()}
+              </>
+            )}
+          </div>
+          {invalidLine}
           {resultLine}
-          <button
-            className="c-btn c-btn--primary"
-            style={{ flexShrink: 0 }}
-            disabled={items.length === 0}
-            onClick={pickFromList}
-          >
-            {t('tool.random-picker.widget.pick')}
-          </button>
+          {actionButton}
         </div>
       );
     }
 
-    // Default: the decision wheel.
+    // Default: the full view – mode select, options editor + weights, result.
     return (
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
           height: '100%',
           gap: 'var(--space-2)',
           padding: 'var(--space-3)',
         }}
       >
-        {listBar}
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-          {items.length === 0 ? (
-            <span className="c-muted" style={{ textAlign: 'center' }}>
-              {t('tool.random-picker.widget.empty')}
-            </span>
-          ) : (
-            <canvas
-              ref={canvasRef}
-              width={240}
-              height={240}
-              role="img"
-              aria-label={t('tool.random-picker.widget.wheelLabel')}
-              style={{ maxWidth: '100%', maxHeight: '100%' }}
+        {modeSelect}
+        {usesOptions ? (
+          <>
+            <textarea
+              className="c-input"
+              style={{ flex: 1, minHeight: 0, resize: 'none', fontFamily: 'inherit' }}
+              value={optionsDraft ?? texts.join('\n')}
+              placeholder={t('tool.random-picker.widget.optionsPlaceholder')}
+              aria-label={t('tool.random-picker.widget.optionsPlaceholder')}
+              onChange={(e) => setOptionsDraft(e.target.value)}
+              onBlur={() => {
+                if (optionsDraft !== null) {
+                  setOptions(mergeOptions(parseItems(optionsDraft), options));
+                  setOptionsDraft(null);
+                }
+              }}
             />
-          )}
-        </div>
+            {options.length > 0 && (
+              <details style={{ flexShrink: 0 }}>
+                <summary className="c-muted" style={{ cursor: 'pointer', fontSize: '0.85em' }}>
+                  {t('tool.random-picker.widget.advanced')}
+                </summary>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 'var(--space-1)',
+                    marginTop: 'var(--space-1)',
+                    maxHeight: '120px',
+                    overflow: 'auto',
+                  }}
+                >
+                  {options.map((option, i) => (
+                    <label
+                      key={`${option.text}-${i}`}
+                      style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
+                    >
+                      <span
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontSize: '0.85em',
+                        }}
+                      >
+                        {option.text}
+                      </span>
+                      <input
+                        type="range"
+                        min={MIN_WEIGHT}
+                        max={MAX_WEIGHT}
+                        step={1}
+                        value={option.weight}
+                        style={{ accentColor: 'var(--accent)', width: '100px', flexShrink: 0 }}
+                        aria-label={t('tool.random-picker.widget.weightLabel', { option: option.text })}
+                        title={t('tool.random-picker.widget.weightLabel', { option: option.text })}
+                        onChange={(e) => setWeight(i, Number(e.target.value))}
+                      />
+                      <span
+                        className="c-muted"
+                        style={{
+                          fontSize: '0.85em',
+                          width: '2ch',
+                          textAlign: 'right',
+                          fontVariantNumeric: 'tabular-nums',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {option.weight}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+            )}
+            {mode === 'pick-n' && paramControls()}
+          </>
+        ) : (
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--space-2)',
+            }}
+          >
+            {paramControls()}
+          </div>
+        )}
+        {invalidLine}
         {resultLine}
-        <button
-          className="c-btn c-btn--primary"
-          style={{ flexShrink: 0 }}
-          disabled={spinning || items.length === 0}
-          onClick={spin}
-        >
-          {spinning ? t('tool.random-picker.widget.spinning') : t('tool.random-picker.widget.spin')}
-        </button>
+        {actionButton}
       </div>
     );
   }
@@ -433,17 +695,31 @@ export function createTool(): CardoTool {
     async activate(context: ToolContext) {
       ctx = context;
 
+      await migrateLegacy(context.storage);
+
       context.commands.register({
         id: 'random-picker.pick',
         titleKey: 'tool.random-picker.command.pick',
         descriptionKey: 'tool.random-picker.command.pickDesc',
         icon: '🎯',
-        params: z.object({ list: z.string().min(1).optional() }),
-        selfTestParams: {},
-        async run({ list }): Promise<CommandResult> {
-          const picked = await pickFromListIn(context.storage, list);
-          // Graceful when nothing exists (also keeps diagnostics green).
+        params: z.object({ options: z.string().min(1).optional() }),
+        selfTestParams: { options: 'alpha, beta, gamma' },
+        async run({ options }): Promise<CommandResult> {
+          if (options) {
+            // Inline comma-separated options override the stored state (weight 1).
+            const inline = parseItems(options).map((text) => ({ text, weight: 1 }));
+            const picked = pickWeighted(inline);
+            if (!picked) return { ok: true, messageKey: 'tool.random-picker.msg.empty' };
+            return { ok: true, data: picked, messageKey: 'tool.random-picker.msg.picked' };
+          }
+          const state = await loadState(context.storage);
+          const picked = pickWeighted(state.options);
+          // Graceful when nothing is entered (also keeps diagnostics green).
           if (!picked) return { ok: true, messageKey: 'tool.random-picker.msg.empty' };
+          await context.storage.set<PickerStateDoc>(STATE_DOC_ID, {
+            ...state,
+            lastResult: picked.pick,
+          });
           return { ok: true, data: picked, messageKey: 'tool.random-picker.msg.picked' };
         },
       });
@@ -463,14 +739,48 @@ export function createTool(): CardoTool {
       });
 
       context.commands.register({
+        id: 'random-picker.flip',
+        titleKey: 'tool.random-picker.command.flip',
+        descriptionKey: 'tool.random-picker.command.flipDesc',
+        icon: '🪙',
+        params: z.object({}),
+        selfTestParams: {},
+        async run(): Promise<CommandResult> {
+          const side = coinFlip(secureRandomInt);
+          return { ok: true, data: { side }, messageKey: 'tool.random-picker.msg.flipped' };
+        },
+      });
+
+      context.commands.register({
+        id: 'random-picker.number',
+        titleKey: 'tool.random-picker.command.number',
+        descriptionKey: 'tool.random-picker.command.numberDesc',
+        icon: '🔢',
+        params: z.object({
+          min: z.number().int().min(-1_000_000_000).max(1_000_000_000),
+          max: z.number().int().min(-1_000_000_000).max(1_000_000_000),
+        }),
+        selfTestParams: { min: 1, max: 100 },
+        async run({ min, max }): Promise<CommandResult> {
+          const value = randomInRange(min, max, secureRandomInt);
+          if (value === null) return { ok: false, messageKey: 'tool.random-picker.msg.invalidRange' };
+          return { ok: true, data: { value, min, max }, messageKey: 'tool.random-picker.msg.number' };
+        },
+      });
+
+      context.commands.register({
         id: 'random-picker.context',
         titleKey: 'tool.random-picker.command.context',
         palette: false,
         params: z.object({}),
         selfTestParams: {},
         async run(): Promise<CommandResult> {
-          const lists = await queryLists(context.storage);
-          return { ok: true, data: { contextText: buildPickerContext(lists, context.i18n.language) } };
+          const doc = await context.storage.get<PickerStateDoc>(STATE_DOC_ID);
+          const state = doc ? await loadState(context.storage) : null;
+          return {
+            ok: true,
+            data: { contextText: buildPickerContext(state, context.i18n.language) },
+          };
         },
       });
     },
@@ -480,67 +790,117 @@ export function createTool(): CardoTool {
     Widget: PickerWidget,
     async runSelfTest(testId: string, testCtx: SelfTestContext): Promise<SelfTestResult> {
       switch (testId) {
-        case 'crud': {
-          const doc: PickerListDoc = {
-            id: 'list:selftest-crud',
-            type: 'list',
-            name: 'Selftest',
-            items: ['a', 'b'],
-            removeOnPick: false,
-            createdAt: new Date().toISOString(),
-          };
-          await testCtx.storage.set(doc.id, doc);
-          const back = await testCtx.storage.get<PickerListDoc>(doc.id);
-          await testCtx.storage.set<PickerListDoc>(doc.id, { ...doc, items: ['a', 'b', 'c'] });
-          const updated = await testCtx.storage.get<PickerListDoc>(doc.id);
-          await testCtx.storage.delete(doc.id);
-          const gone = await testCtx.storage.get<PickerListDoc>(doc.id);
-          if (back?.name !== 'Selftest' || back.items.length !== 2) {
-            return { status: 'fail', detail: `bad roundtrip: ${JSON.stringify(back)}` };
-          }
-          if (updated?.items.length !== 3) {
-            return { status: 'fail', detail: `update lost items: ${JSON.stringify(updated)}` };
-          }
-          if (gone !== null) return { status: 'fail', detail: 'list doc still present after delete' };
-          return { status: 'pass', detail: 'create → read → update → delete roundtrip ok' };
-        }
-        case 'pick-command': {
-          const doc: PickerListDoc = {
-            id: 'list:selftest-pick',
-            type: 'list',
-            name: 'Selftest Pick',
-            items: ['alpha', 'beta', 'gamma'],
-            removeOnPick: true,
-            createdAt: new Date().toISOString(),
-          };
-          await testCtx.storage.set(doc.id, doc);
-          const result = await testCtx.commands.execute('random-picker.pick', { list: 'Selftest Pick' });
-          const after = await testCtx.storage.get<PickerListDoc>(doc.id);
-          await testCtx.storage.delete(doc.id);
-          const data = result.data as { pick?: string } | undefined;
-          if (!result.ok || !data?.pick || !doc.items.includes(data.pick)) {
-            return { status: 'fail', detail: `pick not a member: ${JSON.stringify(result)}` };
-          }
-          if (after?.items.length !== 2 || after.items.includes(data.pick)) {
-            return { status: 'fail', detail: `removeOnPick not honored: ${JSON.stringify(after?.items)}` };
-          }
-          return { status: 'pass', detail: `picked "${data.pick}" and consumed it` };
-        }
-        case 'dice-logic': {
-          for (const bad of ['d6', '2d', '0d6', '21d6', '2d1001']) {
-            if (rollDice(bad, defaultRandomInts) !== null) {
-              return { status: 'fail', detail: `spec "${bad}" must be rejected` };
+        case 'weighted-pick': {
+          for (const bad of [[], [0, 0], [1, -1], [1, 0.5]] as const) {
+            if (weightedPickIndex(bad, secureRandomInt) !== null) {
+              return { status: 'fail', detail: `weights ${JSON.stringify(bad)} must be rejected` };
             }
           }
-          const fixed = rollDice('2d6', (count) => Array.from({ length: count }, (_, i) => i * 5));
-          if (!fixed || fixed.rolls.join(',') !== '1,6' || fixed.total !== 7) {
-            return { status: 'fail', detail: `2d6 with [0,5] should be [1,6]=7, got ${JSON.stringify(fixed)}` };
+          // Cumulative mapping: weights [2,1,3], target 2 falls into index 1.
+          if (weightedPickIndex([2, 1, 3], () => 2) !== 1) {
+            return { status: 'fail', detail: 'cumulative range mapping broken' };
           }
-          const real = rollDice('20d6', defaultRandomInts);
-          if (!real || real.rolls.some((f) => f < 1 || f > 6)) {
-            return { status: 'fail', detail: `faces out of range: ${JSON.stringify(real?.rolls)}` };
+          const counts = [0, 0, 0];
+          for (let i = 0; i < 300; i++) {
+            const index = weightedPickIndex([0, 5, 1], secureRandomInt);
+            if (index === null || index < 0 || index > 2) {
+              return { status: 'fail', detail: `index out of bounds: ${index}` };
+            }
+            counts[index] = (counts[index] ?? 0) + 1;
           }
-          return { status: 'pass', detail: 'parser edges rejected, faces in range' };
+          if (counts[0] !== 0) {
+            return { status: 'fail', detail: `zero-weight option picked ${counts[0]} times` };
+          }
+          // P(1) = 5/6 → mean 250 of 300; below 180 is >10σ off.
+          if ((counts[1] ?? 0) < 180) {
+            return { status: 'fail', detail: `weight-5 option only picked ${counts[1]} of 300` };
+          }
+          return { status: 'pass', detail: 'validation, mapping and distribution bounds ok' };
+        }
+        case 'migration': {
+          await testCtx.storage.delete(STATE_DOC_ID);
+          const legacyA: LegacyListDoc = {
+            id: 'list:selftest-a',
+            type: 'list',
+            name: 'First',
+            items: ['one', 'two'],
+            removeOnPick: false,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          };
+          const legacyB: LegacyListDoc = {
+            ...legacyA,
+            id: 'list:selftest-b',
+            name: 'Second',
+            items: ['ignored'],
+            createdAt: '2026-01-02T00:00:00.000Z',
+          };
+          await testCtx.storage.set(legacyA.id, legacyA);
+          await testCtx.storage.set(legacyB.id, legacyB);
+          await migrateLegacy(testCtx.storage);
+          const state = await testCtx.storage.get<PickerStateDoc>(STATE_DOC_ID);
+          const leftA = await testCtx.storage.get(legacyA.id);
+          const leftB = await testCtx.storage.get(legacyB.id);
+          await testCtx.storage.delete(STATE_DOC_ID);
+          if (leftA !== null || leftB !== null) {
+            return { status: 'fail', detail: 'legacy list docs not deleted' };
+          }
+          const importedTexts = state?.options.map((o) => o.text).join(',');
+          const weightsOk = state?.options.every((o) => o.weight === 1) ?? false;
+          if (state?.mode !== 'wheel' || importedTexts !== 'one,two' || !weightsOk) {
+            return { status: 'fail', detail: `bad import: ${JSON.stringify(state)}` };
+          }
+          return { status: 'pass', detail: 'first list imported as weight-1 options, legacy docs deleted' };
+        }
+        case 'pick-command': {
+          const inline = await testCtx.commands.execute('random-picker.pick', {
+            options: 'alpha, beta',
+          });
+          const inlineData = inline.data as { pick?: string } | undefined;
+          if (!inline.ok || !inlineData?.pick || !['alpha', 'beta'].includes(inlineData.pick)) {
+            return { status: 'fail', detail: `inline pick not a member: ${JSON.stringify(inline)}` };
+          }
+          const doc: PickerStateDoc = {
+            id: STATE_DOC_ID,
+            type: 'state',
+            options: [{ text: 'solo', weight: 3 }],
+            mode: 'wheel',
+          };
+          await testCtx.storage.set(doc.id, doc);
+          const stored = await testCtx.commands.execute('random-picker.pick', {});
+          const after = await testCtx.storage.get<PickerStateDoc>(STATE_DOC_ID);
+          await testCtx.storage.delete(STATE_DOC_ID);
+          const storedData = stored.data as { pick?: string } | undefined;
+          if (!stored.ok || storedData?.pick !== 'solo') {
+            return { status: 'fail', detail: `stored pick wrong: ${JSON.stringify(stored)}` };
+          }
+          if (after?.lastResult !== 'solo') {
+            return { status: 'fail', detail: 'stored pick did not persist lastResult' };
+          }
+          return { status: 'pass', detail: 'inline override and stored weighted pick both work' };
+        }
+        case 'mode-commands': {
+          const flip = await testCtx.commands.execute('random-picker.flip', {});
+          const side = (flip.data as { side?: string } | undefined)?.side ?? '';
+          if (!flip.ok || !['heads', 'tails'].includes(side)) {
+            return { status: 'fail', detail: `bad coin flip: ${JSON.stringify(flip)}` };
+          }
+          const fixed = await testCtx.commands.execute('random-picker.number', { min: 5, max: 5 });
+          if (!fixed.ok || (fixed.data as { value?: number } | undefined)?.value !== 5) {
+            return { status: 'fail', detail: `5..5 must yield 5: ${JSON.stringify(fixed)}` };
+          }
+          const ranged = await testCtx.commands.execute('random-picker.number', { min: 3, max: 7 });
+          const value = (ranged.data as { value?: number } | undefined)?.value;
+          if (!ranged.ok || typeof value !== 'number' || value < 3 || value > 7 || !Number.isInteger(value)) {
+            return { status: 'fail', detail: `3..7 out of range: ${JSON.stringify(ranged)}` };
+          }
+          const badDice = await testCtx.commands.execute('random-picker.roll', { dice: 'nope' });
+          if (badDice.ok) return { status: 'fail', detail: 'invalid dice spec must fail' };
+          const roll = await testCtx.commands.execute('random-picker.roll', { dice: '2d6' });
+          const total = (roll.data as { total?: number } | undefined)?.total;
+          if (!roll.ok || typeof total !== 'number' || total < 2 || total > 12) {
+            return { status: 'fail', detail: `2d6 total out of range: ${JSON.stringify(roll)}` };
+          }
+          return { status: 'pass', detail: 'flip, number and roll commands behave' };
         }
         case 'render':
           return typeof PickerWidget === 'function' && PickerWidget.length <= 1

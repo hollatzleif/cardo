@@ -1573,51 +1573,82 @@
     },
     "random-picker": {
       "name": "Zufallsentscheider",
-      "description": "Glücksrad, Listen-Picker und Würfel – lass fairen Zufall entscheiden, komplett lokal.",
-      "privacy": "Funktioniert komplett offline. Deine Listen und Entscheidungen verlassen dieses Gerät nie.",
+      "description": "Glücksrad, Würfel, Münze, Zahlen, Ja/Nein, Mischen und N ziehen – faire, gewichtete Zufälle, komplett lokal.",
+      "privacy": "Funktioniert komplett offline. Deine Optionen und Ergebnisse verlassen dieses Gerät nie.",
+      "mode": {
+        "label": "Modus",
+        "wheel": "Glücksrad",
+        "dice": "Würfel",
+        "coin": "Münzwurf",
+        "number": "Zufallszahl",
+        "yes-no": "Ja oder Nein",
+        "shuffle": "Mischen",
+        "pick-n": "N ziehen"
+      },
       "widget": {
-        "listLabel": "Liste wählen",
-        "noLists": "Noch keine Listen",
-        "addList": "Liste hinzufügen",
-        "newListName": "Liste {{n}}",
-        "empty": "Füge in der Listenansicht Einträge hinzu – dann kann sich das Rad drehen.",
-        "itemsPlaceholder": "Eine Option pro Zeile (oder durch Kommas getrennt) …",
-        "removeOnPick": "Gezogene Einträge aus der Liste entfernen",
-        "pick": "Ziehen",
+        "optionsPlaceholder": "Eine Option pro Zeile (oder durch Kommas getrennt) …",
+        "advanced": "Erweiterte Einstellungen",
+        "weightLabel": "Gewicht von {{option}}",
+        "empty": "Trag zuerst deine Optionen ein – die große Ansicht hat den Editor.",
+        "wheelLabel": "Glücksrad",
         "spin": "Drehen",
         "spinning": "Dreht sich …",
-        "wheelLabel": "Glücksrad",
-        "diceLabel": "Würfel, z. B. 2d6",
         "roll": "Würfeln",
-        "invalidDice": "Nutze das NdM-Format, z. B. 2d6 (max. 20 Würfel, 1000 Seiten)."
+        "flip": "Werfen",
+        "drawNumber": "Zahl ziehen",
+        "ask": "Entscheiden",
+        "shuffle": "Mischen",
+        "drawN": "Ziehen",
+        "diceLabel": "Würfel, z. B. 2d6",
+        "invalidDice": "Nutz das NdM-Format, z. B. 2d6 (max. 20 Würfel, 1000 Seiten).",
+        "minLabel": "Minimum",
+        "maxLabel": "Maximum",
+        "invalidRange": "Der Bereich muss mindestens eine ganze Zahl enthalten.",
+        "allowMaybe": "„Vielleicht“ zulassen",
+        "countLabel": "Wie viele?"
+      },
+      "result": {
+        "heads": "Kopf",
+        "tails": "Zahl",
+        "yes": "Ja",
+        "no": "Nein",
+        "maybe": "Vielleicht"
       },
       "command": {
-        "pick": "Zufälligen Eintrag ziehen",
-        "pickDesc": "Zieht gleichverteilt einen Eintrag aus der genannten Liste (oder der ersten Liste). Entsprechend markierte Listen verbrauchen den gezogenen Eintrag.",
+        "pick": "Zufällige Option ziehen",
+        "pickDesc": "Zieht eine Option zufällig und beachtet dabei die eingestellten Gewichte. Mit „options“ (kommagetrennt) ziehst du stattdessen aus genau diesen Werten.",
         "roll": "Würfeln",
-        "rollDesc": "Würfelt in NdM-Notation, z. B. „2d6\" für zwei sechsseitige Würfel (max. 20 Würfel mit bis zu 1000 Seiten). Liefert die Augen und die Summe.",
-        "context": "Zufallsentscheider: aktueller Stand"
+        "rollDesc": "Würfelt in NdM-Notation, z. B. „2d6“ für zwei sechsseitige Würfel (max. 20 Würfel mit bis zu 1000 Seiten). Liefert die Augen und die Summe.",
+        "flip": "Münze werfen",
+        "flipDesc": "Wirft eine faire Münze und liefert Kopf oder Zahl.",
+        "number": "Zufallszahl ziehen",
+        "numberDesc": "Zieht eine gleichverteilte ganze Zahl zwischen min und max (beide inklusive).",
+        "context": "Zufallsentscheider: aktueller Zustand"
       },
       "msg": {
         "picked": "Gezogen!",
         "rolled": "Gewürfelt!",
-        "empty": "Nichts zu ziehen – lege zuerst eine Liste mit Einträgen an.",
-        "invalidDice": "Ungültige Würfel – nutze NdM, z. B. 2d6."
+        "flipped": "Geworfen!",
+        "number": "Zahl gezogen!",
+        "empty": "Nichts zu ziehen – trag zuerst Optionen ein.",
+        "invalidDice": "Ungültige Würfel – nutz NdM, z. B. 2d6.",
+        "invalidRange": "Ungültiger Bereich – zwischen min und max muss eine ganze Zahl liegen."
       },
       "test": {
-        "crud": "Listen überstehen Anlegen, Ändern und Löschen",
-        "pickCommand": "Ziehen liefert ein Mitglied und verbraucht es",
-        "diceLogic": "Würfel-Parser weist Grenzfälle ab, Augen bleiben im Bereich",
-        "render": "Widget wird gerendert"
+        "weightedPick": "Gewichtetes Ziehen respektiert Grenzen und Gewichte",
+        "migration": "Alte Listen wandern ins neue Arbeitsset",
+        "pickCommand": "Ziehen beachtet Inline-Optionen und gespeicherte Gewichte",
+        "modeCommands": "Münz-, Zahlen- und Würfelbefehle bleiben im Rahmen",
+        "render": "Widget wird angezeigt"
       },
       "tour": {
         "title": "Lass den Zufall entscheiden",
-        "body": "Trage deine Optionen in eine Liste ein und dreh am Rad – oder stelle das Widget auf die Listen- oder Würfelansicht um. Alles bleibt auf diesem Gerät."
+        "body": "Tipp deine Optionen direkt ins Widget, stell ihre Gewichte unter „Erweiterte Einstellungen“ ein und wechsle zwischen Glücksrad, Würfeln, Münze, Zahlen und mehr. Alles bleibt auf diesem Gerät."
       },
       "variant": {
-        "wheel": "Glücksrad",
-        "list": "Liste",
-        "dice": "Würfel"
+        "full": "Komplett",
+        "compact": "Kompakt",
+        "wheel": "Glücksrad"
       }
     },
     "bookmarks": {

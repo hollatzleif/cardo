@@ -2,7 +2,37 @@
 
 export type RandomInts = (count: number, maxExclusive: number) => number[];
 
-export type PickerListDoc = {
+/* ── State shape ──────────────────────────────────────────────────────── */
+
+export type PickerMode = 'wheel' | 'dice' | 'coin' | 'number' | 'yes-no' | 'shuffle' | 'pick-n';
+
+export const PICKER_MODES: readonly PickerMode[] = [
+  'wheel',
+  'dice',
+  'coin',
+  'number',
+  'yes-no',
+  'shuffle',
+  'pick-n',
+];
+
+export type PickerOption = { text: string; weight: number };
+
+/** Singleton storage doc `state`: the ephemeral working set of the widget. */
+export type PickerStateDoc = {
+  id: string;
+  type: 'state';
+  options: PickerOption[];
+  mode: PickerMode;
+  lastResult?: string;
+};
+
+export const STATE_DOC_ID = 'state';
+export const MIN_WEIGHT = 1;
+export const MAX_WEIGHT = 10;
+
+/** Legacy doc shape (pre-1.1) – only used by the one-shot migration. */
+export type LegacyListDoc = {
   id: string;
   type: 'list';
   name: string;
@@ -11,17 +41,10 @@ export type PickerListDoc = {
   createdAt: string;
 };
 
-/** Uniform pick over `length` items; randomness is injected. Null when empty. */
-export function pickIndex(length: number, randomInt: (maxExclusive: number) => number): number | null {
-  if (!Number.isInteger(length) || length <= 0) return null;
-  const raw = Math.floor(randomInt(length));
-  return Math.min(Math.max(0, raw), length - 1);
-}
-
-/** Copy of `items` without index `index`; out-of-range indices are a no-op. */
-export function removeAt<T>(items: readonly T[], index: number): T[] {
-  if (!Number.isInteger(index) || index < 0 || index >= items.length) return [...items];
-  return items.filter((_, i) => i !== index);
+/** Clamp a weight to an integer in [MIN_WEIGHT, MAX_WEIGHT]; junk → 1. */
+export function clampWeight(weight: unknown): number {
+  const n = typeof weight === 'number' && Number.isFinite(weight) ? Math.round(weight) : MIN_WEIGHT;
+  return Math.min(MAX_WEIGHT, Math.max(MIN_WEIGHT, n));
 }
 
 /** Split textarea input into items: newline/comma separated, trimmed, empties dropped. */
@@ -31,6 +54,141 @@ export function parseItems(text: string): string[] {
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
 }
+
+/**
+ * Re-derive the option list after the texts were edited: options whose text
+ * survives keep their weight (duplicates are matched in order), new texts
+ * start at weight 1.
+ */
+export function mergeOptions(texts: readonly string[], previous: readonly PickerOption[]): PickerOption[] {
+  const pool = [...previous];
+  return texts.map((text) => {
+    const at = pool.findIndex((option) => option.text === text);
+    if (at === -1) return { text, weight: MIN_WEIGHT };
+    const found = pool[at];
+    pool.splice(at, 1);
+    return { text, weight: clampWeight(found?.weight) };
+  });
+}
+
+/** Options of the FIRST legacy list become the new working set (weight 1). */
+export function migrateLegacyItems(lists: readonly LegacyListDoc[]): PickerOption[] {
+  const first = lists[0];
+  if (!first) return [];
+  return first.items.map((text) => ({ text, weight: MIN_WEIGHT }));
+}
+
+/* ── Weighted picking ─────────────────────────────────────────────────── */
+
+/**
+ * Weighted pick: index i is chosen with probability weight[i] / Σweights.
+ * Weights must be non-negative integers with at least one positive value;
+ * anything else → null. Randomness is injected as a uniform integer source.
+ */
+export function weightedPickIndex(
+  weights: readonly number[],
+  randomInt: (maxExclusive: number) => number,
+): number | null {
+  if (weights.length === 0) return null;
+  let total = 0;
+  for (const w of weights) {
+    if (!Number.isInteger(w) || w < 0) return null;
+    total += w;
+  }
+  if (total <= 0) return null;
+  const raw = Math.floor(randomInt(total));
+  const target = Math.min(Math.max(0, raw), total - 1);
+  let cumulative = 0;
+  for (let i = 0; i < weights.length; i++) {
+    cumulative += weights[i] ?? 0;
+    if (target < cumulative) return i;
+  }
+  return weights.length - 1; // unreachable with valid inputs; defensive
+}
+
+/**
+ * Draw `n` DISTINCT options, weighted without replacement (successive
+ * weighted draws, removing each winner). `n` is clamped to the number of
+ * positively weighted options. Invalid weights or mismatched lengths → null.
+ */
+export function weightedPickN<T>(
+  options: readonly T[],
+  weights: readonly number[],
+  n: number,
+  randomInts: RandomInts,
+): T[] | null {
+  if (options.length !== weights.length) return null;
+  for (const w of weights) {
+    if (!Number.isInteger(w) || w < 0) return null;
+  }
+  const pickable = weights.filter((w) => w > 0).length;
+  const count = Math.min(Math.max(0, Math.floor(n)), pickable);
+  const restOptions = [...options];
+  const restWeights = [...weights];
+  const picked: T[] = [];
+  for (let i = 0; i < count; i++) {
+    const index = weightedPickIndex(restWeights, (max) => randomInts(1, max)[0] ?? 0);
+    if (index === null) break;
+    const winner = restOptions[index];
+    if (winner === undefined) break;
+    picked.push(winner);
+    restOptions.splice(index, 1);
+    restWeights.splice(index, 1);
+  }
+  return picked;
+}
+
+/** Fisher-Yates shuffle with injected randomness; never mutates the input. */
+export function shuffleAll<T>(items: readonly T[], randomInts: RandomInts): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const raw = randomInts(1, i + 1)[0] ?? 0;
+    const j = Math.min(Math.max(0, Math.floor(raw)), i);
+    const a = out[i];
+    const b = out[j];
+    if (a === undefined || b === undefined) continue; // satisfies noUncheckedIndexedAccess
+    out[i] = b;
+    out[j] = a;
+  }
+  return out;
+}
+
+/* ── Simple modes ─────────────────────────────────────────────────────── */
+
+/**
+ * Uniform integer in [min, max] (inclusive, order-forgiving). Bounds are
+ * snapped to integers inwards; empty or absurdly large ranges → null.
+ */
+export function randomInRange(
+  min: number,
+  max: number,
+  randomInt: (maxExclusive: number) => number,
+): number | null {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+  const lo = Math.ceil(Math.min(min, max));
+  const hi = Math.floor(Math.max(min, max));
+  if (lo > hi) return null;
+  const span = hi - lo + 1;
+  if (span > 0x100000000) return null; // beyond the 32-bit uniform source
+  const raw = Math.floor(randomInt(span));
+  return lo + Math.min(Math.max(0, raw), span - 1);
+}
+
+export type CoinSide = 'heads' | 'tails';
+
+export function coinFlip(randomInt: (maxExclusive: number) => number): CoinSide {
+  return randomInt(2) === 0 ? 'heads' : 'tails';
+}
+
+export type YesNoAnswer = 'yes' | 'no' | 'maybe';
+
+export function yesNo(withMaybe: boolean, randomInt: (maxExclusive: number) => number): YesNoAnswer {
+  const raw = Math.floor(randomInt(withMaybe ? 3 : 2));
+  const n = Math.min(Math.max(0, raw), withMaybe ? 2 : 1);
+  return n === 0 ? 'yes' : n === 1 ? 'no' : 'maybe';
+}
+
+/* ── Dice ─────────────────────────────────────────────────────────────── */
 
 export const MAX_DICE_COUNT = 20;
 export const MAX_DICE_SIDES = 1000;
@@ -52,28 +210,33 @@ export function rollDice(spec: string, randomInts: RandomInts): DiceRoll | null 
   return { count, sides, rolls, total: rolls.reduce((sum, v) => sum + v, 0) };
 }
 
-/** Assistant context: what lists exist and how many options each holds. */
-export function buildPickerContext(lists: readonly PickerListDoc[], language: string): string {
+/* ── Assistant context ────────────────────────────────────────────────── */
+
+/** Assistant context: current mode, the working options (with weights) and the last result. */
+export function buildPickerContext(state: PickerStateDoc | null, language: string): string {
   const de = language === 'de';
-  if (lists.length === 0) {
-    return de ? 'Zufallsentscheider: keine Listen vorhanden.' : 'Random picker: no lists yet.';
+  if (!state || state.options.length === 0) {
+    const head = de
+      ? 'Zufallsentscheider: keine Optionen eingetragen.'
+      : 'Random picker: no options entered.';
+    const mode = state ? (de ? ` Modus: ${state.mode}.` : ` Mode: ${state.mode}.`) : '';
+    return head + mode;
   }
-  const lines = lists.slice(0, 10).map((list) => {
-    const preview = list.items.slice(0, 8).join(', ');
-    const more = list.items.length > 8 ? ' …' : '';
-    const consume = list.removeOnPick
-      ? de
-        ? ', Einträge werden nach dem Ziehen entfernt'
-        : ', entries are removed once picked'
-      : '';
-    return de
-      ? `– «${list.name}» (${list.items.length} Einträge${consume}): ${preview}${more}`
-      : `– «${list.name}» (${list.items.length} entries${consume}): ${preview}${more}`;
-  });
-  const head = de
-    ? `Zufallsentscheider – ${lists.length} Liste(n):`
-    : `Random picker – ${lists.length} list(s):`;
-  return [head, ...lines].join('\n');
+  const preview = state.options
+    .slice(0, 12)
+    .map((option) => (option.weight === 1 ? option.text : `${option.text} (×${option.weight})`))
+    .join(', ');
+  const more = state.options.length > 12 ? ' …' : '';
+  const lines = [
+    de
+      ? `Zufallsentscheider – Modus: ${state.mode}, ${state.options.length} Option(en):`
+      : `Random picker – mode: ${state.mode}, ${state.options.length} option(s):`,
+    `– ${preview}${more}`,
+  ];
+  if (state.lastResult) {
+    lines.push(de ? `Letztes Ergebnis: ${state.lastResult}` : `Last result: ${state.lastResult}`);
+  }
+  return lines.join('\n');
 }
 
 /* ── Runtime randomness (rejection sampling – no modulo bias) ─────────── */

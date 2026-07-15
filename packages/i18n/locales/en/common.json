@@ -1573,51 +1573,82 @@
     },
     "random-picker": {
       "name": "Random Picker",
-      "description": "Decision wheel, list picker and dice – let fair randomness decide, fully local.",
-      "privacy": "Works fully offline. Your lists and picks never leave this device.",
+      "description": "Wheel, dice, coin, numbers, yes/no, shuffle and pick-N – fair, weighted randomness, fully local.",
+      "privacy": "Works fully offline. Your options and results never leave this device.",
+      "mode": {
+        "label": "Mode",
+        "wheel": "Wheel",
+        "dice": "Dice",
+        "coin": "Coin flip",
+        "number": "Number",
+        "yes-no": "Yes or no",
+        "shuffle": "Shuffle",
+        "pick-n": "Pick N"
+      },
       "widget": {
-        "listLabel": "Choose a list",
-        "noLists": "No lists yet",
-        "addList": "Add a list",
-        "newListName": "List {{n}}",
-        "empty": "Add entries in the list view – then the wheel can spin.",
-        "itemsPlaceholder": "One option per line (or comma-separated) …",
-        "removeOnPick": "Remove picked entries from the list",
-        "pick": "Pick",
+        "optionsPlaceholder": "One option per line (or comma-separated) …",
+        "advanced": "Advanced settings",
+        "weightLabel": "Weight of {{option}}",
+        "empty": "Enter your options first – the full view has the editor.",
+        "wheelLabel": "Decision wheel",
         "spin": "Spin",
         "spinning": "Spinning …",
-        "wheelLabel": "Decision wheel",
-        "diceLabel": "Dice, e.g. 2d6",
         "roll": "Roll",
-        "invalidDice": "Use the NdM format, e.g. 2d6 (max 20 dice, 1000 sides)."
+        "flip": "Flip",
+        "drawNumber": "Draw a number",
+        "ask": "Decide",
+        "shuffle": "Shuffle",
+        "drawN": "Draw",
+        "diceLabel": "Dice, e.g. 2d6",
+        "invalidDice": "Use the NdM format, e.g. 2d6 (max 20 dice, 1000 sides).",
+        "minLabel": "Minimum",
+        "maxLabel": "Maximum",
+        "invalidRange": "The range must contain at least one whole number.",
+        "allowMaybe": "Allow \"maybe\"",
+        "countLabel": "How many?"
+      },
+      "result": {
+        "heads": "Heads",
+        "tails": "Tails",
+        "yes": "Yes",
+        "no": "No",
+        "maybe": "Maybe"
       },
       "command": {
-        "pick": "Pick a random entry",
-        "pickDesc": "Picks one entry uniformly at random from the named list (or the first list). Lists marked accordingly consume the picked entry.",
+        "pick": "Pick a random option",
+        "pickDesc": "Picks one option at random, honoring the configured weights. Pass \"options\" as a comma-separated list to pick from those instead of the stored ones.",
         "roll": "Roll dice",
         "rollDesc": "Rolls dice in NdM notation, e.g. \"2d6\" for two six-sided dice (max 20 dice with up to 1000 sides). Returns the faces and the total.",
+        "flip": "Flip a coin",
+        "flipDesc": "Flips a fair coin and returns heads or tails.",
+        "number": "Draw a random number",
+        "numberDesc": "Draws a uniformly distributed whole number between min and max (both inclusive).",
         "context": "Random Picker: current state"
       },
       "msg": {
         "picked": "Picked!",
         "rolled": "Rolled!",
-        "empty": "Nothing to pick – add a list with entries first.",
-        "invalidDice": "Invalid dice – use NdM, e.g. 2d6."
+        "flipped": "Flipped!",
+        "number": "Number drawn!",
+        "empty": "Nothing to pick – enter options first.",
+        "invalidDice": "Invalid dice – use NdM, e.g. 2d6.",
+        "invalidRange": "Invalid range – min and max must enclose a whole number."
       },
       "test": {
-        "crud": "Lists survive create, update and delete",
-        "pickCommand": "Picking returns a member and consumes it",
-        "diceLogic": "Dice parser rejects edge cases, faces stay in range",
+        "weightedPick": "Weighted picking respects bounds and weights",
+        "migration": "Legacy lists migrate into the new working set",
+        "pickCommand": "Picking honors inline options and stored weights",
+        "modeCommands": "Coin, number and dice commands stay in range",
         "render": "Widget renders"
       },
       "tour": {
         "title": "Let chance decide",
-        "body": "Put your options into a list and spin the wheel – or switch the widget to the list or dice view. Everything stays on this device."
+        "body": "Type your options right into the widget, tune their weights under advanced settings and switch between wheel, dice, coin, numbers and more. Everything stays on this device."
       },
       "variant": {
-        "wheel": "Wheel",
-        "list": "List",
-        "dice": "Dice"
+        "full": "Full",
+        "compact": "Compact",
+        "wheel": "Wheel"
       }
     },
     "bookmarks": {
