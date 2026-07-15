@@ -341,8 +341,10 @@ pub(crate) fn b64_decode_public(text: &str) -> Option<Vec<u8>> {
 /* ── Engine plumbing ──────────────────────────────────────────────────── */
 
 fn build_transport(config: &SyncConfig) -> Result<Box<dyn SyncTransport>, String> {
+    // Configs written before a transport was ever picked carry "" – treat it
+    // as the folder default exactly like the UI does.
     match config.transport.as_str() {
-        "folder" => {
+        "" | "folder" => {
             let path = config.folder_path.as_deref().ok_or("no sync folder configured")?;
             Ok(Box::new(FolderTransport::new(path).map_err(|e| e.to_string())?))
         }
@@ -363,7 +365,7 @@ fn build_transport(config: &SyncConfig) -> Result<Box<dyn SyncTransport>, String
 
 fn transport_cursor_id(config: &SyncConfig) -> String {
     match config.transport.as_str() {
-        "folder" => format!("folder:{}", config.folder_path.as_deref().unwrap_or_default()),
+        "" | "folder" => format!("folder:{}", config.folder_path.as_deref().unwrap_or_default()),
         "webdav" => format!("webdav:{}", config.webdav_url.as_deref().unwrap_or_default()),
         other => other.to_string(),
     }
