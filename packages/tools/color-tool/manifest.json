@@ -18,23 +18,37 @@
         "h": 3
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "picker",
+        "palette",
+        "contrast"
+      ]
     }
   ],
   "commands": [
+    "color-tool.contrast",
+    "color-tool.save-palette",
     "color-tool.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.color-tool.test.render"
+      "id": "conversion-roundtrip",
+      "titleKey": "tool.color-tool.test.conversion-roundtrip"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.color-tool.test.storage"
+      "id": "contrast-math",
+      "titleKey": "tool.color-tool.test.contrast-math"
+    },
+    {
+      "id": "palette-crud",
+      "titleKey": "tool.color-tool.test.palette-crud"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.color-tool.test.render"
     }
   ],
   "tourSteps": [

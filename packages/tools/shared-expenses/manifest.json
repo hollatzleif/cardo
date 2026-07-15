@@ -15,26 +15,39 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "balances",
+        "log",
+        "settle"
+      ]
     }
   ],
   "commands": [
+    "shared-expenses.add",
     "shared-expenses.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.shared-expenses.test.render"
+      "id": "balance-math",
+      "titleKey": "tool.shared-expenses.test.balance-math"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.shared-expenses.test.storage"
+      "id": "settle-clears",
+      "titleKey": "tool.shared-expenses.test.settle-clears"
+    },
+    {
+      "id": "crud",
+      "titleKey": "tool.shared-expenses.test.crud"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.shared-expenses.test.render"
     }
   ],
   "tourSteps": [

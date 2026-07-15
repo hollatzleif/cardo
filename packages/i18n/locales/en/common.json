@@ -2210,79 +2210,203 @@
       }
     },
     "shared-expenses": {
-      "name": "Shared Expenses",
-      "description": "TODO: describe Shared Expenses.",
-      "privacy": "Works fully local. Nothing leaves your device.",
-      "widget": {
-        "empty": "Nothing here yet."
-      },
-      "command": {
-        "context": "Shared Expenses: current state"
-      },
-      "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
-      },
-      "tour": {
-        "title": "Shared Expenses",
-        "body": "TODO: one-line tour hint for Shared Expenses."
+      "tool": {
+        "shared-expenses": {
+          "name": "Shared Expenses",
+          "description": "Track group expenses, see who owes whom, and settle up with the fewest transfers.",
+          "privacy": "Works fully local. Nothing leaves your device.",
+          "command": {
+            "add": "Shared Expenses: add expense",
+            "addDesc": "Adds an expense to a group (created on demand): who paid, how much, what for, and optionally who shares it (comma-separated; default: all members).",
+            "context": "Shared Expenses: current state",
+            "contextDesc": "Summarizes all groups with their open balances (who is owed, who owes)."
+          },
+          "msg": {
+            "added": "Expense added."
+          },
+          "widget": {
+            "groupLabel": "Group",
+            "noGroups": "No groups",
+            "newGroup": "New group",
+            "groupNamePlaceholder": "Group name",
+            "membersPlaceholder": "Members, comma-separated",
+            "createGroup": "Create",
+            "emptyGroups": "Create a group with its members to get started.",
+            "emptyExpenses": "No expenses yet.",
+            "payerLabel": "Paid by",
+            "amountLabel": "Amount",
+            "descriptionPlaceholder": "What for?",
+            "participantsPlaceholder": "Participants (optional)",
+            "participantsHint": "Comma-separated; empty = all members",
+            "addExpense": "Add expense",
+            "deleteExpense": "Delete “{description}”",
+            "allSettled": "All settled – nobody owes anything.",
+            "markSettled": "Done",
+            "settlementDescription": "Settlement {from} → {to}"
+          },
+          "test": {
+            "balance-math": "Cent-exact splits, balances sum to zero",
+            "settle-clears": "Settle-up transfers clear all balances",
+            "crud": "Group & expense storage roundtrip works",
+            "render": "Widget renders"
+          },
+          "tour": {
+            "title": "Shared Expenses",
+            "body": "Log group expenses and let Cardo work out who owes whom – settle up with the fewest transfers."
+          }
+        }
       }
     },
     "calculator": {
-      "name": "Calculator",
-      "description": "TODO: describe Calculator.",
-      "privacy": "Works fully local. Nothing leaves your device.",
-      "widget": {
-        "empty": "Nothing here yet."
-      },
-      "command": {
-        "context": "Calculator: current state"
-      },
-      "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
-      },
-      "tour": {
-        "title": "Calculator",
-        "body": "TODO: one-line tour hint for Calculator."
+      "tool": {
+        "calculator": {
+          "name": "Calculator",
+          "description": "Expression calculator with functions, deg/rad trig modes and a history – no eval, ever.",
+          "privacy": "Works fully local. Nothing leaves your device.",
+          "command": {
+            "calc": "Calculator: calculate",
+            "calcDesc": "Evaluates a math expression (e.g. \"2+3*4\", \"sin(90)\", \"sqrt(2)^2\") and returns the result – also usable by the assistant to answer math questions.",
+            "context": "Calculator: current state",
+            "contextDesc": "Returns the last calculations from the history."
+          },
+          "msg": {
+            "calculated": "Calculated."
+          },
+          "error": {
+            "syntax": "Invalid expression",
+            "divisionByZero": "Division by zero",
+            "unknownToken": "Unknown symbol",
+            "math": "Result is not a finite number"
+          },
+          "widget": {
+            "placeholder": "2+3*4, sin(90), sqrt(2)…",
+            "inputLabel": "Expression",
+            "settingsToggle": "Settings",
+            "deg": "deg",
+            "rad": "rad",
+            "angleToggle": "Toggle degrees/radians",
+            "emptyHistory": "No calculations yet.",
+            "reuse": "Load into the input"
+          },
+          "settings": {
+            "angleMode": "Default angle mode",
+            "thousands": "Thousands separator",
+            "historyLength": "History length"
+          },
+          "test": {
+            "parser": "Parser handles precedence, functions and errors",
+            "calc-command": "Calc command computes and records history",
+            "history-crud": "History storage roundtrip with cap works",
+            "render": "Widget renders"
+          },
+          "tour": {
+            "title": "Calculator",
+            "body": "Type an expression or use the keypad – results land in the history, and the assistant can calculate for you too."
+          }
+        }
       }
     },
     "color-tool": {
-      "name": "Colors & Palettes",
-      "description": "TODO: describe Colors & Palettes.",
-      "privacy": "Works fully local. Nothing leaves your device.",
-      "widget": {
-        "empty": "Nothing here yet."
-      },
-      "command": {
-        "context": "Colors & Palettes: current state"
-      },
-      "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
-      },
-      "tour": {
-        "title": "Colors & Palettes",
-        "body": "TODO: one-line tour hint for Colors & Palettes."
+      "tool": {
+        "color-tool": {
+          "name": "Colors & Palettes",
+          "description": "Pick colors, build harmonies, save palettes and check WCAG contrast.",
+          "privacy": "Works fully local. Nothing leaves your device.",
+          "command": {
+            "contrast": "Colors: check contrast",
+            "contrastDesc": "Computes the WCAG contrast ratio of two colors (hex/rgb/hsl) with an AA/AAA verdict for normal and large text.",
+            "savePalette": "Colors: save palette",
+            "savePaletteDesc": "Saves a named palette from a comma-separated color list (hex/rgb/hsl).",
+            "context": "Colors: current state",
+            "contextDesc": "Lists the saved palettes with their color counts."
+          },
+          "msg": {
+            "invalidColor": "Could not parse one of the colors.",
+            "invalidColors": "The color list contains an invalid entry.",
+            "paletteSaved": "Palette saved."
+          },
+          "harmony": {
+            "complementary": "Complementary",
+            "analogous": "Analogous",
+            "triadic": "Triadic",
+            "shades": "Shades"
+          },
+          "widget": {
+            "baseColor": "Base color",
+            "harmonyLabel": "Harmony rule",
+            "paletteNamePlaceholder": "Palette name",
+            "savePalette": "Save",
+            "emptyPalettes": "No palettes saved yet.",
+            "deletePalette": "Delete palette “{name}”",
+            "copyColor": "Copy {hex}",
+            "copied": "{hex} copied.",
+            "foreground": "Text color",
+            "background": "Background color",
+            "sampleText": "Sample text",
+            "aaNormal": "AA",
+            "aaaNormal": "AAA",
+            "aaLarge": "AA large",
+            "aaaLarge": "AAA large"
+          },
+          "test": {
+            "conversion-roundtrip": "Color conversions round-trip exactly",
+            "contrast-math": "WCAG contrast math is correct",
+            "palette-crud": "Palette storage roundtrip works",
+            "render": "Widget renders"
+          },
+          "tour": {
+            "title": "Colors & Palettes",
+            "body": "Pick a color, explore harmonies, save palettes – and check text contrast against WCAG right away."
+          }
+        }
       }
     },
     "snippets": {
-      "name": "Code Snippets",
-      "description": "TODO: describe Code Snippets.",
-      "privacy": "Works fully local. Nothing leaves your device.",
-      "widget": {
-        "empty": "Nothing here yet."
-      },
-      "command": {
-        "context": "Code Snippets: current state"
-      },
-      "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
-      },
-      "tour": {
-        "title": "Code Snippets",
-        "body": "TODO: one-line tour hint for Code Snippets."
+      "tool": {
+        "snippets": {
+          "name": "Code Snippets",
+          "description": "Store, search and copy code snippets with lightweight syntax highlighting for 8 languages.",
+          "privacy": "Works fully local. Nothing leaves your device.",
+          "command": {
+            "add": "Snippets: add snippet",
+            "addDesc": "Saves a code snippet with title, language, body and optional comma-separated tags.",
+            "context": "Snippets: current state",
+            "contextDesc": "Reports how many snippets exist and names the newest ones."
+          },
+          "msg": {
+            "added": "Snippet saved."
+          },
+          "widget": {
+            "searchPlaceholder": "Search snippets…",
+            "tagFilterLabel": "Filter by tag",
+            "allTags": "All tags",
+            "addToggle": "New snippet",
+            "settingsToggle": "Settings",
+            "titlePlaceholder": "Title",
+            "languageLabel": "Language",
+            "tagsPlaceholder": "Tags, comma-separated",
+            "bodyPlaceholder": "Paste your code here…",
+            "save": "Save snippet",
+            "empty": "No snippets yet – add your first one.",
+            "noMatches": "Nothing matches your search.",
+            "copy": "Copy “{title}”",
+            "delete": "Delete “{title}”"
+          },
+          "settings": {
+            "fontSize": "Code font size",
+            "wrap": "Wrap long lines"
+          },
+          "test": {
+            "crud": "Snippet storage roundtrip works",
+            "highlight-logic": "Highlighter separates code, strings and comments",
+            "filter-logic": "Search and tag filtering work",
+            "render": "Widget renders"
+          },
+          "tour": {
+            "title": "Code Snippets",
+            "body": "Your local snippet library: search, expand, copy – with syntax highlighting and tags."
+          }
+        }
       }
     },
     "currency": {

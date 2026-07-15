@@ -14,27 +14,40 @@
     {
       "id": "main",
       "defaultSize": {
-        "w": 4,
-        "h": 3
+        "w": 3,
+        "h": 4
       },
       "minSize": {
         "w": 2,
-        "h": 2
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "basic",
+        "scientific",
+        "compact"
+      ]
     }
   ],
   "commands": [
+    "calculator.calc",
     "calculator.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.calculator.test.render"
+      "id": "parser",
+      "titleKey": "tool.calculator.test.parser"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.calculator.test.storage"
+      "id": "calc-command",
+      "titleKey": "tool.calculator.test.calc-command"
+    },
+    {
+      "id": "history-crud",
+      "titleKey": "tool.calculator.test.history-crud"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.calculator.test.render"
     }
   ],
   "tourSteps": [

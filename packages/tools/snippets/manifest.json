@@ -15,26 +15,39 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "list",
+        "grid",
+        "focused"
+      ]
     }
   ],
   "commands": [
+    "snippets.add",
     "snippets.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.snippets.test.render"
+      "id": "crud",
+      "titleKey": "tool.snippets.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.snippets.test.storage"
+      "id": "highlight-logic",
+      "titleKey": "tool.snippets.test.highlight-logic"
+    },
+    {
+      "id": "filter-logic",
+      "titleKey": "tool.snippets.test.filter-logic"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.snippets.test.render"
     }
   ],
   "tourSteps": [

@@ -2210,79 +2210,203 @@
       }
     },
     "shared-expenses": {
-      "name": "Gemeinsame Ausgaben",
-      "description": "TODO: Gemeinsame Ausgaben beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
-      "widget": {
-        "empty": "Noch nichts hier."
-      },
-      "command": {
-        "context": "Gemeinsame Ausgaben: aktueller Stand"
-      },
-      "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
-      },
-      "tour": {
-        "title": "Gemeinsame Ausgaben",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Gemeinsame Ausgaben."
+      "tool": {
+        "shared-expenses": {
+          "name": "Gruppenkasse",
+          "description": "Erfasse Gruppenausgaben, sieh, wer wem was schuldet, und gleiche mit möglichst wenigen Überweisungen aus.",
+          "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
+          "command": {
+            "add": "Gruppenkasse: Ausgabe hinzufügen",
+            "addDesc": "Fügt einer Gruppe (wird bei Bedarf angelegt) eine Ausgabe hinzu: wer gezahlt hat, wie viel, wofür und optional, wer sie teilt (kommagetrennt; Standard: alle Mitglieder).",
+            "context": "Gruppenkasse: aktueller Stand",
+            "contextDesc": "Fasst alle Gruppen mit ihren offenen Salden zusammen (wer bekommt, wer schuldet)."
+          },
+          "msg": {
+            "added": "Ausgabe hinzugefügt."
+          },
+          "widget": {
+            "groupLabel": "Gruppe",
+            "noGroups": "Keine Gruppen",
+            "newGroup": "Neue Gruppe",
+            "groupNamePlaceholder": "Gruppenname",
+            "membersPlaceholder": "Mitglieder, kommagetrennt",
+            "createGroup": "Anlegen",
+            "emptyGroups": "Lege zuerst eine Gruppe mit ihren Mitgliedern an.",
+            "emptyExpenses": "Noch keine Ausgaben.",
+            "payerLabel": "Bezahlt von",
+            "amountLabel": "Betrag",
+            "descriptionPlaceholder": "Wofür?",
+            "participantsPlaceholder": "Beteiligte (optional)",
+            "participantsHint": "Kommagetrennt; leer = alle Mitglieder",
+            "addExpense": "Ausgabe hinzufügen",
+            "deleteExpense": "„{description}“ löschen",
+            "allSettled": "Alles ausgeglichen – niemand schuldet etwas.",
+            "markSettled": "Erledigt",
+            "settlementDescription": "Ausgleich {from} → {to}"
+          },
+          "test": {
+            "balance-math": "Centgenaue Aufteilung, Salden summieren zu null",
+            "settle-clears": "Ausgleichsvorschläge tilgen alle Salden",
+            "crud": "Speicher-Roundtrip für Gruppe & Ausgabe funktioniert",
+            "render": "Widget wird gerendert"
+          },
+          "tour": {
+            "title": "Gruppenkasse",
+            "body": "Erfasse Gruppenausgaben und lass Cardo ausrechnen, wer wem was schuldet – ausgleichen mit möglichst wenigen Überweisungen."
+          }
+        }
       }
     },
     "calculator": {
-      "name": "Taschenrechner",
-      "description": "TODO: Taschenrechner beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
-      "widget": {
-        "empty": "Noch nichts hier."
-      },
-      "command": {
-        "context": "Taschenrechner: aktueller Stand"
-      },
-      "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
-      },
-      "tour": {
-        "title": "Taschenrechner",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Taschenrechner."
+      "tool": {
+        "calculator": {
+          "name": "Taschenrechner",
+          "description": "Ausdrucks-Rechner mit Funktionen, Grad/Bogenmaß und Verlauf – garantiert ohne eval.",
+          "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
+          "command": {
+            "calc": "Taschenrechner: berechnen",
+            "calcDesc": "Wertet einen Mathe-Ausdruck aus (z. B. \"2+3*4\", \"sin(90)\", \"sqrt(2)^2\") und liefert das Ergebnis – auch der Assistent kann damit rechnen.",
+            "context": "Taschenrechner: aktueller Stand",
+            "contextDesc": "Liefert die letzten Berechnungen aus dem Verlauf."
+          },
+          "msg": {
+            "calculated": "Berechnet."
+          },
+          "error": {
+            "syntax": "Ungültiger Ausdruck",
+            "divisionByZero": "Division durch null",
+            "unknownToken": "Unbekanntes Zeichen",
+            "math": "Ergebnis ist keine endliche Zahl"
+          },
+          "widget": {
+            "placeholder": "2+3*4, sin(90), sqrt(2)…",
+            "inputLabel": "Ausdruck",
+            "settingsToggle": "Einstellungen",
+            "deg": "Grad",
+            "rad": "Bogenmaß",
+            "angleToggle": "Grad/Bogenmaß umschalten",
+            "emptyHistory": "Noch keine Berechnungen.",
+            "reuse": "In die Eingabe übernehmen"
+          },
+          "settings": {
+            "angleMode": "Standard-Winkelmodus",
+            "thousands": "Tausendertrennzeichen",
+            "historyLength": "Verlaufslänge"
+          },
+          "test": {
+            "parser": "Parser beherrscht Vorrang, Funktionen und Fehler",
+            "calc-command": "Rechen-Befehl rechnet und schreibt den Verlauf",
+            "history-crud": "Verlaufs-Roundtrip mit Begrenzung funktioniert",
+            "render": "Widget wird gerendert"
+          },
+          "tour": {
+            "title": "Taschenrechner",
+            "body": "Tippe einen Ausdruck oder nutze das Tastenfeld – Ergebnisse landen im Verlauf, und auch der Assistent kann für dich rechnen."
+          }
+        }
       }
     },
     "color-tool": {
-      "name": "Farben & Paletten",
-      "description": "TODO: Farben & Paletten beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
-      "widget": {
-        "empty": "Noch nichts hier."
-      },
-      "command": {
-        "context": "Farben & Paletten: aktueller Stand"
-      },
-      "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
-      },
-      "tour": {
-        "title": "Farben & Paletten",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Farben & Paletten."
+      "tool": {
+        "color-tool": {
+          "name": "Farben & Paletten",
+          "description": "Wähle Farben, baue Harmonien, speichere Paletten und prüfe WCAG-Kontrast.",
+          "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
+          "command": {
+            "contrast": "Farben: Kontrast prüfen",
+            "contrastDesc": "Berechnet das WCAG-Kontrastverhältnis zweier Farben (Hex/RGB/HSL) mit AA/AAA-Urteil für normalen und großen Text.",
+            "savePalette": "Farben: Palette speichern",
+            "savePaletteDesc": "Speichert eine benannte Palette aus einer kommagetrennten Farbliste (Hex/RGB/HSL).",
+            "context": "Farben: aktueller Stand",
+            "contextDesc": "Listet die gespeicherten Paletten mit ihrer Farbanzahl."
+          },
+          "msg": {
+            "invalidColor": "Eine der Farben konnte nicht gelesen werden.",
+            "invalidColors": "Die Farbliste enthält einen ungültigen Eintrag.",
+            "paletteSaved": "Palette gespeichert."
+          },
+          "harmony": {
+            "complementary": "Komplementär",
+            "analogous": "Analog",
+            "triadic": "Triadisch",
+            "shades": "Abstufungen"
+          },
+          "widget": {
+            "baseColor": "Grundfarbe",
+            "harmonyLabel": "Harmonie-Regel",
+            "paletteNamePlaceholder": "Palettenname",
+            "savePalette": "Speichern",
+            "emptyPalettes": "Noch keine Paletten gespeichert.",
+            "deletePalette": "Palette „{name}“ löschen",
+            "copyColor": "{hex} kopieren",
+            "copied": "{hex} kopiert.",
+            "foreground": "Textfarbe",
+            "background": "Hintergrundfarbe",
+            "sampleText": "Beispieltext",
+            "aaNormal": "AA",
+            "aaaNormal": "AAA",
+            "aaLarge": "AA groß",
+            "aaaLarge": "AAA groß"
+          },
+          "test": {
+            "conversion-roundtrip": "Farbkonvertierungen laufen exakt im Kreis",
+            "contrast-math": "WCAG-Kontrastrechnung stimmt",
+            "palette-crud": "Paletten-Speicher-Roundtrip funktioniert",
+            "render": "Widget wird gerendert"
+          },
+          "tour": {
+            "title": "Farben & Paletten",
+            "body": "Wähle eine Farbe, entdecke Harmonien, speichere Paletten – und prüfe Textkontrast direkt gegen WCAG."
+          }
+        }
       }
     },
     "snippets": {
-      "name": "Code-Schnipsel",
-      "description": "TODO: Code-Schnipsel beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
-      "widget": {
-        "empty": "Noch nichts hier."
-      },
-      "command": {
-        "context": "Code-Schnipsel: aktueller Stand"
-      },
-      "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
-      },
-      "tour": {
-        "title": "Code-Schnipsel",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Code-Schnipsel."
+      "tool": {
+        "snippets": {
+          "name": "Code-Snippets",
+          "description": "Speichere, durchsuche und kopiere Code-Snippets mit leichtem Syntax-Highlighting für 8 Sprachen.",
+          "privacy": "Arbeitet komplett lokal. Nichts verlässt dein Gerät.",
+          "command": {
+            "add": "Snippets: Snippet hinzufügen",
+            "addDesc": "Speichert ein Code-Snippet mit Titel, Sprache, Inhalt und optionalen kommagetrennten Tags.",
+            "context": "Snippets: aktueller Stand",
+            "contextDesc": "Meldet, wie viele Snippets es gibt, und nennt die neuesten."
+          },
+          "msg": {
+            "added": "Snippet gespeichert."
+          },
+          "widget": {
+            "searchPlaceholder": "Snippets durchsuchen…",
+            "tagFilterLabel": "Nach Tag filtern",
+            "allTags": "Alle Tags",
+            "addToggle": "Neues Snippet",
+            "settingsToggle": "Einstellungen",
+            "titlePlaceholder": "Titel",
+            "languageLabel": "Sprache",
+            "tagsPlaceholder": "Tags, kommagetrennt",
+            "bodyPlaceholder": "Füge deinen Code hier ein…",
+            "save": "Snippet speichern",
+            "empty": "Noch keine Snippets – leg dein erstes an.",
+            "noMatches": "Nichts passt zu deiner Suche.",
+            "copy": "„{title}“ kopieren",
+            "delete": "„{title}“ löschen"
+          },
+          "settings": {
+            "fontSize": "Code-Schriftgröße",
+            "wrap": "Lange Zeilen umbrechen"
+          },
+          "test": {
+            "crud": "Snippet-Speicher-Roundtrip funktioniert",
+            "highlight-logic": "Highlighter trennt Code, Strings und Kommentare",
+            "filter-logic": "Suche und Tag-Filter funktionieren",
+            "render": "Widget wird gerendert"
+          },
+          "tour": {
+            "title": "Code-Snippets",
+            "body": "Deine lokale Snippet-Bibliothek: suchen, aufklappen, kopieren – mit Syntax-Highlighting und Tags."
+          }
+        }
       }
     },
     "currency": {
