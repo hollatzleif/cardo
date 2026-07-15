@@ -15,26 +15,37 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "list",
+        "timeline-bar",
+        "board"
+      ]
     }
   ],
   "commands": [
+    "project-tracker.add-project",
+    "project-tracker.add-milestone",
+    "project-tracker.complete-milestone",
     "project-tracker.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.project-tracker.test.render"
+      "id": "crud",
+      "titleKey": "tool.project-tracker.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.project-tracker.test.storage"
+      "id": "progress",
+      "titleKey": "tool.project-tracker.test.progress"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.project-tracker.test.render"
     }
   ],
   "tourSteps": [

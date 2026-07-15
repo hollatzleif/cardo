@@ -1675,59 +1675,148 @@
     },
     "time-blocking": {
       "name": "Time Blocking",
-      "description": "TODO: describe Time Blocking.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "Plan your day in time blocks – on a timeline that flags overlapping plans.",
+      "privacy": "Works fully local. Your day plans never leave this device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "empty": "No blocks planned yet – add your first one above.",
+        "titlePlaceholder": "What are you planning? (Enter)",
+        "dateLabel": "Day",
+        "startLabel": "Start time",
+        "endLabel": "End time",
+        "add": "Add block",
+        "delete": "Delete block \"{{title}}\"",
+        "outsideWindow": "{{count}} block(s) outside the shown hours",
+        "settingsToggle": "Show or hide settings"
+      },
+      "settings": {
+        "slotMinutes": "Grid granularity",
+        "dayStart": "Day starts at (hour)",
+        "dayEnd": "Day ends at (hour)",
+        "twelveHour": "12-hour clock (AM/PM)"
+      },
+      "variant": {
+        "day": "Day",
+        "three-day": "3 days",
+        "work-hours": "Work hours"
       },
       "command": {
-        "context": "Time Blocking: current state"
+        "add-block": "Add time block",
+        "add-blockDesc": "Plans a time block (start/end as HH:MM, end must be after start) on a day (yyyy-mm-dd, defaults to today), with an optional category.",
+        "context": "Time blocking: current state",
+        "contextDesc": "Summarizes today's planned blocks, total planned minutes and any overlaps for the assistant."
+      },
+      "msg": {
+        "added": "Time block planned.",
+        "invalidRange": "The end must be after the start.",
+        "invalidDate": "The day is not a valid date (yyyy-mm-dd)."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Blocks survive add, read and remove",
+        "conflict-detection": "Overlapping blocks are flagged as conflicts",
+        "render": "Widget renders"
       },
       "tour": {
         "title": "Time Blocking",
-        "body": "TODO: one-line tour hint for Time Blocking."
+        "body": "Give the block a title, pick start and end and press Enter. Overlapping blocks turn yellow – the 3-day view shows what is coming up."
       }
     },
     "project-tracker": {
-      "name": "Projects",
-      "description": "TODO: describe Projects.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "name": "Project Tracker",
+      "description": "Projects with milestones – progress bars, next steps and a timeline of due dates.",
+      "privacy": "Works fully local. Your projects never leave this device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "empty": "No projects yet – add your first one above.",
+        "projectPlaceholder": "New project… (Enter)",
+        "addProject": "Add project",
+        "deleteProject": "Delete project \"{{name}}\"",
+        "showMilestones": "Show milestones of \"{{name}}\"",
+        "milestonePlaceholder": "New milestone…",
+        "dueLabel": "Due date (optional)",
+        "addMilestone": "Add milestone",
+        "toggleMilestone": "Toggle milestone \"{{title}}\"",
+        "next": "Next:",
+        "completed": "Completed 🎉",
+        "noDates": "no due dates"
+      },
+      "variant": {
+        "list": "List",
+        "timeline-bar": "Timeline",
+        "board": "Board"
       },
       "command": {
-        "context": "Projects: current state"
+        "add-project": "Add project",
+        "add-projectDesc": "Creates a new project by name; milestones are added separately.",
+        "add-milestone": "Add milestone",
+        "add-milestoneDesc": "Adds a milestone (title, optional due date yyyy-mm-dd) to a project matched by its name.",
+        "complete-milestone": "Complete milestone",
+        "complete-milestoneDesc": "Marks a milestone as done – project and milestone are matched by name/title.",
+        "context": "Project tracker: current state",
+        "contextDesc": "Summarizes every project with its progress percentage and next milestone for the assistant."
+      },
+      "msg": {
+        "projectAdded": "Project added.",
+        "milestoneAdded": "Milestone added.",
+        "milestoneCompleted": "Milestone completed.",
+        "invalidDate": "The due date is not a valid date (yyyy-mm-dd).",
+        "notFound": "No matching project or milestone found."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Projects and milestones survive create, update and delete",
+        "progress": "Progress percentage is derived correctly from milestones",
+        "render": "Widget renders"
       },
       "tour": {
-        "title": "Projects",
-        "body": "TODO: one-line tour hint for Projects."
+        "title": "Project Tracker",
+        "body": "Add a project, click its name and plan milestones with due dates. The bar fills as you tick them off – the timeline view shows all due dates at once."
       }
     },
     "okr": {
-      "name": "Goals & OKRs",
-      "description": "TODO: describe Goals & OKRs.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "name": "OKR",
+      "description": "Objectives & key results – measurable goals whose progress fills up as you log results.",
+      "privacy": "Works fully local. Your goals never leave this device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "empty": "No objectives yet – add your first one above.",
+        "objectivePlaceholder": "New objective… (Enter)",
+        "quarterPlaceholder": "Q3 2026",
+        "addObjective": "Add objective",
+        "deleteObjective": "Delete objective \"{{title}}\"",
+        "krPlaceholder": "New key result…",
+        "targetLabel": "Target",
+        "unitPlaceholder": "Unit",
+        "addKr": "Add key result",
+        "currentLabel": "Current value of \"{{title}}\"",
+        "focusHint": "Needs your attention",
+        "settingsToggle": "Show or hide settings"
+      },
+      "settings": {
+        "showPercent": "Show percent instead of current/target"
+      },
+      "variant": {
+        "cards": "Cards",
+        "compact": "Compact",
+        "single-focus": "Focus"
       },
       "command": {
-        "context": "Goals & OKRs: current state"
+        "add-objective": "Add objective",
+        "add-objectiveDesc": "Creates a new objective with a title and an optional quarter label (e.g. \"Q3 2026\"); key results are added in the widget.",
+        "update-kr": "Update key result",
+        "update-krDesc": "Sets the current value of a key result – objective and key result are matched by title.",
+        "context": "OKR: current state",
+        "contextDesc": "Summarizes every objective with its overall percentage and each key result as current/target for the assistant."
+      },
+      "msg": {
+        "objectiveAdded": "Objective added.",
+        "krUpdated": "Key result updated.",
+        "notFound": "No matching objective or key result found."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Objectives and key results survive create, read and delete",
+        "progress-math": "Progress math clamps correctly (target 0, overachievement)",
+        "render": "Widget renders"
       },
       "tour": {
-        "title": "Goals & OKRs",
-        "body": "TODO: one-line tour hint for Goals & OKRs."
+        "title": "OKR",
+        "body": "Add an objective, give it measurable key results (target plus unit) and log your current values – the bars and the overall percentage update themselves."
       }
     },
     "flashcards": {

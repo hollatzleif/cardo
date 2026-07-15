@@ -15,26 +15,35 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 5
       },
       "minSize": {
-        "w": 2,
-        "h": 2
+        "w": 3,
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "day",
+        "three-day",
+        "work-hours"
+      ]
     }
   ],
   "commands": [
+    "time-blocking.add-block",
     "time-blocking.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.time-blocking.test.render"
+      "id": "crud",
+      "titleKey": "tool.time-blocking.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.time-blocking.test.storage"
+      "id": "conflict-detection",
+      "titleKey": "tool.time-blocking.test.conflict-detection"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.time-blocking.test.render"
     }
   ],
   "tourSteps": [

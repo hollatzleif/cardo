@@ -15,26 +15,36 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
-        "w": 2,
+        "w": 3,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "cards",
+        "compact",
+        "single-focus"
+      ]
     }
   ],
   "commands": [
+    "okr.add-objective",
+    "okr.update-kr",
     "okr.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.okr.test.render"
+      "id": "crud",
+      "titleKey": "tool.okr.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.okr.test.storage"
+      "id": "progress-math",
+      "titleKey": "tool.okr.test.progress-math"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.okr.test.render"
     }
   ],
   "tourSteps": [

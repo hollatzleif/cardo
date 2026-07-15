@@ -1675,59 +1675,148 @@
     },
     "time-blocking": {
       "name": "Zeitblöcke",
-      "description": "TODO: Zeitblöcke beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Plane deinen Tag in Zeitblöcken – auf einer Timeline, die Überschneidungen markiert.",
+      "privacy": "Funktioniert komplett lokal. Deine Tagespläne verlassen dein Gerät nicht.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "empty": "Noch keine Blöcke geplant – lege oben deinen ersten an.",
+        "titlePlaceholder": "Was planst du? (Enter)",
+        "dateLabel": "Tag",
+        "startLabel": "Startzeit",
+        "endLabel": "Endzeit",
+        "add": "Block hinzufügen",
+        "delete": "Block \"{{title}}\" löschen",
+        "outsideWindow": "{{count}} Block/Blöcke außerhalb der angezeigten Stunden",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "settings": {
+        "slotMinutes": "Raster",
+        "dayStart": "Tag beginnt um (Stunde)",
+        "dayEnd": "Tag endet um (Stunde)",
+        "twelveHour": "12-Stunden-Anzeige (AM/PM)"
+      },
+      "variant": {
+        "day": "Tag",
+        "three-day": "3 Tage",
+        "work-hours": "Arbeitszeit"
       },
       "command": {
-        "context": "Zeitblöcke: aktueller Stand"
+        "add-block": "Zeitblock planen",
+        "add-blockDesc": "Plant einen Zeitblock (Start/Ende als HH:MM, Ende muss nach dem Start liegen) an einem Tag (yyyy-mm-dd, Standard heute), optional mit Kategorie.",
+        "context": "Zeitblöcke: aktueller Stand",
+        "contextDesc": "Fasst die heute geplanten Blöcke, die geplanten Minuten und Überschneidungen für den Assistenten zusammen."
+      },
+      "msg": {
+        "added": "Zeitblock geplant.",
+        "invalidRange": "Das Ende muss nach dem Start liegen.",
+        "invalidDate": "Der Tag ist kein gültiges Datum (yyyy-mm-dd)."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Blöcke überstehen Anlegen, Lesen und Entfernen",
+        "conflict-detection": "Überlappende Blöcke werden als Konflikt markiert",
+        "render": "Widget rendert"
       },
       "tour": {
         "title": "Zeitblöcke",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Zeitblöcke."
+        "body": "Gib dem Block einen Titel, wähle Start und Ende und drücke Enter. Überlappende Blöcke werden gelb – die 3-Tage-Ansicht zeigt, was ansteht."
       }
     },
     "project-tracker": {
-      "name": "Projekte",
-      "description": "TODO: Projekte beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "name": "Projekt-Tracker",
+      "description": "Projekte mit Meilensteinen – Fortschrittsbalken, nächste Schritte und eine Timeline der Termine.",
+      "privacy": "Funktioniert komplett lokal. Deine Projekte verlassen dein Gerät nicht.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "empty": "Noch keine Projekte – lege oben dein erstes an.",
+        "projectPlaceholder": "Neues Projekt… (Enter)",
+        "addProject": "Projekt hinzufügen",
+        "deleteProject": "Projekt \"{{name}}\" löschen",
+        "showMilestones": "Meilensteine von \"{{name}}\" anzeigen",
+        "milestonePlaceholder": "Neuer Meilenstein…",
+        "dueLabel": "Fälligkeitsdatum (optional)",
+        "addMilestone": "Meilenstein hinzufügen",
+        "toggleMilestone": "Meilenstein \"{{title}}\" umschalten",
+        "next": "Als Nächstes:",
+        "completed": "Abgeschlossen 🎉",
+        "noDates": "keine Termine"
+      },
+      "variant": {
+        "list": "Liste",
+        "timeline-bar": "Timeline",
+        "board": "Board"
       },
       "command": {
-        "context": "Projekte: aktueller Stand"
+        "add-project": "Projekt anlegen",
+        "add-projectDesc": "Legt ein neues Projekt mit Namen an; Meilensteine kommen separat dazu.",
+        "add-milestone": "Meilenstein hinzufügen",
+        "add-milestoneDesc": "Fügt einem per Name gefundenen Projekt einen Meilenstein hinzu (Titel, optionales Fälligkeitsdatum yyyy-mm-dd).",
+        "complete-milestone": "Meilenstein abschließen",
+        "complete-milestoneDesc": "Hakt einen Meilenstein ab – Projekt und Meilenstein werden per Name/Titel gefunden.",
+        "context": "Projekt-Tracker: aktueller Stand",
+        "contextDesc": "Fasst jedes Projekt mit Fortschritt in Prozent und dem nächsten Meilenstein für den Assistenten zusammen."
+      },
+      "msg": {
+        "projectAdded": "Projekt angelegt.",
+        "milestoneAdded": "Meilenstein hinzugefügt.",
+        "milestoneCompleted": "Meilenstein abgeschlossen.",
+        "invalidDate": "Das Fälligkeitsdatum ist kein gültiges Datum (yyyy-mm-dd).",
+        "notFound": "Kein passendes Projekt oder kein passender Meilenstein gefunden."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Projekte und Meilensteine überstehen Anlegen, Ändern und Löschen",
+        "progress": "Der Fortschritt in Prozent wird korrekt aus den Meilensteinen abgeleitet",
+        "render": "Widget rendert"
       },
       "tour": {
-        "title": "Projekte",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Projekte."
+        "title": "Projekt-Tracker",
+        "body": "Lege ein Projekt an, klicke auf seinen Namen und plane Meilensteine mit Terminen. Der Balken füllt sich beim Abhaken – die Timeline-Ansicht zeigt alle Termine auf einen Blick."
       }
     },
     "okr": {
-      "name": "Ziele & OKRs",
-      "description": "TODO: Ziele & OKRs beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "name": "OKR",
+      "description": "Objectives & Key Results – messbare Ziele, deren Fortschritt sich mit deinen Ergebnissen füllt.",
+      "privacy": "Funktioniert komplett lokal. Deine Ziele verlassen dein Gerät nicht.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "empty": "Noch keine Objectives – lege oben dein erstes an.",
+        "objectivePlaceholder": "Neues Objective… (Enter)",
+        "quarterPlaceholder": "Q3 2026",
+        "addObjective": "Objective hinzufügen",
+        "deleteObjective": "Objective \"{{title}}\" löschen",
+        "krPlaceholder": "Neues Key Result…",
+        "targetLabel": "Zielwert",
+        "unitPlaceholder": "Einheit",
+        "addKr": "Key Result hinzufügen",
+        "currentLabel": "Aktueller Wert von \"{{title}}\"",
+        "focusHint": "Braucht deine Aufmerksamkeit",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "settings": {
+        "showPercent": "Prozent statt Ist/Ziel anzeigen"
+      },
+      "variant": {
+        "cards": "Karten",
+        "compact": "Kompakt",
+        "single-focus": "Fokus"
       },
       "command": {
-        "context": "Ziele & OKRs: aktueller Stand"
+        "add-objective": "Objective anlegen",
+        "add-objectiveDesc": "Legt ein neues Objective mit Titel und optionalem Quartal (z. B. \"Q3 2026\") an; Key Results kommen im Widget dazu.",
+        "update-kr": "Key Result aktualisieren",
+        "update-krDesc": "Setzt den aktuellen Wert eines Key Results – Objective und Key Result werden per Titel gefunden.",
+        "context": "OKR: aktueller Stand",
+        "contextDesc": "Fasst jedes Objective mit Gesamtprozent und jedem Key Result als Ist/Ziel für den Assistenten zusammen."
+      },
+      "msg": {
+        "objectiveAdded": "Objective angelegt.",
+        "krUpdated": "Key Result aktualisiert.",
+        "notFound": "Kein passendes Objective oder Key Result gefunden."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Objectives und Key Results überstehen Anlegen, Lesen und Löschen",
+        "progress-math": "Die Fortschrittsrechnung begrenzt korrekt (Ziel 0, Übererfüllung)",
+        "render": "Widget rendert"
       },
       "tour": {
-        "title": "Ziele & OKRs",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Ziele & OKRs."
+        "title": "OKR",
+        "body": "Lege ein Objective an, gib ihm messbare Key Results (Zielwert plus Einheit) und trage deine aktuellen Werte ein – Balken und Gesamtprozent aktualisieren sich von selbst."
       }
     },
     "flashcards": {
