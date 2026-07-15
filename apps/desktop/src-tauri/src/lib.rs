@@ -293,7 +293,24 @@ pub fn run() {
             let app_data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&app_data_dir)?;
             let db_path = app_data_dir.join("cardo.db");
-            let storage = tauri::async_runtime::block_on(SqliteStorage::open(&db_path))?;
+            let storage = match tauri::async_runtime::block_on(SqliteStorage::open(&db_path)) {
+                Ok(storage) => storage,
+                Err(err) => {
+                    // Most common cause: an OLDER Cardo opening a database a
+                    // newer build already migrated (downgrade protection).
+                    // Without this dialog the app hard-aborts with no hint.
+                    use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+                    let message = format!(
+                        "Cardo kann die Datenbank nicht öffnen:\n\n{err}\n\nMeist bedeutet das: Eine neuere Cardo-Version hat die Daten bereits aktualisiert. Bitte installiere die neueste Version.\n\nUsually this means a newer Cardo already upgraded your data. Please install the latest version."
+                    );
+                    app.dialog()
+                        .message(message)
+                        .kind(MessageDialogKind::Error)
+                        .title("Cardo")
+                        .blocking_show();
+                    std::process::exit(1);
+                }
+            };
             let identity = LicenseKeyIdentity::new(storage.device_id());
             app.manage(AppState { storage, identity, app_data_dir });
             sync::start_background_loop(app.handle().clone());
