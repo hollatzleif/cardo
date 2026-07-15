@@ -1,0 +1,48 @@
+{
+  "id": "password-gen",
+  "nameKey": "tool.password-gen.name",
+  "descriptionKey": "tool.password-gen.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.password-gen.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "password-gen.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.password-gen.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.password-gen.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:password-gen:main",
+      "titleKey": "tool.password-gen.tour.title",
+      "bodyKey": "tool.password-gen.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

@@ -62,6 +62,9 @@ importers:
       '@cardo/tool-alarm':
         specifier: workspace:*
         version: link:../../packages/tools/alarm
+      '@cardo/tool-bookmarks':
+        specifier: workspace:*
+        version: link:../../packages/tools/bookmarks
       '@cardo/tool-calendar':
         specifier: workspace:*
         version: link:../../packages/tools/calendar
@@ -74,6 +77,9 @@ importers:
       '@cardo/tool-counter':
         specifier: workspace:*
         version: link:../../packages/tools/counter
+      '@cardo/tool-decision-log':
+        specifier: workspace:*
+        version: link:../../packages/tools/decision-log
       '@cardo/tool-eisenhower':
         specifier: workspace:*
         version: link:../../packages/tools/eisenhower
@@ -89,30 +95,60 @@ importers:
       '@cardo/tool-notes':
         specifier: workspace:*
         version: link:../../packages/tools/notes
+      '@cardo/tool-password-gen':
+        specifier: workspace:*
+        version: link:../../packages/tools/password-gen
       '@cardo/tool-pomodoro':
         specifier: workspace:*
         version: link:../../packages/tools/pomodoro
+      '@cardo/tool-qr-generator':
+        specifier: workspace:*
+        version: link:../../packages/tools/qr-generator
       '@cardo/tool-quickcapture':
         specifier: workspace:*
         version: link:../../packages/tools/quickcapture
+      '@cardo/tool-random-picker':
+        specifier: workspace:*
+        version: link:../../packages/tools/random-picker
+      '@cardo/tool-reading-list':
+        specifier: workspace:*
+        version: link:../../packages/tools/reading-list
       '@cardo/tool-routine':
         specifier: workspace:*
         version: link:../../packages/tools/routine
+      '@cardo/tool-savings-jar':
+        specifier: workspace:*
+        version: link:../../packages/tools/savings-jar
+      '@cardo/tool-scratchpad':
+        specifier: workspace:*
+        version: link:../../packages/tools/scratchpad
       '@cardo/tool-stats':
         specifier: workspace:*
         version: link:../../packages/tools/stats
+      '@cardo/tool-sticky-notes':
+        specifier: workspace:*
+        version: link:../../packages/tools/sticky-notes
+      '@cardo/tool-subscriptions':
+        specifier: workspace:*
+        version: link:../../packages/tools/subscriptions
       '@cardo/tool-today':
         specifier: workspace:*
         version: link:../../packages/tools/today
       '@cardo/tool-todo':
         specifier: workspace:*
         version: link:../../packages/tools/todo
+      '@cardo/tool-unit-converter':
+        specifier: workspace:*
+        version: link:../../packages/tools/unit-converter
       '@cardo/tool-weather':
         specifier: workspace:*
         version: link:../../packages/tools/weather
       '@cardo/tool-workclock':
         specifier: workspace:*
         version: link:../../packages/tools/workclock
+      '@cardo/tool-world-clock':
+        specifier: workspace:*
+        version: link:../../packages/tools/world-clock
       '@cardo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -237,6 +273,18 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/bookmarks:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/calendar:
     dependencies:
       '@cardo/plugin-api':
@@ -274,6 +322,18 @@ importers:
         version: 3.25.76
 
   packages/tools/counter:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/decision-log:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*
@@ -351,7 +411,31 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/password-gen:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/pomodoro:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/qr-generator:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*
@@ -375,6 +459,30 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/random-picker:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/reading-list:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/routine:
     dependencies:
       '@cardo/plugin-api':
@@ -387,7 +495,55 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/savings-jar:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/scratchpad:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/stats:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/sticky-notes:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/subscriptions:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*
@@ -423,6 +579,18 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/unit-converter:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/weather:
     dependencies:
       '@cardo/plugin-api':
@@ -436,6 +604,18 @@ importers:
         version: 3.25.76
 
   packages/tools/workclock:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/world-clock:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*

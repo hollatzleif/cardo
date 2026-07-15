@@ -1,0 +1,48 @@
+{
+  "id": "sticky-notes",
+  "nameKey": "tool.sticky-notes.name",
+  "descriptionKey": "tool.sticky-notes.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.sticky-notes.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "sticky-notes.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.sticky-notes.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.sticky-notes.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:sticky-notes:main",
+      "titleKey": "tool.sticky-notes.tour.title",
+      "bodyKey": "tool.sticky-notes.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

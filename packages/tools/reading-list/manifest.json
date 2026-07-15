@@ -1,0 +1,48 @@
+{
+  "id": "reading-list",
+  "nameKey": "tool.reading-list.name",
+  "descriptionKey": "tool.reading-list.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.reading-list.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "reading-list.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.reading-list.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.reading-list.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:reading-list:main",
+      "titleKey": "tool.reading-list.tour.title",
+      "bodyKey": "tool.reading-list.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

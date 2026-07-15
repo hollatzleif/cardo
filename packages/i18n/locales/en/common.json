@@ -931,6 +931,234 @@
         "title": "Eisenhower Matrix",
         "body": "TODO: one-line tour hint for Eisenhower Matrix."
       }
+    },
+    "sticky-notes": {
+      "name": "Sticky Notes",
+      "description": "TODO: describe Sticky Notes.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Sticky Notes: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Sticky Notes",
+        "body": "TODO: one-line tour hint for Sticky Notes."
+      }
+    },
+    "decision-log": {
+      "name": "Decision Log",
+      "description": "TODO: describe Decision Log.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Decision Log: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Decision Log",
+        "body": "TODO: one-line tour hint for Decision Log."
+      }
+    },
+    "reading-list": {
+      "name": "Reading List",
+      "description": "TODO: describe Reading List.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Reading List: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Reading List",
+        "body": "TODO: one-line tour hint for Reading List."
+      }
+    },
+    "scratchpad": {
+      "name": "Scratchpad",
+      "description": "TODO: describe Scratchpad.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Scratchpad: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Scratchpad",
+        "body": "TODO: one-line tour hint for Scratchpad."
+      }
+    },
+    "savings-jar": {
+      "name": "Savings Jar",
+      "description": "TODO: describe Savings Jar.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Savings Jar: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Savings Jar",
+        "body": "TODO: one-line tour hint for Savings Jar."
+      }
+    },
+    "subscriptions": {
+      "name": "Subscriptions",
+      "description": "TODO: describe Subscriptions.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Subscriptions: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Subscriptions",
+        "body": "TODO: one-line tour hint for Subscriptions."
+      }
+    },
+    "unit-converter": {
+      "name": "Unit Converter",
+      "description": "TODO: describe Unit Converter.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Unit Converter: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Unit Converter",
+        "body": "TODO: one-line tour hint for Unit Converter."
+      }
+    },
+    "world-clock": {
+      "name": "World Clock",
+      "description": "TODO: describe World Clock.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "World Clock: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "World Clock",
+        "body": "TODO: one-line tour hint for World Clock."
+      }
+    },
+    "password-gen": {
+      "name": "Password Generator",
+      "description": "TODO: describe Password Generator.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Password Generator: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Password Generator",
+        "body": "TODO: one-line tour hint for Password Generator."
+      }
+    },
+    "random-picker": {
+      "name": "Random Picker",
+      "description": "TODO: describe Random Picker.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Random Picker: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Random Picker",
+        "body": "TODO: one-line tour hint for Random Picker."
+      }
+    },
+    "bookmarks": {
+      "name": "Bookmarks",
+      "description": "TODO: describe Bookmarks.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Bookmarks: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Bookmarks",
+        "body": "TODO: one-line tour hint for Bookmarks."
+      }
+    },
+    "qr-generator": {
+      "name": "QR Codes",
+      "description": "TODO: describe QR Codes.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "QR Codes: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "QR Codes",
+        "body": "TODO: one-line tour hint for QR Codes."
+      }
     }
   },
   "theme": {

@@ -1,0 +1,48 @@
+{
+  "id": "world-clock",
+  "nameKey": "tool.world-clock.name",
+  "descriptionKey": "tool.world-clock.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.world-clock.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "world-clock.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.world-clock.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.world-clock.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:world-clock:main",
+      "titleKey": "tool.world-clock.tour.title",
+      "bodyKey": "tool.world-clock.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

@@ -1,0 +1,48 @@
+{
+  "id": "bookmarks",
+  "nameKey": "tool.bookmarks.name",
+  "descriptionKey": "tool.bookmarks.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.bookmarks.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "bookmarks.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.bookmarks.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.bookmarks.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:bookmarks:main",
+      "titleKey": "tool.bookmarks.tour.title",
+      "bodyKey": "tool.bookmarks.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

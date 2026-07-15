@@ -1,0 +1,48 @@
+{
+  "id": "scratchpad",
+  "nameKey": "tool.scratchpad.name",
+  "descriptionKey": "tool.scratchpad.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.scratchpad.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "scratchpad.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.scratchpad.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.scratchpad.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:scratchpad:main",
+      "titleKey": "tool.scratchpad.tour.title",
+      "bodyKey": "tool.scratchpad.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

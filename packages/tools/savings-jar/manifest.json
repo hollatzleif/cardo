@@ -1,0 +1,48 @@
+{
+  "id": "savings-jar",
+  "nameKey": "tool.savings-jar.name",
+  "descriptionKey": "tool.savings-jar.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.savings-jar.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "savings-jar.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.savings-jar.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.savings-jar.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:savings-jar:main",
+      "titleKey": "tool.savings-jar.tour.title",
+      "bodyKey": "tool.savings-jar.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

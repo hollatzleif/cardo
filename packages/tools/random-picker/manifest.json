@@ -1,0 +1,48 @@
+{
+  "id": "random-picker",
+  "nameKey": "tool.random-picker.name",
+  "descriptionKey": "tool.random-picker.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.random-picker.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "random-picker.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.random-picker.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.random-picker.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:random-picker:main",
+      "titleKey": "tool.random-picker.tour.title",
+      "bodyKey": "tool.random-picker.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

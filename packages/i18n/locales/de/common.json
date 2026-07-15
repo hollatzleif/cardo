@@ -931,6 +931,234 @@
         "title": "Eisenhower-Matrix",
         "body": "TODO: Ein-Zeilen-Tour-Hinweis für Eisenhower-Matrix."
       }
+    },
+    "sticky-notes": {
+      "name": "Haftnotizen",
+      "description": "TODO: Haftnotizen beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Haftnotizen: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Haftnotizen",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Haftnotizen."
+      }
+    },
+    "decision-log": {
+      "name": "Entscheidungslog",
+      "description": "TODO: Entscheidungslog beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Entscheidungslog: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Entscheidungslog",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Entscheidungslog."
+      }
+    },
+    "reading-list": {
+      "name": "Leseliste",
+      "description": "TODO: Leseliste beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Leseliste: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Leseliste",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Leseliste."
+      }
+    },
+    "scratchpad": {
+      "name": "Schmierzettel",
+      "description": "TODO: Schmierzettel beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Schmierzettel: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Schmierzettel",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Schmierzettel."
+      }
+    },
+    "savings-jar": {
+      "name": "Sparglas",
+      "description": "TODO: Sparglas beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Sparglas: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Sparglas",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Sparglas."
+      }
+    },
+    "subscriptions": {
+      "name": "Abos & Rechnungen",
+      "description": "TODO: Abos & Rechnungen beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Abos & Rechnungen: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Abos & Rechnungen",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Abos & Rechnungen."
+      }
+    },
+    "unit-converter": {
+      "name": "Einheiten-Umrechner",
+      "description": "TODO: Einheiten-Umrechner beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Einheiten-Umrechner: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Einheiten-Umrechner",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Einheiten-Umrechner."
+      }
+    },
+    "world-clock": {
+      "name": "Weltuhr",
+      "description": "TODO: Weltuhr beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Weltuhr: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Weltuhr",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Weltuhr."
+      }
+    },
+    "password-gen": {
+      "name": "Passwort-Generator",
+      "description": "TODO: Passwort-Generator beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Passwort-Generator: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Passwort-Generator",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Passwort-Generator."
+      }
+    },
+    "random-picker": {
+      "name": "Zufallsentscheider",
+      "description": "TODO: Zufallsentscheider beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Zufallsentscheider: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Zufallsentscheider",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Zufallsentscheider."
+      }
+    },
+    "bookmarks": {
+      "name": "Lesezeichen",
+      "description": "TODO: Lesezeichen beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Lesezeichen: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Lesezeichen",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Lesezeichen."
+      }
+    },
+    "qr-generator": {
+      "name": "QR-Codes",
+      "description": "TODO: QR-Codes beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "QR-Codes: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "QR-Codes",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für QR-Codes."
+      }
     }
   },
   "theme": {

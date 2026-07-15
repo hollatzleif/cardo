@@ -1,0 +1,48 @@
+{
+  "id": "qr-generator",
+  "nameKey": "tool.qr-generator.name",
+  "descriptionKey": "tool.qr-generator.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.qr-generator.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "qr-generator.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.qr-generator.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.qr-generator.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:qr-generator:main",
+      "titleKey": "tool.qr-generator.tour.title",
+      "bodyKey": "tool.qr-generator.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

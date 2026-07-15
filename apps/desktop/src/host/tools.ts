@@ -18,6 +18,18 @@ import { createTool as createWeatherTool } from '@cardo/tool-weather';
 import { createTool as createHydrationTool } from '@cardo/tool-hydration';
 import { createTool as createFilesExplorerTool } from '@cardo/tool-files-explorer';
 import { createTool as createEisenhowerTool } from '@cardo/tool-eisenhower';
+import { createTool as createStickyNotesTool } from '@cardo/tool-sticky-notes';
+import { createTool as createDecisionLogTool } from '@cardo/tool-decision-log';
+import { createTool as createReadingListTool } from '@cardo/tool-reading-list';
+import { createTool as createScratchpadTool } from '@cardo/tool-scratchpad';
+import { createTool as createSavingsJarTool } from '@cardo/tool-savings-jar';
+import { createTool as createSubscriptionsTool } from '@cardo/tool-subscriptions';
+import { createTool as createUnitConverterTool } from '@cardo/tool-unit-converter';
+import { createTool as createWorldClockTool } from '@cardo/tool-world-clock';
+import { createTool as createPasswordGenTool } from '@cardo/tool-password-gen';
+import { createTool as createRandomPickerTool } from '@cardo/tool-random-picker';
+import { createTool as createBookmarksTool } from '@cardo/tool-bookmarks';
+import { createTool as createQrGeneratorTool } from '@cardo/tool-qr-generator';
 
 /**
  * First-party tool catalog. Every tool ships with the app; "installing" in
@@ -44,6 +56,18 @@ export const toolFactories: Record<string, () => CardoTool> = {
   clock: createClockTool,
   counter: createCounterTool,
   eisenhower: createEisenhowerTool,
+  'sticky-notes': createStickyNotesTool,
+  'decision-log': createDecisionLogTool,
+  'reading-list': createReadingListTool,
+  scratchpad: createScratchpadTool,
+  'savings-jar': createSavingsJarTool,
+  subscriptions: createSubscriptionsTool,
+  'unit-converter': createUnitConverterTool,
+  'world-clock': createWorldClockTool,
+  'password-gen': createPasswordGenTool,
+  'random-picker': createRandomPickerTool,
+  bookmarks: createBookmarksTool,
+  'qr-generator': createQrGeneratorTool,
 };
 
 /** Live instances (widgets render from these). */

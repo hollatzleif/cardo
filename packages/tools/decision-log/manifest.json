@@ -1,0 +1,48 @@
+{
+  "id": "decision-log",
+  "nameKey": "tool.decision-log.name",
+  "descriptionKey": "tool.decision-log.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.decision-log.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "decision-log.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.decision-log.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.decision-log.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:decision-log:main",
+      "titleKey": "tool.decision-log.tour.title",
+      "bodyKey": "tool.decision-log.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

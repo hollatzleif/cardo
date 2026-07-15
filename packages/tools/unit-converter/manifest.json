@@ -1,0 +1,48 @@
+{
+  "id": "unit-converter",
+  "nameKey": "tool.unit-converter.name",
+  "descriptionKey": "tool.unit-converter.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.unit-converter.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "unit-converter.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.unit-converter.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.unit-converter.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:unit-converter:main",
+      "titleKey": "tool.unit-converter.tour.title",
+      "bodyKey": "tool.unit-converter.tour.body"
+    }
+  ],
+  "setupSteps": []
+}
