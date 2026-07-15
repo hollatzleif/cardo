@@ -1213,6 +1213,272 @@
         "title": "QR Codes",
         "body": "TODO: one-line tour hint for QR Codes."
       }
+    },
+    "time-blocking": {
+      "name": "Time Blocking",
+      "description": "TODO: describe Time Blocking.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Time Blocking: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Time Blocking",
+        "body": "TODO: one-line tour hint for Time Blocking."
+      }
+    },
+    "project-tracker": {
+      "name": "Projects",
+      "description": "TODO: describe Projects.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Projects: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Projects",
+        "body": "TODO: one-line tour hint for Projects."
+      }
+    },
+    "okr": {
+      "name": "Goals & OKRs",
+      "description": "TODO: describe Goals & OKRs.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Goals & OKRs: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Goals & OKRs",
+        "body": "TODO: one-line tour hint for Goals & OKRs."
+      }
+    },
+    "flashcards": {
+      "name": "Flashcards",
+      "description": "TODO: describe Flashcards.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Flashcards: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Flashcards",
+        "body": "TODO: one-line tour hint for Flashcards."
+      }
+    },
+    "mood": {
+      "name": "Mood Journal",
+      "description": "TODO: describe Mood Journal.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Mood Journal: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Mood Journal",
+        "body": "TODO: one-line tour hint for Mood Journal."
+      }
+    },
+    "sleep-log": {
+      "name": "Sleep Log",
+      "description": "TODO: describe Sleep Log.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Sleep Log: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Sleep Log",
+        "body": "TODO: one-line tour hint for Sleep Log."
+      }
+    },
+    "workout": {
+      "name": "Workout Log",
+      "description": "TODO: describe Workout Log.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Workout Log: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Workout Log",
+        "body": "TODO: one-line tour hint for Workout Log."
+      }
+    },
+    "meal-planner": {
+      "name": "Meal Planner",
+      "description": "TODO: describe Meal Planner.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Meal Planner: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Meal Planner",
+        "body": "TODO: one-line tour hint for Meal Planner."
+      }
+    },
+    "medication": {
+      "name": "Medication",
+      "description": "TODO: describe Medication.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Medication: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Medication",
+        "body": "TODO: one-line tour hint for Medication."
+      }
+    },
+    "breathing": {
+      "name": "Breathing",
+      "description": "TODO: describe Breathing.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Breathing: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Breathing",
+        "body": "TODO: one-line tour hint for Breathing."
+      }
+    },
+    "shared-expenses": {
+      "name": "Shared Expenses",
+      "description": "TODO: describe Shared Expenses.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Shared Expenses: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Shared Expenses",
+        "body": "TODO: one-line tour hint for Shared Expenses."
+      }
+    },
+    "calculator": {
+      "name": "Calculator",
+      "description": "TODO: describe Calculator.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Calculator: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Calculator",
+        "body": "TODO: one-line tour hint for Calculator."
+      }
+    },
+    "color-tool": {
+      "name": "Colors & Palettes",
+      "description": "TODO: describe Colors & Palettes.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Colors & Palettes: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Colors & Palettes",
+        "body": "TODO: one-line tour hint for Colors & Palettes."
+      }
+    },
+    "snippets": {
+      "name": "Code Snippets",
+      "description": "TODO: describe Code Snippets.",
+      "privacy": "Works fully local. Nothing leaves your device.",
+      "widget": {
+        "empty": "Nothing here yet."
+      },
+      "command": {
+        "context": "Code Snippets: current state"
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Code Snippets",
+        "body": "TODO: one-line tour hint for Code Snippets."
+      }
     }
   },
   "theme": {

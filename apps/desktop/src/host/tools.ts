@@ -30,6 +30,20 @@ import { createTool as createPasswordGenTool } from '@cardo/tool-password-gen';
 import { createTool as createRandomPickerTool } from '@cardo/tool-random-picker';
 import { createTool as createBookmarksTool } from '@cardo/tool-bookmarks';
 import { createTool as createQrGeneratorTool } from '@cardo/tool-qr-generator';
+import { createTool as createTimeBlockingTool } from '@cardo/tool-time-blocking';
+import { createTool as createProjectTrackerTool } from '@cardo/tool-project-tracker';
+import { createTool as createOkrTool } from '@cardo/tool-okr';
+import { createTool as createFlashcardsTool } from '@cardo/tool-flashcards';
+import { createTool as createMoodTool } from '@cardo/tool-mood';
+import { createTool as createSleepLogTool } from '@cardo/tool-sleep-log';
+import { createTool as createWorkoutTool } from '@cardo/tool-workout';
+import { createTool as createMealPlannerTool } from '@cardo/tool-meal-planner';
+import { createTool as createMedicationTool } from '@cardo/tool-medication';
+import { createTool as createBreathingTool } from '@cardo/tool-breathing';
+import { createTool as createSharedExpensesTool } from '@cardo/tool-shared-expenses';
+import { createTool as createCalculatorTool } from '@cardo/tool-calculator';
+import { createTool as createColorToolTool } from '@cardo/tool-color-tool';
+import { createTool as createSnippetsTool } from '@cardo/tool-snippets';
 
 /**
  * First-party tool catalog. Every tool ships with the app; "installing" in
@@ -68,6 +82,20 @@ export const toolFactories: Record<string, () => CardoTool> = {
   'random-picker': createRandomPickerTool,
   bookmarks: createBookmarksTool,
   'qr-generator': createQrGeneratorTool,
+  'time-blocking': createTimeBlockingTool,
+  'project-tracker': createProjectTrackerTool,
+  okr: createOkrTool,
+  flashcards: createFlashcardsTool,
+  mood: createMoodTool,
+  'sleep-log': createSleepLogTool,
+  workout: createWorkoutTool,
+  'meal-planner': createMealPlannerTool,
+  medication: createMedicationTool,
+  breathing: createBreathingTool,
+  'shared-expenses': createSharedExpensesTool,
+  calculator: createCalculatorTool,
+  'color-tool': createColorToolTool,
+  snippets: createSnippetsTool,
 };
 
 /** Live instances (widgets render from these). */

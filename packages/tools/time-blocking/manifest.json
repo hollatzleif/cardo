@@ -1,0 +1,48 @@
+{
+  "id": "time-blocking",
+  "nameKey": "tool.time-blocking.name",
+  "descriptionKey": "tool.time-blocking.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.time-blocking.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "time-blocking.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.time-blocking.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.time-blocking.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:time-blocking:main",
+      "titleKey": "tool.time-blocking.tour.title",
+      "bodyKey": "tool.time-blocking.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

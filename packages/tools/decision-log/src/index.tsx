@@ -211,7 +211,11 @@ export function createTool(): CardoTool {
     const { decisions, focused } = useDecisions();
     const [adding, setAdding] = useState(false);
     const [expanded, setExpanded] = useState<string | null>(null);
-    const open = expanded ?? focused;
+    // A search hit expands its decision exactly like a click would.
+    useEffect(() => {
+      if (focused) setExpanded(focused);
+    }, [focused]);
+    const open = expanded;
 
     return (
       <>

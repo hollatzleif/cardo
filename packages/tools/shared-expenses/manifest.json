@@ -1,0 +1,48 @@
+{
+  "id": "shared-expenses",
+  "nameKey": "tool.shared-expenses.name",
+  "descriptionKey": "tool.shared-expenses.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.shared-expenses.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "shared-expenses.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.shared-expenses.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.shared-expenses.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:shared-expenses:main",
+      "titleKey": "tool.shared-expenses.tour.title",
+      "bodyKey": "tool.shared-expenses.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

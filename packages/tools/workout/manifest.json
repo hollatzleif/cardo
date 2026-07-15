@@ -1,0 +1,48 @@
+{
+  "id": "workout",
+  "nameKey": "tool.workout.name",
+  "descriptionKey": "tool.workout.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.workout.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "workout.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.workout.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.workout.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:workout:main",
+      "titleKey": "tool.workout.tour.title",
+      "bodyKey": "tool.workout.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

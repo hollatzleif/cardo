@@ -1,0 +1,48 @@
+{
+  "id": "snippets",
+  "nameKey": "tool.snippets.name",
+  "descriptionKey": "tool.snippets.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.snippets.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "snippets.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.snippets.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.snippets.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:snippets:main",
+      "titleKey": "tool.snippets.tour.title",
+      "bodyKey": "tool.snippets.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

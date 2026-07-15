@@ -15,26 +15,35 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
         "w": 2,
-        "h": 2
+        "h": 3
       },
-      "variants": []
+      "variants": [
+        "code",
+        "with-caption",
+        "batch"
+      ]
     }
   ],
   "commands": [
+    "qr-generator.make",
     "qr-generator.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.qr-generator.test.render"
+      "id": "matrix",
+      "titleKey": "tool.qr-generator.test.matrix"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.qr-generator.test.storage"
+      "id": "wifi-escaping",
+      "titleKey": "tool.qr-generator.test.wifiEscaping"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.qr-generator.test.render"
     }
   ],
   "tourSteps": [

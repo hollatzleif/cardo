@@ -65,12 +65,21 @@ importers:
       '@cardo/tool-bookmarks':
         specifier: workspace:*
         version: link:../../packages/tools/bookmarks
+      '@cardo/tool-breathing':
+        specifier: workspace:*
+        version: link:../../packages/tools/breathing
+      '@cardo/tool-calculator':
+        specifier: workspace:*
+        version: link:../../packages/tools/calculator
       '@cardo/tool-calendar':
         specifier: workspace:*
         version: link:../../packages/tools/calendar
       '@cardo/tool-clock':
         specifier: workspace:*
         version: link:../../packages/tools/clock
+      '@cardo/tool-color-tool':
+        specifier: workspace:*
+        version: link:../../packages/tools/color-tool
       '@cardo/tool-countdown':
         specifier: workspace:*
         version: link:../../packages/tools/countdown
@@ -86,21 +95,39 @@ importers:
       '@cardo/tool-files-explorer':
         specifier: workspace:*
         version: link:../../packages/tools/files-explorer
+      '@cardo/tool-flashcards':
+        specifier: workspace:*
+        version: link:../../packages/tools/flashcards
       '@cardo/tool-habits':
         specifier: workspace:*
         version: link:../../packages/tools/habits
       '@cardo/tool-hydration':
         specifier: workspace:*
         version: link:../../packages/tools/hydration
+      '@cardo/tool-meal-planner':
+        specifier: workspace:*
+        version: link:../../packages/tools/meal-planner
+      '@cardo/tool-medication':
+        specifier: workspace:*
+        version: link:../../packages/tools/medication
+      '@cardo/tool-mood':
+        specifier: workspace:*
+        version: link:../../packages/tools/mood
       '@cardo/tool-notes':
         specifier: workspace:*
         version: link:../../packages/tools/notes
+      '@cardo/tool-okr':
+        specifier: workspace:*
+        version: link:../../packages/tools/okr
       '@cardo/tool-password-gen':
         specifier: workspace:*
         version: link:../../packages/tools/password-gen
       '@cardo/tool-pomodoro':
         specifier: workspace:*
         version: link:../../packages/tools/pomodoro
+      '@cardo/tool-project-tracker':
+        specifier: workspace:*
+        version: link:../../packages/tools/project-tracker
       '@cardo/tool-qr-generator':
         specifier: workspace:*
         version: link:../../packages/tools/qr-generator
@@ -122,6 +149,15 @@ importers:
       '@cardo/tool-scratchpad':
         specifier: workspace:*
         version: link:../../packages/tools/scratchpad
+      '@cardo/tool-shared-expenses':
+        specifier: workspace:*
+        version: link:../../packages/tools/shared-expenses
+      '@cardo/tool-sleep-log':
+        specifier: workspace:*
+        version: link:../../packages/tools/sleep-log
+      '@cardo/tool-snippets':
+        specifier: workspace:*
+        version: link:../../packages/tools/snippets
       '@cardo/tool-stats':
         specifier: workspace:*
         version: link:../../packages/tools/stats
@@ -131,6 +167,9 @@ importers:
       '@cardo/tool-subscriptions':
         specifier: workspace:*
         version: link:../../packages/tools/subscriptions
+      '@cardo/tool-time-blocking':
+        specifier: workspace:*
+        version: link:../../packages/tools/time-blocking
       '@cardo/tool-today':
         specifier: workspace:*
         version: link:../../packages/tools/today
@@ -146,6 +185,9 @@ importers:
       '@cardo/tool-workclock':
         specifier: workspace:*
         version: link:../../packages/tools/workclock
+      '@cardo/tool-workout':
+        specifier: workspace:*
+        version: link:../../packages/tools/workout
       '@cardo/tool-world-clock':
         specifier: workspace:*
         version: link:../../packages/tools/world-clock
@@ -285,6 +327,30 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/breathing:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/calculator:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/calendar:
     dependencies:
       '@cardo/plugin-api':
@@ -298,6 +364,18 @@ importers:
         version: 3.25.76
 
   packages/tools/clock:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/color-tool:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*
@@ -372,6 +450,18 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/flashcards:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/habits:
     dependencies:
       '@cardo/plugin-api':
@@ -396,6 +486,42 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/meal-planner:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/medication:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/mood:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/notes:
     dependencies:
       '@cardo/plugin-api':
@@ -404,6 +530,18 @@ importers:
       '@cardo/ui':
         specifier: workspace:*
         version: link:../../ui
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/okr:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -435,11 +573,26 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/project-tracker:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/qr-generator:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*
         version: link:../../plugin-api
+      '@cardo/ui':
+        specifier: workspace:*
+        version: link:../../ui
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -522,6 +675,42 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/tools/shared-expenses:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/sleep-log:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/snippets:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/tools/stats:
     dependencies:
       '@cardo/plugin-api':
@@ -547,6 +736,18 @@ importers:
         version: 3.25.76
 
   packages/tools/subscriptions:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/time-blocking:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*
@@ -607,6 +808,18 @@ importers:
         version: 3.25.76
 
   packages/tools/workclock:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/workout:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*

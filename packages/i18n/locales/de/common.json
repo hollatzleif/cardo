@@ -1213,6 +1213,272 @@
         "title": "QR-Codes",
         "body": "TODO: Ein-Zeilen-Tour-Hinweis für QR-Codes."
       }
+    },
+    "time-blocking": {
+      "name": "Zeitblöcke",
+      "description": "TODO: Zeitblöcke beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Zeitblöcke: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Zeitblöcke",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Zeitblöcke."
+      }
+    },
+    "project-tracker": {
+      "name": "Projekte",
+      "description": "TODO: Projekte beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Projekte: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Projekte",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Projekte."
+      }
+    },
+    "okr": {
+      "name": "Ziele & OKRs",
+      "description": "TODO: Ziele & OKRs beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Ziele & OKRs: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Ziele & OKRs",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Ziele & OKRs."
+      }
+    },
+    "flashcards": {
+      "name": "Karteikarten",
+      "description": "TODO: Karteikarten beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Karteikarten: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Karteikarten",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Karteikarten."
+      }
+    },
+    "mood": {
+      "name": "Stimmungstagebuch",
+      "description": "TODO: Stimmungstagebuch beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Stimmungstagebuch: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Stimmungstagebuch",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Stimmungstagebuch."
+      }
+    },
+    "sleep-log": {
+      "name": "Schlaf-Log",
+      "description": "TODO: Schlaf-Log beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Schlaf-Log: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Schlaf-Log",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Schlaf-Log."
+      }
+    },
+    "workout": {
+      "name": "Trainingslog",
+      "description": "TODO: Trainingslog beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Trainingslog: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Trainingslog",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Trainingslog."
+      }
+    },
+    "meal-planner": {
+      "name": "Essensplaner",
+      "description": "TODO: Essensplaner beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Essensplaner: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Essensplaner",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Essensplaner."
+      }
+    },
+    "medication": {
+      "name": "Medikamente",
+      "description": "TODO: Medikamente beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Medikamente: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Medikamente",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Medikamente."
+      }
+    },
+    "breathing": {
+      "name": "Atemübungen",
+      "description": "TODO: Atemübungen beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Atemübungen: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Atemübungen",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Atemübungen."
+      }
+    },
+    "shared-expenses": {
+      "name": "Gemeinsame Ausgaben",
+      "description": "TODO: Gemeinsame Ausgaben beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Gemeinsame Ausgaben: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Gemeinsame Ausgaben",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Gemeinsame Ausgaben."
+      }
+    },
+    "calculator": {
+      "name": "Taschenrechner",
+      "description": "TODO: Taschenrechner beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Taschenrechner: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Taschenrechner",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Taschenrechner."
+      }
+    },
+    "color-tool": {
+      "name": "Farben & Paletten",
+      "description": "TODO: Farben & Paletten beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Farben & Paletten: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Farben & Paletten",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Farben & Paletten."
+      }
+    },
+    "snippets": {
+      "name": "Code-Schnipsel",
+      "description": "TODO: Code-Schnipsel beschreiben.",
+      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "widget": {
+        "empty": "Noch nichts hier."
+      },
+      "command": {
+        "context": "Code-Schnipsel: aktueller Stand"
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Code-Schnipsel",
+        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Code-Schnipsel."
+      }
     }
   },
   "theme": {

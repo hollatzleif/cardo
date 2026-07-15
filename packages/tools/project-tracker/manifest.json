@@ -1,0 +1,48 @@
+{
+  "id": "project-tracker",
+  "nameKey": "tool.project-tracker.name",
+  "descriptionKey": "tool.project-tracker.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.project-tracker.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "project-tracker.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.project-tracker.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.project-tracker.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:project-tracker:main",
+      "titleKey": "tool.project-tracker.tour.title",
+      "bodyKey": "tool.project-tracker.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

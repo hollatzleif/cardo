@@ -1,0 +1,48 @@
+{
+  "id": "meal-planner",
+  "nameKey": "tool.meal-planner.name",
+  "descriptionKey": "tool.meal-planner.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.meal-planner.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "meal-planner.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.meal-planner.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.meal-planner.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:meal-planner:main",
+      "titleKey": "tool.meal-planner.tour.title",
+      "bodyKey": "tool.meal-planner.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

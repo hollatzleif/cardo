@@ -1,0 +1,48 @@
+{
+  "id": "color-tool",
+  "nameKey": "tool.color-tool.name",
+  "descriptionKey": "tool.color-tool.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.color-tool.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "color-tool.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.color-tool.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.color-tool.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:color-tool:main",
+      "titleKey": "tool.color-tool.tour.title",
+      "bodyKey": "tool.color-tool.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

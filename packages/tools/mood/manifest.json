@@ -1,0 +1,48 @@
+{
+  "id": "mood",
+  "nameKey": "tool.mood.name",
+  "descriptionKey": "tool.mood.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.mood.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "mood.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.mood.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.mood.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:mood:main",
+      "titleKey": "tool.mood.tour.title",
+      "bodyKey": "tool.mood.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

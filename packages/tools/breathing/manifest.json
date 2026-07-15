@@ -1,0 +1,48 @@
+{
+  "id": "breathing",
+  "nameKey": "tool.breathing.name",
+  "descriptionKey": "tool.breathing.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.breathing.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "breathing.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.breathing.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.breathing.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:breathing:main",
+      "titleKey": "tool.breathing.tour.title",
+      "bodyKey": "tool.breathing.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

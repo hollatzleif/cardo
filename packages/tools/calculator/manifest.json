@@ -1,0 +1,48 @@
+{
+  "id": "calculator",
+  "nameKey": "tool.calculator.name",
+  "descriptionKey": "tool.calculator.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.calculator.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "calculator.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.calculator.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.calculator.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:calculator:main",
+      "titleKey": "tool.calculator.tour.title",
+      "bodyKey": "tool.calculator.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

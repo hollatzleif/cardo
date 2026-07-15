@@ -1,0 +1,48 @@
+{
+  "id": "flashcards",
+  "nameKey": "tool.flashcards.name",
+  "descriptionKey": "tool.flashcards.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.flashcards.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "flashcards.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.flashcards.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.flashcards.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:flashcards:main",
+      "titleKey": "tool.flashcards.tour.title",
+      "bodyKey": "tool.flashcards.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

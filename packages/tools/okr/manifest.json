@@ -1,0 +1,48 @@
+{
+  "id": "okr",
+  "nameKey": "tool.okr.name",
+  "descriptionKey": "tool.okr.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.okr.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "okr.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.okr.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.okr.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:okr:main",
+      "titleKey": "tool.okr.tour.title",
+      "bodyKey": "tool.okr.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

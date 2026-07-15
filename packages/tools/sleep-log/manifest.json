@@ -1,0 +1,48 @@
+{
+  "id": "sleep-log",
+  "nameKey": "tool.sleep-log.name",
+  "descriptionKey": "tool.sleep-log.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.sleep-log.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "sleep-log.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.sleep-log.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.sleep-log.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:sleep-log:main",
+      "titleKey": "tool.sleep-log.tour.title",
+      "bodyKey": "tool.sleep-log.tour.body"
+    }
+  ],
+  "setupSteps": []
+}
