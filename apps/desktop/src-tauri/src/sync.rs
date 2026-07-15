@@ -65,6 +65,21 @@ pub struct SyncConfig {
     /// The user confirmed the mandatory trust warning.
     #[serde(default)]
     pub trust_confirmed: bool,
+    /// Joining is allowed: the key may be revealed (QR/copy) so NEW devices
+    /// can enter it. Devices that already joined are unaffected by turning
+    /// this off. Default ON – the freshly generated key must be shareable.
+    #[serde(default = "default_true")]
+    pub key_joinable: bool,
+    /// This device generated the key (it manages the device list / kicks).
+    #[serde(default)]
+    pub key_origin: bool,
+    /// This device was kicked via a revocation record (UI shows a banner).
+    #[serde(default)]
+    pub kicked: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 fn config_path(app_data_dir: &std::path::Path) -> PathBuf {
@@ -410,6 +425,34 @@ async fn run_sync_round(
     }
     let _ = app.emit("sync:done", &report);
 
+    // Honor revocation records: kicked devices (or a dissolved group) stop
+    // syncing on their next round.
+    let own_id = app_state.storage.device_id().to_string();
+    let revoked_all = app_state
+        .storage
+        .get(CONTROL_NS, "revoke-all")
+        .await
+        .map_err(|e| e.to_string())?
+        .map(|doc| doc["issuedBy"].as_str().map(str::to_string))
+        .is_some();
+    let revoked_me = app_state
+        .storage
+        .get(CONTROL_NS, &format!("revoke-{own_id}"))
+        .await
+        .map_err(|e| e.to_string())?
+        .is_some();
+    if revoked_all || revoked_me {
+        let mut updated = config_of(&sync_state, &app_state.app_data_dir);
+        // The origin that dissolved the group already handled itself.
+        if !updated.key_origin {
+            updated.enabled = false;
+            updated.kicked = true;
+            store_config(&sync_state, &app_state.app_data_dir, updated)?;
+            let _ = app.emit("sync:revoked", revoked_all);
+            return Ok(report);
+        }
+    }
+
     let mut updated = config;
     updated.last_sync_ms = Some(
         std::time::SystemTime::now()
@@ -457,26 +500,64 @@ fn device_label() -> String {
 type CmdResult<T> = Result<T, String>;
 
 #[tauri::command]
-pub fn sync_generate_key() -> CmdResult<String> {
+pub fn sync_generate_key(
+    app_state: State<'_, AppState>,
+    sync_state: State<'_, SyncState>,
+) -> CmdResult<String> {
     if stored_key()?.is_some() {
         return Err("a sync key already exists on this device".into());
     }
     let key = SyncKey::generate().map_err(|e| e.to_string())?;
     let display = key.display();
     store_key(&display)?;
+    // The generating device manages the sync group (device list, kicks).
+    let mut config = config_of(&sync_state, &app_state.app_data_dir);
+    config.key_origin = true;
+    config.key_joinable = true;
+    config.kicked = false;
+    store_config(&sync_state, &app_state.app_data_dir, config)?;
     Ok(display)
 }
 
 #[tauri::command]
-pub fn sync_set_key(key: String) -> CmdResult<()> {
+pub fn sync_set_key(
+    app_state: State<'_, AppState>,
+    sync_state: State<'_, SyncState>,
+    key: String,
+) -> CmdResult<()> {
     let parsed = SyncKey::parse(&key).map_err(|e| e.to_string())?;
-    store_key(&parsed.display())
+    store_key(&parsed.display())?;
+    let mut config = config_of(&sync_state, &app_state.app_data_dir);
+    config.key_origin = false;
+    config.kicked = false;
+    store_config(&sync_state, &app_state.app_data_dir, config)
 }
 
-/// The key leaves the keychain ONLY for explicit user display (QR/copy).
+/// The key leaves the keychain ONLY for explicit user display (QR/copy) –
+/// and only while joining is enabled (the join toggle gates sharing).
 #[tauri::command]
-pub fn sync_reveal_key() -> CmdResult<Option<String>> {
+pub fn sync_reveal_key(
+    app_state: State<'_, AppState>,
+    sync_state: State<'_, SyncState>,
+) -> CmdResult<Option<String>> {
+    let config = config_of(&sync_state, &app_state.app_data_dir);
+    if !config.key_joinable {
+        return Err("joining is disabled – enable it to share the key".into());
+    }
     Ok(stored_key()?.map(|k| k.display()))
+}
+
+/// Join toggle: ON = the key can be revealed/entered on new devices.
+/// Devices that already joined keep syncing either way.
+#[tauri::command]
+pub fn sync_set_joinable(
+    app_state: State<'_, AppState>,
+    sync_state: State<'_, SyncState>,
+    joinable: bool,
+) -> CmdResult<()> {
+    let mut config = config_of(&sync_state, &app_state.app_data_dir);
+    config.key_joinable = joinable;
+    store_config(&sync_state, &app_state.app_data_dir, config)
 }
 
 #[tauri::command]
@@ -506,6 +587,9 @@ pub async fn sync_status(
         "webdavUrl": config.webdav_url,
         "webdavUser": config.webdav_user,
         "syncLayouts": config.sync_layouts,
+        "keyJoinable": config.key_joinable,
+        "keyOrigin": config.key_origin,
+        "kicked": config.kicked,
         "lastSyncMs": config.last_sync_ms,
         "unsyncedOps": unsynced,
         "devices": devices,
@@ -556,6 +640,9 @@ pub fn sync_configure(
             sync_layouts: args.sync_layouts,
             last_sync_ms: previous.last_sync_ms,
             trust_confirmed: args.trust_confirmed,
+            key_joinable: previous.key_joinable,
+            key_origin: previous.key_origin,
+            kicked: previous.kicked,
         },
     )
 }
@@ -565,26 +652,74 @@ pub async fn sync_now(app: tauri::AppHandle) -> CmdResult<SyncReport> {
     run_sync_round(&app, &device_label()).await
 }
 
-/// Key rotation, step 1: this device forgets the key and disables sync.
-/// The data stays. Generating/entering a new key re-arms the device.
+/// Forgetting the key: on the ORIGIN device this ends the whole sync group –
+/// a revoke-all record is pushed first (best effort) so every connected
+/// device disables itself on its next pull. On joined devices it only takes
+/// this device out. Data stays local either way.
 #[tauri::command]
-pub fn sync_forget_key(
-    app_state: State<'_, AppState>,
-    sync_state: State<'_, SyncState>,
-) -> CmdResult<()> {
+pub async fn sync_forget_key(app: tauri::AppHandle) -> CmdResult<()> {
+    let app_state: State<'_, AppState> = app.state();
+    let sync_state: State<'_, SyncState> = app.state();
+    let config = config_of(&sync_state, &app_state.app_data_dir);
+    if config.key_origin {
+        let own = app_state.storage.device_id().to_string();
+        app_state
+            .storage
+            .set(
+                CONTROL_NS,
+                "revoke-all",
+                json!({
+                    "type": "revocation",
+                    "all": true,
+                    "issuedBy": own,
+                    "atMs": std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .map(|d| d.as_millis() as i64)
+                        .unwrap_or(0),
+                }),
+            )
+            .await
+            .map_err(|e| e.to_string())?;
+        // Best effort: carry the revocation out before the key disappears.
+        let _ = run_sync_round(&app, &device_label()).await;
+    }
     forget_key()?;
     let mut config = config_of(&sync_state, &app_state.app_data_dir);
     config.enabled = false;
+    config.key_origin = false;
     store_config(&sync_state, &app_state.app_data_dir, config)
 }
 
-/// Removes a device from the shared registry (its slot frees up). The
-/// removed device stops converging the moment the key rotates.
+const CONTROL_NS: &str = "core.sync-control";
+
+/// Removes a device from the shared registry AND writes a revocation record
+/// that syncs to every device; the kicked device disables its own sync on
+/// the next pull. Honest limitation (documented in the UI): a device that
+/// keeps the key and ignores the record could still read the hub – real
+/// cryptographic lockout means rotating the key.
 #[tauri::command]
 pub async fn sync_remove_device(
     app_state: State<'_, AppState>,
     device_id: String,
 ) -> CmdResult<()> {
+    let own = app_state.storage.device_id().to_string();
+    app_state
+        .storage
+        .set(
+            CONTROL_NS,
+            &format!("revoke-{device_id}"),
+            json!({
+                "type": "revocation",
+                "deviceId": device_id,
+                "issuedBy": own,
+                "atMs": std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as i64)
+                    .unwrap_or(0),
+            }),
+        )
+        .await
+        .map_err(|e| e.to_string())?;
     let Some(mut doc) =
         app_state.storage.get(DEVICES_NS, DEVICES_DOC).await.map_err(|e| e.to_string())?
     else {

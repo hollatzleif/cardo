@@ -353,6 +353,7 @@ pub fn run() {
             sync::sync_configure,
             sync::sync_now,
             sync::sync_forget_key,
+            sync::sync_set_joinable,
             sync::sync_remove_device,
             sync_gdrive::sync_gdrive_connect,
             sync_gdrive::sync_gdrive_disconnect,

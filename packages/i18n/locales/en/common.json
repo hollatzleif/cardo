@@ -149,7 +149,47 @@
       "trustTitle": "Before sync starts",
       "trustBody": "Your data is end-to-end encrypted before it leaves this device – the storage provider only ever sees unreadable blocks. BUT: anyone who has your sync key can decrypt everything. Share it only with your own devices.",
       "trustRecovery": "If you lose every device AND the key, the synced data cannot be recovered. There is no reset – by design.",
-      "trustConfirm": "I understand – enable sync"
+      "trustConfirm": "I understand – enable sync",
+      "kickedTitle": "This device was removed from the sync group",
+      "kickedBody": "The device that manages the key removed this device (or dissolved the group). Your local data is untouched. To rejoin, enter a currently valid key.",
+      "joinable": "Allow joining with this key",
+      "joinableHint": "ON: the key can be shown/copied so a new device can enter it. OFF: no new devices can join — devices that already joined keep syncing.",
+      "joinableOffHint": "Joining is disabled — enable it to show the key.",
+      "deleteKeyOrigin": "Delete key (ends group)",
+      "forgetConfirmOrigin": "Delete the sync key? This device created it — deleting it DISSOLVES the whole group: every connected device stops syncing on its next round. All data stays on every device locally. Really delete?",
+      "kickDevice": "Remove device",
+      "kickConfirm": "Remove \"{{name}}\" from the sync group? It stops syncing on its next round. Its local data stays on that device. For guaranteed lock-out (e.g. a stolen device), delete this key and create a new one.",
+      "explainTitle": "How does sync work? (the full story)",
+      "explain": {
+        "what": {
+          "title": "What it is",
+          "body": "Sync keeps your Cardo data — to-dos, notes, calendar, habits, settings, assistants and their chats — identical across your devices. It is optional and off by default. Without sync, Cardo remains 100% offline."
+        },
+        "key": {
+          "title": "The key",
+          "body": "Everything is protected by one key (CRD1-…) that YOU generate on your first device. It is stored in the operating system's keychain, never in a file, and never sent anywhere. Anyone who has this key can read your synced data — treat it exactly like a password. The join switch controls whether the key can currently be shown for adding new devices; devices that already joined stay in the group even when it is off."
+        },
+        "crypto": {
+          "title": "The encryption",
+          "body": "Before anything leaves your device, it is end-to-end encrypted (XChaCha20-Poly1305). From your key, two separate keys are derived: one that a storage service may see for authentication, and the data key that never leaves your device. The result: whatever carries your data — Google, your NAS, a folder — only ever sees unreadable blocks and can neither read nor forge your data."
+        },
+        "transports": {
+          "title": "The transports",
+          "body": "You choose where the encrypted blocks travel: your own Google Drive (Cardo only uses its hidden app folder and cannot see your files), any synced folder (iCloud, Dropbox, Syncthing, a network share), or a WebDAV server such as Nextcloud. Cardo runs a sync round every 5 minutes while enabled, plus whenever you press 'Sync now'. Conflicts resolve per field: the newest change wins on every device identically."
+        },
+        "devices": {
+          "title": "Devices, joining, removing",
+          "body": "A key has 10 device slots. The device that created the key manages the group: it sees every device and can remove any of them — a removed device stops syncing on its next round and shows a notice. Deleting the key on the managing device dissolves the whole group. Every device always keeps its full local copy of the data."
+        },
+        "limits": {
+          "title": "Honest limits",
+          "body": "Removal relies on devices honoring the removal record — Cardo devices do. But a device that keeps the key could technically still read new blocks in the storage. If a device is stolen or you don't trust it anymore: delete this key, create a fresh one and re-join your devices. Also: sync is near-real-time (minutes), not instant."
+        },
+        "loss": {
+          "title": "If everything is lost",
+          "body": "There is no recovery service, no reset — by design, because nobody but you holds the key. If you lose every device AND the key, the encrypted data in the storage is permanently unreadable. Your local data on any surviving device is never affected."
+        }
+      }
     }
   },
   "diagnose": {

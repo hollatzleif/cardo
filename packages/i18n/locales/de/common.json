@@ -149,7 +149,47 @@
       "trustTitle": "Bevor Sync startet",
       "trustBody": "Deine Daten werden Ende-zu-Ende verschlüsselt, bevor sie dieses Gerät verlassen – der Speicheranbieter sieht nur unlesbare Blöcke. ABER: Wer deinen Sync-Schlüssel hat, kann alles entschlüsseln. Teile ihn nur mit deinen eigenen Geräten.",
       "trustRecovery": "Verlierst du alle Geräte UND den Schlüssel, sind die synchronisierten Daten nicht wiederherstellbar. Es gibt keinen Reset – mit Absicht.",
-      "trustConfirm": "Verstanden – Sync einschalten"
+      "trustConfirm": "Verstanden – Sync einschalten",
+      "kickedTitle": "Dieses Gerät wurde aus der Sync-Gruppe entfernt",
+      "kickedBody": "Das Gerät, das den Schlüssel verwaltet, hat dieses Gerät entfernt (oder die Gruppe aufgelöst). Deine lokalen Daten sind unberührt. Zum Wiederbeitreten gib einen aktuell gültigen Schlüssel ein.",
+      "joinable": "Beitritt mit diesem Schlüssel erlauben",
+      "joinableHint": "AN: Der Schlüssel kann angezeigt/kopiert werden, damit ein neues Gerät ihn eingibt. AUS: Keine neuen Geräte können beitreten — bereits beigetretene Geräte syncen weiter.",
+      "joinableOffHint": "Beitritt ist deaktiviert — einschalten, um den Schlüssel anzuzeigen.",
+      "deleteKeyOrigin": "Schlüssel löschen (löst Gruppe auf)",
+      "forgetConfirmOrigin": "Sync-Schlüssel löschen? Dieses Gerät hat ihn erzeugt — Löschen LÖST die ganze Gruppe AUF: Jedes verbundene Gerät stoppt den Sync bei seiner nächsten Runde. Alle Daten bleiben auf jedem Gerät lokal erhalten. Wirklich löschen?",
+      "kickDevice": "Gerät entfernen",
+      "kickConfirm": "„{{name}}\" aus der Sync-Gruppe entfernen? Es stoppt den Sync bei seiner nächsten Runde. Seine lokalen Daten bleiben auf dem Gerät. Für garantierten Ausschluss (z. B. gestohlenes Gerät): diesen Schlüssel löschen und einen neuen erzeugen.",
+      "explainTitle": "Wie funktioniert Sync? (die ganze Geschichte)",
+      "explain": {
+        "what": {
+          "title": "Was es ist",
+          "body": "Sync hält deine Cardo-Daten — To-Dos, Notizen, Kalender, Gewohnheiten, Einstellungen, Assistenten samt Chats — auf allen deinen Geräten identisch. Es ist optional und standardmäßig aus. Ohne Sync bleibt Cardo 100 % offline."
+        },
+        "key": {
+          "title": "Der Schlüssel",
+          "body": "Alles wird durch EINEN Schlüssel (CRD1-…) geschützt, den DU auf deinem ersten Gerät erzeugst. Er liegt im Schlüsselbund deines Betriebssystems, nie in einer Datei, und wird nirgendwohin gesendet. Wer diesen Schlüssel hat, kann deine synchronisierten Daten lesen — behandle ihn exakt wie ein Passwort. Der Beitritts-Schalter steuert, ob der Schlüssel gerade angezeigt werden kann, um neue Geräte hinzuzufügen; bereits beigetretene Geräte bleiben auch bei „aus\" in der Gruppe."
+        },
+        "crypto": {
+          "title": "Die Verschlüsselung",
+          "body": "Bevor irgendetwas dein Gerät verlässt, wird es Ende-zu-Ende verschlüsselt (XChaCha20-Poly1305). Aus deinem Schlüssel werden zwei getrennte Schlüssel abgeleitet: einer, den ein Speicherdienst zur Anmeldung sehen darf, und der Daten-Schlüssel, der dein Gerät nie verlässt. Ergebnis: Was auch immer deine Daten trägt — Google, dein NAS, ein Ordner — sieht nur unlesbare Blöcke und kann deine Daten weder lesen noch fälschen."
+        },
+        "transports": {
+          "title": "Die Transporte",
+          "body": "Du wählst, worüber die verschlüsselten Blöcke reisen: dein eigenes Google Drive (Cardo nutzt nur seinen versteckten App-Ordner und sieht deine Dateien nicht), einen beliebigen synchronisierten Ordner (iCloud, Dropbox, Syncthing, Netzwerkfreigabe) oder einen WebDAV-Server wie Nextcloud. Solange Sync an ist, läuft alle 5 Minuten eine Runde — plus immer, wenn du „Jetzt synchronisieren\" drückst. Konflikte lösen sich pro Feld: Die neueste Änderung gewinnt, auf jedem Gerät identisch."
+        },
+        "devices": {
+          "title": "Geräte, Beitritt, Entfernen",
+          "body": "Ein Schlüssel hat 10 Geräteplätze. Das Gerät, das den Schlüssel erzeugt hat, verwaltet die Gruppe: Es sieht alle Geräte und kann jedes entfernen — ein entferntes Gerät stoppt den Sync bei seiner nächsten Runde und zeigt einen Hinweis. Löschst du den Schlüssel auf dem Verwaltungsgerät, löst sich die ganze Gruppe auf. Jedes Gerät behält immer seine vollständige lokale Kopie der Daten."
+        },
+        "limits": {
+          "title": "Ehrliche Grenzen",
+          "body": "Das Entfernen beruht darauf, dass Geräte den Entfernen-Vermerk respektieren — Cardo-Geräte tun das. Ein Gerät, das den Schlüssel behält, könnte technisch aber weiterhin neue Blöcke im Speicher lesen. Wenn ein Gerät gestohlen wurde oder du ihm nicht mehr traust: Lösche diesen Schlüssel, erzeuge einen neuen und lass deine Geräte neu beitreten. Außerdem: Sync ist nahezu-echtzeit (Minuten), nicht sofort."
+        },
+        "loss": {
+          "title": "Wenn alles verloren geht",
+          "body": "Es gibt keinen Wiederherstellungsdienst und keinen Reset — mit Absicht, denn niemand außer dir hat den Schlüssel. Verlierst du ALLE Geräte UND den Schlüssel, sind die verschlüsselten Daten im Speicher dauerhaft unlesbar. Deine lokalen Daten auf jedem verbliebenen Gerät sind davon nie betroffen."
+        }
+      }
     }
   },
   "diagnose": {

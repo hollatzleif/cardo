@@ -28,6 +28,9 @@ interface SyncStatus {
   devices: Array<{ deviceId: string; name: string; lastSeenMs: number }>;
   deviceSlots: number;
   gdriveConnected: boolean;
+  keyJoinable: boolean;
+  keyOrigin: boolean;
+  kicked: boolean;
 }
 
 interface SyncReport {
@@ -170,6 +173,36 @@ export function SyncSection({
 
   return (
     <>
+      {status.kicked && (
+        <Card>
+          <Row
+            label={`⚠️ ${t('settings.sync.kickedTitle')}`}
+            description={t('settings.sync.kickedBody')}
+          />
+        </Card>
+      )}
+
+      {/* ── How it works (detailed, expandable) ─────────────────────── */}
+      <Card>
+        <details className="settings-page__wide">
+          <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
+            {t('settings.sync.explainTitle')}
+          </summary>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginTop: 'var(--space-3)' }}>
+            {(['what', 'key', 'crypto', 'transports', 'devices', 'limits', 'loss'] as const).map(
+              (section) => (
+                <div key={section}>
+                  <strong style={{ fontSize: 14 }}>{t(`settings.sync.explain.${section}.title`)}</strong>
+                  <p className="c-muted" style={{ margin: 'var(--space-1) 0 0', fontSize: 13, lineHeight: 1.6 }}>
+                    {t(`settings.sync.explain.${section}.body`)}
+                  </p>
+                </div>
+              ),
+            )}
+          </div>
+        </details>
+      </Card>
+
       {/* ── Key ─────────────────────────────────────────────────────── */}
       <GroupLabel>{t('settings.sync.keyGroup')}</GroupLabel>
       <Card>
@@ -219,12 +252,26 @@ export function SyncSection({
         ) : (
           <>
             <Row
+              label={t('settings.sync.joinable')}
+              description={t('settings.sync.joinableHint')}
+            >
+              <input
+                type="checkbox"
+                checked={status.keyJoinable}
+                disabled={busy}
+                onChange={(e) =>
+                  void call(() => invoke('sync_set_joinable', { joinable: e.target.checked }))
+                }
+              />
+            </Row>
+            <Row
               label={t('settings.sync.keyPresent')}
               description={`${t('settings.sync.licenseId')}: ${status.licenseId ?? '–'}`}
             >
               <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                 <Button
-                  disabled={busy}
+                  disabled={busy || !status.keyJoinable}
+                  title={status.keyJoinable ? undefined : t('settings.sync.joinableOffHint')}
                   onClick={() =>
                     void call(async () => {
                       const key = await invoke<string | null>('sync_reveal_key');
@@ -238,12 +285,17 @@ export function SyncSection({
                   variant="danger"
                   disabled={busy}
                   onClick={() => {
-                    if (window.confirm(t('settings.sync.forgetConfirm'))) {
+                    const message = status.keyOrigin
+                      ? t('settings.sync.forgetConfirmOrigin')
+                      : t('settings.sync.forgetConfirm');
+                    if (window.confirm(message)) {
                       void call(() => invoke('sync_forget_key'));
                     }
                   }}
                 >
-                  {t('settings.sync.forgetKey')}
+                  {status.keyOrigin
+                    ? t('settings.sync.deleteKeyOrigin')
+                    : t('settings.sync.forgetKey')}
                 </Button>
               </div>
             </Row>
@@ -463,15 +515,18 @@ export function SyncSection({
                     <span className="c-muted" style={{ fontSize: 12 }}>
                       {new Date(device.lastSeenMs).toLocaleDateString()}
                     </span>
-                    {device.deviceId !== status.deviceId && (
+                    {device.deviceId !== status.deviceId && status.keyOrigin && (
                       <Button
                         variant="ghost"
                         disabled={busy}
-                        onClick={() =>
-                          void call(() =>
-                            invoke('sync_remove_device', { deviceId: device.deviceId }),
-                          )
-                        }
+                        title={t('settings.sync.kickDevice')}
+                        onClick={() => {
+                          if (window.confirm(t('settings.sync.kickConfirm', { name: device.name }))) {
+                            void call(() =>
+                              invoke('sync_remove_device', { deviceId: device.deviceId }),
+                            );
+                          }
+                        }}
                       >
                         ✕
                       </Button>
