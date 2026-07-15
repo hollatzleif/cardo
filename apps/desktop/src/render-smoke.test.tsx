@@ -273,7 +273,7 @@ describe('surfaces render and take basic interaction (network down)', () => {
   it('SettingsPage: renders and every sidebar section opens', async () => {
     const { container, unmount } = await render(<SettingsPage />);
     const items = [...container.querySelectorAll('.settings-page__nav-item')];
-    expect(items).toHaveLength(9);
+    expect(items).toHaveLength(10);
 
     // Order mirrors the SECTIONS list in SettingsPage: label key that must
     // show up as the section title + one section-identifying element.

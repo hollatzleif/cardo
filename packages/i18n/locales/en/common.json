@@ -969,249 +969,675 @@
     },
     "eisenhower": {
       "name": "Eisenhower Matrix",
-      "description": "TODO: describe Eisenhower Matrix.",
+      "description": "Sort tasks into four urgent/important quadrants and always know what to do next.",
       "privacy": "Works fully local. Nothing leaves your device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "empty": "No tasks yet – add one above and pick its quadrant.",
+        "addPlaceholder": "Add task… (Enter)",
+        "quadrantLabel": "Quadrant",
+        "toggle": "Toggle task \"{{title}}\"",
+        "moveLabel": "Move \"{{title}}\" to another quadrant",
+        "delete": "Delete task \"{{title}}\""
+      },
+      "quadrant": {
+        "q1": "Urgent & important",
+        "q2": "Important, not urgent",
+        "q3": "Urgent, not important",
+        "q4": "Neither"
+      },
+      "variant": {
+        "matrix": "Matrix",
+        "list": "List"
       },
       "command": {
+        "add": "Add matrix task",
+        "addDesc": "Adds a task to an Eisenhower quadrant (q1 = urgent & important … q4 = neither).",
+        "move": "Move matrix task",
+        "moveDesc": "Moves an existing task to another quadrant by its id.",
+        "complete": "Complete matrix task",
+        "completeDesc": "Marks a matrix task as done by its id.",
         "context": "Eisenhower Matrix: current state"
       },
+      "msg": {
+        "added": "Task added",
+        "moved": "Task moved",
+        "completed": "Task completed",
+        "notFound": "This task no longer exists"
+      },
       "test": {
+        "crud": "Tasks survive add, move, complete and delete",
         "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "context": "Assistant context lists existing tasks"
       },
       "tour": {
         "title": "Eisenhower Matrix",
-        "body": "TODO: one-line tour hint for Eisenhower Matrix."
+        "body": "Type a task, pick its quadrant and press Enter. The checkbox completes a task, the dropdown moves it – in edit mode you can also delete."
       }
     },
     "sticky-notes": {
       "name": "Sticky Notes",
-      "description": "TODO: describe Sticky Notes.",
+      "description": "A freeform wall of colorful sticky notes – drag them around, recolor and edit inline.",
       "privacy": "Works fully local. Nothing leaves your device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "empty": "No notes yet – write one above and stick it to the wall.",
+        "addPlaceholder": "New note… (Enter)",
+        "add": "Add note",
+        "editLabel": "Edit note text",
+        "delete": "Delete note",
+        "setColor": "Pick color {{index}}"
+      },
+      "variant": {
+        "wall": "Wall",
+        "grid": "Grid"
       },
       "command": {
+        "add": "Add sticky note",
+        "addDesc": "Sticks a new note to the wall; the color (chart-1 … chart-8) is optional and rotates otherwise.",
         "context": "Sticky Notes: current state"
       },
+      "msg": {
+        "added": "Note added"
+      },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Notes survive create, read, update and delete",
+        "zorder": "Clicked notes come to the front, the top note stays stable",
+        "render": "Widget renders"
       },
       "tour": {
         "title": "Sticky Notes",
-        "body": "TODO: one-line tour hint for Sticky Notes."
+        "body": "Write a note and press Enter. Drag notes anywhere, double-click to edit the text and pick a new color – in edit mode you can also delete."
       }
     },
     "decision-log": {
       "name": "Decision Log",
-      "description": "TODO: describe Decision Log.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "A searchable log of your decisions – context, options, decision and rationale as markdown files.",
+      "privacy": "Works fully local. Decisions are saved as markdown files in your folder. Nothing leaves your device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "add": "Log decision",
+        "empty": "No decisions logged yet.",
+        "count": "Decisions"
+      },
+      "form": {
+        "title": "What was decided? (title)",
+        "context": "Context (optional)",
+        "options": "Options (optional)",
+        "decision": "Decision",
+        "rationale": "Rationale (optional)",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "section": {
+        "context": "Context",
+        "options": "Options",
+        "decision": "Decision",
+        "rationale": "Rationale"
+      },
+      "variant": {
+        "log": "Log",
+        "detail": "Detail",
+        "compact": "Compact"
       },
       "command": {
-        "context": "Decision Log: current state"
+        "add": "Log a decision",
+        "addDesc": "Records a decision as a markdown document (title and decision required; context, options and rationale optional).",
+        "context": "Decision log: current state"
+      },
+      "msg": {
+        "created": "Decision logged."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "roundtrip": "Markdown serialize → parse round-trip",
+        "crud": "Store add/list/remove roundtrip",
+        "render": "Widget renders and context builds"
       },
       "tour": {
         "title": "Decision Log",
-        "body": "TODO: one-line tour hint for Decision Log."
+        "body": "Log decisions with context and rationale – each one becomes a searchable markdown file."
       }
     },
     "reading-list": {
       "name": "Reading List",
-      "description": "TODO: describe Reading List.",
+      "description": "A queue for articles and books – track what you want to read, are reading, and have finished.",
       "privacy": "Works fully local. Nothing leaves your device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "addPlaceholder": "Add title…",
+        "urlPlaceholder": "Link (optional)",
+        "empty": "Nothing on your reading list yet.",
+        "statusLabel": "Status of \"{{title}}\"",
+        "notesToggle": "Notes for \"{{title}}\"",
+        "notesPlaceholder": "Your notes…",
+        "sendToNotes": "Send \"{{title}}\" to notes",
+        "sent": "Saved as note",
+        "delete": "Delete \"{{title}}\""
+      },
+      "status": {
+        "queued": "Queued",
+        "reading": "Reading",
+        "done": "Done"
+      },
+      "variant": {
+        "list": "List",
+        "cards": "Cards",
+        "kanban": "Board"
       },
       "command": {
-        "context": "Reading List: current state"
+        "add": "Add to reading list",
+        "addDesc": "Adds an article or book (title, optional http/https link) to the reading list.",
+        "setStatus": "Set reading status",
+        "setStatusDesc": "Moves a reading-list item to queued, reading or done (needs the item id).",
+        "context": "Reading list: current state"
+      },
+      "msg": {
+        "created": "Added to the reading list.",
+        "statusSet": "Status updated.",
+        "invalidUrl": "Only http/https links are allowed.",
+        "notFound": "Item not found."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Item create/read/delete roundtrip",
+        "statusFlow": "Status flow queued → reading → done",
+        "render": "Widget renders and sorts correctly"
       },
       "tour": {
         "title": "Reading List",
-        "body": "TODO: one-line tour hint for Reading List."
+        "body": "Collect articles and books, move them from queued to done – and send any item to your notes."
       }
     },
     "scratchpad": {
       "name": "Scratchpad",
-      "description": "TODO: describe Scratchpad.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "One always-there markdown note for quick thoughts – with autosave and live preview.",
+      "privacy": "Works fully local. The pad is saved as scratchpad.md in your folder. Nothing leaves your device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "placeholder": "Jot something down…",
+        "editorLabel": "Scratchpad editor",
+        "empty": "The scratchpad is empty.",
+        "tab": {
+          "edit": "Edit",
+          "preview": "Preview"
+        },
+        "clear": "Clear",
+        "clearConfirm": "Clear the whole scratchpad? This cannot be undone.",
+        "settingsToggle": "Scratchpad settings"
+      },
+      "settings": {
+        "monospace": "Monospace font",
+        "previewRender": "Preview tab in edit view"
+      },
+      "variant": {
+        "edit": "Editor",
+        "split": "Split",
+        "preview": "Preview"
       },
       "command": {
+        "append": "Append to scratchpad",
+        "appendDesc": "Appends a line of text to the scratchpad (great for quickly parking thoughts).",
+        "clear": "Clear scratchpad",
+        "clearDesc": "Empties the scratchpad completely. Cannot be undone.",
         "context": "Scratchpad: current state"
       },
+      "msg": {
+        "appended": "Added to the scratchpad.",
+        "cleared": "Scratchpad cleared."
+      },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "roundtrip": "Save → load → append roundtrip",
+        "appendCommand": "Append handles newlines and empty pad",
+        "render": "Widget renders, markdown preview works"
       },
       "tour": {
         "title": "Scratchpad",
-        "body": "TODO: one-line tour hint for Scratchpad."
+        "body": "One always-there note: type and it saves itself – markdown, math and [[wiki-links]] render in the preview."
       }
     },
     "savings-jar": {
       "name": "Savings Jar",
-      "description": "TODO: describe Savings Jar.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "Visual savings goals – watch your jars fill up as you save.",
+      "privacy": "Works fully offline. Your savings goals never leave this device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "empty": "No savings goals yet – add your first one above.",
+        "namePlaceholder": "Goal name",
+        "targetPlaceholder": "Target",
+        "deadlineLabel": "Target date (optional)",
+        "addGoal": "Add goal",
+        "amountLabel": "Amount to add",
+        "contribute": "Add to {{name}}",
+        "deleteGoal": "Delete {{name}}",
+        "progressLabel": "{{name}}: {{saved}} of {{target}} saved",
+        "deadline": "by {{date}}",
+        "perDay": "{{amount}}/day needed",
+        "onTrack": "on track",
+        "behind": "behind plan",
+        "reached": "Goal reached! 🎉",
+        "settingsToggle": "Show or hide settings"
+      },
+      "settings": {
+        "currency": "Currency symbol"
       },
       "command": {
-        "context": "Savings Jar: current state"
+        "addGoal": "Add savings goal",
+        "addGoalDesc": "Creates a new savings goal with a name, target amount and optional target date (yyyy-mm-dd).",
+        "contribute": "Add money to a savings goal",
+        "contributeDesc": "Adds a positive amount to an existing savings goal; goal ids are listed in the savings context.",
+        "context": "Savings context (internal)",
+        "contextDesc": "Summarizes all savings goals with their progress, deadlines and ids for the assistant."
+      },
+      "msg": {
+        "goalAdded": "Savings goal added.",
+        "contributed": "Contribution saved.",
+        "invalidDeadline": "The target date is not a valid date (yyyy-mm-dd).",
+        "notFound": "This savings goal no longer exists."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Goals can be created, read and deleted",
+        "contributeCommand": "Contributions increase a goal's saved amount",
+        "render": "Savings jar renders"
       },
       "tour": {
-        "title": "Savings Jar",
-        "body": "TODO: one-line tour hint for Savings Jar."
+        "title": "Your savings goals",
+        "body": "Create a goal, add money whenever you put something aside, and watch the jar fill up. Everything stays on this device."
+      },
+      "variant": {
+        "jar": "Jars",
+        "bar": "Bars",
+        "cards": "Cards"
       }
     },
     "subscriptions": {
       "name": "Subscriptions",
-      "description": "TODO: describe Subscriptions.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "Keeps track of recurring costs and shows what they add up to per month.",
+      "privacy": "Works fully offline. Your subscriptions never leave this device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "empty": "No subscriptions yet – add your first one above.",
+        "namePlaceholder": "Name",
+        "amountLabel": "Amount",
+        "cycleLabel": "Billing cycle",
+        "nextDueLabel": "Next due date",
+        "add": "Add subscription",
+        "delete": "Delete {{name}}",
+        "markPaid": "Mark {{name}} as paid – rolls the due date forward",
+        "totalMonthly": "≈ {{total}} per month",
+        "perMonth": "per month",
+        "dueOn": "Due on {{date}}",
+        "noDuesThisMonth": "Nothing due this month.",
+        "top3": "Biggest costs",
+        "settingsToggle": "Show or hide settings"
+      },
+      "settings": {
+        "currency": "Currency symbol"
+      },
+      "cycle": {
+        "weekly": "weekly",
+        "monthly": "monthly",
+        "quarterly": "quarterly",
+        "yearly": "yearly"
       },
       "command": {
-        "context": "Subscriptions: current state"
+        "add": "Add subscription",
+        "addDesc": "Creates a subscription with name, amount, billing cycle (weekly/monthly/quarterly/yearly) and next due date (yyyy-mm-dd).",
+        "context": "Subscriptions context (internal)",
+        "contextDesc": "Summarizes all subscriptions, the exact monthly total and the next due dates for the assistant."
+      },
+      "msg": {
+        "added": "Subscription added.",
+        "invalidDate": "The due date is not a valid date (yyyy-mm-dd)."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Subscriptions can be created, read and deleted",
+        "total": "Monthly total is computed correctly",
+        "render": "Subscriptions widget renders"
       },
       "tour": {
-        "title": "Subscriptions",
-        "body": "TODO: one-line tour hint for Subscriptions."
+        "title": "Your recurring costs",
+        "body": "Add your subscriptions once and Cardo shows what they cost per month and what is due next – fully offline."
+      },
+      "variant": {
+        "list": "List",
+        "total-first": "Total first",
+        "calendar": "Calendar"
       }
     },
     "unit-converter": {
       "name": "Unit Converter",
-      "description": "TODO: describe Unit Converter.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "Converts length, weight, temperature, data, speed, volume and area units.",
+      "privacy": "Works fully offline. Nothing you convert leaves this device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "valueLabel": "Value to convert",
+        "fromLabel": "From unit",
+        "toLabel": "To unit",
+        "categoryLabel": "Category",
+        "swap": "Swap units",
+        "settingsToggle": "Show or hide settings"
+      },
+      "settings": {
+        "decimals": "Decimal places (0–6)",
+        "defaultCategory": "Default category"
+      },
+      "category": {
+        "length": "Length",
+        "weight": "Weight",
+        "temperature": "Temperature",
+        "data": "Data",
+        "speed": "Speed",
+        "volume": "Volume",
+        "area": "Area"
+      },
+      "unit": {
+        "mm": "mm",
+        "cm": "cm",
+        "m": "m",
+        "km": "km",
+        "in": "in",
+        "ft": "ft",
+        "yd": "yd",
+        "mi": "mi",
+        "mg": "mg",
+        "g": "g",
+        "kg": "kg",
+        "t": "t",
+        "oz": "oz",
+        "lb": "lb",
+        "c": "°C",
+        "f": "°F",
+        "k": "K",
+        "B": "B",
+        "KB": "KB",
+        "MB": "MB",
+        "GB": "GB",
+        "TB": "TB",
+        "KiB": "KiB",
+        "MiB": "MiB",
+        "GiB": "GiB",
+        "TiB": "TiB",
+        "m/s": "m/s",
+        "km/h": "km/h",
+        "mph": "mph",
+        "kn": "kn",
+        "ft/s": "ft/s",
+        "ml": "ml",
+        "cl": "cl",
+        "l": "l",
+        "m3": "m³",
+        "tsp": "tsp",
+        "tbsp": "tbsp",
+        "floz": "fl oz",
+        "cup": "cup",
+        "pt": "pt",
+        "qt": "qt",
+        "gal": "gal",
+        "cm2": "cm²",
+        "m2": "m²",
+        "ha": "ha",
+        "km2": "km²",
+        "in2": "in²",
+        "ft2": "ft²",
+        "acre": "acre",
+        "mi2": "mi²"
       },
       "command": {
-        "context": "Unit Converter: current state"
+        "convert": "Convert units",
+        "convertDesc": "Converts a value between two units (e.g. km→mi, °C→°F, GiB→GB); the category is inferred and data.text carries the formatted answer.",
+        "context": "Converter context (internal)",
+        "contextDesc": "Tells the assistant which unit pair was converted last."
+      },
+      "msg": {
+        "converted": "Converted.",
+        "unknownUnit": "Unknown unit or mismatched categories."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "conversions": "Known-value conversions are exact",
+        "convertCommand": "Convert command answers and remembers the pair",
+        "render": "Unit converter renders"
       },
       "tour": {
-        "title": "Unit Converter",
-        "body": "TODO: one-line tour hint for Unit Converter."
+        "title": "Convert anything",
+        "body": "Pick a category, choose two units and type a value – the result updates live. Decimals and your default category live behind the gear."
+      },
+      "variant": {
+        "converter": "Converter",
+        "category-tabs": "Category tabs",
+        "compact": "Compact"
       }
     },
     "world-clock": {
       "name": "World Clock",
-      "description": "TODO: describe World Clock.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "The current time in up to eight places at once – daylight-saving safe.",
+      "privacy": "Works fully offline. Your time zones never leave this device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "empty": "No time zones yet – add one above.",
+        "tzPlaceholder": "Time zone (e.g. Europe/Berlin)",
+        "tzLabel": "IANA time zone",
+        "labelPlaceholder": "Label (optional)",
+        "add": "Add time zone",
+        "remove": "Remove {{label}}",
+        "invalidZone": "Unknown time zone – pick one from the list.",
+        "maxReached": "Maximum of {{max}} time zones reached.",
+        "day": "Daytime (06:00–20:00)",
+        "night": "Night"
       },
       "command": {
-        "context": "World Clock: current state"
+        "addZone": "Add a time zone",
+        "addZoneDesc": "Adds an IANA time zone (e.g. \"America/New_York\") to the world clock, with an optional label.",
+        "context": "World clock context (internal)",
+        "contextDesc": "Lists the configured time zones with their current local times for the assistant."
+      },
+      "msg": {
+        "zoneAdded": "Time zone added.",
+        "zoneExists": "This time zone is already on the list.",
+        "invalidZone": "That is not a valid IANA time zone.",
+        "maxZones": "The world clock already holds the maximum number of time zones."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "zonesCrud": "Time zones can be added and removed",
+        "tzValidation": "Time zone validation and conversion work",
+        "render": "World clock renders"
       },
       "tour": {
-        "title": "World Clock",
-        "body": "TODO: one-line tour hint for World Clock."
+        "title": "The world at a glance",
+        "body": "Add the places you care about and see their local times side by side – with day and night at a glance."
+      },
+      "variant": {
+        "list": "List",
+        "grid": "Grid",
+        "analog-row": "Analog"
       }
     },
     "password-gen": {
       "name": "Password Generator",
-      "description": "TODO: describe Password Generator.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "Generates strong passwords and passphrases – fully local, nothing is ever stored.",
+      "privacy": "Works fully offline. Generated passwords are never saved or transmitted – they exist only on your screen.",
       "widget": {
-        "empty": "Nothing here yet."
+        "valueLabel": "Generated value – click to select it",
+        "noClasses": "Enable at least one character set in the settings.",
+        "regenerate": "New",
+        "copy": "Copy",
+        "copied": "Copied!",
+        "settingsToggle": "Show or hide settings",
+        "strengthLabel": "Password strength",
+        "strength": {
+          "weak": "Weak",
+          "ok": "Okay",
+          "strong": "Strong",
+          "excellent": "Excellent"
+        },
+        "bits": "{{bits}} bits"
+      },
+      "settings": {
+        "length": "Length",
+        "lower": "Lowercase (a–z)",
+        "upper": "Uppercase (A–Z)",
+        "digits": "Digits (0–9)",
+        "symbols": "Symbols (!$%…)",
+        "excludeAmbiguous": "Exclude ambiguous (O0Il1|)",
+        "words": "Words",
+        "separator": "Separator"
       },
       "command": {
-        "context": "Password Generator: current state"
+        "generate": "Generate password",
+        "generateDesc": "Generates a strong random password using the saved preferences; an optional length (8–128) overrides the setting. The password is returned in the result and never stored."
+      },
+      "msg": {
+        "generated": "Password generated.",
+        "noClasses": "No character set enabled – check the generator settings."
       },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "noPersist": "Generating leaves no trace in storage",
+        "determinism": "Injected randomness is deterministic",
+        "render": "Widget renders"
       },
       "tour": {
-        "title": "Password Generator",
-        "body": "TODO: one-line tour hint for Password Generator."
+        "title": "Strong passwords",
+        "body": "One click gives you a fresh password or passphrase. Nothing is ever saved – copy it straight into the app that needs it."
+      },
+      "variant": {
+        "generator": "Generator",
+        "passphrase": "Passphrase",
+        "compact": "Compact"
       }
     },
     "random-picker": {
       "name": "Random Picker",
-      "description": "TODO: describe Random Picker.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "Decision wheel, list picker and dice – let fair randomness decide, fully local.",
+      "privacy": "Works fully offline. Your lists and picks never leave this device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "listLabel": "Choose a list",
+        "noLists": "No lists yet",
+        "addList": "Add a list",
+        "newListName": "List {{n}}",
+        "empty": "Add entries in the list view – then the wheel can spin.",
+        "itemsPlaceholder": "One option per line (or comma-separated) …",
+        "removeOnPick": "Remove picked entries from the list",
+        "pick": "Pick",
+        "spin": "Spin",
+        "spinning": "Spinning …",
+        "wheelLabel": "Decision wheel",
+        "diceLabel": "Dice, e.g. 2d6",
+        "roll": "Roll",
+        "invalidDice": "Use the NdM format, e.g. 2d6 (max 20 dice, 1000 sides)."
       },
       "command": {
+        "pick": "Pick a random entry",
+        "pickDesc": "Picks one entry uniformly at random from the named list (or the first list). Lists marked accordingly consume the picked entry.",
+        "roll": "Roll dice",
+        "rollDesc": "Rolls dice in NdM notation, e.g. \"2d6\" for two six-sided dice (max 20 dice with up to 1000 sides). Returns the faces and the total.",
         "context": "Random Picker: current state"
       },
+      "msg": {
+        "picked": "Picked!",
+        "rolled": "Rolled!",
+        "empty": "Nothing to pick – add a list with entries first.",
+        "invalidDice": "Invalid dice – use NdM, e.g. 2d6."
+      },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Lists survive create, update and delete",
+        "pickCommand": "Picking returns a member and consumes it",
+        "diceLogic": "Dice parser rejects edge cases, faces stay in range",
+        "render": "Widget renders"
       },
       "tour": {
-        "title": "Random Picker",
-        "body": "TODO: one-line tour hint for Random Picker."
+        "title": "Let chance decide",
+        "body": "Put your options into a list and spin the wheel – or switch the widget to the list or dice view. Everything stays on this device."
+      },
+      "variant": {
+        "wheel": "Wheel",
+        "list": "List",
+        "dice": "Dice"
       }
     },
     "bookmarks": {
       "name": "Bookmarks",
-      "description": "TODO: describe Bookmarks.",
+      "description": "Your favorite links as a dashboard – grouped into folders, opened with one click.",
       "privacy": "Works fully local. Nothing leaves your device.",
       "widget": {
-        "empty": "Nothing here yet."
+        "empty": "No bookmarks yet – add a link above.",
+        "urlPlaceholder": "URL… (Enter)",
+        "titlePlaceholder": "Title",
+        "folderPlaceholder": "Folder",
+        "add": "Add bookmark",
+        "open": "Open \"{{title}}\"",
+        "delete": "Delete bookmark \"{{title}}\"",
+        "unsorted": "Unfiled"
+      },
+      "variant": {
+        "grid": "Grid",
+        "list": "List",
+        "speed-dial": "Speed dial"
       },
       "command": {
+        "add": "Add bookmark",
+        "addDesc": "Saves an http(s) link with title and optional folder; other URL schemes are rejected.",
         "context": "Bookmarks: current state"
       },
+      "msg": {
+        "added": "Bookmark added",
+        "invalidUrl": "Invalid URL – only http:// and https:// links work"
+      },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "crud": "Links survive create, read and delete",
+        "urlValidation": "Malicious URL schemes are rejected",
+        "render": "Widget renders"
       },
       "tour": {
         "title": "Bookmarks",
-        "body": "TODO: one-line tour hint for Bookmarks."
+        "body": "Add a link with URL, title and optional folder. A click opens it in your browser – in edit mode you can delete bookmarks."
       }
     },
     "qr-generator": {
       "name": "QR Codes",
-      "description": "TODO: describe QR Codes.",
-      "privacy": "Works fully local. Nothing leaves your device.",
+      "description": "Turns text, links and Wi-Fi credentials into QR codes – generated fully offline.",
+      "privacy": "Works fully offline. Whatever you encode never leaves this device – the QR code is computed locally.",
       "widget": {
-        "empty": "Nothing here yet."
+        "mode": {
+          "text": "Text",
+          "url": "Link",
+          "wifi": "Wi-Fi"
+        },
+        "placeholder": {
+          "text": "Text to encode …",
+          "url": "example.org …"
+        },
+        "ssidPlaceholder": "Network name (SSID)",
+        "passwordPlaceholder": "Password",
+        "securityLabel": "Encryption",
+        "security": {
+          "WPA": "WPA/WPA2",
+          "WEP": "WEP",
+          "nopass": "Open"
+        },
+        "qrLabel": "Generated QR code",
+        "empty": "Enter something above – the QR code appears instantly.",
+        "tooLong": "Too long for a QR code (max. 213 bytes).",
+        "savePng": "Save PNG",
+        "settingsToggle": "Show or hide settings",
+        "batchPlaceholder": "One QR code per line …",
+        "batchEmpty": "Enter one line per code above."
+      },
+      "settings": {
+        "size": "Size",
+        "saveRecent": "Remember recent inputs",
+        "ecInfo": "Error correction level M – about 15% of the code may be damaged and still scan."
       },
       "command": {
+        "make": "Create QR code",
+        "makeDesc": "Encodes the given text as a QR code and shows it in the widget. Fails when the text exceeds the QR capacity (213 bytes).",
         "context": "QR Codes: current state"
       },
+      "msg": {
+        "made": "QR code created.",
+        "tooLong": "Too long for a QR code (max. 213 bytes)."
+      },
       "test": {
-        "render": "Widget renders",
-        "storage": "Storage roundtrip works"
+        "matrix": "Encoder produces a structurally valid symbol",
+        "wifiEscaping": "Wi-Fi payload escaping follows the spec",
+        "render": "Widget renders"
       },
       "tour": {
-        "title": "QR Codes",
-        "body": "TODO: one-line tour hint for QR Codes."
+        "title": "QR codes, fully offline",
+        "body": "Type a text, a link or your Wi-Fi credentials and the QR code appears instantly – computed on this device, ready to save as PNG."
+      },
+      "variant": {
+        "code": "Code",
+        "with-caption": "With caption",
+        "batch": "Batch"
       }
     },
     "time-blocking": {

@@ -11,8 +11,27 @@ export interface UserThemeOverrides {
   accentToken?: string;
 }
 
+/**
+ * User-created themes (theme editor). Registered at startup and after every
+ * edit; they resolve by id exactly like built-ins, so the rest of the app
+ * never distinguishes the two.
+ */
+let customThemes: Theme[] = [];
+
+export function setCustomThemes(themes: Theme[]): void {
+  customThemes = themes;
+}
+
+export function getCustomThemes(): Theme[] {
+  return customThemes;
+}
+
+export function resolveTheme(themeId: string): Theme {
+  return customThemes.find((t) => t.id === themeId) ?? getTheme(themeId);
+}
+
 export function applyTheme(themeId: string, overrides: UserThemeOverrides = {}): Theme {
-  const theme = getTheme(themeId);
+  const theme = resolveTheme(themeId);
   const root = document.documentElement;
   for (const token of REQUIRED_PALETTE_TOKENS) {
     root.style.setProperty(`--palette-${token}`, theme.palette[token]);

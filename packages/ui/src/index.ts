@@ -1,4 +1,4 @@
-export { applyTheme, widgetAccentStyle, type UserThemeOverrides } from './theme';
+export { applyTheme, widgetAccentStyle, setCustomThemes, getCustomThemes, resolveTheme, type UserThemeOverrides } from './theme';
 export { Button, Input, Card, Modal, PrivacyBadge, SetupGuide } from './components';
 export { renderMathHtml } from './math';
 export { escapeHtml, renderInline, renderMarkdown } from './markdown';

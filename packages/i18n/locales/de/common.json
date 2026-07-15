@@ -969,249 +969,675 @@
     },
     "eisenhower": {
       "name": "Eisenhower-Matrix",
-      "description": "TODO: Eisenhower-Matrix beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Sortiere Aufgaben in vier Dringend/Wichtig-Quadranten und wisse immer, was als Nächstes dran ist.",
+      "privacy": "Funktioniert komplett lokal. Nichts verlässt dein Gerät.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "empty": "Noch keine Aufgaben – füge oben eine hinzu und wähle den Quadranten.",
+        "addPlaceholder": "Aufgabe hinzufügen… (Enter)",
+        "quadrantLabel": "Quadrant",
+        "toggle": "Aufgabe \"{{title}}\" umschalten",
+        "moveLabel": "\"{{title}}\" in einen anderen Quadranten verschieben",
+        "delete": "Aufgabe \"{{title}}\" löschen"
+      },
+      "quadrant": {
+        "q1": "Dringend & wichtig",
+        "q2": "Wichtig, nicht dringend",
+        "q3": "Dringend, nicht wichtig",
+        "q4": "Weder noch"
+      },
+      "variant": {
+        "matrix": "Matrix",
+        "list": "Liste"
       },
       "command": {
-        "context": "Eisenhower-Matrix: aktueller Stand"
+        "add": "Matrix-Aufgabe hinzufügen",
+        "addDesc": "Fügt eine Aufgabe in einen Eisenhower-Quadranten ein (q1 = dringend & wichtig … q4 = weder noch).",
+        "move": "Matrix-Aufgabe verschieben",
+        "moveDesc": "Verschiebt eine bestehende Aufgabe anhand ihrer Id in einen anderen Quadranten.",
+        "complete": "Matrix-Aufgabe erledigen",
+        "completeDesc": "Markiert eine Matrix-Aufgabe anhand ihrer Id als erledigt.",
+        "context": "Aktuelle Matrix (für den Assistenten)"
+      },
+      "msg": {
+        "added": "Aufgabe hinzugefügt",
+        "moved": "Aufgabe verschoben",
+        "completed": "Aufgabe erledigt",
+        "notFound": "Diese Aufgabe existiert nicht mehr"
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Aufgaben überstehen Hinzufügen, Verschieben, Erledigen und Löschen",
+        "render": "Widget rendert",
+        "context": "Assistenten-Kontext listet vorhandene Aufgaben"
       },
       "tour": {
         "title": "Eisenhower-Matrix",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Eisenhower-Matrix."
+        "body": "Tippe eine Aufgabe, wähle den Quadranten und drücke Enter. Das Häkchen erledigt eine Aufgabe, das Dropdown verschiebt sie – im Bearbeiten-Modus kannst du auch löschen."
       }
     },
     "sticky-notes": {
       "name": "Haftnotizen",
-      "description": "TODO: Haftnotizen beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Eine freie Wand voller bunter Haftnotizen – verschiebe sie, färbe sie um und bearbeite sie direkt.",
+      "privacy": "Funktioniert komplett lokal. Nichts verlässt dein Gerät.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "empty": "Noch keine Notizen – schreibe oben eine und hefte sie an die Wand.",
+        "addPlaceholder": "Neue Notiz… (Enter)",
+        "add": "Notiz hinzufügen",
+        "editLabel": "Notiztext bearbeiten",
+        "delete": "Notiz löschen",
+        "setColor": "Farbe {{index}} wählen"
+      },
+      "variant": {
+        "wall": "Wand",
+        "grid": "Raster"
       },
       "command": {
-        "context": "Haftnotizen: aktueller Stand"
+        "add": "Haftnotiz hinzufügen",
+        "addDesc": "Heftet eine neue Notiz an die Wand; die Farbe (chart-1 … chart-8) ist optional und rotiert sonst.",
+        "context": "Aktuelle Notizen (für den Assistenten)"
+      },
+      "msg": {
+        "added": "Notiz hinzugefügt"
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Notizen überstehen Anlegen, Lesen, Ändern und Löschen",
+        "zorder": "Angeklickte Notizen kommen nach vorn, die oberste bleibt stabil",
+        "render": "Widget rendert"
       },
       "tour": {
         "title": "Haftnotizen",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Haftnotizen."
+        "body": "Schreibe eine Notiz und drücke Enter. Ziehe Notizen frei umher, bearbeite den Text per Doppelklick und wähle eine neue Farbe – im Bearbeiten-Modus kannst du auch löschen."
       }
     },
     "decision-log": {
       "name": "Entscheidungslog",
-      "description": "TODO: Entscheidungslog beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Ein durchsuchbares Log deiner Entscheidungen – Kontext, Optionen, Entscheidung und Begründung als Markdown-Dateien.",
+      "privacy": "Arbeitet vollständig lokal. Entscheidungen werden als Markdown-Dateien in deinem Ordner gespeichert. Nichts verlässt dein Gerät.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "add": "Entscheidung festhalten",
+        "empty": "Noch keine Entscheidungen dokumentiert.",
+        "count": "Entscheidungen"
+      },
+      "form": {
+        "title": "Was wurde entschieden? (Titel)",
+        "context": "Kontext (optional)",
+        "options": "Optionen (optional)",
+        "decision": "Entscheidung",
+        "rationale": "Begründung (optional)",
+        "save": "Speichern",
+        "cancel": "Abbrechen"
+      },
+      "section": {
+        "context": "Kontext",
+        "options": "Optionen",
+        "decision": "Entscheidung",
+        "rationale": "Begründung"
+      },
+      "variant": {
+        "log": "Log",
+        "detail": "Detail",
+        "compact": "Kompakt"
       },
       "command": {
+        "add": "Entscheidung festhalten",
+        "addDesc": "Hält eine Entscheidung als Markdown-Dokument fest (Titel und Entscheidung nötig; Kontext, Optionen und Begründung optional).",
         "context": "Entscheidungslog: aktueller Stand"
       },
+      "msg": {
+        "created": "Entscheidung festgehalten."
+      },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "roundtrip": "Markdown-Roundtrip (serialisieren → parsen)",
+        "crud": "Store-Roundtrip (anlegen/auflisten/entfernen)",
+        "render": "Widget rendert und Kontext wird gebaut"
       },
       "tour": {
         "title": "Entscheidungslog",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Entscheidungslog."
+        "body": "Halte Entscheidungen mit Kontext und Begründung fest – jede wird eine durchsuchbare Markdown-Datei."
       }
     },
     "reading-list": {
       "name": "Leseliste",
-      "description": "TODO: Leseliste beschreiben.",
+      "description": "Eine Warteschlange für Artikel und Bücher – behalte im Blick, was du lesen willst, gerade liest und fertig hast.",
       "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "addPlaceholder": "Titel hinzufügen…",
+        "urlPlaceholder": "Link (optional)",
+        "empty": "Noch nichts auf deiner Leseliste.",
+        "statusLabel": "Status von „{{title}}“",
+        "notesToggle": "Notizen zu „{{title}}“",
+        "notesPlaceholder": "Deine Notizen…",
+        "sendToNotes": "„{{title}}“ an Notizen senden",
+        "sent": "Als Notiz gespeichert",
+        "delete": "„{{title}}“ löschen"
+      },
+      "status": {
+        "queued": "Vorgemerkt",
+        "reading": "Lese ich",
+        "done": "Fertig"
+      },
+      "variant": {
+        "list": "Liste",
+        "cards": "Karten",
+        "kanban": "Board"
       },
       "command": {
+        "add": "Zur Leseliste hinzufügen",
+        "addDesc": "Fügt einen Artikel oder ein Buch (Titel, optionaler http/https-Link) zur Leseliste hinzu.",
+        "setStatus": "Lesestatus setzen",
+        "setStatusDesc": "Verschiebt einen Leselisten-Eintrag nach vorgemerkt, lese ich oder fertig (braucht die Eintrags-Id).",
         "context": "Leseliste: aktueller Stand"
       },
+      "msg": {
+        "created": "Zur Leseliste hinzugefügt.",
+        "statusSet": "Status aktualisiert.",
+        "invalidUrl": "Nur http/https-Links sind erlaubt.",
+        "notFound": "Eintrag nicht gefunden."
+      },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Eintrag-Roundtrip (anlegen/lesen/löschen)",
+        "statusFlow": "Status-Fluss vorgemerkt → lese ich → fertig",
+        "render": "Widget rendert und sortiert korrekt"
       },
       "tour": {
         "title": "Leseliste",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Leseliste."
+        "body": "Sammle Artikel und Bücher, schiebe sie von vorgemerkt bis fertig – und sende jeden Eintrag an deine Notizen."
       }
     },
     "scratchpad": {
       "name": "Schmierzettel",
-      "description": "TODO: Schmierzettel beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Eine immer verfügbare Markdown-Notiz für schnelle Gedanken – mit Autospeichern und Live-Vorschau.",
+      "privacy": "Arbeitet vollständig lokal. Der Zettel wird als scratchpad.md in deinem Ordner gespeichert. Nichts verlässt dein Gerät.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "placeholder": "Notier dir was…",
+        "editorLabel": "Schmierzettel-Editor",
+        "empty": "Der Schmierzettel ist leer.",
+        "tab": {
+          "edit": "Bearbeiten",
+          "preview": "Vorschau"
+        },
+        "clear": "Leeren",
+        "clearConfirm": "Den ganzen Schmierzettel leeren? Das lässt sich nicht rückgängig machen.",
+        "settingsToggle": "Schmierzettel-Einstellungen"
+      },
+      "settings": {
+        "monospace": "Monospace-Schrift",
+        "previewRender": "Vorschau-Tab in der Bearbeiten-Ansicht"
+      },
+      "variant": {
+        "edit": "Editor",
+        "split": "Geteilt",
+        "preview": "Vorschau"
       },
       "command": {
+        "append": "An Schmierzettel anhängen",
+        "appendDesc": "Hängt eine Textzeile an den Schmierzettel an (praktisch, um Gedanken schnell zu parken).",
+        "clear": "Schmierzettel leeren",
+        "clearDesc": "Leert den Schmierzettel vollständig. Lässt sich nicht rückgängig machen.",
         "context": "Schmierzettel: aktueller Stand"
       },
+      "msg": {
+        "appended": "Zum Schmierzettel hinzugefügt.",
+        "cleared": "Schmierzettel geleert."
+      },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "roundtrip": "Roundtrip speichern → laden → anhängen",
+        "appendCommand": "Anhängen behandelt Zeilenumbrüche und leeren Zettel",
+        "render": "Widget rendert, Markdown-Vorschau funktioniert"
       },
       "tour": {
         "title": "Schmierzettel",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Schmierzettel."
+        "body": "Eine immer verfügbare Notiz: Tippen genügt, gespeichert wird automatisch – Markdown, Mathe und [[Wiki-Links]] erscheinen in der Vorschau."
       }
     },
     "savings-jar": {
-      "name": "Sparglas",
-      "description": "TODO: Sparglas beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "name": "Spardose",
+      "description": "Visuelle Sparziele – sieh zu, wie sich deine Spardosen füllen.",
+      "privacy": "Funktioniert komplett offline. Deine Sparziele verlassen dieses Gerät nie.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "empty": "Noch keine Sparziele – lege oben dein erstes an.",
+        "namePlaceholder": "Name des Ziels",
+        "targetPlaceholder": "Zielbetrag",
+        "deadlineLabel": "Zieldatum (optional)",
+        "addGoal": "Ziel anlegen",
+        "amountLabel": "Betrag zum Hinzufügen",
+        "contribute": "Zu {{name}} hinzufügen",
+        "deleteGoal": "{{name}} löschen",
+        "progressLabel": "{{name}}: {{saved}} von {{target}} gespart",
+        "deadline": "bis {{date}}",
+        "perDay": "{{amount}}/Tag nötig",
+        "onTrack": "im Plan",
+        "behind": "hinter dem Plan",
+        "reached": "Ziel erreicht! 🎉",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "settings": {
+        "currency": "Währungssymbol"
       },
       "command": {
-        "context": "Sparglas: aktueller Stand"
+        "addGoal": "Sparziel anlegen",
+        "addGoalDesc": "Legt ein neues Sparziel mit Name, Zielbetrag und optionalem Zieldatum (JJJJ-MM-TT) an.",
+        "contribute": "Geld zu einem Sparziel hinzufügen",
+        "contributeDesc": "Fügt einem bestehenden Sparziel einen positiven Betrag hinzu; die Ziel-Ids stehen im Spar-Kontext.",
+        "context": "Spar-Kontext (intern)",
+        "contextDesc": "Fasst alle Sparziele mit Fortschritt, Fristen und Ids für den Assistenten zusammen."
+      },
+      "msg": {
+        "goalAdded": "Sparziel angelegt.",
+        "contributed": "Beitrag gespeichert.",
+        "invalidDeadline": "Das Zieldatum ist kein gültiges Datum (JJJJ-MM-TT).",
+        "notFound": "Dieses Sparziel existiert nicht mehr."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Ziele lassen sich anlegen, lesen und löschen",
+        "contributeCommand": "Beiträge erhöhen den gesparten Betrag",
+        "render": "Spardose wird angezeigt"
       },
       "tour": {
-        "title": "Sparglas",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Sparglas."
+        "title": "Deine Sparziele",
+        "body": "Lege ein Ziel an, füge Geld hinzu, wann immer du etwas zurücklegst, und sieh zu, wie sich die Spardose füllt. Alles bleibt auf diesem Gerät."
+      },
+      "variant": {
+        "jar": "Spardosen",
+        "bar": "Balken",
+        "cards": "Karten"
       }
     },
     "subscriptions": {
-      "name": "Abos & Rechnungen",
-      "description": "TODO: Abos & Rechnungen beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "name": "Abos",
+      "description": "Behält wiederkehrende Kosten im Blick und zeigt, was sie pro Monat ausmachen.",
+      "privacy": "Funktioniert komplett offline. Deine Abos verlassen dieses Gerät nie.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "empty": "Noch keine Abos – lege oben dein erstes an.",
+        "namePlaceholder": "Name",
+        "amountLabel": "Betrag",
+        "cycleLabel": "Abrechnungszyklus",
+        "nextDueLabel": "Nächste Fälligkeit",
+        "add": "Abo hinzufügen",
+        "delete": "{{name}} löschen",
+        "markPaid": "{{name}} als bezahlt markieren – schiebt die Fälligkeit weiter",
+        "totalMonthly": "≈ {{total}} pro Monat",
+        "perMonth": "pro Monat",
+        "dueOn": "Fällig am {{date}}",
+        "noDuesThisMonth": "Diesen Monat ist nichts fällig.",
+        "top3": "Größte Kosten",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "settings": {
+        "currency": "Währungssymbol"
+      },
+      "cycle": {
+        "weekly": "wöchentlich",
+        "monthly": "monatlich",
+        "quarterly": "quartalsweise",
+        "yearly": "jährlich"
       },
       "command": {
-        "context": "Abos & Rechnungen: aktueller Stand"
+        "add": "Abo hinzufügen",
+        "addDesc": "Legt ein Abo mit Name, Betrag, Abrechnungszyklus (weekly/monthly/quarterly/yearly) und nächster Fälligkeit (JJJJ-MM-TT) an.",
+        "context": "Abo-Kontext (intern)",
+        "contextDesc": "Fasst alle Abos, die exakte Monatssumme und die nächsten Fälligkeiten für den Assistenten zusammen."
+      },
+      "msg": {
+        "added": "Abo hinzugefügt.",
+        "invalidDate": "Die Fälligkeit ist kein gültiges Datum (JJJJ-MM-TT)."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Abos lassen sich anlegen, lesen und löschen",
+        "total": "Die Monatssumme wird korrekt berechnet",
+        "render": "Abo-Widget wird angezeigt"
       },
       "tour": {
-        "title": "Abos & Rechnungen",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Abos & Rechnungen."
+        "title": "Deine laufenden Kosten",
+        "body": "Trag deine Abos einmal ein und Cardo zeigt dir, was sie pro Monat kosten und was als Nächstes fällig ist – komplett offline."
+      },
+      "variant": {
+        "list": "Liste",
+        "total-first": "Summe zuerst",
+        "calendar": "Kalender"
       }
     },
     "unit-converter": {
       "name": "Einheiten-Umrechner",
-      "description": "TODO: Einheiten-Umrechner beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Rechnet Längen, Gewichte, Temperaturen, Daten, Geschwindigkeiten, Volumen und Flächen um.",
+      "privacy": "Funktioniert komplett offline. Nichts, was du umrechnest, verlässt dieses Gerät.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "valueLabel": "Wert zum Umrechnen",
+        "fromLabel": "Von Einheit",
+        "toLabel": "In Einheit",
+        "categoryLabel": "Kategorie",
+        "swap": "Einheiten tauschen",
+        "settingsToggle": "Einstellungen ein- oder ausblenden"
+      },
+      "settings": {
+        "decimals": "Nachkommastellen (0–6)",
+        "defaultCategory": "Standard-Kategorie"
+      },
+      "category": {
+        "length": "Länge",
+        "weight": "Gewicht",
+        "temperature": "Temperatur",
+        "data": "Daten",
+        "speed": "Geschwindigkeit",
+        "volume": "Volumen",
+        "area": "Fläche"
+      },
+      "unit": {
+        "mm": "mm",
+        "cm": "cm",
+        "m": "m",
+        "km": "km",
+        "in": "in",
+        "ft": "ft",
+        "yd": "yd",
+        "mi": "mi",
+        "mg": "mg",
+        "g": "g",
+        "kg": "kg",
+        "t": "t",
+        "oz": "oz",
+        "lb": "lb",
+        "c": "°C",
+        "f": "°F",
+        "k": "K",
+        "B": "B",
+        "KB": "KB",
+        "MB": "MB",
+        "GB": "GB",
+        "TB": "TB",
+        "KiB": "KiB",
+        "MiB": "MiB",
+        "GiB": "GiB",
+        "TiB": "TiB",
+        "m/s": "m/s",
+        "km/h": "km/h",
+        "mph": "mph",
+        "kn": "kn",
+        "ft/s": "ft/s",
+        "ml": "ml",
+        "cl": "cl",
+        "l": "l",
+        "m3": "m³",
+        "tsp": "TL",
+        "tbsp": "EL",
+        "floz": "fl oz",
+        "cup": "Tasse",
+        "pt": "pt",
+        "qt": "qt",
+        "gal": "gal",
+        "cm2": "cm²",
+        "m2": "m²",
+        "ha": "ha",
+        "km2": "km²",
+        "in2": "in²",
+        "ft2": "ft²",
+        "acre": "Acre",
+        "mi2": "mi²"
       },
       "command": {
-        "context": "Einheiten-Umrechner: aktueller Stand"
+        "convert": "Einheiten umrechnen",
+        "convertDesc": "Rechnet einen Wert zwischen zwei Einheiten um (z. B. km→mi, °C→°F, GiB→GB); die Kategorie wird erkannt und data.text enthält die formatierte Antwort.",
+        "context": "Umrechner-Kontext (intern)",
+        "contextDesc": "Sagt dem Assistenten, welches Einheitenpaar zuletzt umgerechnet wurde."
+      },
+      "msg": {
+        "converted": "Umgerechnet.",
+        "unknownUnit": "Unbekannte Einheit oder Kategorien passen nicht zusammen."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "conversions": "Bekannte Umrechnungswerte stimmen exakt",
+        "convertCommand": "Umrechnen-Befehl antwortet und merkt sich das Paar",
+        "render": "Einheiten-Umrechner wird angezeigt"
       },
       "tour": {
-        "title": "Einheiten-Umrechner",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Einheiten-Umrechner."
+        "title": "Rechne alles um",
+        "body": "Wähle eine Kategorie, zwei Einheiten und tippe einen Wert – das Ergebnis aktualisiert sich live. Nachkommastellen und deine Standard-Kategorie findest du hinter dem Zahnrad."
+      },
+      "variant": {
+        "converter": "Umrechner",
+        "category-tabs": "Kategorie-Tabs",
+        "compact": "Kompakt"
       }
     },
     "world-clock": {
-      "name": "Weltuhr",
-      "description": "TODO: Weltuhr beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "name": "Weltzeituhr",
+      "description": "Die aktuelle Zeit an bis zu acht Orten gleichzeitig – sommerzeitsicher.",
+      "privacy": "Funktioniert komplett offline. Deine Zeitzonen verlassen dieses Gerät nie.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "empty": "Noch keine Zeitzonen – füge oben eine hinzu.",
+        "tzPlaceholder": "Zeitzone (z. B. Europe/Berlin)",
+        "tzLabel": "IANA-Zeitzone",
+        "labelPlaceholder": "Bezeichnung (optional)",
+        "add": "Zeitzone hinzufügen",
+        "remove": "{{label}} entfernen",
+        "invalidZone": "Unbekannte Zeitzone – wähle eine aus der Liste.",
+        "maxReached": "Maximal {{max}} Zeitzonen erreicht.",
+        "day": "Tag (06:00–20:00)",
+        "night": "Nacht"
       },
       "command": {
-        "context": "Weltuhr: aktueller Stand"
+        "addZone": "Zeitzone hinzufügen",
+        "addZoneDesc": "Fügt der Weltzeituhr eine IANA-Zeitzone hinzu (z. B. \"America/New_York\"), optional mit Bezeichnung.",
+        "context": "Weltzeituhr-Kontext (intern)",
+        "contextDesc": "Listet die eingerichteten Zeitzonen mit ihren aktuellen Ortszeiten für den Assistenten auf."
+      },
+      "msg": {
+        "zoneAdded": "Zeitzone hinzugefügt.",
+        "zoneExists": "Diese Zeitzone steht schon auf der Liste.",
+        "invalidZone": "Das ist keine gültige IANA-Zeitzone.",
+        "maxZones": "Die Weltzeituhr enthält bereits die maximale Anzahl an Zeitzonen."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "zonesCrud": "Zeitzonen lassen sich hinzufügen und entfernen",
+        "tzValidation": "Zeitzonen-Validierung und -Umrechnung funktionieren",
+        "render": "Weltzeituhr wird angezeigt"
       },
       "tour": {
-        "title": "Weltuhr",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Weltuhr."
+        "title": "Die Welt auf einen Blick",
+        "body": "Füge die Orte hinzu, die dir wichtig sind, und sieh ihre Ortszeiten nebeneinander – mit Tag und Nacht auf einen Blick."
+      },
+      "variant": {
+        "list": "Liste",
+        "grid": "Raster",
+        "analog-row": "Analog"
       }
     },
     "password-gen": {
       "name": "Passwort-Generator",
-      "description": "TODO: Passwort-Generator beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Erzeugt starke Passwörter und Passphrasen – komplett lokal, nichts wird jemals gespeichert.",
+      "privacy": "Funktioniert komplett offline. Erzeugte Passwörter werden nie gespeichert oder übertragen – sie existieren nur auf deinem Bildschirm.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "valueLabel": "Erzeugter Wert – zum Auswählen anklicken",
+        "noClasses": "Aktiviere mindestens einen Zeichensatz in den Einstellungen.",
+        "regenerate": "Neu",
+        "copy": "Kopieren",
+        "copied": "Kopiert!",
+        "settingsToggle": "Einstellungen ein- oder ausblenden",
+        "strengthLabel": "Passwortstärke",
+        "strength": {
+          "weak": "Schwach",
+          "ok": "Okay",
+          "strong": "Stark",
+          "excellent": "Exzellent"
+        },
+        "bits": "{{bits}} Bit"
+      },
+      "settings": {
+        "length": "Länge",
+        "lower": "Kleinbuchstaben (a–z)",
+        "upper": "Großbuchstaben (A–Z)",
+        "digits": "Ziffern (0–9)",
+        "symbols": "Sonderzeichen (!$%…)",
+        "excludeAmbiguous": "Mehrdeutige ausschließen (O0Il1|)",
+        "words": "Wörter",
+        "separator": "Trennzeichen"
       },
       "command": {
-        "context": "Passwort-Generator: aktueller Stand"
+        "generate": "Passwort erzeugen",
+        "generateDesc": "Erzeugt ein starkes Zufallspasswort mit den gespeicherten Einstellungen; eine optionale Länge (8–128) übersteuert die Einstellung. Das Passwort steht nur im Ergebnis und wird nie gespeichert."
+      },
+      "msg": {
+        "generated": "Passwort erzeugt.",
+        "noClasses": "Kein Zeichensatz aktiviert – prüfe die Generator-Einstellungen."
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "noPersist": "Erzeugen hinterlässt keine Spuren im Speicher",
+        "determinism": "Injizierte Zufallsquelle ist deterministisch",
+        "render": "Widget wird gerendert"
       },
       "tour": {
-        "title": "Passwort-Generator",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Passwort-Generator."
+        "title": "Starke Passwörter",
+        "body": "Ein Klick liefert dir ein frisches Passwort oder eine Passphrase. Nichts wird gespeichert – kopiere es direkt in die App, die es braucht."
+      },
+      "variant": {
+        "generator": "Generator",
+        "passphrase": "Passphrase",
+        "compact": "Kompakt"
       }
     },
     "random-picker": {
       "name": "Zufallsentscheider",
-      "description": "TODO: Zufallsentscheider beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Glücksrad, Listen-Picker und Würfel – lass fairen Zufall entscheiden, komplett lokal.",
+      "privacy": "Funktioniert komplett offline. Deine Listen und Entscheidungen verlassen dieses Gerät nie.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "listLabel": "Liste wählen",
+        "noLists": "Noch keine Listen",
+        "addList": "Liste hinzufügen",
+        "newListName": "Liste {{n}}",
+        "empty": "Füge in der Listenansicht Einträge hinzu – dann kann sich das Rad drehen.",
+        "itemsPlaceholder": "Eine Option pro Zeile (oder durch Kommas getrennt) …",
+        "removeOnPick": "Gezogene Einträge aus der Liste entfernen",
+        "pick": "Ziehen",
+        "spin": "Drehen",
+        "spinning": "Dreht sich …",
+        "wheelLabel": "Glücksrad",
+        "diceLabel": "Würfel, z. B. 2d6",
+        "roll": "Würfeln",
+        "invalidDice": "Nutze das NdM-Format, z. B. 2d6 (max. 20 Würfel, 1000 Seiten)."
       },
       "command": {
+        "pick": "Zufälligen Eintrag ziehen",
+        "pickDesc": "Zieht gleichverteilt einen Eintrag aus der genannten Liste (oder der ersten Liste). Entsprechend markierte Listen verbrauchen den gezogenen Eintrag.",
+        "roll": "Würfeln",
+        "rollDesc": "Würfelt in NdM-Notation, z. B. „2d6\" für zwei sechsseitige Würfel (max. 20 Würfel mit bis zu 1000 Seiten). Liefert die Augen und die Summe.",
         "context": "Zufallsentscheider: aktueller Stand"
       },
+      "msg": {
+        "picked": "Gezogen!",
+        "rolled": "Gewürfelt!",
+        "empty": "Nichts zu ziehen – lege zuerst eine Liste mit Einträgen an.",
+        "invalidDice": "Ungültige Würfel – nutze NdM, z. B. 2d6."
+      },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Listen überstehen Anlegen, Ändern und Löschen",
+        "pickCommand": "Ziehen liefert ein Mitglied und verbraucht es",
+        "diceLogic": "Würfel-Parser weist Grenzfälle ab, Augen bleiben im Bereich",
+        "render": "Widget wird gerendert"
       },
       "tour": {
-        "title": "Zufallsentscheider",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Zufallsentscheider."
+        "title": "Lass den Zufall entscheiden",
+        "body": "Trage deine Optionen in eine Liste ein und dreh am Rad – oder stelle das Widget auf die Listen- oder Würfelansicht um. Alles bleibt auf diesem Gerät."
+      },
+      "variant": {
+        "wheel": "Glücksrad",
+        "list": "Liste",
+        "dice": "Würfel"
       }
     },
     "bookmarks": {
       "name": "Lesezeichen",
-      "description": "TODO: Lesezeichen beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Deine Lieblingslinks als Dashboard – in Ordner gruppiert, mit einem Klick geöffnet.",
+      "privacy": "Funktioniert komplett lokal. Nichts verlässt dein Gerät.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "empty": "Noch keine Lesezeichen – füge oben einen Link hinzu.",
+        "urlPlaceholder": "URL… (Enter)",
+        "titlePlaceholder": "Titel",
+        "folderPlaceholder": "Ordner",
+        "add": "Lesezeichen hinzufügen",
+        "open": "\"{{title}}\" öffnen",
+        "delete": "Lesezeichen \"{{title}}\" löschen",
+        "unsorted": "Ohne Ordner"
+      },
+      "variant": {
+        "grid": "Raster",
+        "list": "Liste",
+        "speed-dial": "Schnellwahl"
       },
       "command": {
-        "context": "Lesezeichen: aktueller Stand"
+        "add": "Lesezeichen hinzufügen",
+        "addDesc": "Speichert einen http(s)-Link mit Titel und optionalem Ordner; andere URL-Schemata werden abgelehnt.",
+        "context": "Aktuelle Lesezeichen (für den Assistenten)"
+      },
+      "msg": {
+        "added": "Lesezeichen hinzugefügt",
+        "invalidUrl": "Ungültige URL – nur http://- und https://-Links funktionieren"
       },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "crud": "Links überstehen Anlegen, Lesen und Löschen",
+        "urlValidation": "Bösartige URL-Schemata werden abgelehnt",
+        "render": "Widget rendert"
       },
       "tour": {
         "title": "Lesezeichen",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für Lesezeichen."
+        "body": "Füge einen Link mit URL, Titel und optionalem Ordner hinzu. Ein Klick öffnet ihn im Browser – im Bearbeiten-Modus kannst du Lesezeichen löschen."
       }
     },
     "qr-generator": {
       "name": "QR-Codes",
-      "description": "TODO: QR-Codes beschreiben.",
-      "privacy": "Arbeitet vollständig lokal. Nichts verlässt dein Gerät.",
+      "description": "Macht aus Text, Links und WLAN-Zugangsdaten QR-Codes – komplett offline erzeugt.",
+      "privacy": "Funktioniert komplett offline. Was du kodierst, verlässt dieses Gerät nie – der QR-Code wird lokal berechnet.",
       "widget": {
-        "empty": "Noch nichts hier."
+        "mode": {
+          "text": "Text",
+          "url": "Link",
+          "wifi": "WLAN"
+        },
+        "placeholder": {
+          "text": "Text zum Kodieren …",
+          "url": "beispiel.org …"
+        },
+        "ssidPlaceholder": "Netzwerkname (SSID)",
+        "passwordPlaceholder": "Passwort",
+        "securityLabel": "Verschlüsselung",
+        "security": {
+          "WPA": "WPA/WPA2",
+          "WEP": "WEP",
+          "nopass": "Offen"
+        },
+        "qrLabel": "Erzeugter QR-Code",
+        "empty": "Gib oben etwas ein – der QR-Code erscheint sofort.",
+        "tooLong": "Zu lang für einen QR-Code (max. 213 Bytes).",
+        "savePng": "PNG speichern",
+        "settingsToggle": "Einstellungen ein- oder ausblenden",
+        "batchPlaceholder": "Ein QR-Code pro Zeile …",
+        "batchEmpty": "Gib oben eine Zeile pro Code ein."
+      },
+      "settings": {
+        "size": "Größe",
+        "saveRecent": "Letzte Eingaben merken",
+        "ecInfo": "Fehlerkorrektur-Stufe M – rund 15% des Codes dürfen beschädigt sein und er bleibt lesbar."
       },
       "command": {
+        "make": "QR-Code erzeugen",
+        "makeDesc": "Kodiert den angegebenen Text als QR-Code und zeigt ihn im Widget. Schlägt fehl, wenn der Text die QR-Kapazität (213 Bytes) übersteigt.",
         "context": "QR-Codes: aktueller Stand"
       },
+      "msg": {
+        "made": "QR-Code erzeugt.",
+        "tooLong": "Zu lang für einen QR-Code (max. 213 Bytes)."
+      },
       "test": {
-        "render": "Widget wird dargestellt",
-        "storage": "Speicher-Roundtrip funktioniert"
+        "matrix": "Encoder erzeugt ein strukturell gültiges Symbol",
+        "wifiEscaping": "WLAN-Payload-Escaping folgt der Spezifikation",
+        "render": "Widget wird gerendert"
       },
       "tour": {
-        "title": "QR-Codes",
-        "body": "TODO: Ein-Zeilen-Tour-Hinweis für QR-Codes."
+        "title": "QR-Codes, komplett offline",
+        "body": "Tippe einen Text, einen Link oder deine WLAN-Zugangsdaten ein und der QR-Code erscheint sofort – berechnet auf diesem Gerät, als PNG speicherbar."
+      },
+      "variant": {
+        "code": "Code",
+        "with-caption": "Mit Beschriftung",
+        "batch": "Serie"
       }
     },
     "time-blocking": {
