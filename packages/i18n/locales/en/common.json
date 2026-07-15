@@ -197,7 +197,8 @@
       "namespaceIsolation": "Tools cannot read each other's data",
       "syncCrypto": "Sync encryption seals and verifies correctly",
       "syncEngine": "Sync engine converges two scratch devices",
-      "customThemes": "All custom themes are complete"
+      "customThemes": "All custom themes are complete",
+      "netGoogleDrive": "Google Drive API reachable (sync transport)"
     },
     "category": {
       "core": "Core",
@@ -208,7 +209,7 @@
     },
     "online": {
       "include": "Include online checks",
-      "hosts": "Contacts only these services: hollatzleif.github.io (website & updates), github.com (update server), cardo-polls.hollatzleif.workers.dev (polls & feed), open-meteo.com (weather), huggingface.co (AI models). Nothing about you is sent – Cardo only asks whether they respond.",
+      "hosts": "Contacts only these services: hollatzleif.github.io (website & updates), github.com (update server), cardo-polls.hollatzleif.workers.dev (polls & feed), open-meteo.com (weather), huggingface.co (AI models), googleapis.com (Drive sync). Nothing about you is sent – Cardo only asks whether they respond.",
       "offlineSkipped": "offline – skipped",
       "unreachableSkipped": "not reachable – skipped"
     },

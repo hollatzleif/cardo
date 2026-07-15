@@ -164,6 +164,18 @@ export function buildNetworkChecks(): DiagnoseCheck[] {
         : { status: 'fail', detail: 'forecast response has no "current" block' };
     }),
 
+    netCheck('google-drive', 'diagnose.check.netGoogleDrive', async () => {
+      // Only meaningful in the desktop app: the Drive transport runs in Rust
+      // (reqwest), the webview CSP has no googleapis.com allowance.
+      if (!isTauri()) {
+        return { status: 'warn', detail: tt('diagnose.detail.browserSkipped') };
+      }
+      const probe = await rustProbe('https://www.googleapis.com/discovery/v1/apis');
+      return probe.status >= 200 && probe.status < 400
+        ? pass(probe.ms)
+        : { status: 'fail', detail: `HTTP ${probe.status}` };
+    }),
+
     netCheck('huggingface', 'diagnose.check.netHuggingface', async () => {
       if (!smallestModel) return { status: 'fail', detail: 'model catalog is empty' };
       if (isTauri()) {
