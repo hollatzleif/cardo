@@ -1,0 +1,29 @@
+{
+  "id": "ayu-light",
+  "nameKey": "theme.ayuLight",
+  "appearance": "light",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/ayu-theme/ayu-colors"
+  },
+  "palette": {
+    "base": "#fcfcfc",
+    "surface-0": "#f3f4f5",
+    "surface-1": "#e7e8e9",
+    "surface-2": "#dcdddf",
+    "text": "#5c6166",
+    "text-muted": "#8a9199",
+    "accent-1": "#ffaa33",
+    "accent-2": "#399ee6",
+    "accent-3": "#4cbf99",
+    "accent-4": "#f2ae49",
+    "accent-5": "#a37acc",
+    "accent-6": "#e6ba7e",
+    "accent-7": "#f07171",
+    "accent-8": "#55b4d4",
+    "success": "#6cbf43",
+    "warning": "#f2ae49",
+    "danger": "#f07171",
+    "info": "#399ee6"
+  }
+}

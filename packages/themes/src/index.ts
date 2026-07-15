@@ -8,6 +8,16 @@ import gruvboxLight from '../gruvbox-light.json';
 import tokyoNight from '../tokyo-night.json';
 import solarizedLight from '../solarized-light.json';
 import rosePine from '../rose-pine.json';
+import everforestDark from '../everforest-dark.json';
+import kanagawaWave from '../kanagawa-wave.json';
+import oneDark from '../one-dark.json';
+import solarizedDark from '../solarized-dark.json';
+import ayuLight from '../ayu-light.json';
+import ayuMirage from '../ayu-mirage.json';
+import nightOwl from '../night-owl.json';
+import flexokiLight from '../flexoki-light.json';
+import catppuccinFrappe from '../catppuccin-frappe.json';
+import rosePineDawn from '../rose-pine-dawn.json';
 
 /** Every primitive token a theme MUST define. Checked in CI and by the self-test. */
 export const REQUIRED_PALETTE_TOKENS = [
@@ -52,6 +62,16 @@ export const themes: Theme[] = [
   tokyoNight,
   solarizedLight,
   rosePine,
+  everforestDark,
+  kanagawaWave,
+  oneDark,
+  solarizedDark,
+  ayuLight,
+  ayuMirage,
+  nightOwl,
+  flexokiLight,
+  catppuccinFrappe,
+  rosePineDawn,
 ] as Theme[];
 
 export const defaultThemeId = 'catppuccin-mocha';

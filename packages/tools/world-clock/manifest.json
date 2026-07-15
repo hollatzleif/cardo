@@ -21,20 +21,29 @@
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "list",
+        "grid",
+        "analog-row"
+      ]
     }
   ],
   "commands": [
+    "world-clock.add-zone",
     "world-clock.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.world-clock.test.render"
+      "id": "zones-crud",
+      "titleKey": "tool.world-clock.test.zonesCrud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.world-clock.test.storage"
+      "id": "tz-validation",
+      "titleKey": "tool.world-clock.test.tzValidation"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.world-clock.test.render"
     }
   ],
   "tourSteps": [

@@ -1,0 +1,29 @@
+{
+  "id": "ayu-mirage",
+  "nameKey": "theme.ayuMirage",
+  "appearance": "dark",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/ayu-theme/ayu-colors"
+  },
+  "palette": {
+    "base": "#242936",
+    "surface-0": "#1f2430",
+    "surface-1": "#2a3141",
+    "surface-2": "#343f4c",
+    "text": "#cccac2",
+    "text-muted": "#707a8c",
+    "accent-1": "#ffcc66",
+    "accent-2": "#73d0ff",
+    "accent-3": "#95e6cb",
+    "accent-4": "#ffad66",
+    "accent-5": "#dfbfff",
+    "accent-6": "#ffd173",
+    "accent-7": "#f28779",
+    "accent-8": "#5ccfe6",
+    "success": "#d5ff80",
+    "warning": "#ffd173",
+    "danger": "#f28779",
+    "info": "#73d0ff"
+  }
+}

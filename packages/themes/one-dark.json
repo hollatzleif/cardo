@@ -1,0 +1,29 @@
+{
+  "id": "one-dark",
+  "nameKey": "theme.oneDark",
+  "appearance": "dark",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/atom/atom/tree/master/packages/one-dark-ui"
+  },
+  "palette": {
+    "base": "#282c34",
+    "surface-0": "#2f333d",
+    "surface-1": "#383e4a",
+    "surface-2": "#3f4451",
+    "text": "#abb2bf",
+    "text-muted": "#7f848e",
+    "accent-1": "#61afef",
+    "accent-2": "#c678dd",
+    "accent-3": "#56b6c2",
+    "accent-4": "#d19a66",
+    "accent-5": "#e06c75",
+    "accent-6": "#e5c07b",
+    "accent-7": "#98c379",
+    "accent-8": "#528bff",
+    "success": "#98c379",
+    "warning": "#e5c07b",
+    "danger": "#e06c75",
+    "info": "#61afef"
+  }
+}

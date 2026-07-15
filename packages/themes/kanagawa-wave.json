@@ -1,0 +1,29 @@
+{
+  "id": "kanagawa-wave",
+  "nameKey": "theme.kanagawaWave",
+  "appearance": "dark",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/rebelot/kanagawa.nvim"
+  },
+  "palette": {
+    "base": "#1f1f28",
+    "surface-0": "#2a2a37",
+    "surface-1": "#363646",
+    "surface-2": "#54546d",
+    "text": "#dcd7ba",
+    "text-muted": "#a6a69c",
+    "accent-1": "#7e9cd8",
+    "accent-2": "#957fb8",
+    "accent-3": "#7aa89f",
+    "accent-4": "#ffa066",
+    "accent-5": "#d27e99",
+    "accent-6": "#e6c384",
+    "accent-7": "#e82424",
+    "accent-8": "#6a9589",
+    "success": "#98bb6c",
+    "warning": "#e6c384",
+    "danger": "#e82424",
+    "info": "#7e9cd8"
+  }
+}

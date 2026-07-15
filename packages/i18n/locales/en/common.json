@@ -1225,7 +1225,17 @@
     "gruvbox-light": "Gruvbox Light",
     "tokyo-night": "Tokyo Night",
     "solarized-light": "Solarized Light",
-    "rose-pine": "Rosé Pine"
+    "rose-pine": "Rosé Pine",
+    "everforestDark": "Everforest",
+    "kanagawaWave": "Kanagawa",
+    "oneDark": "One Dark",
+    "solarizedDark": "Solarized Dark",
+    "ayuLight": "Ayu Light",
+    "ayuMirage": "Ayu Mirage",
+    "nightOwl": "Night Owl",
+    "flexokiLight": "Flexoki Light",
+    "catppuccinFrappe": "Catppuccin Frappé",
+    "rosePineDawn": "Rosé Pine Dawn"
   },
   "design": {
     "title": "Design",

@@ -15,26 +15,40 @@
       "id": "main",
       "defaultSize": {
         "w": 4,
-        "h": 3
+        "h": 4
       },
       "minSize": {
         "w": 2,
         "h": 2
       },
-      "variants": []
+      "variants": [
+        "wheel",
+        "list",
+        "dice"
+      ]
     }
   ],
   "commands": [
+    "random-picker.pick",
+    "random-picker.roll",
     "random-picker.context"
   ],
   "selfTests": [
     {
-      "id": "render",
-      "titleKey": "tool.random-picker.test.render"
+      "id": "crud",
+      "titleKey": "tool.random-picker.test.crud"
     },
     {
-      "id": "storage",
-      "titleKey": "tool.random-picker.test.storage"
+      "id": "pick-command",
+      "titleKey": "tool.random-picker.test.pickCommand"
+    },
+    {
+      "id": "dice-logic",
+      "titleKey": "tool.random-picker.test.diceLogic"
+    },
+    {
+      "id": "render",
+      "titleKey": "tool.random-picker.test.render"
     }
   ],
   "tourSteps": [

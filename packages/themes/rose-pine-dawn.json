@@ -1,0 +1,29 @@
+{
+  "id": "rose-pine-dawn",
+  "nameKey": "theme.rosePineDawn",
+  "appearance": "light",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/rose-pine/rose-pine-theme"
+  },
+  "palette": {
+    "base": "#faf4ed",
+    "surface-0": "#fffaf3",
+    "surface-1": "#f2e9e1",
+    "surface-2": "#e4dfde",
+    "text": "#575279",
+    "text-muted": "#797593",
+    "accent-1": "#907aa9",
+    "accent-2": "#286983",
+    "accent-3": "#56949f",
+    "accent-4": "#ea9d34",
+    "accent-5": "#b4637a",
+    "accent-6": "#d7827e",
+    "accent-7": "#eb6f92",
+    "accent-8": "#9893a5",
+    "success": "#56949f",
+    "warning": "#ea9d34",
+    "danger": "#b4637a",
+    "info": "#286983"
+  }
+}

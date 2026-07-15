@@ -1,0 +1,29 @@
+{
+  "id": "solarized-dark",
+  "nameKey": "theme.solarizedDark",
+  "appearance": "dark",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/altercation/solarized"
+  },
+  "palette": {
+    "base": "#002b36",
+    "surface-0": "#073642",
+    "surface-1": "#0d4552",
+    "surface-2": "#155563",
+    "text": "#93a1a1",
+    "text-muted": "#657b83",
+    "accent-1": "#268bd2",
+    "accent-2": "#6c71c4",
+    "accent-3": "#2aa198",
+    "accent-4": "#cb4b16",
+    "accent-5": "#d33682",
+    "accent-6": "#b58900",
+    "accent-7": "#dc322f",
+    "accent-8": "#859900",
+    "success": "#859900",
+    "warning": "#b58900",
+    "danger": "#dc322f",
+    "info": "#268bd2"
+  }
+}

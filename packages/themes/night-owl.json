@@ -1,0 +1,29 @@
+{
+  "id": "night-owl",
+  "nameKey": "theme.nightOwl",
+  "appearance": "dark",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/sdras/night-owl-vscode-theme"
+  },
+  "palette": {
+    "base": "#011627",
+    "surface-0": "#0b2942",
+    "surface-1": "#12395b",
+    "surface-2": "#1d3b53",
+    "text": "#d6deeb",
+    "text-muted": "#8badc1",
+    "accent-1": "#82aaff",
+    "accent-2": "#c792ea",
+    "accent-3": "#7fdbca",
+    "accent-4": "#f78c6c",
+    "accent-5": "#ff5874",
+    "accent-6": "#ecc48d",
+    "accent-7": "#addb67",
+    "accent-8": "#5f7e97",
+    "success": "#addb67",
+    "warning": "#ecc48d",
+    "danger": "#ef5350",
+    "info": "#82aaff"
+  }
+}

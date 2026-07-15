@@ -530,7 +530,7 @@ export function createTool(): CardoTool {
           id: z.string().min(1),
           status: z.enum(['queued', 'reading', 'done']),
         }),
-        selfTestParams: { id: 'item:selftest-nonexistent', status: 'reading' },
+        selfTestParams: { id: 'item:selftest-nonexistent', status: 'reading' as const },
         async run({ id, status }): Promise<CommandResult> {
           const item = await setStatusIn(context.storage, id, status);
           if (!item) return { ok: true, messageKey: 'tool.reading-list.msg.notFound' };

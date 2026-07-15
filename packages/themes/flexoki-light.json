@@ -1,0 +1,29 @@
+{
+  "id": "flexoki-light",
+  "nameKey": "theme.flexokiLight",
+  "appearance": "light",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/kepano/flexoki"
+  },
+  "palette": {
+    "base": "#fffcf0",
+    "surface-0": "#f2f0e5",
+    "surface-1": "#e6e4d9",
+    "surface-2": "#dad8ce",
+    "text": "#100f0f",
+    "text-muted": "#6f6e69",
+    "accent-1": "#205ea6",
+    "accent-2": "#5e409d",
+    "accent-3": "#24837b",
+    "accent-4": "#bc5215",
+    "accent-5": "#a02f6f",
+    "accent-6": "#ad8301",
+    "accent-7": "#af3029",
+    "accent-8": "#66800b",
+    "success": "#66800b",
+    "warning": "#ad8301",
+    "danger": "#af3029",
+    "info": "#205ea6"
+  }
+}

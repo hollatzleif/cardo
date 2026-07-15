@@ -1,0 +1,29 @@
+{
+  "id": "catppuccin-frappe",
+  "nameKey": "theme.catppuccinFrappe",
+  "appearance": "dark",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/catppuccin/catppuccin"
+  },
+  "palette": {
+    "base": "#303446",
+    "surface-0": "#414559",
+    "surface-1": "#51576d",
+    "surface-2": "#626880",
+    "text": "#c6d0f5",
+    "text-muted": "#a5adce",
+    "accent-1": "#ca9ee6",
+    "accent-2": "#8caaee",
+    "accent-3": "#81c8be",
+    "accent-4": "#ef9f76",
+    "accent-5": "#f4b8e4",
+    "accent-6": "#e5c890",
+    "accent-7": "#e78284",
+    "accent-8": "#85c1dc",
+    "success": "#a6d189",
+    "warning": "#e5c890",
+    "danger": "#e78284",
+    "info": "#8caaee"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "everforest-dark",
+  "nameKey": "theme.everforestDark",
+  "appearance": "dark",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/sainnhe/everforest"
+  },
+  "palette": {
+    "base": "#2d353b",
+    "surface-0": "#343f44",
+    "surface-1": "#3d484d",
+    "surface-2": "#475258",
+    "text": "#d3c6aa",
+    "text-muted": "#9da9a0",
+    "accent-1": "#a7c080",
+    "accent-2": "#7fbbb3",
+    "accent-3": "#83c092",
+    "accent-4": "#e69875",
+    "accent-5": "#d699b6",
+    "accent-6": "#dbbc7f",
+    "accent-7": "#e67e80",
+    "accent-8": "#7a8478",
+    "success": "#a7c080",
+    "warning": "#dbbc7f",
+    "danger": "#e67e80",
+    "info": "#7fbbb3"
+  }
+}
