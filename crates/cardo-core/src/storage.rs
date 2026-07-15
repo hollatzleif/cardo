@@ -13,12 +13,28 @@ use crate::hlc::Hlc;
 
 /// Schema version of this build. The DB refuses to open if ITS version is
 /// newer (downgrade protection after an update rollback).
-pub const SCHEMA_VERSION: i64 = 2;
+pub const SCHEMA_VERSION: i64 = 3;
 
 const MIGRATIONS: &[(i64, &str)] = &[
     (1, include_str!("../migrations/0001_init.sql")),
     (2, include_str!("../migrations/0002_schedules.sql")),
+    (3, include_str!("../migrations/0003_sync.sql")),
 ];
+
+/// One change-log row in wire shape: what sync serializes, encrypts and
+/// applies. Field names are part of the sync protocol – do not rename.
+#[derive(Debug, Clone, Serialize, serde::Deserialize)]
+pub struct SyncOp {
+    pub op_id: String,
+    pub device_id: String,
+    pub hlc: String,
+    pub namespace: String,
+    pub doc_id: String,
+    pub op: String,
+    pub field: Option<String>,
+    pub value: Option<Value>,
+    pub created_at: i64,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ChangeNotice {
@@ -279,6 +295,246 @@ impl SqliteStorage {
                 }))
             })
             .collect()
+    }
+
+    /* ── Sync ─────────────────────────────────────────────────────────── */
+
+    /// Unsynced local ops in log order, ready for encryption + push.
+    pub async fn unsynced_ops(&self, limit: i64) -> Result<Vec<SyncOp>> {
+        let rows = sqlx::query(
+            "SELECT op_id, device_id, hlc, namespace, doc_id, op, field, value, created_at
+             FROM change_log WHERE synced = 0 ORDER BY seq LIMIT ?",
+        )
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+        rows.into_iter()
+            .map(|row| {
+                Ok(SyncOp {
+                    op_id: row.get("op_id"),
+                    device_id: row.get("device_id"),
+                    hlc: row.get("hlc"),
+                    namespace: row.get("namespace"),
+                    doc_id: row.get("doc_id"),
+                    op: row.get("op"),
+                    field: row.get("field"),
+                    value: row
+                        .get::<Option<String>, _>("value")
+                        .map(|raw| serde_json::from_str(&raw))
+                        .transpose()?,
+                    created_at: row.get("created_at"),
+                })
+            })
+            .collect()
+    }
+
+    pub async fn mark_ops_synced(&self, op_ids: &[String]) -> Result<()> {
+        let mut tx = self.pool.begin().await?;
+        for id in op_ids {
+            sqlx::query("UPDATE change_log SET synced = 1 WHERE op_id = ?")
+                .bind(id)
+                .execute(&mut *tx)
+                .await?;
+        }
+        tx.commit().await?;
+        Ok(())
+    }
+
+    /// Op already in the local log (own echo) or applied earlier?
+    pub async fn is_op_known(&self, op_id: &str) -> Result<bool> {
+        let known: i64 = sqlx::query_scalar(
+            "SELECT (SELECT COUNT(*) FROM change_log WHERE op_id = ?1)
+                  + (SELECT COUNT(*) FROM sync_applied WHERE op_id = ?1)",
+        )
+        .bind(op_id)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(known > 0)
+    }
+
+    pub async fn cursor_get(&self, transport: &str) -> Result<String> {
+        let cursor: Option<String> =
+            sqlx::query_scalar("SELECT cursor FROM sync_cursors WHERE transport = ?")
+                .bind(transport)
+                .fetch_optional(&self.pool)
+                .await?;
+        Ok(cursor.unwrap_or_default())
+    }
+
+    pub async fn cursor_set(&self, transport: &str, cursor: &str) -> Result<()> {
+        sqlx::query(
+            "INSERT INTO sync_cursors (transport, cursor, updated_at) VALUES (?, ?, ?)
+             ON CONFLICT(transport) DO UPDATE SET cursor = excluded.cursor,
+             updated_at = excluded.updated_at",
+        )
+        .bind(transport)
+        .bind(cursor)
+        .bind(now_ms())
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// Applies one remote op with last-writer-wins per field (doc-level ops
+    /// dominate their document). Returns a notice when the document actually
+    /// changed, None when the op was a duplicate or lost the LWW race.
+    /// Idempotent: every op id is recorded either way.
+    pub async fn apply_remote_op(&self, op: &SyncOp) -> Result<Option<ChangeNotice>> {
+        validate_namespace(&op.namespace)?;
+        validate_id(&op.doc_id)?;
+        if self.is_op_known(&op.op_id).await? {
+            return Ok(None);
+        }
+
+        let mut tx = self.pool.begin().await?;
+
+        // Latest local knowledge this op competes against.
+        let latest_local: Option<String> = match op.op.as_str() {
+            "set_field" | "delete_field" => {
+                let field = op.field.as_deref().unwrap_or_default();
+                sqlx::query_scalar(
+                    "SELECT MAX(hlc) FROM change_log
+                     WHERE namespace = ? AND doc_id = ?
+                       AND (field = ? OR op IN ('create', 'delete_doc'))",
+                )
+                .bind(&op.namespace)
+                .bind(&op.doc_id)
+                .bind(field)
+                .fetch_one(&mut *tx)
+                .await?
+            }
+            _ => {
+                sqlx::query_scalar(
+                    "SELECT MAX(hlc) FROM change_log WHERE namespace = ? AND doc_id = ?",
+                )
+                .bind(&op.namespace)
+                .bind(&op.doc_id)
+                .fetch_one(&mut *tx)
+                .await?
+            }
+        };
+        let remote_wins = latest_local.as_deref().is_none_or(|local| op.hlc.as_str() > local);
+
+        let now = now_ms();
+        let mut notice: Option<ChangeNotice> = None;
+
+        if remote_wins {
+            match op.op.as_str() {
+                "create" => {
+                    let value = op.value.clone().unwrap_or(Value::Object(Map::new()));
+                    sqlx::query(
+                        "INSERT INTO documents (namespace, id, data, created_at, updated_at, deleted)
+                         VALUES (?, ?, ?, ?, ?, 0)
+                         ON CONFLICT(namespace, id) DO UPDATE
+                         SET data = excluded.data, updated_at = excluded.updated_at, deleted = 0",
+                    )
+                    .bind(&op.namespace)
+                    .bind(&op.doc_id)
+                    .bind(value.to_string())
+                    .bind(now)
+                    .bind(now)
+                    .execute(&mut *tx)
+                    .await?;
+                    notice = Some(ChangeNotice {
+                        namespace: op.namespace.clone(),
+                        doc_id: op.doc_id.clone(),
+                        operation: "create",
+                        ops_logged: 1,
+                    });
+                }
+                "set_field" | "delete_field" => {
+                    let field = op
+                        .field
+                        .clone()
+                        .ok_or_else(|| CoreError::Other("field op without field".into()))?;
+                    validate_field(&field)?;
+                    let existing: Option<String> = sqlx::query_scalar(
+                        "SELECT data FROM documents WHERE namespace = ? AND id = ?",
+                    )
+                    .bind(&op.namespace)
+                    .bind(&op.doc_id)
+                    .fetch_optional(&mut *tx)
+                    .await?;
+                    let mut doc: Map<String, Value> = existing
+                        .as_deref()
+                        .and_then(|raw| serde_json::from_str::<Value>(raw).ok())
+                        .and_then(|v| v.as_object().cloned())
+                        .unwrap_or_default();
+                    if op.op == "set_field" {
+                        doc.insert(field, op.value.clone().unwrap_or(Value::Null));
+                    } else {
+                        doc.remove(&field);
+                    }
+                    sqlx::query(
+                        "INSERT INTO documents (namespace, id, data, created_at, updated_at, deleted)
+                         VALUES (?, ?, ?, ?, ?, 0)
+                         ON CONFLICT(namespace, id) DO UPDATE
+                         SET data = excluded.data, updated_at = excluded.updated_at, deleted = 0",
+                    )
+                    .bind(&op.namespace)
+                    .bind(&op.doc_id)
+                    .bind(Value::Object(doc).to_string())
+                    .bind(now)
+                    .bind(now)
+                    .execute(&mut *tx)
+                    .await?;
+                    notice = Some(ChangeNotice {
+                        namespace: op.namespace.clone(),
+                        doc_id: op.doc_id.clone(),
+                        operation: "update",
+                        ops_logged: 1,
+                    });
+                }
+                "delete_doc" => {
+                    sqlx::query(
+                        "UPDATE documents SET deleted = 1, updated_at = ?
+                         WHERE namespace = ? AND id = ?",
+                    )
+                    .bind(now)
+                    .bind(&op.namespace)
+                    .bind(&op.doc_id)
+                    .execute(&mut *tx)
+                    .await?;
+                    notice = Some(ChangeNotice {
+                        namespace: op.namespace.clone(),
+                        doc_id: op.doc_id.clone(),
+                        operation: "delete",
+                        ops_logged: 1,
+                    });
+                }
+                other => {
+                    return Err(CoreError::Other(format!("unknown sync op \"{other}\"")));
+                }
+            }
+
+            // Winning remote ops join the log (synced=1: already on the wire)
+            // so future LWW lookups see the remote hlc.
+            sqlx::query(
+                "INSERT INTO change_log (op_id, device_id, hlc, namespace, doc_id, op, field, value, created_at, synced)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
+            )
+            .bind(&op.op_id)
+            .bind(&op.device_id)
+            .bind(&op.hlc)
+            .bind(&op.namespace)
+            .bind(&op.doc_id)
+            .bind(&op.op)
+            .bind(op.field.as_deref())
+            .bind(op.value.as_ref().map(|v| v.to_string()))
+            .bind(op.created_at)
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        // Losers and winners alike are remembered – a pull is idempotent.
+        sqlx::query("INSERT OR IGNORE INTO sync_applied (op_id, applied_at) VALUES (?, ?)")
+            .bind(&op.op_id)
+            .bind(now)
+            .execute(&mut *tx)
+            .await?;
+
+        tx.commit().await?;
+        Ok(notice)
     }
 
     /* ── Backup ───────────────────────────────────────────────────────── */

@@ -16,6 +16,11 @@ sqlx = { version = "0.8", default-features = false, features = [
   "json",
 ] }
 tempfile = "3"
+# Sync key system + end-to-end encryption (zero-knowledge transports).
+sha2 = "0.10"
+hkdf = "0.12"
+chacha20poly1305 = "0.10"
+getrandom = "0.2"
 
 [dev-dependencies]
 tokio = { workspace = true }

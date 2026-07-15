@@ -8,6 +8,13 @@ pub mod hlc;
 pub mod identity;
 pub mod storage;
 pub mod sync;
+pub mod sync_crypto;
+pub mod sync_engine;
+pub mod sync_folder;
+pub mod sync_keys;
 
 pub use error::{CoreError, Result};
-pub use storage::{ChangeNotice, Query, SqliteStorage, StorageAdapter};
+pub use storage::{ChangeNotice, Query, SqliteStorage, StorageAdapter, SyncOp};
+pub use sync_engine::{SyncEngine, SyncReport};
+pub use sync_folder::FolderTransport;
+pub use sync_keys::{DerivedKeys, SyncKey};
