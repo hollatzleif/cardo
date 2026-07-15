@@ -159,7 +159,7 @@
       "kickedTitle": "This device was removed from the sync group",
       "kickedBody": "The device that manages the key removed this device (or dissolved the group). Your local data is untouched. To rejoin, enter a currently valid key.",
       "joinable": "Allow joining with this key",
-      "joinableHint": "ON: the key can be shown/copied so a new device can enter it. OFF: no new devices can join — devices that already joined keep syncing.",
+      "joinableHint": "ON: new devices can join with this key. OFF: the key stops admitting ANY new device — even someone who knows it cannot join. Devices that already belong to the group keep syncing.",
       "joinableOffHint": "Joining is disabled — enable it to show the key.",
       "deleteKeyOrigin": "Delete key (ends group)",
       "forgetConfirmOrigin": "Delete the sync key? This device created it — deleting it DISSOLVES the whole group: every connected device stops syncing on its next round. All data stays on every device locally. Really delete?",
@@ -196,7 +196,9 @@
           "body": "There is no recovery service, no reset — by design, because nobody but you holds the key. If you lose every device AND the key, the encrypted data in the storage is permanently unreadable. Your local data on any surviving device is never affected."
         }
       },
-      "enableNeedsFolder": "First choose a sync folder below — then sync can be switched on."
+      "enableNeedsFolder": "First choose a sync folder below — then sync can be switched on.",
+      "joinDeniedTitle": "Joining is currently disabled",
+      "joinDeniedBody": "This sync group does not admit new devices right now. Ask the managing device to enable joining, then try 'Sync now' again — your key stays saved."
     }
   },
   "diagnose": {

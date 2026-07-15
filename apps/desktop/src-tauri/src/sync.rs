@@ -76,6 +76,9 @@ pub struct SyncConfig {
     /// This device was kicked via a revocation record (UI shows a banner).
     #[serde(default)]
     pub kicked: bool,
+    /// Joining was denied by the group's join policy (banner + retry hint).
+    #[serde(default)]
+    pub join_denied: bool,
 }
 
 fn default_true() -> bool {
@@ -408,8 +411,6 @@ async fn run_sync_round(
     let key = stored_key()?.ok_or("no sync key stored")?;
     let derived = key.derive();
 
-    upsert_own_device(&app_state.storage, device_name).await?;
-
     let transport = build_transport(&config)?;
     let mut excluded = Vec::new();
     if !config.sync_layouts {
@@ -417,7 +418,60 @@ async fn run_sync_round(
     }
     let engine = SyncEngine::new(&app_state.storage, &derived.data_key, transport_cursor_id(&config))
         .with_excluded_namespaces(excluded);
-    let report = engine.sync_once(transport.as_ref()).await.map_err(|e| e.to_string())?;
+
+    // Pull FIRST: brings the group's join policy + device registry + any
+    // revocations onto this device before it writes anything to the hub.
+    let mut report = engine.pull_once(transport.as_ref()).await.map_err(|e| e.to_string())?;
+
+    // Join gate: a device that is not yet part of the group may only enter
+    // while the join policy is open. Having the key alone is NOT enough –
+    // the origin device can close the group at any time. Already-registered
+    // devices pass regardless (they keep syncing when joining is off).
+    let own_id = app_state.storage.device_id().to_string();
+    let is_member = app_state
+        .storage
+        .get(DEVICES_NS, DEVICES_DOC)
+        .await
+        .map_err(|e| e.to_string())?
+        .and_then(|doc| doc["devices"].as_array().cloned())
+        .map(|devices| devices.iter().any(|d| d["deviceId"].as_str() == Some(own_id.as_str())))
+        .unwrap_or(false);
+    if !is_member && !config.key_origin {
+        let join_open = app_state
+            .storage
+            .get(CONTROL_NS, "join-policy")
+            .await
+            .map_err(|e| e.to_string())?
+            .map(|doc| doc["open"].as_bool().unwrap_or(true))
+            .unwrap_or(true); // no policy record yet = open group
+        if !join_open {
+            let mut updated = config;
+            updated.enabled = false;
+            updated.join_denied = true;
+            store_config(&sync_state, &app_state.app_data_dir, updated)?;
+            let _ = app.emit("sync:join-denied", ());
+            return Err("joining this sync group is currently disabled".into());
+        }
+    }
+
+    if !config.key_origin {
+        let join_open = app_state
+            .storage
+            .get(CONTROL_NS, "join-policy")
+            .await
+            .map_err(|e| e.to_string())?
+            .map(|doc| doc["open"].as_bool().unwrap_or(true))
+            .unwrap_or(true);
+        if config.key_joinable != join_open {
+            let mut mirrored = config_of(&sync_state, &app_state.app_data_dir);
+            mirrored.key_joinable = join_open;
+            store_config(&sync_state, &app_state.app_data_dir, mirrored)?;
+        }
+    }
+
+    upsert_own_device(&app_state.storage, device_name).await?;
+    let push_report = engine.push_once(transport.as_ref()).await.map_err(|e| e.to_string())?;
+    report.pushed = push_report.pushed;
 
     // Refresh the UI exactly like local writes do.
     for notice in &report.notices {
@@ -454,6 +508,7 @@ async fn run_sync_round(
     }
 
     let mut updated = config;
+    updated.join_denied = false;
     updated.last_sync_ms = Some(
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -547,17 +602,27 @@ pub fn sync_reveal_key(
     Ok(stored_key()?.map(|k| k.display()))
 }
 
-/// Join toggle: ON = the key can be revealed/entered on new devices.
-/// Devices that already joined keep syncing either way.
+/// Join toggle: ON = new devices may join the group (and the key may be
+/// revealed). OFF = the KEY ITSELF stops admitting new devices – even
+/// someone who already knows the key string cannot join; the policy record
+/// syncs encrypted through the hub and every honest client checks it before
+/// registering. Devices that already joined keep syncing either way.
 #[tauri::command]
-pub fn sync_set_joinable(
+pub async fn sync_set_joinable(
     app_state: State<'_, AppState>,
     sync_state: State<'_, SyncState>,
     joinable: bool,
 ) -> CmdResult<()> {
     let mut config = config_of(&sync_state, &app_state.app_data_dir);
     config.key_joinable = joinable;
-    store_config(&sync_state, &app_state.app_data_dir, config)
+    store_config(&sync_state, &app_state.app_data_dir, config)?;
+    // The enforced group policy (synced, encrypted like everything else).
+    app_state
+        .storage
+        .set(CONTROL_NS, "join-policy", json!({ "type": "join-policy", "open": joinable }))
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -590,6 +655,7 @@ pub async fn sync_status(
         "keyJoinable": config.key_joinable,
         "keyOrigin": config.key_origin,
         "kicked": config.kicked,
+        "joinDenied": config.join_denied,
         "lastSyncMs": config.last_sync_ms,
         "unsyncedOps": unsynced,
         "devices": devices,
@@ -643,6 +709,7 @@ pub fn sync_configure(
             key_joinable: previous.key_joinable,
             key_origin: previous.key_origin,
             kicked: previous.kicked,
+            join_denied: previous.join_denied,
         },
     )
 }

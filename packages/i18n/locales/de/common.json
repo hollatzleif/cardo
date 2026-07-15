@@ -159,7 +159,7 @@
       "kickedTitle": "Dieses Gerät wurde aus der Sync-Gruppe entfernt",
       "kickedBody": "Das Gerät, das den Schlüssel verwaltet, hat dieses Gerät entfernt (oder die Gruppe aufgelöst). Deine lokalen Daten sind unberührt. Zum Wiederbeitreten gib einen aktuell gültigen Schlüssel ein.",
       "joinable": "Beitritt mit diesem Schlüssel erlauben",
-      "joinableHint": "AN: Der Schlüssel kann angezeigt/kopiert werden, damit ein neues Gerät ihn eingibt. AUS: Keine neuen Geräte können beitreten — bereits beigetretene Geräte syncen weiter.",
+      "joinableHint": "AN: Neue Geräte können mit diesem Schlüssel beitreten. AUS: Der Schlüssel lässt KEIN neues Gerät mehr zu — selbst wer ihn kennt, kann nicht beitreten. Geräte, die schon zur Gruppe gehören, syncen weiter.",
       "joinableOffHint": "Beitritt ist deaktiviert — einschalten, um den Schlüssel anzuzeigen.",
       "deleteKeyOrigin": "Schlüssel löschen (löst Gruppe auf)",
       "forgetConfirmOrigin": "Sync-Schlüssel löschen? Dieses Gerät hat ihn erzeugt — Löschen LÖST die ganze Gruppe AUF: Jedes verbundene Gerät stoppt den Sync bei seiner nächsten Runde. Alle Daten bleiben auf jedem Gerät lokal erhalten. Wirklich löschen?",
@@ -196,7 +196,9 @@
           "body": "Es gibt keinen Wiederherstellungsdienst und keinen Reset — mit Absicht, denn niemand außer dir hat den Schlüssel. Verlierst du ALLE Geräte UND den Schlüssel, sind die verschlüsselten Daten im Speicher dauerhaft unlesbar. Deine lokalen Daten auf jedem verbliebenen Gerät sind davon nie betroffen."
         }
       },
-      "enableNeedsFolder": "Wähle zuerst unten einen Sync-Ordner — dann lässt sich Sync einschalten."
+      "enableNeedsFolder": "Wähle zuerst unten einen Sync-Ordner — dann lässt sich Sync einschalten.",
+      "joinDeniedTitle": "Beitritt ist gerade deaktiviert",
+      "joinDeniedBody": "Diese Sync-Gruppe nimmt derzeit keine neuen Geräte auf. Lass das verwaltende Gerät den Beitritt einschalten und drücke dann erneut „Jetzt synchronisieren“ — dein Schlüssel bleibt gespeichert."
     }
   },
   "diagnose": {

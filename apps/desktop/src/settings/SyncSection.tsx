@@ -31,6 +31,7 @@ interface SyncStatus {
   keyJoinable: boolean;
   keyOrigin: boolean;
   kicked: boolean;
+  joinDenied: boolean;
 }
 
 interface SyncReport {
@@ -186,6 +187,14 @@ export function SyncSection({
           />
         </Card>
       )}
+      {status.joinDenied && (
+        <Card>
+          <Row
+            label={`⚠️ ${t('settings.sync.joinDeniedTitle')}`}
+            description={t('settings.sync.joinDeniedBody')}
+          />
+        </Card>
+      )}
 
       {/* ── How it works (detailed, expandable) ─────────────────────── */}
       <Card>
@@ -256,19 +265,21 @@ export function SyncSection({
           </>
         ) : (
           <>
-            <Row
-              label={t('settings.sync.joinable')}
-              description={t('settings.sync.joinableHint')}
-            >
-              <input
-                type="checkbox"
-                checked={status.keyJoinable}
-                disabled={busy}
-                onChange={(e) =>
-                  void call(() => invoke('sync_set_joinable', { joinable: e.target.checked }))
-                }
-              />
-            </Row>
+            {status.keyOrigin && (
+              <Row
+                label={t('settings.sync.joinable')}
+                description={t('settings.sync.joinableHint')}
+              >
+                <input
+                  type="checkbox"
+                  checked={status.keyJoinable}
+                  disabled={busy}
+                  onChange={(e) =>
+                    void call(() => invoke('sync_set_joinable', { joinable: e.target.checked }))
+                  }
+                />
+              </Row>
+            )}
             <Row
               label={t('settings.sync.keyPresent')}
               description={`${t('settings.sync.licenseId')}: ${status.licenseId ?? '–'}`}
@@ -560,11 +571,14 @@ export function SyncSection({
       {/* ── Mandatory trust warning ─────────────────────────────────── */}
       {trustOpen && (
         <Modal onClose={() => setTrustOpen(false)}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', maxWidth: 420 }}>
-            <strong>⚠️ {t('settings.sync.trustTitle')}</strong>
-            <p style={{ margin: 0 }}>{t('settings.sync.trustBody')}</p>
-            <p className="c-muted" style={{ margin: 0, fontSize: 13 }}>{t('settings.sync.trustRecovery')}</p>
-            <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+          <div className="sync-trust">
+            <div className="sync-trust__head">
+              <span className="sync-trust__icon" aria-hidden="true">⚠️</span>
+              <h3 className="sync-trust__title">{t('settings.sync.trustTitle')}</h3>
+            </div>
+            <p className="sync-trust__body">{t('settings.sync.trustBody')}</p>
+            <p className="sync-trust__note c-muted">{t('settings.sync.trustRecovery')}</p>
+            <div className="sync-trust__actions">
               <Button variant="ghost" onClick={() => setTrustOpen(false)}>
                 {t('common.cancel')}
               </Button>

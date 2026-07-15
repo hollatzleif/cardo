@@ -63,6 +63,21 @@ impl<'a> SyncEngine<'a> {
         Ok(report)
     }
 
+    /// Pull half only. Used by the app to check group policy (join allowed?
+    /// device revoked?) BEFORE anything of this device reaches the hub.
+    pub async fn pull_once(&self, transport: &dyn SyncTransport) -> Result<SyncReport> {
+        let mut report = SyncReport::default();
+        self.pull_and_apply(transport, &mut report).await?;
+        Ok(report)
+    }
+
+    /// Push half only – the counterpart to `pull_once`.
+    pub async fn push_once(&self, transport: &dyn SyncTransport) -> Result<SyncReport> {
+        let mut report = SyncReport::default();
+        self.push_pending(transport, &mut report).await?;
+        Ok(report)
+    }
+
     async fn pull_and_apply(
         &self,
         transport: &dyn SyncTransport,
