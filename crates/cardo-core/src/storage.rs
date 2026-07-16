@@ -343,6 +343,19 @@ impl SqliteStorage {
             .collect()
     }
 
+    /// Re-queues EVERY local op for upload (transport switch / manual
+    /// re-send). Safe: receivers are idempotent per op_id, duplicates are
+    /// skipped, so the worst case is redundant blobs in the new hub.
+    pub async fn mark_all_unsynced(&self) -> Result<u64> {
+        let result = sqlx::query(
+            "UPDATE change_log SET synced = 0 WHERE synced = 1 AND device_id = ?",
+        )
+        .bind(self.hlc.device_id())
+        .execute(&self.pool)
+        .await?;
+        Ok(result.rows_affected())
+    }
+
     pub async fn mark_ops_synced(&self, op_ids: &[String]) -> Result<()> {
         let mut tx = self.pool.begin().await?;
         for id in op_ids {

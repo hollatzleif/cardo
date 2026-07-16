@@ -200,7 +200,9 @@
       "joinDeniedTitle": "Beitritt ist gerade deaktiviert",
       "joinDeniedBody": "Diese Sync-Gruppe nimmt derzeit keine neuen Geräte auf. Lass das verwaltende Gerät den Beitritt einschalten und drücke dann erneut „Jetzt synchronisieren“ — dein Schlüssel bleibt gespeichert.",
       "gdriveUnconfigured": "In diesem Build noch nicht verfügbar: Die Google-OAuth-App muss einmalig registriert werden (Entwickler-Schritt). Bis dahin: Ordner-Transport nutzen — gleiche Verschlüsselung, funktioniert sofort.",
-      "undecryptable": "{{count}} Blöcke konnten NICHT entschlüsselt werden — der Schlüssel dieses Geräts passt nicht zu dem, der sie geschrieben hat. Vergleiche die Schlüssel-ID auf beiden Geräten."
+      "undecryptable": "{{count}} Blöcke konnten NICHT entschlüsselt werden — der Schlüssel dieses Geräts passt nicht zu dem, der sie geschrieben hat. Vergleiche die Schlüssel-ID auf beiden Geräten.",
+      "pushAll": "Alles erneut senden",
+      "pushAllHint": "Lädt deine komplette Historie neu hoch — nach einem Transport-Wechsel oder wenn einem Gerät Daten fehlen. Ungefährlich: Geräte ignorieren Blöcke, die sie schon kennen."
     }
   },
   "diagnose": {

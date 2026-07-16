@@ -494,17 +494,31 @@ export function SyncSection({
                   : t('settings.sync.never')
               }
             >
-              <Button
-                variant="primary"
-                disabled={busy || !status.enabled}
-                onClick={() =>
-                  void call(async () => {
-                    setReport(await invoke<SyncReport>('sync_now'));
-                  })
-                }
-              >
-                {busy ? '…' : t('settings.sync.syncNow')}
-              </Button>
+              <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <Button
+                  variant="primary"
+                  disabled={busy || !status.enabled}
+                  onClick={() =>
+                    void call(async () => {
+                      setReport(await invoke<SyncReport>('sync_now'));
+                    })
+                  }
+                >
+                  {busy ? '…' : t('settings.sync.syncNow')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={busy || !status.enabled}
+                  title={t('settings.sync.pushAllHint')}
+                  onClick={() =>
+                    void call(async () => {
+                      setReport(await invoke<SyncReport>('sync_push_all'));
+                    })
+                  }
+                >
+                  {t('settings.sync.pushAll')}
+                </Button>
+              </div>
             </Row>
             <Row
               label={t('settings.sync.pending')}

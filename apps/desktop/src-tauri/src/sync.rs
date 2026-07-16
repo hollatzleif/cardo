@@ -79,6 +79,11 @@ pub struct SyncConfig {
     /// Joining was denied by the group's join policy (banner + retry hint).
     #[serde(default)]
     pub join_denied: bool,
+    /// Cursor id of the transport used in the previous round. A change means
+    /// the hub changed: everything must be re-queued or history stays behind
+    /// in the old hub forever.
+    #[serde(default)]
+    pub last_transport: String,
 }
 
 fn default_true() -> bool {
@@ -414,6 +419,19 @@ async fn run_sync_round(
     let derived = key.derive();
 
     let transport = build_transport(&config)?;
+
+    // Transport switched? The old hub holds ops the new one never saw —
+    // re-queue our full history (receivers dedupe by op_id).
+    let cursor_id = transport_cursor_id(&config);
+    if !config.last_transport.is_empty() && config.last_transport != cursor_id {
+        app_state.storage.mark_all_unsynced().await.map_err(|e| e.to_string())?;
+    }
+    if config.last_transport != cursor_id {
+        let mut remembered = config_of(&sync_state, &app_state.app_data_dir);
+        remembered.last_transport = cursor_id.clone();
+        store_config(&sync_state, &app_state.app_data_dir, remembered)?;
+    }
+
     let mut excluded = Vec::new();
     if !config.sync_layouts {
         excluded.push(LAYOUT_NS.to_string());
@@ -740,6 +758,7 @@ pub fn sync_configure(
             key_origin: previous.key_origin,
             kicked: previous.kicked,
             join_denied: previous.join_denied,
+            last_transport: previous.last_transport,
         },
     )
 }
@@ -788,6 +807,16 @@ pub async fn sync_forget_key(app: tauri::AppHandle) -> CmdResult<()> {
 }
 
 const CONTROL_NS: &str = "core.sync-control";
+
+/// Manual full re-send: re-queues every local op and runs a round. For
+/// "my other device is missing history" situations (old hub, restored
+/// backup, …). Safe to run repeatedly.
+#[tauri::command]
+pub async fn sync_push_all(app: tauri::AppHandle) -> CmdResult<SyncReport> {
+    let app_state: State<'_, AppState> = app.state();
+    app_state.storage.mark_all_unsynced().await.map_err(|e| e.to_string())?;
+    run_sync_round(&app, &device_label()).await
+}
 
 /// Removes a device from the shared registry AND writes a revocation record
 /// that syncs to every device; the kicked device disables its own sync on

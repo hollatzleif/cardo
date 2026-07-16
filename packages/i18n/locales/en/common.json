@@ -200,7 +200,9 @@
       "joinDeniedTitle": "Joining is currently disabled",
       "joinDeniedBody": "This sync group does not admit new devices right now. Ask the managing device to enable joining, then try 'Sync now' again — your key stays saved.",
       "gdriveUnconfigured": "Not available in this build yet: the Google OAuth app still needs to be registered (a one-time developer step). Until then, use the folder transport — same encryption, works today.",
-      "undecryptable": "{{count}} blocks could NOT be decrypted — this device's key does not match the one that wrote them. Compare the key ID on both devices."
+      "undecryptable": "{{count}} blocks could NOT be decrypted — this device's key does not match the one that wrote them. Compare the key ID on both devices.",
+      "pushAll": "Send everything again",
+      "pushAllHint": "Re-uploads your complete history — use after switching the transport or when another device is missing data. Safe: devices ignore blocks they already know."
     }
   },
   "diagnose": {
