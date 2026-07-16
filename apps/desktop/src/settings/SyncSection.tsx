@@ -28,6 +28,7 @@ interface SyncStatus {
   devices: Array<{ deviceId: string; name: string; lastSeenMs: number }>;
   deviceSlots: number;
   gdriveConnected: boolean;
+  gdriveConfigured: boolean;
   keyJoinable: boolean;
   keyOrigin: boolean;
   kicked: boolean;
@@ -417,7 +418,13 @@ export function SyncSection({
               </>
             )}
 
-            {transport === 'gdrive' && (
+            {transport === 'gdrive' && !status.gdriveConfigured && (
+              <Row
+                label="Google Drive"
+                description={t('settings.sync.gdriveUnconfigured')}
+              />
+            )}
+            {transport === 'gdrive' && status.gdriveConfigured && (
               <Row
                 label="Google Drive"
                 description={

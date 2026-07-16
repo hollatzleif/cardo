@@ -690,6 +690,7 @@ pub async fn sync_status(
         "devices": devices,
         "deviceSlots": DEVICE_SLOTS,
         "gdriveConnected": crate::sync_gdrive::is_connected(),
+        "gdriveConfigured": crate::sync_gdrive::is_configured(),
     }))
 }
 

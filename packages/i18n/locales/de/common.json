@@ -198,7 +198,8 @@
       },
       "enableNeedsFolder": "Wähle zuerst unten einen Sync-Ordner — dann lässt sich Sync einschalten.",
       "joinDeniedTitle": "Beitritt ist gerade deaktiviert",
-      "joinDeniedBody": "Diese Sync-Gruppe nimmt derzeit keine neuen Geräte auf. Lass das verwaltende Gerät den Beitritt einschalten und drücke dann erneut „Jetzt synchronisieren“ — dein Schlüssel bleibt gespeichert."
+      "joinDeniedBody": "Diese Sync-Gruppe nimmt derzeit keine neuen Geräte auf. Lass das verwaltende Gerät den Beitritt einschalten und drücke dann erneut „Jetzt synchronisieren“ — dein Schlüssel bleibt gespeichert.",
+      "gdriveUnconfigured": "In diesem Build noch nicht verfügbar: Die Google-OAuth-App muss einmalig registriert werden (Entwickler-Schritt). Bis dahin: Ordner-Transport nutzen — gleiche Verschlüsselung, funktioniert sofort."
     }
   },
   "diagnose": {

@@ -40,6 +40,11 @@ fn refresh_entry() -> Result<keyring::Entry, String> {
     keyring::Entry::new(KEYCHAIN_SERVICE, KEYCHAIN_REFRESH_ENTRY).map_err(|e| e.to_string())
 }
 
+/// A build without an OAuth client id cannot start the consent flow.
+pub fn is_configured() -> bool {
+    !client_id().is_empty()
+}
+
 pub fn is_connected() -> bool {
     matches!(refresh_entry().map(|e| e.get_password()), Ok(Ok(_)))
 }

@@ -267,7 +267,7 @@ export function createTool(): CardoTool {
     const usesOptions = OPTION_MODES.includes(mode);
 
     useEffect(() => {
-      if (variant !== 'wheel' || state.mode !== 'wheel') return;
+      if (state.mode !== 'wheel') return;
       const canvas = canvasRef.current;
       if (canvas) drawWheel(canvas, state.options, rotationRef.current);
     }, [variant, state]);
@@ -769,6 +769,18 @@ export function createTool(): CardoTool {
         }}
       >
         {modeSelect}
+        {mode === 'wheel' && options.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+            <canvas
+              ref={canvasRef}
+              width={200}
+              height={200}
+              role="img"
+              aria-label={t('tool.random-picker.widget.wheelLabel')}
+              style={{ maxWidth: '100%' }}
+            />
+          </div>
+        )}
         {usesOptions ? (
           <>
             <textarea
