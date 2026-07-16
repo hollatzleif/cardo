@@ -515,11 +515,20 @@ export function SyncSection({
             {report && (
               <Row
                 label={t('settings.sync.lastReport')}
-                description={t('settings.sync.reportLine', {
-                  pushed: report.pushed,
-                  applied: report.applied,
-                  skipped: report.skipped,
-                })}
+                description={
+                  <>
+                    {t('settings.sync.reportLine', {
+                      pushed: report.pushed,
+                      applied: report.applied,
+                      skipped: report.skipped,
+                    })}
+                    {report.undecryptable > 0 && (
+                      <span style={{ color: 'var(--danger)', display: 'block' }}>
+                        {t('settings.sync.undecryptable', { count: report.undecryptable })}
+                      </span>
+                    )}
+                  </>
+                }
               />
             )}
             {status.devices.length > 0 && (
