@@ -29,6 +29,8 @@ import {
   weightedPickIndex,
   weightedPickN,
   yesNo,
+  type CoinSide,
+  type DiceRoll,
   type LegacyListDoc,
   type PickerMode,
   type PickerOption,
@@ -44,9 +46,33 @@ import {
 
 const SPIN_MS = 2000;
 const WHEEL_TURNS = 4;
+/** Gentle settle wobble at the very end of the wheel spin. */
+const WOBBLE_MS = 200;
+const WOBBLE_RAD = 0.035; // ≈2° overshoot amplitude
+/** Coin flip: even number of half-turns → the coin lands front-facing. */
+const COIN_MS = 1000;
+const COIN_HALF_TURNS = 6;
+/** Dice shuffle: rapid face changes with decreasing speed. */
+const DICE_MS = 600;
 
 /** Modes that operate on the entered options (the rest are parameter-only). */
 const OPTION_MODES: readonly PickerMode[] = ['wheel', 'shuffle', 'pick-n'];
+
+/** All animations collapse to instant results when the user prefers reduced motion. */
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+const DICE_GLYPHS: readonly string[] = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+/** Dice faces as glyphs (d6) or plain numbers (any other die). */
+function diceFacesText(rolls: readonly number[], sides: number): string {
+  if (sides === 6) return rolls.map((v) => DICE_GLYPHS[v - 1] ?? String(v)).join(' ');
+  return rolls.join('  ');
+}
 
 function isPickerMode(value: unknown): value is PickerMode {
   return typeof value === 'string' && (PICKER_MODES as readonly string[]).includes(value);
@@ -160,14 +186,18 @@ function drawWheel(canvas: HTMLCanvasElement, options: readonly PickerOption[], 
       g.restore();
     }
   }
-  // Pointer at 12 o'clock.
+  // Pointer/tick indicator at 12 o'clock: small accent triangle, outlined in
+  // the widget background so it reads on every segment color.
   g.beginPath();
   g.moveTo(cx - 9, 1);
   g.lineTo(cx + 9, 1);
   g.lineTo(cx, 20);
   g.closePath();
-  g.fillStyle = color('--text-primary', 'black');
+  g.fillStyle = color('--accent', 'black');
   g.fill();
+  g.strokeStyle = color('--bg-widget', 'white');
+  g.lineWidth = 2;
+  g.stroke();
 }
 
 export function createTool(): CardoTool {
@@ -186,9 +216,30 @@ export function createTool(): CardoTool {
     const [withMaybe, setWithMaybe] = useState(false);
     const [countDraft, setCountDraft] = useState('2');
     const [invalid, setInvalid] = useState<'dice' | 'range' | null>(null);
+    const [coinFace, setCoinFace] = useState<CoinSide | null>(null);
+    const [diceFaces, setDiceFaces] = useState<string | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const rotationRef = useRef(0);
     const animRef = useRef<number | null>(null);
+    const coinRef = useRef<HTMLDivElement | null>(null);
+    const coinAnimRef = useRef<Animation | null>(null);
+    const diceTimerRef = useRef<number | null>(null);
+
+    /** Stop every running presentation animation (refs only – safe on unmount). */
+    const cancelAnimations = useCallback(() => {
+      if (animRef.current !== null) {
+        cancelAnimationFrame(animRef.current);
+        animRef.current = null;
+      }
+      if (coinAnimRef.current !== null) {
+        coinAnimRef.current.cancel(); // cancelled animations never fire onfinish
+        coinAnimRef.current = null;
+      }
+      if (diceTimerRef.current !== null) {
+        window.clearTimeout(diceTimerRef.current);
+        diceTimerRef.current = null;
+      }
+    }, []);
 
     const reload = useCallback(async () => {
       if (!ctx) return;
@@ -205,9 +256,9 @@ export function createTool(): CardoTool {
       return () => {
         mounted = false;
         unsub?.();
-        if (animRef.current !== null) cancelAnimationFrame(animRef.current);
+        cancelAnimations();
       };
-    }, [reload]);
+    }, [reload, cancelAnimations]);
 
     const mode = state.mode;
     const options = state.options;
@@ -239,6 +290,10 @@ export function createTool(): CardoTool {
     }
 
     function setMode(next: PickerMode): void {
+      cancelAnimations();
+      setSpinning(false);
+      setCoinFace(null);
+      setDiceFaces(null);
       setInvalid(null);
       setState((prev) => ({ ...prev, mode: next }));
       void save({ mode: next });
@@ -269,10 +324,7 @@ export function createTool(): CardoTool {
       const picked = pickWeighted(options);
       if (!picked) return;
       const canvas = canvasRef.current;
-      const reduced =
-        typeof window.matchMedia === 'function' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!canvas || reduced) {
+      if (!canvas || prefersReducedMotion()) {
         // No canvas in this variant (or reduced motion): instant result.
         if (canvas) {
           rotationRef.current = targetFor(picked.index);
@@ -285,10 +337,18 @@ export function createTool(): CardoTool {
       const startRotation = rotationRef.current;
       const target = targetFor(picked.index);
       const startTime = performance.now();
+      const wobbleFrom = 1 - WOBBLE_MS / SPIN_MS;
       const step = (now: number): void => {
         const progress = Math.min(1, (now - startTime) / SPIN_MS);
         const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-        rotationRef.current = startRotation + (target - startRotation) * eased;
+        let rotation = startRotation + (target - startRotation) * eased;
+        if (progress > wobbleFrom) {
+          // Gentle settle wobble over the last WOBBLE_MS: a damped full sine
+          // swing that is exactly 0 at progress 1 (lands precisely on target).
+          const wp = (progress - wobbleFrom) / (1 - wobbleFrom);
+          rotation += WOBBLE_RAD * Math.sin(wp * Math.PI * 2) * (1 - wp);
+        }
+        rotationRef.current = rotation;
         drawWheel(canvas, options, rotationRef.current);
         if (progress < 1) {
           animRef.current = requestAnimationFrame(step);
@@ -301,7 +361,77 @@ export function createTool(): CardoTool {
       animRef.current = requestAnimationFrame(step);
     }
 
+    /**
+     * Coin flip: the RESULT is decided up front (pure logic); the WAAPI
+     * animation is presentation only – ~1s of 3D half-turns with ease-out,
+     * landing front-facing, then the result face and text appear.
+     */
+    function animateCoin(side: CoinSide): void {
+      const finish = (): void => {
+        setCoinFace(side);
+        commitResult(t(`tool.random-picker.result.${side}`));
+      };
+      const el = coinRef.current;
+      // No coin element in this variant, no WAAPI (tests) or reduced motion:
+      // show the result immediately.
+      if (!el || typeof el.animate !== 'function' || prefersReducedMotion()) {
+        finish();
+        return;
+      }
+      setSpinning(true);
+      setCoinFace(null); // neutral face while airborne
+      const degrees = COIN_HALF_TURNS * 180; // even count → ends front-facing
+      const anim = el.animate(
+        [
+          { transform: 'rotateY(0deg) translateY(0px)' },
+          { transform: `rotateY(${degrees / 2}deg) translateY(-14px)`, offset: 0.45 },
+          { transform: `rotateY(${degrees}deg) translateY(0px)` },
+        ],
+        { duration: COIN_MS, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' }, // ease-out cubic
+      );
+      coinAnimRef.current = anim;
+      anim.onfinish = () => {
+        coinAnimRef.current = null;
+        setSpinning(false);
+        finish();
+      };
+    }
+
+    /**
+     * Dice roll: the rolls are final BEFORE the animation; the faces just
+     * shuffle rapidly (decreasing speed, ~600ms) before settling on them.
+     */
+    function animateDice(rolled: DiceRoll): void {
+      const settle = (): void => {
+        setDiceFaces(diceFacesText(rolled.rolls, rolled.sides));
+        commitResult(`${rolled.total} (${rolled.rolls.join(' + ')})`);
+      };
+      // Compact has no dice display; reduced motion skips the shuffle.
+      if (variant === 'compact' || prefersReducedMotion()) {
+        settle();
+        return;
+      }
+      setSpinning(true);
+      const startTime = performance.now();
+      let delay = 45;
+      const tick = (): void => {
+        if (performance.now() - startTime >= DICE_MS) {
+          diceTimerRef.current = null;
+          setSpinning(false);
+          settle();
+          return;
+        }
+        // Throwaway faces – presentation only, never the result.
+        const faces = defaultRandomInts(rolled.count, rolled.sides).map((v) => v + 1);
+        setDiceFaces(diceFacesText(faces, rolled.sides));
+        delay *= 1.3; // slow down towards the end
+        diceTimerRef.current = window.setTimeout(tick, delay);
+      };
+      tick();
+    }
+
     function runAction(): void {
+      if (spinning) return; // e.g. Enter in the dice input while animating
       setInvalid(null);
       switch (mode) {
         case 'wheel':
@@ -313,11 +443,11 @@ export function createTool(): CardoTool {
             setInvalid('dice');
             return;
           }
-          commitResult(`${rolled.total} (${rolled.rolls.join(' + ')})`);
+          animateDice(rolled);
           return;
         }
         case 'coin':
-          commitResult(t(`tool.random-picker.result.${coinFlip(secureRandomInt)}`));
+          animateCoin(coinFlip(secureRandomInt));
           return;
         case 'number': {
           const value = randomInRange(Number(minDraft), Number(maxDraft), secureRandomInt);
@@ -367,18 +497,44 @@ export function createTool(): CardoTool {
       switch (mode) {
         case 'dice':
           return (
-            <input
-              className="c-input"
-              value={diceSpec}
-              style={{ width: '90px', textAlign: 'center', flexShrink: 0 }}
-              aria-label={t('tool.random-picker.widget.diceLabel')}
-              title={t('tool.random-picker.widget.diceLabel')}
-              placeholder="2d6"
-              onChange={(e) => setDiceSpec(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') runAction();
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 'var(--space-2)',
+                flexShrink: 0,
               }}
-            />
+            >
+              <input
+                className="c-input"
+                value={diceSpec}
+                style={{ width: '90px', textAlign: 'center', flexShrink: 0 }}
+                aria-label={t('tool.random-picker.widget.diceLabel')}
+                title={t('tool.random-picker.widget.diceLabel')}
+                placeholder="2d6"
+                onChange={(e) => setDiceSpec(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') runAction();
+                }}
+              />
+              {diceFaces !== null && (
+                <div
+                  aria-hidden
+                  style={{
+                    fontSize: '1.8em',
+                    lineHeight: 1.2,
+                    letterSpacing: '0.08em',
+                    textAlign: 'center',
+                    fontVariantNumeric: 'tabular-nums',
+                    overflowWrap: 'break-word',
+                    maxWidth: '100%',
+                  }}
+                >
+                  {diceFaces}
+                </div>
+              )}
+            </div>
           );
         case 'number':
           return (
@@ -441,10 +597,30 @@ export function createTool(): CardoTool {
             </label>
           );
         case 'coin':
+          // The coin is decorative (the result is announced via the aria-live
+          // result line); perspective on the wrapper gives the 3D flip depth.
           return (
-            <span style={{ fontSize: '2.4em' }} aria-hidden>
-              🪙
-            </span>
+            <div style={{ perspective: '400px', flexShrink: 0 }} aria-hidden>
+              <div
+                ref={coinRef}
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'var(--accent)',
+                  color: 'var(--accent-text)',
+                  fontWeight: 700,
+                  fontSize: coinFace === null ? '1.6em' : '0.95em',
+                  willChange: 'transform',
+                  userSelect: 'none',
+                }}
+              >
+                {coinFace === null ? '🪙' : t(`tool.random-picker.result.${coinFace}`)}
+              </div>
+            </div>
           );
         default:
           return null;
@@ -460,10 +636,15 @@ export function createTool(): CardoTool {
       shuffle: 'shuffle',
       'pick-n': 'drawN',
     };
-    const actionLabel =
-      mode === 'wheel' && spinning
-        ? t('tool.random-picker.widget.spinning')
-        : t(`tool.random-picker.widget.${actionKeys[mode]}`);
+    const busyKeys: Partial<Record<PickerMode, string>> = {
+      wheel: 'spinning',
+      coin: 'flipping',
+      dice: 'rolling',
+    };
+    const busyKey = spinning ? busyKeys[mode] : undefined;
+    const actionLabel = busyKey
+      ? t(`tool.random-picker.widget.${busyKey}`)
+      : t(`tool.random-picker.widget.${actionKeys[mode]}`);
     const actionDisabled = spinning || (usesOptions && options.length === 0);
 
     const actionButton = (

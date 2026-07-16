@@ -6,6 +6,7 @@ mod assistant;
 mod claude;
 mod notes;
 mod sync;
+mod sync_files;
 mod sync_gdrive;
 
 use cardo_core::diagnose::CoreCheckResult;
@@ -173,7 +174,8 @@ async fn backup_import(state: State<'_, AppState>, path: String) -> CmdResult<u6
 
 /// Hosts the diagnose may probe. The webview cannot fetch some of these
 /// (github.com sends no CORS headers), so the probe runs in Rust.
-const PROBE_ALLOWED_HOSTS: [&str; 7] = [
+const PROBE_ALLOWED_HOSTS: [&str; 8] = [
+    "www.googleapis.com",
     "github.com",
     "hollatzleif.github.io",
     "cardo-polls.hollatzleif.workers.dev",

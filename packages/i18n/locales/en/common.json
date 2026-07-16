@@ -1754,7 +1754,9 @@
         "maxLabel": "Maximum",
         "invalidRange": "The range must contain at least one whole number.",
         "allowMaybe": "Allow \"maybe\"",
-        "countLabel": "How many?"
+        "countLabel": "How many?",
+        "flipping": "Flipping …",
+        "rolling": "Rolling …"
       },
       "result": {
         "heads": "Heads",

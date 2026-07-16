@@ -1754,7 +1754,9 @@
         "maxLabel": "Maximum",
         "invalidRange": "Der Bereich muss mindestens eine ganze Zahl enthalten.",
         "allowMaybe": "„Vielleicht“ zulassen",
-        "countLabel": "Wie viele?"
+        "countLabel": "Wie viele?",
+        "flipping": "Fliegt …",
+        "rolling": "Würfelt …"
       },
       "result": {
         "heads": "Kopf",

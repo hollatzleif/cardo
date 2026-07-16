@@ -350,9 +350,9 @@ export function createTool(): CardoTool {
         params: z.object({
           track: z.enum(['rain', 'white-noise', 'brown-noise', 'stream']).optional(),
         }),
-        // In silent contexts (diagnose scratch, jsdom) LoopPlayer no-ops,
-        // so this probe just flips persisted state – no sound, no failure.
-        selfTestParams: {},
+        // No selfTestParams: the auto commands-check would start REAL audio
+        // with no reliable stop (user report: diagnose left ambience running).
+        // Coverage comes from the 'commands' self-test's silent path.
         async run(params): Promise<CommandResult> {
           if (params.track) {
             await applyAction(context, { type: 'solo', track: params.track }, false);

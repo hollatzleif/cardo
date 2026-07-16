@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import { createPortal } from 'react-dom';
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
 
 /** Shared component library – tools build on these, never on raw styles. */
@@ -27,7 +28,7 @@ export function Card({ children, className = '', style }: { children: ReactNode;
 }
 
 export function Modal({ children, onClose }: { children: ReactNode; onClose: () => void }) {
-  return (
+  const modal = (
     <div
       className="c-modal-backdrop"
       onMouseDown={(e) => {
@@ -39,6 +40,10 @@ export function Modal({ children, onClose }: { children: ReactNode; onClose: () 
       </div>
     </div>
   );
+  // Portal to <body>: widgets live inside transform-ed grid items, which
+  // would otherwise become the containing block for position:fixed and trap
+  // the "fullscreen" backdrop inside the widget frame.
+  return typeof document !== 'undefined' ? createPortal(modal, document.body) : modal;
 }
 
 export function PrivacyBadge({ level, label }: { level: 'green' | 'yellow'; label: string }) {

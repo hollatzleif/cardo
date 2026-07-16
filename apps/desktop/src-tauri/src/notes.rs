@@ -32,6 +32,11 @@ fn validate_name(name: &str) -> CmdResult<()> {
     if ok { Ok(()) } else { Err(format!("invalid note name \"{name}\"")) }
 }
 
+/// Sync file-lane: the currently configured notes folder, if any.
+pub fn current_folder(state: &NotesState) -> Option<PathBuf> {
+    state.dir.lock().ok().and_then(|guard| guard.clone())
+}
+
 fn current_dir(state: &NotesState) -> CmdResult<PathBuf> {
     state
         .dir

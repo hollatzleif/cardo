@@ -552,6 +552,18 @@ impl SqliteStorage {
         Ok(notice)
     }
 
+    /// Live document ids of one namespace (sync file-lane discovery).
+    pub async fn list_ids(&self, namespace: &str) -> Result<Vec<String>> {
+        validate_namespace(namespace)?;
+        let rows: Vec<String> = sqlx::query_scalar(
+            "SELECT id FROM documents WHERE namespace = ? AND deleted = 0 ORDER BY id",
+        )
+        .bind(namespace)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows)
+    }
+
     /* ── Backup ───────────────────────────────────────────────────────── */
 
     /// Full dump of every live document, grouped by namespace.

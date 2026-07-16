@@ -323,12 +323,13 @@ describe('surfaces render and take basic interaction (network down)', () => {
   });
 
   it('AddWidgetMenu: renders every active widget and search narrows', async () => {
-    const { container, unmount } = await render(<AddWidgetMenu onClose={() => {}} />);
-    const before = container.querySelectorAll('.add-widget__card').length;
+    const { unmount } = await render(<AddWidgetMenu onClose={() => {}} />);
+    // Modal portals to <body> since the widget-help fix – query the document.
+    const before = document.querySelectorAll('.add-widget__card').length;
     expect(before).toBeGreaterThan(0);
 
-    await typeInto(container.querySelector('input'), 'todo');
-    const after = container.querySelectorAll('.add-widget__card').length;
+    await typeInto(document.querySelector('.c-modal input'), 'todo');
+    const after = document.querySelectorAll('.add-widget__card').length;
     expect(after).toBeGreaterThan(0);
     expect(after).toBeLessThan(before);
     await unmount();
@@ -336,10 +337,10 @@ describe('surfaces render and take basic interaction (network down)', () => {
 
   it('TemplatePicker: three template cards plus the blank option', async () => {
     const onDone = vi.fn();
-    const { container, unmount } = await render(<TemplatePicker onDone={onDone} />);
-    expect(container.querySelectorAll('.templates__card')).toHaveLength(3);
+    const { unmount } = await render(<TemplatePicker onDone={onDone} />);
+    expect(document.querySelectorAll('.templates__card')).toHaveLength(3);
 
-    const blank = container.querySelector('.templates__footer button');
+    const blank = document.querySelector('.templates__footer button');
     await click(blank);
     expect(onDone).toHaveBeenCalledTimes(1);
     await unmount();
@@ -372,12 +373,12 @@ describe('surfaces render and take basic interaction (network down)', () => {
 
   it('CommandPalette: typing "todo" lists commands and Escape closes', async () => {
     const onClose = vi.fn();
-    const { container, unmount } = await render(<CommandPalette onClose={onClose} />);
-    const input = container.querySelector('input');
+    const { unmount } = await render(<CommandPalette onClose={onClose} />);
+    const input = document.querySelector<HTMLInputElement>('.c-modal input, .palette__input, .c-modal-backdrop input');
     expect(input).not.toBeNull();
 
     await typeInto(input, 'todo');
-    expect(container.querySelectorAll('.palette__item').length).toBeGreaterThan(0);
+    expect(document.querySelectorAll('.palette__item').length).toBeGreaterThan(0);
 
     await act(async () => {
       input!.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));

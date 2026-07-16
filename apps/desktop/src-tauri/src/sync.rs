@@ -472,6 +472,33 @@ async fn run_sync_round(
     }
 
     upsert_own_device(&app_state.storage, device_name).await?;
+
+    // File lane: notes + assistant documents mirror into the DB here, so
+    // their changes ride along in this round's push (and remote file docs
+    // that just arrived materialize on disk).
+    let notes_dir = crate::notes::current_folder(&app.state::<crate::notes::NotesState>());
+    let assistant_dir = crate::assistant::assistant_dir(app).ok();
+    match crate::sync_files::sweep(
+        &app_state.storage,
+        &app_state.app_data_dir,
+        notes_dir,
+        assistant_dir,
+        device_name,
+    )
+    .await
+    {
+        Ok(files) => {
+            if files.applied > 0 {
+                // Notes widgets re-read on interaction; nudge the UI anyway.
+                let _ = app.emit("files:changed", files.applied);
+            }
+        }
+        Err(err) => {
+            // File-lane trouble must never block the DB sync.
+            let _ = app.emit("sync:error", format!("file sync: {err}"));
+        }
+    }
+
     let push_report = engine.push_once(transport.as_ref()).await.map_err(|e| e.to_string())?;
     report.pushed = push_report.pushed;
 

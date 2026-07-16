@@ -220,9 +220,7 @@ export function createTool(): CardoTool {
           <span style={stale ? { color: 'var(--warning)' } : undefined}>
             {t('tool.currency.updated', { age: rateAgeLabel(doc.fetchedAtMs, now, lang) })}
           </span>
-        ) : (
-          <span>{t('tool.currency.noRates')}</span>
-        )}
+        ) : null}
         {offline && <span style={{ color: 'var(--warning)' }}>{t('tool.currency.offlineHint')}</span>}
       </div>
     );

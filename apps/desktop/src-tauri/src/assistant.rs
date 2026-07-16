@@ -226,7 +226,7 @@ fn model_path(app: &tauri::AppHandle, id: &str) -> CmdResult<PathBuf> {
     Ok(models_dir(app)?.join(format!("{id}.gguf")))
 }
 
-fn assistant_dir(app: &tauri::AppHandle) -> CmdResult<PathBuf> {
+pub(crate) fn assistant_dir(app: &tauri::AppHandle) -> CmdResult<PathBuf> {
     Ok(app
         .path()
         .app_data_dir()
