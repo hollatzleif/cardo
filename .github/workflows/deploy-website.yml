@@ -3,10 +3,10 @@
 # Needs the same RELEASE_TOKEN secret as release.yml (cross-repo push).
 name: Deploy website
 
-# TEMPORARILY manual-only: main already carries the v1.0.0 website texts
-# (sync, 47 tools) — they must not go live before the v1.0.0 tag ships.
-# Re-enable the push trigger together with the release (run it manually then).
 on:
+  push:
+    branches: [main]
+    paths: ['apps/website/**', '.github/workflows/deploy-website.yml']
   workflow_dispatch:
 
 jobs:
