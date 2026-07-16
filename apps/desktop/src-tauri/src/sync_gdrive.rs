@@ -22,9 +22,21 @@ use sha2::{Digest, Sha256};
 const KEYCHAIN_SERVICE: &str = "de.cardo.sync";
 const KEYCHAIN_REFRESH_ENTRY: &str = "gdrive-refresh-token";
 
-/// Filled in once Leif's OAuth app is registered in the Google console.
+/// Leif's registered OAuth app (Google Cloud project "Cardo").
 /// Installed-app client ids are not secrets (PKCE carries the proof).
-const DEFAULT_CLIENT_ID: &str = "";
+const DEFAULT_CLIENT_ID: &str =
+    "1057427798264-f5fs57rfp4i870rbp9pak96dup6at8sm.apps.googleusercontent.com";
+/// Desktop-type clients MAY carry a client secret that Google's token
+/// endpoint expects alongside PKCE (it is explicitly not confidential for
+/// installed apps). Empty = omitted from token requests.
+/// Injected at BUILD time (CI secret / local env) so the PUBLIC repo never
+/// carries the literal: GitHub push protection blocks it and Google may
+/// auto-revoke secrets found in public sources. The packaged binary still
+/// contains it — Google's installed-app model explicitly allows that.
+const DEFAULT_CLIENT_SECRET: &str = match option_env!("CARDO_GDRIVE_CLIENT_SECRET") {
+    Some(secret) => secret,
+    None => "",
+};
 
 const AUTH_URL: &str = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
@@ -34,6 +46,11 @@ const UPLOAD_URL: &str = "https://www.googleapis.com/upload/drive/v3/files";
 
 fn client_id() -> String {
     std::env::var("CARDO_GDRIVE_CLIENT_ID").unwrap_or_else(|_| DEFAULT_CLIENT_ID.to_string())
+}
+
+fn client_secret() -> String {
+    std::env::var("CARDO_GDRIVE_CLIENT_SECRET")
+        .unwrap_or_else(|_| DEFAULT_CLIENT_SECRET.to_string())
 }
 
 fn refresh_entry() -> Result<keyring::Entry, String> {
@@ -159,15 +176,20 @@ pub fn connect_interactive() -> Result<(), String> {
     };
 
     // Exchange the code synchronously (we are inside spawn_blocking).
+    let secret = client_secret();
+    let mut form: Vec<(&str, &str)> = vec![
+        ("client_id", id.as_str()),
+        ("code", code.as_str()),
+        ("code_verifier", verifier.as_str()),
+        ("grant_type", "authorization_code"),
+        ("redirect_uri", redirect_uri.as_str()),
+    ];
+    if !secret.is_empty() {
+        form.push(("client_secret", secret.as_str()));
+    }
     let response = reqwest::blocking::Client::new()
         .post(TOKEN_URL)
-        .form(&[
-            ("client_id", id.as_str()),
-            ("code", code.as_str()),
-            ("code_verifier", verifier.as_str()),
-            ("grant_type", "authorization_code"),
-            ("redirect_uri", redirect_uri.as_str()),
-        ])
+        .form(&form)
         .send()
         .map_err(|e| e.to_string())?;
     let tokens: Value = response.json().map_err(|e| e.to_string())?;
@@ -206,14 +228,19 @@ impl GoogleDriveTransport {
             }
         }
         let refresh = refresh_entry()?.get_password().map_err(|e| e.to_string())?;
+        let mut form: Vec<(String, String)> = vec![
+            ("client_id".into(), client_id()),
+            ("refresh_token".into(), refresh),
+            ("grant_type".into(), "refresh_token".into()),
+        ];
+        let secret = client_secret();
+        if !secret.is_empty() {
+            form.push(("client_secret".into(), secret));
+        }
         let response = self
             .client
             .post(TOKEN_URL)
-            .form(&[
-                ("client_id", client_id()),
-                ("refresh_token", refresh),
-                ("grant_type", "refresh_token".to_string()),
-            ])
+            .form(&form)
             .send()
             .await
             .map_err(|e| e.to_string())?;

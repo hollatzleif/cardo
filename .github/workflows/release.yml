@@ -78,6 +78,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          CARDO_GDRIVE_CLIENT_SECRET: ${{ secrets.CARDO_GDRIVE_CLIENT_SECRET }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           # llama.cpp needs std::filesystem → macOS 10.15+; we target 11.0.
           MACOSX_DEPLOYMENT_TARGET: '11.0'

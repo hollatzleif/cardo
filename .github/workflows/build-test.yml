@@ -36,6 +36,7 @@ jobs:
         run: pnpm --filter @cardo/desktop tauri build
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          CARDO_GDRIVE_CLIENT_SECRET: ${{ secrets.CARDO_GDRIVE_CLIENT_SECRET }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       - uses: actions/upload-artifact@v4
         with:
@@ -65,6 +66,7 @@ jobs:
         run: pnpm --filter @cardo/desktop tauri build
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          CARDO_GDRIVE_CLIENT_SECRET: ${{ secrets.CARDO_GDRIVE_CLIENT_SECRET }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           MACOSX_DEPLOYMENT_TARGET: '11.0'
       - uses: actions/upload-artifact@v4
@@ -98,6 +100,7 @@ jobs:
         run: pnpm --filter @cardo/desktop tauri build
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          CARDO_GDRIVE_CLIENT_SECRET: ${{ secrets.CARDO_GDRIVE_CLIENT_SECRET }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       - uses: actions/upload-artifact@v4
         with:
