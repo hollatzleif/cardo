@@ -103,8 +103,13 @@ fn b64url_no_pad(data: &[u8]) -> String {
 fn open_in_browser(url: &str) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     let result = std::process::Command::new("open").arg(url).spawn();
+    // NOT via `cmd /C start`: cmd treats `&` as a command separator and
+    // truncates OAuth URLs at the first query parameter (seen live as a
+    // Google "Autorisierungsfehler"). rundll32 passes the URL verbatim.
     #[cfg(target_os = "windows")]
-    let result = std::process::Command::new("cmd").args(["/C", "start", "", url]).spawn();
+    let result = std::process::Command::new("rundll32")
+        .args(["url.dll,FileProtocolHandler", url])
+        .spawn();
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     let result = std::process::Command::new("xdg-open").arg(url).spawn();
     result.map(|_| ()).map_err(|e| format!("could not open browser: {e}"))
