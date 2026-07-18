@@ -2091,7 +2091,12 @@
       "description": "Anki-class flashcards: note types, decks, FSRS & SM-2 scheduling, a card browser and learning stats — fully local, .apkg import/export.",
       "privacy": "Works fully local. Your cards and learning progress never leave this device.",
       "widget": {
-        "empty": "No cards yet – add your first one above."
+        "empty": "No cards yet – switch to “Manage” to add one or import an .apkg."
+      },
+      "tab": {
+        "manage": "Manage",
+        "study": "Study",
+        "stats": "Stats"
       },
       "study": {
         "reveal": "Show answer",
@@ -2135,6 +2140,7 @@
         "frontPlaceholder": "Front",
         "backPlaceholder": "Back",
         "add": "Add card",
+        "study": "Study deck",
         "cards": "{{count}} cards",
         "due": "{{count}} due"
       },
@@ -2917,6 +2923,9 @@
         "unavailable": "Online fetch is only available in the app",
         "source": "Jurisdiction / source",
         "book": "Statute book",
+        "bookSearch": "Search law book …",
+        "changeBook": "change",
+        "noBooks": "No matches",
         "norm": "Section / article",
         "get": "Fetch",
         "needsKey": "key required",

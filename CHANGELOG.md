@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.2 — Karteikarten-Bedienung & Rechts-Abruf-Fixes
+
+- **Karteikarten-Widget ist jetzt bedienbar:** eine sichtbare Leiste mit den drei
+  Ansichten **Verwalten · Lernen · Statistik**. Das Widget öffnet auf „Verwalten"
+  (die Stapel-Übersicht, wie Ankis Startbildschirm) — dort liegen **.apkg-Import**,
+  **Karte hinzufügen**, **Optionen** (Algorithmus/Retention/Lernplan) direkt sichtbar.
+  Ein Stapel-Klick startet die Lernrunde. Vorher steckten diese Knöpfe in einer
+  versteckten Widget-Variante, die kaum jemand fand.
+- **Rechts-Abruf: kein falsches „HTTP 404" mehr.** Beim schnellen Wechsel der
+  Rechtsordnung konnte eine langsam nachladende Länder-Bücherliste (Deutschlands
+  ~6000 Gesetze) die bereits gewählte andere Quelle überschreiben — dann ging die
+  Abfrage ans falsche Land und scheiterte. Jetzt gewinnt immer nur die aktuelle
+  Auswahl.
+- **Gesetzbuch-Suche statt endloser Liste:** die 6000 deutschen Gesetze stehen
+  nicht mehr in einem Riesen-Dropdown, sondern werden per Tippfeld durchsucht.
+
 ## 1.1.1 — Anki-Import & Rechtsquellen-Fixes
 
 - **Anki-Import versteht das neueste Format:** `.apkg`-Dateien im aktuellen

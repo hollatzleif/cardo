@@ -2091,7 +2091,12 @@
       "description": "Karteikarten der Anki-Klasse: Notiztypen, Stapel, FSRS- & SM-2-Planung, ein Karten-Browser und Lernstatistik – komplett lokal, .apkg-Import/Export.",
       "privacy": "Arbeitet komplett lokal. Deine Karten und dein Lernfortschritt verlassen dieses Gerät nie.",
       "widget": {
-        "empty": "Noch keine Karten – leg oben deine erste an."
+        "empty": "Noch keine Karten – wechsle zu „Verwalten“, um eine anzulegen oder ein .apkg zu importieren."
+      },
+      "tab": {
+        "manage": "Verwalten",
+        "study": "Lernen",
+        "stats": "Statistik"
       },
       "study": {
         "reveal": "Antwort zeigen",
@@ -2135,6 +2140,7 @@
         "frontPlaceholder": "Vorderseite",
         "backPlaceholder": "Rückseite",
         "add": "Karte hinzufügen",
+        "study": "Stapel lernen",
         "cards": "{{count}} Karten",
         "due": "{{count}} fällig"
       },
@@ -2917,6 +2923,9 @@
         "unavailable": "Online-Abruf gibt es nur in der App",
         "source": "Rechtsordnung / Quelle",
         "book": "Gesetzbuch",
+        "bookSearch": "Gesetzbuch suchen …",
+        "changeBook": "ändern",
+        "noBooks": "Keine Treffer",
         "norm": "Paragraf / Artikel",
         "get": "Abrufen",
         "needsKey": "Schlüssel erforderlich",

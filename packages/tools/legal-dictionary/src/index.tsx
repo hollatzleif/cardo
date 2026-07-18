@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
 import type {
   CardoTool,
@@ -66,6 +66,7 @@ export function createTool(): CardoTool {
     const [sources, setSources] = useState<LegalSourceInfo[]>([]);
     const [sourceId, setSourceId] = useState('');
     const [books, setBooks] = useState<LegalBook[]>([]);
+    const [bookFilter, setBookFilter] = useState('');
     const [bookId, setBookId] = useState('');
     const [norms, setNorms] = useState<LegalNorm[]>([]);
     const [normId, setNormId] = useState('');
@@ -73,6 +74,12 @@ export function createTool(): CardoTool {
     const [fetched, setFetched] = useState<{ text: string; stand: string; sourceUrl: string } | null>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
+
+    // Guards every async source/book load: a late response only applies if it is
+    // still the newest request. Without this, a slow list (Germany's ~6000-entry
+    // TOC) can resolve AFTER the user already switched jurisdiction and clobber
+    // the new source's books — leaving "UK selected, German books shown".
+    const reqToken = useRef(0);
 
     const hasLegal = ctx?.legal != null;
 
@@ -108,7 +115,10 @@ export function createTool(): CardoTool {
     }
 
     async function chooseSource(id: string) {
+      const token = (reqToken.current += 1);
       setSourceId(id);
+      setBooks([]);
+      setBookFilter('');
       setBookId('');
       setNorms([]);
       setNormId('');
@@ -118,16 +128,21 @@ export function createTool(): CardoTool {
       if (!legal || !id) return;
       try {
         setBusy(true);
-        setBooks(await legal.listBooks(id));
+        const loaded = await legal.listBooks(id);
+        if (reqToken.current === token) setBooks(loaded);
       } catch (e) {
-        setError(t('tool.legal-dictionary.online.fetchFailed', { error: String(e) }));
+        if (reqToken.current === token) {
+          setError(t('tool.legal-dictionary.online.fetchFailed', { error: String(e) }));
+        }
       } finally {
-        setBusy(false);
+        if (reqToken.current === token) setBusy(false);
       }
     }
 
     async function chooseBook(id: string) {
+      const token = (reqToken.current += 1);
       setBookId(id);
+      setNorms([]);
       setNormId('');
       setFetched(null);
       setError('');
@@ -135,11 +150,14 @@ export function createTool(): CardoTool {
       if (!legal || !id) return;
       try {
         setBusy(true);
-        setNorms(await legal.listNorms(sourceId, id));
+        const loaded = await legal.listNorms(sourceId, id);
+        if (reqToken.current === token) setNorms(loaded);
       } catch (e) {
-        setError(t('tool.legal-dictionary.online.fetchFailed', { error: String(e) }));
+        if (reqToken.current === token) {
+          setError(t('tool.legal-dictionary.online.fetchFailed', { error: String(e) }));
+        }
       } finally {
-        setBusy(false);
+        if (reqToken.current === token) setBusy(false);
       }
     }
 
@@ -223,6 +241,15 @@ export function createTool(): CardoTool {
     const set = (patch: Partial<AddParagraphInput>) => setDraft((d) => ({ ...d, ...patch }));
     const rows = list ? searchParagraphs(list, search) : [];
     const selectedSource = sources.find((s) => s.id === sourceId);
+    const selectedBook = books.find((b) => b.id === bookId);
+    // Client-side typeahead over the (possibly huge) book list. Only show matches
+    // once the user has typed, and cap the rendered rows so 6000 German laws stay
+    // responsive.
+    const filteredBooks = useMemo(() => {
+      const q = bookFilter.trim().toLowerCase();
+      if (!q) return books.slice(0, 30);
+      return books.filter((b) => b.name.toLowerCase().includes(q)).slice(0, 30);
+    }, [books, bookFilter]);
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 'var(--space-2)', padding: 'var(--space-3)' }}>
@@ -288,10 +315,53 @@ export function createTool(): CardoTool {
               ))}
             </select>
             {selectedSource && (
-              <select className="c-input" value={bookId} aria-label={t('tool.legal-dictionary.online.book')} onChange={(e) => void chooseBook(e.target.value)}>
-                <option value="">{t('tool.legal-dictionary.online.book')}</option>
-                {books.map((b) => (<option key={b.id} value={b.id}>{b.name}</option>))}
-              </select>
+              selectedBook ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+                  <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                    {selectedBook.name}
+                  </span>
+                  <button
+                    className="c-btn c-btn--ghost"
+                    style={{ flexShrink: 0, fontSize: 12 }}
+                    onClick={() => { void chooseBook(''); setBookFilter(''); }}
+                  >
+                    {t('tool.legal-dictionary.online.changeBook')}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    className="c-input"
+                    value={bookFilter}
+                    placeholder={t('tool.legal-dictionary.online.bookSearch')}
+                    aria-label={t('tool.legal-dictionary.online.book')}
+                    onChange={(e) => setBookFilter(e.target.value)}
+                  />
+                  {busy && books.length === 0 ? (
+                    <div className="c-muted" style={{ fontSize: 12 }}>…</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', maxHeight: 160, overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 4 }}>
+                      {filteredBooks.length === 0 ? (
+                        <div className="c-muted" style={{ fontSize: 12, padding: 'var(--space-1)' }}>
+                          {t('tool.legal-dictionary.online.noBooks')}
+                        </div>
+                      ) : (
+                        filteredBooks.map((b) => (
+                          <button
+                            key={b.id}
+                            className="c-btn c-btn--ghost"
+                            style={{ textAlign: 'left', justifyContent: 'flex-start', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            title={b.name}
+                            onClick={() => void chooseBook(b.id)}
+                          >
+                            {b.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </>
+              )
             )}
             {bookId && (
               <div style={{ display: 'flex', gap: 'var(--space-1)' }}>

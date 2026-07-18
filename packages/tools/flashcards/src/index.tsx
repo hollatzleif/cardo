@@ -217,7 +217,7 @@ export function createTool(): CardoTool {
   }
 
   /* Manage pane: deck list + add card + search browser ------------------ */
-  function ManagePane() {
+  function ManagePane({ onStudy }: { onStudy: () => void }) {
     const { collection } = useCollection(ctx);
     const [deckDraft, setDeckDraft] = useState('');
     const [front, setFront] = useState('');
@@ -432,7 +432,13 @@ export function createTool(): CardoTool {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
               {decks.map((d) => (
-                <div key={d.deckId} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <button
+                  key={d.deckId}
+                  className="c-btn c-btn--ghost"
+                  title={t('tool.flashcards.grid.study')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', width: '100%', textAlign: 'left', padding: 'var(--space-1)' }}
+                  onClick={onStudy}
+                >
                   <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {d.name}
                   </span>
@@ -445,7 +451,7 @@ export function createTool(): CardoTool {
                   >
                     {d.due > 0 ? `● ${d.due}` : '✓'}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -508,20 +514,47 @@ export function createTool(): CardoTool {
   }
 
   function FlashcardsWidget(props: WidgetProps) {
+    // Open on the deck list (like Anki's home screen) unless the frame's variant
+    // explicitly asks for study or stats. The tab bar keeps every view — decks,
+    // import, options, studying, stats — reachable inside the one widget.
+    const initialTab: 'grid' | 'study' | 'stats' =
+      props.variant === 'study' ? 'study' : props.variant === 'stats' ? 'stats' : 'grid';
+    const [tab, setTab] = useState<'grid' | 'study' | 'stats'>(initialTab);
+
+    const tabButton = (id: 'grid' | 'study' | 'stats', label: string) => (
+      <button
+        className={`c-btn${tab === id ? ' c-btn--primary' : ''}`}
+        style={{ flex: 1, minWidth: 0 }}
+        onClick={() => setTab(id)}
+      >
+        {label}
+      </button>
+    );
+
     let body;
-    switch (props.variant) {
-      case 'grid':
-        body = <ManagePane />;
+    switch (tab) {
+      case 'study':
+        body = <StudyPane />;
         break;
       case 'stats':
         body = <StatsPane />;
         break;
-      case 'study':
+      case 'grid':
       default:
-        body = <StudyPane />;
+        body = <ManagePane onStudy={() => setTab('study')} />;
         break;
     }
-    return <div style={{ height: '100%', padding: 'var(--space-3)' }}>{body}</div>;
+
+    return (
+      <div style={{ height: '100%', padding: 'var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-1)', flexShrink: 0 }}>
+          {tabButton('grid', `🗂 ${t('tool.flashcards.tab.manage')}`)}
+          {tabButton('study', `🎓 ${t('tool.flashcards.tab.study')}`)}
+          {tabButton('stats', `📊 ${t('tool.flashcards.tab.stats')}`)}
+        </div>
+        <div style={{ flex: 1, minHeight: 0 }}>{body}</div>
+      </div>
+    );
   }
 
   function buildContext(collection: Collection, language: string, today: string): string {
