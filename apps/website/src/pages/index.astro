@@ -14,10 +14,10 @@ const installSh = `curl -fsSL https://${GITHUB_USER}.github.io/cardo-app/install
     <h1>Cardo brings everything into one place.<br />Arranged the way <em>you</em> want it.</h1>
     <p class="muted">
       <strong>Cardo</strong> is a free, freely arrangeable dashboard app for macOS, Linux and
-      Windows: to-dos, notes, calendar, files, timers, a local AI assistant and more than 45
-      tools – as widgets on your personal board, with optional end-to-end-encrypted sync between
-      your devices. Built for everyone who feels overwhelmed and needs <strong>one</strong> calm
-      place where everything comes together. Your pivot point.
+      Windows: to-dos, notes, calendar, files, Anki-class flashcards, a legal-paragraph book, a
+      local AI assistant and close to 50 tools – as widgets on your personal board, with optional
+      end-to-end-encrypted sync between your devices. Built for everyone who feels overwhelmed and
+      needs <strong>one</strong> calm place where everything comes together. Your pivot point.
     </p>
     <div class="hero__install">
       <CopyBlock command={installSh} label="Install (macOS / Linux)" />
@@ -46,6 +46,14 @@ const installSh = `curl -fsSL https://${GITHUB_USER}.github.io/cardo-app/install
     <div class="card">
       <h3>📄 Notes &amp; files that stay yours</h3>
       <p>Write Markdown notes with <code>[[wiki-links]]</code>, backlinks and rendered LaTeX, and browse your notes folder – text, images, PDFs – right inside Cardo. Real files in a folder you own, readable with any editor.</p>
+    </div>
+    <div class="card">
+      <h3>🃏 Anki-class flashcards</h3>
+      <p>Real spaced repetition: note types with templates and cloze deletions, the modern FSRS scheduler (or classic SM-2), a card browser and stats – and import or export your existing Anki decks as <code>.apkg</code>. All fully local.</p>
+    </div>
+    <div class="card">
+      <h3>⚖️ Statutes at your fingertips</h3>
+      <p>For lawyers and students: keep the sections you work with, annotated and searchable. Fetch the official text of a § straight from legal sources – Germany, EU, UK, Austria – with its “as of” date, or just type your own. Public statute text, stored on your device.</p>
     </div>
     <div class="card">
       <h3>🔑 Sync with your own key</h3>
