@@ -238,6 +238,7 @@
       "designDocRoundtrip": "Design settings can be written back",
       "netUpdateServer": "Update server responds with a valid version",
       "netWebsite": "Cardo website reachable",
+      "netLegalDe": "German law source (gesetze-im-internet.de) reachable",
       "netPollsWorker": "Poll server responds",
       "netFeed": "Inbox feed responds",
       "netOpenMeteoGeo": "Weather: place search responds",
@@ -250,6 +251,12 @@
       "namespaceIsolation": "Tools cannot read each other's data",
       "syncCrypto": "Sync encryption seals and verifies correctly",
       "syncEngine": "Sync engine converges two scratch devices",
+      "syncCiphertext": "Sync stores only ciphertext – no plaintext leaks to the transport",
+      "coverage": "Every assistant command is covered by a self-test",
+      "backupRoundtrip": "Backup export and re-import preserves every document",
+      "notesPathTraversal": "Note file names cannot escape the notes folder",
+      "legalHosts": "Legal sources only contact their allow-listed hosts",
+      "keyInKeychain": "The OS keychain stores the sync key correctly",
       "customThemes": "All custom themes are complete",
       "netGoogleDrive": "Google Drive API reachable (sync transport)"
     },
@@ -2081,7 +2088,7 @@
     },
     "flashcards": {
       "name": "Flashcards",
-      "description": "Spaced-repetition flashcards (SM-2): decks, daily reviews and learning stats – fully local.",
+      "description": "Anki-class flashcards: note types, decks, FSRS & SM-2 scheduling, a card browser and learning stats — fully local, .apkg import/export.",
       "privacy": "Works fully local. Your cards and learning progress never leave this device.",
       "widget": {
         "empty": "No cards yet – add your first one above."
@@ -2091,13 +2098,37 @@
         "backSide": "Back to the question",
         "dueCount": "{{count}} due",
         "done": "All caught up – nothing due right now.",
-        "checkAgain": "Check again"
+        "checkAgain": "Check again",
+        "undo": "Undo"
       },
       "grade": {
         "again": "Again",
         "hard": "Hard",
         "good": "Good",
         "easy": "Easy"
+      },
+      "browse": {
+        "search": "Search: deck:… tag:… is:due …",
+        "searchLabel": "Search cards",
+        "noMatches": "No matches",
+        "suspend": "Suspend"
+      },
+      "import": {
+        "button": "Import .apkg",
+        "running": "Importing…",
+        "done": "Imported {{decks}} deck(s), {{cards}} card(s).",
+        "failed": "Import failed: {{error}}"
+      },
+      "export": {
+        "button": "Export as .apkg"
+      },
+      "options": {
+        "button": "Options",
+        "scheduler": "Scheduler",
+        "retention": "Target retention",
+        "newPerDay": "New cards / day",
+        "reviewsPerDay": "Reviews / day",
+        "learningSteps": "Learning steps (min)"
       },
       "grid": {
         "deckPlaceholder": "Deck",
@@ -2109,7 +2140,13 @@
       },
       "stats": {
         "title": "{{count}} reviews in the last 14 days",
-        "empty": "No reviews yet – study a few cards first."
+        "empty": "No reviews yet – study a few cards first.",
+        "new": "new",
+        "learning": "learning",
+        "review": "review",
+        "retention": "Retention",
+        "forecast": "Forecast (14 days)",
+        "activity": "Activity"
       },
       "command": {
         "addCard": "Flashcards: add a card",
@@ -2136,7 +2173,7 @@
         "body": "Add cards to decks and grade yourself daily – the SM-2 algorithm schedules every card exactly when you are about to forget it."
       },
       "help": {
-        "how": "Create cards with a front and back, organized into decks. The study view shows due cards one at a time: reveal the answer, then grade yourself Again/Hard/Good/Easy — the SM-2 spaced-repetition algorithm schedules each card so you review it right before you would forget it. The Stats variant shows your reviews over the last 14 days.",
+        "how": "Create cards (organized into decks) and study the due ones one at a time: reveal the answer, then rate Again/Hard/Good/Easy. The scheduler — FSRS by default, classic SM-2 optional — plans each card so you review it right before you would forget it. The grid variant lists decks and has a card browser with Anki search (deck:, tag:, is:due …); the stats variant shows counts, a due forecast, retention and an activity heatmap. Decks import/export as Anki .apkg.",
         "setup": "No setup needed — drag the widget onto your board and go.",
         "bestFor": "Vocabulary, exam prep, anything memorized long-term — a few minutes of due cards per day beat cramming."
       }
@@ -2850,6 +2887,65 @@
         "how": "An ambience mixer with four bundled loops — rain, white noise, brown noise and a stream. Toggle any combination, set each track’s volume plus a master level, and let it play while you work. All sounds ship with Cardo: nothing is streamed, nothing goes online. It can even follow your Pomodoro: sound during focus phases, silence in breaks.",
         "setup": "No setup needed — press play. The Pomodoro coupling lives in the settings (gear).",
         "bestFor": "Masking noisy surroundings and settling into focus — open-plan offices, cafés, restless evenings."
+      }
+    },
+    "legal-dictionary": {
+      "name": "Legal Paragraphs",
+      "description": "Store statute sections (§§ / articles) with your own comment — fully local. Type them in, or fetch the official text from legal sources (DE, EU, UK, AT, CH; FR with your own key) and re-check its 'as of' date.",
+      "privacy": "Works fully local. Your statutes and comments never leave your device.",
+      "widget": {
+        "empty": "No statutes yet — add your first with +."
+      },
+      "searchPlaceholder": "Search book, §, text, comment…",
+      "add": {
+        "open": "Add a paragraph",
+        "book": "Book (e.g. BGB)",
+        "norm": "§ / Article (e.g. § 242)",
+        "section": "Para.",
+        "title": "Heading (optional)",
+        "text": "Statute text",
+        "comment": "Your comment",
+        "save": "Save"
+      },
+      "list": {
+        "stand": "As of",
+        "delete": "Delete"
+      },
+      "online": {
+        "own": "Type it in",
+        "fetch": "Online",
+        "unavailable": "Online fetch is only available in the app",
+        "source": "Jurisdiction / source",
+        "book": "Statute book",
+        "norm": "Section / article",
+        "get": "Fetch",
+        "needsKey": "key required",
+        "checkStand": "Check status",
+        "changed": "{{label}} was updated to the current version",
+        "unchanged": "{{label}} is unchanged",
+        "fetchFailed": "Could not fetch from this source: {{error}}"
+      },
+      "command": {
+        "add": "Legal Paragraphs: save a §",
+        "addDesc": "Saves a statute section (book, §/article, optional section, text and your comment).",
+        "context": "Legal Paragraphs: current state"
+      },
+      "msg": {
+        "added": "Paragraph saved.",
+        "invalid": "Book and § must not be empty."
+      },
+      "test": {
+        "render": "Widget renders",
+        "storage": "Storage roundtrip works"
+      },
+      "tour": {
+        "title": "Legal Paragraphs",
+        "body": "Save the statutes you work with and annotate them — searchable and always at hand."
+      },
+      "help": {
+        "how": "Keep the statute sections you work with in one place. Add one with + — either type it in yourself, or pick 'online' to fetch the official text: choose a jurisdiction (Germany, EU, UK, Austria, Switzerland; France needs your own free PISTE key), then the book and the section. Everything is searchable across all fields. Online entries show an 'as of' date and a ↻ button that re-checks the source and updates the text if it changed.",
+        "setup": "No setup needed — drag the widget onto your board and add your first § with the + button.",
+        "bestFor": "Lawyers, students and anyone who repeatedly looks up the same statutes and wants them annotated and instantly searchable."
       }
     }
   },

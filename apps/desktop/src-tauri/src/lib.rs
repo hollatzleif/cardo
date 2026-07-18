@@ -4,6 +4,7 @@
 
 mod assistant;
 mod claude;
+mod legal;
 mod notes;
 mod sync;
 mod sync_files;
@@ -169,6 +170,63 @@ async fn backup_import(state: State<'_, AppState>, path: String) -> CmdResult<u6
     Ok(restored)
 }
 
+
+/* ── Diagnose: OS keychain round-trip ─────────────────────────────────── */
+
+/// Prove the OS keychain (where the sync key lives) accepts a write/read/delete
+/// round-trip. Tolerant by design: the caller treats an error as a WARNING, not
+/// a failure, so a headless/locked keychain never turns diagnostics red.
+#[tauri::command]
+fn diagnose_keychain() -> CmdResult<String> {
+    let entry = keyring::Entry::new("de.cardo.diagnose", "keychain-probe").map_err(|e| e.to_string())?;
+    const PROBE: &str = "cardo-keychain-probe";
+    entry.set_password(PROBE).map_err(|e| e.to_string())?;
+    let back = entry.get_password().map_err(|e| e.to_string())?;
+    let _ = entry.delete_credential();
+    if back == PROBE {
+        Ok("keychain read/write/delete ok".into())
+    } else {
+        Err("keychain round-trip returned a different value".into())
+    }
+}
+
+/* ── Spaced repetition (flashcards scheduler bridge) ──────────────────── */
+
+/// Compute the next scheduling state + due interval for one flashcard answer.
+/// A thin, pure bridge to `cardo_core::srs::review` so the flashcards tool
+/// shares the sync-tested SM-2/FSRS core instead of a second implementation.
+#[tauri::command]
+fn srs_review(
+    scheduler: cardo_core::srs::Scheduler,
+    state: cardo_core::srs::CardState,
+    rating: cardo_core::srs::Rating,
+    elapsed_days: u32,
+    sm2: cardo_core::srs::Sm2Config,
+    fsrs: cardo_core::srs::FsrsConfig,
+) -> CmdResult<Value> {
+    let (next, interval) =
+        cardo_core::srs::review(scheduler, &state, rating, elapsed_days, &sm2, &fsrs)?;
+    Ok(serde_json::json!({ "state": next, "interval": interval }))
+}
+
+/* ── Anki .apkg import/export ──────────────────────────────────────────── */
+
+/// Parse an `.apkg`/`.colpkg` file into a Cardo-shaped collection for the
+/// flashcards tool to turn into its own notes/cards/decks.
+#[tauri::command]
+async fn anki_import(path: String) -> CmdResult<cardo_core::anki::AnkiImport> {
+    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
+    cardo_core::anki::import_apkg(&bytes).await
+}
+
+/// Write a Cardo collection out as an `.apkg` (legacy schema). Returns bytes written.
+#[tauri::command]
+async fn anki_export(path: String, collection: cardo_core::anki::AnkiImport) -> CmdResult<u64> {
+    let bytes = cardo_core::anki::export_apkg(&collection).await?;
+    let len = bytes.len() as u64;
+    std::fs::write(&path, bytes).map_err(|e| e.to_string())?;
+    Ok(len)
+}
 
 /* ── Diagnose network probe ───────────────────────────────────────────── */
 
@@ -350,6 +408,18 @@ pub fn run() {
             schedule_list,
             backup_export,
             backup_import,
+            srs_review,
+            diagnose_keychain,
+            anki_import,
+            anki_export,
+            legal::legal_sources,
+            legal::legal_allowed_hosts,
+            legal::legal_list_books,
+            legal::legal_list_norms,
+            legal::legal_fetch_norm,
+            legal::legal_set_piste_key,
+            legal::legal_piste_key_present,
+            legal::legal_clear_piste_key,
             net_probe,
             assistant::assistant_hw_info,
             assistant::assistant_list_models,
@@ -387,6 +457,19 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn srs_review_command_shapes_json_for_the_frontend() {
+        use cardo_core::srs::{CardState, FsrsConfig, Rating, Scheduler, Sm2Config};
+        let sm2 = Sm2Config::default();
+        let fsrs = FsrsConfig::default();
+        let fresh = CardState::new(&sm2);
+        // SM-2 Easy graduates a new card to a 4-day review.
+        let out = srs_review(Scheduler::Sm2, fresh, Rating::Easy, 0, sm2, fsrs).unwrap();
+        assert_eq!(out["interval"], serde_json::json!({ "days": 4 }));
+        assert_eq!(out["state"]["phase"], "review");
+        assert_eq!(out["state"]["intervalDays"], 4);
+    }
 
     #[test]
     fn export_report_rejects_path_tricks() {

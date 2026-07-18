@@ -104,7 +104,7 @@ impl SyncTransport for FolderTransport {
 
 const B64: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-fn b64_encode(data: &[u8]) -> String {
+pub(crate) fn b64_encode(data: &[u8]) -> String {
     let mut out = String::with_capacity(data.len().div_ceil(3) * 4);
     for chunk in data.chunks(3) {
         let b = [chunk[0], *chunk.get(1).unwrap_or(&0), *chunk.get(2).unwrap_or(&0)];
@@ -117,7 +117,7 @@ fn b64_encode(data: &[u8]) -> String {
     out
 }
 
-fn b64_decode(text: &str) -> Option<Vec<u8>> {
+pub(crate) fn b64_decode(text: &str) -> Option<Vec<u8>> {
     let cleaned: Vec<u8> = text.bytes().filter(|&b| b != b'=').collect();
     let mut out = Vec::with_capacity(cleaned.len() * 3 / 4);
     for chunk in cleaned.chunks(4) {
@@ -174,8 +174,14 @@ mod tests {
 
         let first = t.pull(String::new()).await.unwrap();
         assert_eq!(first.ops.len(), 2);
-        assert_eq!(first.ops[0].op_id, "op-1");
-        assert_eq!(first.ops[1].blob, vec![4, 5]);
+        // Two separate pushes can land in the same millisecond; the uuid
+        // tiebreak then leaves their relative order arbitrary. Assert on
+        // identity, not position – per-op order never matters downstream (the
+        // engine dedups by op_id and resolves conflicts by HLC).
+        let op1 = first.ops.iter().find(|o| o.op_id == "op-1").expect("op-1 present");
+        let op2 = first.ops.iter().find(|o| o.op_id == "op-2").expect("op-2 present");
+        assert_eq!(op1.blob, vec![1, 2, 3]);
+        assert_eq!(op2.blob, vec![4, 5]);
 
         // Cursor: nothing new afterwards.
         let second = t.pull(first.next_cursor.clone()).await.unwrap();

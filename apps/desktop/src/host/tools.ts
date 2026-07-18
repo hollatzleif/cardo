@@ -47,6 +47,7 @@ import { createTool as createSnippetsTool } from '@cardo/tool-snippets';
 import { createTool as createCurrencyTool } from '@cardo/tool-currency';
 import { createTool as createRssTool } from '@cardo/tool-rss';
 import { createTool as createSoundscapesTool } from '@cardo/tool-soundscapes';
+import { createTool as createLegalDictionaryTool } from '@cardo/tool-legal-dictionary';
 
 /**
  * First-party tool catalog. Every tool ships with the app; "installing" in
@@ -102,6 +103,7 @@ export const toolFactories: Record<string, () => CardoTool> = {
   currency: createCurrencyTool,
   rss: createRssTool,
   soundscapes: createSoundscapesTool,
+  'legal-dictionary': createLegalDictionaryTool,
 };
 
 /** Live instances (widgets render from these). */

@@ -122,6 +122,18 @@ export function buildNetworkChecks(): DiagnoseCheck[] {
       return res.ok ? pass(ms) : badStatus(res);
     }),
 
+    netCheck('legal-de', 'diagnose.check.netLegalDe', async () => {
+      // Listing DE laws actually fetches gii-toc.xml through the Rust adapter,
+      // so a non-empty result means gesetze-im-internet.de is reachable.
+      if (!isTauri()) return { status: 'warn', detail: tt('diagnose.detail.browserSkipped') };
+      const start = performance.now();
+      const books = await invoke<Array<{ id: string }>>('legal_list_books', { sourceId: 'de' });
+      const ms = Math.round(performance.now() - start);
+      return books.length > 0
+        ? { status: 'pass', detail: `${books.length} laws · ${ms} ms` }
+        : { status: 'fail', detail: 'no laws returned from gesetze-im-internet.de' };
+    }),
+
     netCheck('polls-worker', 'diagnose.check.netPollsWorker', async () => {
       const { res, ms } = await timed(() =>
         fetchWithTimeout(`${POLLS_WORKER_URL}/results`, undefined, NET_TIMEOUT_MS),

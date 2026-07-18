@@ -1,0 +1,49 @@
+{
+  "id": "legal-dictionary",
+  "nameKey": "tool.legal-dictionary.name",
+  "descriptionKey": "tool.legal-dictionary.description",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "permissions": [],
+  "privacy": {
+    "level": "green",
+    "network": [],
+    "summaryKey": "tool.legal-dictionary.privacy"
+  },
+  "widgets": [
+    {
+      "id": "main",
+      "defaultSize": {
+        "w": 4,
+        "h": 3
+      },
+      "minSize": {
+        "w": 2,
+        "h": 2
+      },
+      "variants": []
+    }
+  ],
+  "commands": [
+    "legal-dictionary.add",
+    "legal-dictionary.context"
+  ],
+  "selfTests": [
+    {
+      "id": "render",
+      "titleKey": "tool.legal-dictionary.test.render"
+    },
+    {
+      "id": "storage",
+      "titleKey": "tool.legal-dictionary.test.storage"
+    }
+  ],
+  "tourSteps": [
+    {
+      "anchor": "widget:legal-dictionary:main",
+      "titleKey": "tool.legal-dictionary.tour.title",
+      "bodyKey": "tool.legal-dictionary.tour.body"
+    }
+  ],
+  "setupSteps": []
+}

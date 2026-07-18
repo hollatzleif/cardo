@@ -238,6 +238,7 @@
       "designDocRoundtrip": "Design-Einstellungen lassen sich zurückschreiben",
       "netUpdateServer": "Update-Server antwortet mit gültiger Version",
       "netWebsite": "Cardo-Website erreichbar",
+      "netLegalDe": "Deutsche Rechtsquelle (gesetze-im-internet.de) erreichbar",
       "netPollsWorker": "Umfrage-Server antwortet",
       "netFeed": "Posteingang-Feed antwortet",
       "netOpenMeteoGeo": "Wetter: Ortssuche antwortet",
@@ -250,6 +251,12 @@
       "namespaceIsolation": "Tools können gegenseitig keine Daten lesen",
       "syncCrypto": "Sync-Verschlüsselung versiegelt und prüft korrekt",
       "syncEngine": "Sync-Engine gleicht zwei Test-Geräte ab",
+      "syncCiphertext": "Sync speichert nur Geheimtext – kein Klartext gelangt in den Transport",
+      "coverage": "Jeder Assistenten-Befehl ist durch einen Selbsttest abgedeckt",
+      "backupRoundtrip": "Backup-Export und Re-Import erhalten jedes Dokument",
+      "notesPathTraversal": "Notiz-Dateinamen können den Notizordner nicht verlassen",
+      "legalHosts": "Rechtsquellen kontaktieren nur ihre freigegebenen Hosts",
+      "keyInKeychain": "Der OS-Schlüsselbund speichert den Sync-Schlüssel korrekt",
       "customThemes": "Alle eigenen Themes sind vollständig",
       "netGoogleDrive": "Google-Drive-API erreichbar (Sync-Transport)"
     },
@@ -2081,7 +2088,7 @@
     },
     "flashcards": {
       "name": "Karteikarten",
-      "description": "Karteikarten mit Spaced Repetition (SM-2): Stapel, tägliche Wiederholungen und Lernstatistik – komplett lokal.",
+      "description": "Karteikarten der Anki-Klasse: Notiztypen, Stapel, FSRS- & SM-2-Planung, ein Karten-Browser und Lernstatistik – komplett lokal, .apkg-Import/Export.",
       "privacy": "Arbeitet komplett lokal. Deine Karten und dein Lernfortschritt verlassen dieses Gerät nie.",
       "widget": {
         "empty": "Noch keine Karten – leg oben deine erste an."
@@ -2091,13 +2098,37 @@
         "backSide": "Zurück zur Frage",
         "dueCount": "{{count}} fällig",
         "done": "Alles gelernt – gerade ist nichts fällig.",
-        "checkAgain": "Nochmal prüfen"
+        "checkAgain": "Nochmal prüfen",
+        "undo": "Rückgängig"
       },
       "grade": {
         "again": "Nochmal",
         "hard": "Schwer",
         "good": "Gut",
         "easy": "Leicht"
+      },
+      "browse": {
+        "search": "Suchen: deck:… tag:… is:due …",
+        "searchLabel": "Karten durchsuchen",
+        "noMatches": "Keine Treffer",
+        "suspend": "Aussetzen"
+      },
+      "import": {
+        "button": ".apkg importieren",
+        "running": "Importiere…",
+        "done": "{{decks}} Stapel, {{cards}} Karten importiert.",
+        "failed": "Import fehlgeschlagen: {{error}}"
+      },
+      "export": {
+        "button": "Als .apkg exportieren"
+      },
+      "options": {
+        "button": "Optionen",
+        "scheduler": "Algorithmus",
+        "retention": "Ziel-Behaltensrate",
+        "newPerDay": "Neue Karten / Tag",
+        "reviewsPerDay": "Wiederholungen / Tag",
+        "learningSteps": "Lernschritte (Min.)"
       },
       "grid": {
         "deckPlaceholder": "Stapel",
@@ -2109,7 +2140,13 @@
       },
       "stats": {
         "title": "{{count}} Wiederholungen in den letzten 14 Tagen",
-        "empty": "Noch keine Wiederholungen – lern erst ein paar Karten."
+        "empty": "Noch keine Wiederholungen – lern erst ein paar Karten.",
+        "new": "neu",
+        "learning": "lernen",
+        "review": "wiederholen",
+        "retention": "Behalten",
+        "forecast": "Prognose (14 Tage)",
+        "activity": "Aktivität"
       },
       "command": {
         "addCard": "Karteikarten: Karte hinzufügen",
@@ -2136,7 +2173,7 @@
         "body": "Leg Karten in Stapeln an und bewerte dich täglich – der SM-2-Algorithmus plant jede Karte genau dann ein, wenn du sie fast vergessen hättest."
       },
       "help": {
-        "how": "Erstelle Karten mit Vorder- und Rückseite, geordnet in Stapeln. Die Lernansicht zeigt fällige Karten einzeln: Antwort aufdecken, dann dich selbst bewerten mit Nochmal/Schwer/Gut/Einfach — der SM-2-Algorithmus (Spaced Repetition) terminiert jede Karte so, dass du sie genau dann wiederholst, kurz bevor du sie vergessen würdest. Die Statistik-Variante zeigt deine Wiederholungen der letzten 14 Tage.",
+        "how": "Erstelle Karten (in Stapeln geordnet) und lerne die fälligen einzeln: Antwort aufdecken, dann bewerten mit Nochmal/Schwer/Gut/Leicht. Der Scheduler — standardmäßig FSRS, klassisches SM-2 optional — terminiert jede Karte so, dass du sie kurz vor dem Vergessen wiederholst. Die Gitter-Variante listet Stapel und hat einen Karten-Browser mit Anki-Suche (deck:, tag:, is:due …); die Statistik-Variante zeigt Zählungen, eine Fälligkeits-Prognose, Retention und eine Aktivitäts-Heatmap. Stapel lassen sich als Anki-.apkg importieren/exportieren.",
         "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
         "bestFor": "Vokabeln, Prüfungsstoff, alles fürs Langzeitgedächtnis — ein paar Minuten fällige Karten am Tag schlagen jedes Pauken."
       }
@@ -2850,6 +2887,65 @@
         "how": "Ein Ambience-Mixer mit vier mitgelieferten Loops — Regen, weißes Rauschen, braunes Rauschen und ein Bach. Schalte beliebige Kombinationen an, regle jede Spur einzeln plus einen Master-Pegel und lass es beim Arbeiten laufen. Alle Klänge sind in Cardo enthalten: Nichts wird gestreamt, nichts geht ins Netz. Auf Wunsch folgt es deinem Pomodoro: Klang in Fokusphasen, Stille in Pausen.",
         "setup": "Keine Einrichtung nötig — einfach auf Play drücken. Die Pomodoro-Kopplung findest du im Zahnrad.",
         "bestFor": "Laute Umgebung ausblenden und in den Fokus finden — Großraumbüro, Café, unruhige Abende."
+      }
+    },
+    "legal-dictionary": {
+      "name": "Paragrafen-Wörterbuch",
+      "description": "Speichere Paragrafen (§§ / Artikel) mit deinem eigenen Kommentar – komplett lokal. Selbst eintragen oder den amtlichen Text aus Rechtsquellen abrufen (DE, EU, UK, AT, CH; FR mit eigenem Schlüssel) und den Stand prüfen.",
+      "privacy": "Arbeitet vollständig lokal. Deine Paragrafen und Kommentare verlassen dein Gerät nie.",
+      "widget": {
+        "empty": "Noch keine Paragrafen – füge den ersten mit + hinzu."
+      },
+      "searchPlaceholder": "Suche Gesetzbuch, §, Text, Kommentar…",
+      "add": {
+        "open": "Paragraf hinzufügen",
+        "book": "Gesetzbuch (z. B. BGB)",
+        "norm": "§ / Artikel (z. B. § 242)",
+        "section": "Abs.",
+        "title": "Überschrift (optional)",
+        "text": "Gesetzestext",
+        "comment": "Dein Kommentar",
+        "save": "Speichern"
+      },
+      "list": {
+        "stand": "Stand",
+        "delete": "Löschen"
+      },
+      "online": {
+        "own": "Selbst eintragen",
+        "fetch": "Online",
+        "unavailable": "Online-Abruf gibt es nur in der App",
+        "source": "Rechtsordnung / Quelle",
+        "book": "Gesetzbuch",
+        "norm": "Paragraf / Artikel",
+        "get": "Abrufen",
+        "needsKey": "Schlüssel erforderlich",
+        "checkStand": "Stand prüfen",
+        "changed": "{{label}} wurde auf den aktuellen Stand gebracht",
+        "unchanged": "{{label}} ist unverändert",
+        "fetchFailed": "Abruf aus dieser Quelle nicht möglich: {{error}}"
+      },
+      "command": {
+        "add": "Paragrafen-Wörterbuch: § speichern",
+        "addDesc": "Speichert einen Paragrafen (Gesetzbuch, §/Artikel, optional Absatz, Text und deinen Kommentar).",
+        "context": "Paragrafen-Wörterbuch: aktueller Stand"
+      },
+      "msg": {
+        "added": "Paragraf gespeichert.",
+        "invalid": "Gesetzbuch und § dürfen nicht leer sein."
+      },
+      "test": {
+        "render": "Widget wird dargestellt",
+        "storage": "Speicher-Roundtrip funktioniert"
+      },
+      "tour": {
+        "title": "Paragrafen-Wörterbuch",
+        "body": "Speichere die Paragrafen, mit denen du arbeitest, und kommentiere sie – durchsuchbar und immer griffbereit."
+      },
+      "help": {
+        "how": "Sammle die Paragrafen, mit denen du arbeitest, an einem Ort. Füge einen mit + hinzu – entweder selbst eintragen oder 'online' wählen, um den amtlichen Text abzurufen: Rechtsordnung wählen (Deutschland, EU, UK, Österreich, Schweiz; Frankreich braucht deinen eigenen kostenlosen PISTE-Schlüssel), dann Gesetzbuch und Paragraf. Alles ist über sämtliche Felder durchsuchbar. Online-Einträge zeigen ein Stand-Datum und einen ↻-Knopf, der die Quelle neu prüft und den Text bei Änderung aktualisiert.",
+        "setup": "Keine Einrichtung nötig – Widget aufs Board ziehen und den ersten § mit dem +-Knopf hinzufügen.",
+        "bestFor": "Juristinnen und Juristen, Studierende und alle, die immer wieder dieselben Paragrafen nachschlagen und sie kommentiert und sofort durchsuchbar haben wollen."
       }
     }
   },

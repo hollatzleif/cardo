@@ -16,6 +16,8 @@ import type { SchedulerApi } from '@cardo/plugin-api';
 import { invoke } from '@tauri-apps/api/core';
 import { createBackend, isTauri } from './backend';
 import { createFilesApi } from './files';
+import { createLegalApi } from './legal';
+import { createAnkiApi } from './anki';
 
 /** OS notification, best-effort. The in-app toast is always shown as well. */
 async function sendOsNotification(title: string, body?: string): Promise<void> {
@@ -146,6 +148,9 @@ export function createHost(): Host {
       },
     },
     files: createFilesApi(),
+    // Legal adapters live in Rust; only the Tauri host can reach them.
+    legal: isTauri() ? createLegalApi() : undefined,
+    anki: isTauri() ? createAnkiApi() : undefined,
     search,
     scheduler: createScheduler(commands),
     i18n: {

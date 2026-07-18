@@ -208,6 +208,81 @@ mod tests {
         assert_eq!(doc_a["done"], true);
     }
 
+    fn contains(haystack: &[u8], needle: &[u8]) -> bool {
+        needle.len() <= haystack.len() && haystack.windows(needle.len()).any(|w| w == needle)
+    }
+
+    /// SECURITY, end-to-end: the transport hub is exactly what a cloud backend
+    /// (Google Drive `appDataFolder`, WebDAV, a synced folder) gets to see.
+    /// This proves the zero-knowledge promise holds all the way to disk:
+    ///   1. the plaintext a user typed never appears in any hub byte – not in
+    ///      the raw batch file, not in the base64-decoded blob;
+    ///   2. a device WITHOUT the key cannot read the data (all ops
+    ///      undecryptable, nothing applied);
+    ///   3. only a device WITH the key recovers the exact plaintext.
+    #[tokio::test]
+    async fn hub_leaks_no_plaintext_and_requires_the_key() {
+        use crate::sync_folder::b64_decode;
+
+        let dir = TempDir::new().unwrap();
+        let hub = dir.path().join("hub");
+        let key = SyncKey::generate().unwrap().derive();
+
+        // A marker no cipher or base64 framing could produce by chance.
+        const SECRET: &str = "TOP-SECRET-MARKER-3f9c1a8e2b7d4655-buy-insulin";
+
+        let a = device(&dir, "a").await;
+        a.set("notes", "n1", json!({ "type": "note", "title": SECRET, "body": SECRET }))
+            .await
+            .unwrap();
+
+        let transport = FolderTransport::new(&hub).unwrap();
+        let engine_a = SyncEngine::new(&a, &key.data_key, "test");
+        assert!(engine_a.sync_once(&transport).await.unwrap().pushed >= 1);
+
+        // 1) Scan every hub byte: raw file AND every base64-decoded blob.
+        let secret = SECRET.as_bytes();
+        let mut batch_files = 0;
+        for entry in std::fs::read_dir(hub.join("ops")).unwrap() {
+            let path = entry.unwrap().path();
+            if path.extension().and_then(|e| e.to_str()) != Some("cardo-ops") {
+                continue;
+            }
+            batch_files += 1;
+            let raw = std::fs::read(&path).unwrap();
+            assert!(!contains(&raw, secret), "plaintext leaked into raw hub file {path:?}");
+            let batch: serde_json::Value = serde_json::from_slice(&raw).unwrap();
+            for op in batch["ops"].as_array().expect("ops array") {
+                let blob = b64_decode(op["blob_b64"].as_str().expect("blob_b64")).expect("valid b64");
+                assert!(!contains(&blob, secret), "plaintext leaked into a decoded blob in {path:?}");
+            }
+        }
+        assert!(batch_files >= 1, "expected at least one batch file in the hub");
+
+        // 2) Wrong key = no access: every op is undecryptable, nothing applied.
+        let wrong = SyncKey::generate().unwrap().derive();
+        let eve = device(&dir, "eve").await;
+        let report = SyncEngine::new(&eve, &wrong.data_key, "test")
+            .sync_once(&transport)
+            .await
+            .unwrap();
+        assert_eq!(report.applied, 0, "wrong key must never apply an op");
+        assert!(report.undecryptable >= 1, "wrong key must see the ops as undecryptable");
+        assert!(eve.get("notes", "n1").await.unwrap().is_none(), "eve must learn nothing");
+
+        // 3) Right key = exact recovery.
+        let b = device(&dir, "b").await;
+        assert!(SyncEngine::new(&b, &key.data_key, "test")
+            .sync_once(&transport)
+            .await
+            .unwrap()
+            .applied
+            >= 1);
+        let doc = b.get("notes", "n1").await.unwrap().unwrap();
+        assert_eq!(doc["title"], SECRET);
+        assert_eq!(doc["body"], SECRET);
+    }
+
     /// Own pushes must not echo back as changes.
     #[tokio::test]
     async fn own_ops_do_not_echo() {

@@ -107,6 +107,9 @@ importers:
       '@cardo/tool-hydration':
         specifier: workspace:*
         version: link:../../packages/tools/hydration
+      '@cardo/tool-legal-dictionary':
+        specifier: workspace:*
+        version: link:../../packages/tools/legal-dictionary
       '@cardo/tool-meal-planner':
         specifier: workspace:*
         version: link:../../packages/tools/meal-planner
@@ -479,12 +482,28 @@ importers:
       '@cardo/plugin-api':
         specifier: workspace:*
         version: link:../../plugin-api
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
+      '@cardo/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      ts-fsrs:
+        specifier: ^5.4.1
+        version: 5.4.1
       zod:
         specifier: ^3.24.1
         version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.14
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18.3.2
+        version: 18.3.7(@types/react@18.3.31)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
 
   packages/tools/habits:
     dependencies:
@@ -499,6 +518,18 @@ importers:
         version: 3.25.76
 
   packages/tools/hydration:
+    dependencies:
+      '@cardo/plugin-api':
+        specifier: workspace:*
+        version: link:../../plugin-api
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/tools/legal-dictionary:
     dependencies:
       '@cardo/plugin-api':
         specifier: workspace:*
@@ -3810,6 +3841,10 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: '>=4.8.4'
+
+  ts-fsrs@5.4.1:
+    resolution: {integrity: sha512-mOp9+oexJexBTkwjg/jQI1aSUQRLIAvbimeKHLSmVdNJPwObugFNKmZkoggH5d6kZ0uaWLboP1Al1DnXAfIb9w==}
+    engines: {node: '>=20.0.0'}
 
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
@@ -7311,6 +7346,8 @@ snapshots:
   ts-api-utils@2.5.0(typescript@5.9.3):
     dependencies:
       typescript: 5.9.3
+
+  ts-fsrs@5.4.1: {}
 
   tsconfck@3.1.6(typescript@5.9.3):
     optionalDependencies:

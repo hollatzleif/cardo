@@ -353,6 +353,7 @@ export function createTool(): CardoTool {
         // No selfTestParams: the auto commands-check would start REAL audio
         // with no reliable stop (user report: diagnose left ambience running).
         // Coverage comes from the 'commands' self-test's silent path.
+        selfTestExempt: 'would start real audio in the scratch run',
         async run(params): Promise<CommandResult> {
           if (params.track) {
             await applyAction(context, { type: 'solo', track: params.track }, false);

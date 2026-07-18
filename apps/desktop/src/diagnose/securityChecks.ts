@@ -4,8 +4,10 @@ import {
   createNamespacedStorage,
   type DiagnoseCheck,
 } from '@cardo/core';
+import { invoke } from '@tauri-apps/api/core';
 import { fetchWithTimeout } from '../host/net';
 import { fetchAppInfo, isTauri } from '../host/backend';
+import { getHost } from '../host';
 import { deviceHash } from '../inbox/feed';
 import { writeDoc } from '../assistant/api';
 import { MODEL_CATALOG } from '../assistant/models';
@@ -90,6 +92,81 @@ function assistantDocTraversalCheck(): DiagnoseCheck {
   };
 }
 
+function notesPathTraversalCheck(): DiagnoseCheck {
+  return {
+    id: 'security:notes-path-traversal',
+    titleKey: 'diagnose.check.notesPathTraversal',
+    category: 'security',
+    async run() {
+      // Outside Tauri the files backend is in-memory (no Rust guard to test).
+      if (!isTauri()) return { status: 'warn', detail: tt('diagnose.detail.browserSkipped') };
+      const { files } = getHost().services;
+      if (!files) return { status: 'warn', detail: tt('diagnose.detail.browserSkipped') };
+      // Each of these must be refused by notes.rs::validate_name before it
+      // ever reaches the filesystem.
+      const invalidNames = ['../evil.md', 'sub/dir.md', 'no-ext', '..\\evil.md'];
+      const accepted: string[] = [];
+      for (const name of invalidNames) {
+        try {
+          await files.write(name, 'diagnose probe');
+          accepted.push(name);
+          // If it slipped through, undo the damage best-effort.
+          try {
+            await files.delete(name);
+          } catch {
+            /* ignore */
+          }
+        } catch {
+          // Expected: the Rust name guard rejects it.
+        }
+      }
+      return accepted.length > 0
+        ? { status: 'fail', detail: `invalid note name(s) accepted: ${accepted.join(', ')}` }
+        : { status: 'pass' };
+    },
+  };
+}
+
+function keyInKeychainCheck(): DiagnoseCheck {
+  return {
+    id: 'security:key-in-keychain',
+    titleKey: 'diagnose.check.keyInKeychain',
+    category: 'security',
+    async run() {
+      // The keychain lives on the Rust side; browser dev has none.
+      if (!isTauri()) return { status: 'warn', detail: tt('diagnose.detail.browserSkipped') };
+      try {
+        const detail = await invoke<string>('diagnose_keychain');
+        return { status: 'pass', detail };
+      } catch (err) {
+        // A locked / unavailable keychain is a warning, not a failure – the
+        // sync key simply cannot be stored until it is unlocked.
+        return { status: 'warn', detail: `keychain unavailable: ${String(err)}` };
+      }
+    },
+  };
+}
+
+function legalHostsCheck(): DiagnoseCheck {
+  return {
+    id: 'security:legal-hosts',
+    titleKey: 'diagnose.check.legalHosts',
+    category: 'security',
+    async run() {
+      // The host allow-list lives in the Rust legal module; browser dev has none.
+      if (!isTauri()) return { status: 'warn', detail: tt('diagnose.detail.browserSkipped') };
+      const hosts = await invoke<string[]>('legal_allowed_hosts');
+      // Every entry must be a bare https host: no scheme, path, port, wildcard.
+      const bad = hosts.filter(
+        (h) => !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(h) || h.includes('*') || h.includes('/') || h.includes(':'),
+      );
+      return bad.length === 0
+        ? { status: 'pass', detail: `${hosts.length} allow-listed legal host(s)` }
+        : { status: 'fail', detail: `malformed legal host(s): ${bad.join(', ')}` };
+    },
+  };
+}
+
 function modelUrlAllowlistCheck(): DiagnoseCheck {
   return {
     id: 'security:model-url-allowlist',
@@ -149,7 +226,10 @@ export function buildSecurityChecks(): DiagnoseCheck[] {
     cspAllowlistCheck(),
     voteAnonymousCheck(),
     assistantDocTraversalCheck(),
+    notesPathTraversalCheck(),
     modelUrlAllowlistCheck(),
     namespaceIsolationCheck(),
+    legalHostsCheck(),
+    keyInKeychainCheck(),
   ];
 }

@@ -22,6 +22,10 @@ tokio = { workspace = true }
 sysinfo = "0.35"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream", "json", "blocking"] }
 futures-util = "0.3"
+# Legal-source adapters parse XML (gesetze-im-internet, EUR-Lex Akoma Ntoso, …).
+quick-xml = "0.36"
+# Some legal sources ship a law as a zipped XML (gesetze-im-internet xml.zip).
+zip = { version = "2", default-features = false, features = ["deflate"] }
 # Sync: OS keychain for the sync key (never plaintext on disk).
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 uuid = { workspace = true }

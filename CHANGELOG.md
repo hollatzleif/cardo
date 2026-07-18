@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.1.0 — Voll-Anki & Paragrafen-Wörterbuch
+
+### Karteikarten: jetzt Anki-Klasse
+- **Notiztypen & Kartenvorlagen** mit `{{Feld}}`, Bedingungen `{{#Feld}}…{{/Feld}}`,
+  **Lückentext (Cloze)** und eigenem CSS; LaTeX über KaTeX, sicheres HTML-Sanitizing.
+- **FSRS-Scheduler** (Ankis moderner Standard, via `ts-fsrs`) **plus** klassisches SM-2 —
+  pro Deck wählbar. Lernschritte, Graduierung, Lapse/Relearning, Ease-Boden.
+- **Karten-Browser** mit Anki-Suchsyntax (`deck:`, `tag:`, `is:due`, `is:suspended`,
+  `flag:`, `added:`) und Massen-Aktionen (aussetzen, vergraben, flaggen, verschieben,
+  umtaggen, löschen).
+- **Statistik**: Zählungen, Fälligkeits-Prognose, Retention und Aktivitäts-Heatmap.
+- **Medien** (Bild/Audio/Video) eingebettet, E2E-verschlüsselt gesynct.
+- **`.apkg`/`.colpkg`-Import & -Export** (Notiztypen, Vorlagen, Medien, Tags, Lernstand).
+- Nahtlose Migration bestehender Karten ins neue Modell (ids/Fälligkeiten/Fortschritt bleiben).
+
+### Neu: Paragrafen-Wörterbuch (für Juristinnen und Juristen)
+- Paragrafen (§§ / Artikel) mit eigenem Kommentar speichern, durchsuchbar — komplett lokal.
+- **Online-Abruf** des amtlichen Textes aus sechs Rechtsquellen: **Deutschland**
+  (gesetze-im-internet.de), **EU** (EUR-Lex), **UK** (legislation.gov.uk), **Österreich**
+  (RIS), **Schweiz** (Fedlex) und **Frankreich** (Légifrance, mit eigenem PISTE-Schlüssel).
+- **„Stand prüfen"**: holt den § neu, meldet Änderungen und aktualisiert den Text.
+- Alle Abrufe laufen über eine harte Host-Allowlist; nur amtlicher, gemeinfreier Normtext.
+
+### Unter der Haube
+- **Diagnose erweitert**: Zero-Knowledge-Sync runtime-prüfbar (`core:sync-ciphertext`),
+  Backup-Roundtrip, Keychain-Roundtrip, Notiz-Pfad-Schutz, Rechtsquellen-Host-Allowlist.
+- **Abdeckungs-Wächter**: fehlende Selbsttests brechen jetzt die CI (kein still ungetestetes Tool).
+- Neuer JS-Regressionstest gegen den früheren Hydration-Erinnerungs-Spam.
+
 ## 1.0.0 — Das große Update
 
 ### Sync (neu)

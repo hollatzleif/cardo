@@ -17,6 +17,7 @@ import { useAppStore } from '../state/appStore';
 import { buildUiChecks } from './uiChecks';
 import { buildNetworkChecks } from './networkChecks';
 import { buildSecurityChecks } from './securityChecks';
+import { buildCoverageChecks } from './coverageChecks';
 
 /** Maps Rust core-check ids to i18n title keys. */
 const CORE_CHECK_TITLES: Record<string, string> = {
@@ -27,6 +28,8 @@ const CORE_CHECK_TITLES: Record<string, string> = {
   'core:migrations': 'diagnose.check.migrations',
   'core:sync-crypto': 'diagnose.check.syncCrypto',
   'core:sync-engine': 'diagnose.check.syncEngine',
+  'core:sync-ciphertext': 'diagnose.check.syncCiphertext',
+  'core:backup-roundtrip': 'diagnose.check.backupRoundtrip',
 };
 
 async function coreChecks(): Promise<DiagnoseCheck[]> {
@@ -112,6 +115,7 @@ export async function runFullDiagnose(
     ...buildUiChecks(),
     ...(options.includeNetwork ? buildNetworkChecks() : []),
     ...buildSecurityChecks(),
+    ...buildCoverageChecks(Object.values(toolFactories), host.services),
   ];
 
   const info = await fetchAppInfo();

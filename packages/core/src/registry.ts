@@ -2,8 +2,10 @@ import {
   ToolManifestSchema,
   type CardoTool,
   type EventBus,
+  type AnkiApi,
   type FilesApi,
   type I18nApi,
+  type LegalApi,
   type NotificationsApi,
   type SchedulerApi,
   type ThemeTokensApi,
@@ -22,6 +24,10 @@ export interface HostServices {
   i18n: I18nApi;
   /** File backend for tools with file permissions. Absent in scratch/diagnose contexts. */
   files?: FilesApi;
+  /** Legal-source adapters (paragraphs tool). Absent in scratch/browser contexts. */
+  legal?: LegalApi;
+  /** Anki import/export (flashcards tool). Absent in scratch/browser contexts. */
+  anki?: AnkiApi;
   /** Global content search. Optional: scratch contexts use a throwaway one. */
   search?: SearchRegistry;
 }
@@ -110,6 +116,8 @@ export class ToolRegistry {
       // Only the live context gets file access; the diagnose scratch
       // context passes its own backend but no files (tools must degrade).
       ...(backend === undefined && s.files ? { files: s.files } : {}),
+      ...(backend === undefined && s.legal ? { legal: s.legal } : {}),
+      ...(backend === undefined && s.anki ? { anki: s.anki } : {}),
     };
   }
 

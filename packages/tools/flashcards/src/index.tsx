@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import type {
   CardoTool,
@@ -11,395 +11,439 @@ import type {
 } from '@cardo/plugin-api';
 import manifest from '../manifest.json';
 import {
-  addCardParamsSchema,
-  buildFlashcardsContext,
-  deckStats,
-  dueCards,
-  localDayKey,
   makeCard,
   makeDeck,
-  review,
-  reviewSeries,
+  makeNote,
+  newCardState,
   type CardDoc,
   type DeckDoc,
-  type Grade,
-  type ReviewLogDoc,
-} from './logic';
+  type DeckOptionsDoc,
+  type NoteDoc,
+} from './model';
+import { ensureDefaults, importAnkiCollection, loadCollection, migrateIfNeeded, type Collection } from './store';
+import { docsToAnkiCollection } from './anki-import';
+import { review as scheduleReview, isSubDay } from './scheduler';
+import {
+  buildQueue,
+  currentCard,
+  queueCounts,
+  recordAnswer,
+  startSession,
+  undo as undoSession,
+  canUndo,
+  type Rating,
+  type Session,
+} from './session';
+import { StudyView } from './StudyView';
+import { filterCards, setSuspended, type BrowseContext } from './browse';
+import { cardCounts, deckBreakdown, forecast, heatmapCells, retention, type ReviewEvent } from './stats';
 
 /**
- * Flashcards – SM-2 spaced repetition, fully local.
- * Decks live in `deck:<id>` docs, cards in `card:<id>` docs; each review
- * bumps a per-day counter in `log:<yyyy-mm-dd>` for the stats variant.
+ * Flashcards – an Anki-class spaced-repetition tool, fully local.
+ * Documents: noteType/note/card/deck/deckOptions/media (+ reviewEvent for
+ * stats). Scheduling (SM-2 or FSRS) runs in JS so the tool works offline.
  */
 
-/** Grade buttons of the study variant: label key → SM-2 grade. */
-const GRADE_BUTTONS: Array<{ labelKey: string; grade: Grade }> = [
-  { labelKey: 'tool.flashcards.grade.again', grade: 2 },
-  { labelKey: 'tool.flashcards.grade.hard', grade: 3 },
-  { labelKey: 'tool.flashcards.grade.good', grade: 4 },
-  { labelKey: 'tool.flashcards.grade.easy', grade: 5 },
-];
+/* ── Dates ────────────────────────────────────────────────────────────────── */
 
-/* ── Storage helpers (parameterized so commands, widget and self-tests share them) ── */
-
-async function queryDecksIn(storage: ToolStorage): Promise<DeckDoc[]> {
-  const decks = await storage.query<DeckDoc>({
-    where: [{ field: 'type', op: '=', value: 'deck' }],
-  });
-  return [...decks].sort((a, b) => a.name.localeCompare(b.name));
+function localDayKey(now: Date = new Date()): string {
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${m}-${d}`;
+}
+function addDays(dayKey: string, days: number): string {
+  const ms = new Date(`${dayKey}T00:00:00Z`).getTime() + days * 86_400_000;
+  return new Date(ms).toISOString().slice(0, 10);
 }
 
-async function queryCardsIn(storage: ToolStorage): Promise<CardDoc[]> {
-  return storage.query<CardDoc>({ where: [{ field: 'type', op: '=', value: 'card' }] });
-}
+/* ── Storage helpers shared by commands, widget and self-tests ────────────── */
 
-async function queryLogsIn(storage: ToolStorage): Promise<ReviewLogDoc[]> {
-  return storage.query<ReviewLogDoc>({ where: [{ field: 'type', op: '=', value: 'log' }] });
-}
+const addCardParamsSchema = z.object({
+  deck: z.string().min(1),
+  front: z.string().min(1),
+  back: z.string().min(1),
+});
 
-/** Resolve a deck reference (doc id or display name, case-insensitive) – creates by name when missing. */
-async function resolveDeckIn(storage: ToolStorage, ref: string): Promise<DeckDoc> {
+async function resolveDeck(storage: ToolStorage, ref: string, optionsId: string): Promise<DeckDoc> {
   const name = ref.trim();
-  const direct = await storage.get<DeckDoc>(name);
-  if (direct && direct.type === 'deck') return direct;
-  const decks = await queryDecksIn(storage);
+  const decks = await storage.query<DeckDoc>({ where: [{ field: 'type', op: '=', value: 'deck' }] });
   const byName = decks.find((d) => d.name.toLowerCase() === name.toLowerCase());
   if (byName) return byName;
-  const created = makeDeck(name);
+  const created = makeDeck(name, optionsId);
   await storage.set(created.id, created);
   return created;
 }
 
-async function addCardIn(
+async function addNoteCard(
   storage: ToolStorage,
   input: { deck: string; front: string; back: string },
   today: string,
-): Promise<{ deck: DeckDoc; card: CardDoc }> {
-  const deck = await resolveDeckIn(storage, input.deck);
-  const card = makeCard({ deckId: deck.id, front: input.front, back: input.back }, today);
+): Promise<{ deck: DeckDoc; note: NoteDoc; card: CardDoc }> {
+  const { noteType, options } = await ensureDefaults(storage);
+  const deck = await resolveDeck(storage, input.deck, options.id);
+  const [front, back] = noteType.fields;
+  const note = makeNote(noteType.id, { [front!]: input.front, [back!]: input.back });
+  await storage.set(note.id, note);
+  const card = makeCard({ noteId: note.id, templateIndex: 0, deckId: deck.id }, today);
   await storage.set(card.id, card);
-  return { deck, card };
+  return { deck, note, card };
 }
 
-/** Persist one SM-2 review and bump today's review counter. */
-async function reviewCardIn(
+function optionsFor(collection: Collection, deck: DeckDoc | undefined): DeckOptionsDoc {
+  const byId = deck && collection.options.find((o) => o.id === deck.optionsId);
+  return byId ?? collection.options[0]!;
+}
+
+async function persistAnswer(
   storage: ToolStorage,
+  collection: Collection,
   card: CardDoc,
-  grade: Grade,
+  rating: Rating,
   today: string,
-): Promise<CardDoc> {
-  const next: CardDoc = { ...card, ...review(card, grade, today) };
+  now: Date,
+): Promise<{ card: CardDoc; requeue: boolean }> {
+  const deck = collection.decks.find((d) => d.id === card.deckId);
+  const options = optionsFor(collection, deck);
+  const result = scheduleReview(card.state, rating, options, { now });
+  const sub = isSubDay(result.interval);
+  const iv = result.interval;
+  const next: CardDoc = {
+    ...card,
+    state: result.state,
+    due: 'minutes' in iv ? today : addDays(today, iv.days),
+    dueAt: 'minutes' in iv ? new Date(now.getTime() + iv.minutes * 60_000).toISOString() : null,
+  };
   await storage.set(next.id, next);
-  const logId = `log:${today}`;
-  const log = await storage.get<ReviewLogDoc>(logId);
-  await storage.set<ReviewLogDoc>(logId, {
-    id: logId,
-    type: 'log',
+  const ev: ReviewEvent & { id: string; type: string } = {
+    id: `ev:${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    type: 'reviewEvent',
     date: today,
-    count: (log?.count ?? 0) + 1,
-  });
-  return next;
+    rating,
+  };
+  await storage.set(ev.id, ev as unknown as Record<string, unknown>);
+  return { card: next, requeue: sub };
 }
 
-/* ── The tool ─────────────────────────────────────────────────────────── */
+/* ── Data hook ────────────────────────────────────────────────────────────── */
+
+function useCollection(ctx: ToolContext | null): { collection: Collection | null; reload: () => void } {
+  const [collection, setCollection] = useState<Collection | null>(null);
+  const reload = useCallback(() => {
+    if (!ctx) return;
+    void loadCollection(ctx.storage).then(setCollection);
+  }, [ctx]);
+  useEffect(() => {
+    let alive = true;
+    if (!ctx) return undefined;
+    void loadCollection(ctx.storage).then((c) => alive && setCollection(c));
+    const unsub = ctx.storage.subscribe(() => {
+      if (alive) void loadCollection(ctx.storage).then(setCollection);
+    });
+    return () => {
+      alive = false;
+      unsub();
+    };
+  }, [ctx]);
+  return { collection, reload };
+}
+
+/* ── The tool ─────────────────────────────────────────────────────────────── */
 
 export function createTool(): CardoTool {
   let ctx: ToolContext | null = null;
-  const t = (key: string, vars?: Record<string, unknown>): string =>
-    ctx?.i18n.t(key, vars) ?? key;
+  const t = (key: string, vars?: Record<string, unknown>): string => ctx?.i18n.t(key, vars) ?? key;
 
-  /** True when the OS asks for reduced motion – the card flip snaps instead of turning. */
-  function prefersReducedMotion(): boolean {
-    return (
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    );
-  }
+  const studyLabels = () => ({
+    show: t('tool.flashcards.study.reveal'),
+    again: t('tool.flashcards.grade.again'),
+    hard: t('tool.flashcards.grade.hard'),
+    good: t('tool.flashcards.grade.good'),
+    easy: t('tool.flashcards.grade.easy'),
+    undo: t('tool.flashcards.study.undo'),
+    done: t('tool.flashcards.study.done'),
+    empty: t('tool.flashcards.widget.empty'),
+  });
 
-  /* ── Study variant: front → reveal → grade ─────────────────────────── */
+  /* Study pane ---------------------------------------------------------- */
+  function StudyPane() {
+    const { collection } = useCollection(ctx);
+    const [session, setSession] = useState<Session | null>(null);
 
-  function StudyView() {
-    const [queue, setQueue] = useState<CardDoc[] | null>(null);
-    const [decks, setDecks] = useState<DeckDoc[]>([]);
-    const [revealed, setRevealed] = useState(false);
-
-    const loadQueue = useCallback(async () => {
-      const c = ctx;
-      if (!c) return;
-      const [cards, deckList] = await Promise.all([
-        queryCardsIn(c.storage),
-        queryDecksIn(c.storage),
-      ]);
-      setQueue(dueCards(cards, localDayKey()));
-      setDecks(deckList);
-      setRevealed(false);
-    }, []);
-
-    // The queue is loaded once per mount – NOT on every storage change,
-    // otherwise grading would reshuffle the session mid-review.
+    // Build the session ONCE per collection load (not on every answer).
     useEffect(() => {
-      void loadQueue();
-    }, [loadQueue]);
+      if (!collection || session) return;
+      const options = collection.options[0];
+      const limits = {
+        newPerDay: options?.newPerDay ?? 20,
+        reviewsPerDay: options?.reviewsPerDay ?? 200,
+      };
+      const queue = buildQueue(collection.cards, limits, localDayKey(), new Date().toISOString());
+      setSession(startSession(queue, limits, localDayKey(), new Date().toISOString()));
+    }, [collection, session]);
 
-    const current = queue?.[0];
-    const deckName = current ? decks.find((d) => d.id === current.deckId)?.name : undefined;
+    const card = session ? currentCard(session) : null;
+    const note = card && collection ? collection.notes.find((n) => n.id === card.noteId) : null;
+    const noteType =
+      note && collection ? collection.noteTypes.find((nt) => nt.id === note.noteTypeId) : null;
 
-    async function grade(g: Grade) {
+    async function onRate(rating: Rating) {
       const c = ctx;
-      if (!c || !current) return;
-      await reviewCardIn(c.storage, current, g, localDayKey());
-      setQueue((q) => (q ? q.slice(1) : q));
-      setRevealed(false);
-    }
-
-    if (queue === null) return <div className="c-muted">…</div>;
-
-    if (!current) {
-      return (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            gap: 'var(--space-2)',
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ fontSize: '1.6em' }}>✓</div>
-          <div style={{ color: 'var(--success)' }}>{t('tool.flashcards.study.done')}</div>
-          <button className="c-btn c-btn--ghost" onClick={() => void loadQueue()}>
-            {t('tool.flashcards.study.checkAgain')}
-          </button>
-        </div>
+      if (!c || !collection || !card || !session) return;
+      const { card: updated, requeue } = await persistAnswer(
+        c.storage,
+        collection,
+        card,
+        rating,
+        localDayKey(),
+        new Date(),
       );
+      setSession((s) => (s ? recordAnswer(s, updated, requeue) : s));
     }
-
-    const reduced = prefersReducedMotion();
-    const face = (content: string, back: boolean) => (
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 'var(--space-3)',
-          textAlign: 'center',
-          overflow: 'hidden',
-          overflowWrap: 'break-word',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-md, 8px)',
-          background: 'var(--bg-widget-hover)',
-          backfaceVisibility: 'hidden',
-          transform: back ? 'rotateY(180deg)' : undefined,
-        }}
-      >
-        <span style={{ maxHeight: '100%', overflowY: 'auto' }}>{content}</span>
-      </div>
-    );
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 'var(--space-2)' }}>
-        <div
-          className="c-muted"
-          style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, flexShrink: 0 }}
-        >
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {deckName ?? ''}
-          </span>
-          <span style={{ fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-            {t('tool.flashcards.study.dueCount', { count: queue.length })}
-          </span>
-        </div>
-
-        <button
-          aria-label={t(revealed ? 'tool.flashcards.study.backSide' : 'tool.flashcards.study.reveal')}
-          onClick={() => setRevealed((r) => !r)}
-          style={{
-            flex: 1,
-            minHeight: 0,
-            border: 'none',
-            background: 'none',
-            padding: 0,
-            cursor: 'pointer',
-            perspective: '800px',
-            color: 'inherit',
-            font: 'inherit',
-          }}
-        >
-          <div
-            style={{
-              position: 'relative',
-              width: '100%',
-              height: '100%',
-              transformStyle: 'preserve-3d',
-              transition: reduced ? 'none' : 'transform 0.35s ease',
-              transform: revealed ? 'rotateY(180deg)' : 'none',
-            }}
-          >
-            {face(current.front, false)}
-            {face(current.back, true)}
-          </div>
-        </button>
-
-        {revealed ? (
-          <div style={{ display: 'flex', gap: 'var(--space-1)', flexShrink: 0 }}>
-            {GRADE_BUTTONS.map(({ labelKey, grade: g }) => (
-              <button
-                key={g}
-                className={`c-btn${g === 2 ? '' : g === 4 ? ' c-btn--primary' : ' c-btn--ghost'}`}
-                style={{ flex: 1, minWidth: 0, ...(g === 2 ? { color: 'var(--danger)' } : {}) }}
-                onClick={() => void grade(g)}
-              >
-                {t(labelKey)}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <button
-            className="c-btn c-btn--primary"
-            style={{ flexShrink: 0 }}
-            onClick={() => setRevealed(true)}
-          >
-            {t('tool.flashcards.study.reveal')}
-          </button>
-        )}
-      </div>
+      <StudyView
+        card={card}
+        noteType={noteType ?? null}
+        note={note ?? null}
+        counts={session ? queueCounts(session.queue) : { new: 0, learning: 0, review: 0 }}
+        answered={session?.answered ?? 0}
+        canUndo={session ? canUndo(session) : false}
+        onRate={(r) => void onRate(r)}
+        onUndo={() => setSession((s) => (s ? undoSession(s) : s))}
+        labels={studyLabels()}
+        finished={(session?.answered ?? 0) > 0}
+      />
     );
   }
 
-  /* ── Grid variant: deck overview + add form ────────────────────────── */
-
-  function GridView() {
-    const [decks, setDecks] = useState<DeckDoc[]>([]);
-    const [cards, setCards] = useState<CardDoc[]>([]);
+  /* Manage pane: deck list + add card + search browser ------------------ */
+  function ManagePane() {
+    const { collection } = useCollection(ctx);
     const [deckDraft, setDeckDraft] = useState('');
     const [front, setFront] = useState('');
     const [back, setBack] = useState('');
+    const [search, setSearch] = useState('');
+    const [panel, setPanel] = useState<'none' | 'add' | 'options'>('none');
+    const [importMsg, setImportMsg] = useState('');
+    const hasAnki = ctx?.anki != null;
 
-    const reload = useCallback(async () => {
-      const c = ctx;
-      if (!c) return;
-      const [deckList, cardList] = await Promise.all([
-        queryDecksIn(c.storage),
-        queryCardsIn(c.storage),
-      ]);
-      setDecks(deckList);
-      setCards(cardList);
-    }, []);
+    const today = localDayKey();
+    const nowIso = new Date().toISOString();
 
-    useEffect(() => {
-      let mounted = true;
-      const safeReload = () => {
-        if (mounted) void reload();
-      };
-      safeReload();
-      const unsub = ctx?.storage.subscribe(safeReload);
-      return () => {
-        mounted = false;
-        unsub?.();
-      };
-    }, [reload]);
+    const deckNameById = useMemo(
+      () => new Map((collection?.decks ?? []).map((d) => [d.id, d.name])),
+      [collection],
+    );
+    const noteById = useMemo(
+      () => new Map((collection?.notes ?? []).map((n) => [n.id, n])),
+      [collection],
+    );
 
-    async function addCard() {
+    async function add() {
       const c = ctx;
       if (!c || !deckDraft.trim() || !front.trim() || !back.trim()) return;
-      await addCardIn(c.storage, { deck: deckDraft, front, back }, localDayKey());
+      await addNoteCard(c.storage, { deck: deckDraft, front, back }, today);
       setFront('');
       setBack('');
     }
 
-    const stats = deckStats(decks, cards, localDayKey());
+    async function importApkg() {
+      const c = ctx;
+      if (!c?.anki) return;
+      setImportMsg(t('tool.flashcards.import.running'));
+      try {
+        const coll = await c.anki.importFile();
+        if (!coll) {
+          setImportMsg('');
+          return;
+        }
+        const s = await importAnkiCollection(c.storage, coll, today);
+        setImportMsg(t('tool.flashcards.import.done', { decks: s.decks, cards: s.cards }));
+      } catch (e) {
+        setImportMsg(t('tool.flashcards.import.failed', { error: String(e) }));
+      }
+    }
+
+    async function exportApkg() {
+      const c = ctx;
+      if (!c?.anki || !collection) return;
+      try {
+        await c.anki.exportFile(docsToAnkiCollection(collection));
+      } catch (e) {
+        setImportMsg(t('tool.flashcards.import.failed', { error: String(e) }));
+      }
+    }
+
+    async function saveOptions(patch: Partial<DeckOptionsDoc>) {
+      const c = ctx;
+      const opt = collection?.options[0];
+      if (!c || !opt) return;
+      await c.storage.set(opt.id, { ...opt, ...patch });
+    }
+
+    if (!collection) return <div className="c-muted">…</div>;
+    const options = collection.options[0];
+
+    const browseCtx: BrowseContext = { today, nowIso, deckNameById, noteById };
+    const found = search.trim()
+      ? filterCards(collection.cards, browseCtx, search).slice(0, 100)
+      : [];
+    const decks = deckBreakdown(collection.cards, deckNameById, today, nowIso);
+
+    async function suspendCard(id: string) {
+      const c = ctx;
+      if (!c || !collection) return;
+      const [updated] = setSuspended(collection.cards, new Set([id]), true);
+      if (updated) await c.storage.set(updated.id, updated);
+    }
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 'var(--space-2)' }}>
         <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap', flexShrink: 0 }}>
-          <input
-            className="c-input"
-            list="flashcards-decks"
-            value={deckDraft}
-            placeholder={t('tool.flashcards.grid.deckPlaceholder')}
-            aria-label={t('tool.flashcards.grid.deckPlaceholder')}
-            style={{ flex: 1, minWidth: 70 }}
-            onChange={(e) => setDeckDraft(e.target.value)}
-          />
-          <datalist id="flashcards-decks">
-            {decks.map((d) => (
-              <option key={d.id} value={d.name} />
-            ))}
-          </datalist>
-          <input
-            className="c-input"
-            value={front}
-            placeholder={t('tool.flashcards.grid.frontPlaceholder')}
-            aria-label={t('tool.flashcards.grid.frontPlaceholder')}
-            style={{ flex: 1, minWidth: 70 }}
-            onChange={(e) => setFront(e.target.value)}
-          />
-          <input
-            className="c-input"
-            value={back}
-            placeholder={t('tool.flashcards.grid.backPlaceholder')}
-            aria-label={t('tool.flashcards.grid.backPlaceholder')}
-            style={{ flex: 1, minWidth: 70 }}
-            onChange={(e) => setBack(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void addCard();
-            }}
-          />
           <button
-            className="c-btn c-btn--primary"
-            aria-label={t('tool.flashcards.grid.add')}
-            title={t('tool.flashcards.grid.add')}
-            style={{ flexShrink: 0 }}
-            onClick={() => void addCard()}
+            className={`c-btn${panel === 'add' ? ' c-btn--primary' : ''}`}
+            style={{ flex: 1, minWidth: 60 }}
+            onClick={() => setPanel((p) => (p === 'add' ? 'none' : 'add'))}
           >
-            +
+            ＋ {t('tool.flashcards.grid.add')}
           </button>
+          {hasAnki && (
+            <button
+              className="c-btn"
+              style={{ flex: 1, minWidth: 60 }}
+              onClick={() => void importApkg()}
+            >
+              ⬆ {t('tool.flashcards.import.button')}
+            </button>
+          )}
+          <button
+            className={`c-btn${panel === 'options' ? ' c-btn--primary' : ''}`}
+            style={{ flex: 1, minWidth: 60 }}
+            onClick={() => setPanel((p) => (p === 'options' ? 'none' : 'options'))}
+          >
+            ⚙ {t('tool.flashcards.options.button')}
+          </button>
+          {hasAnki && (
+            <button
+              className="c-btn c-btn--ghost"
+              title={t('tool.flashcards.export.button')}
+              aria-label={t('tool.flashcards.export.button')}
+              style={{ flexShrink: 0 }}
+              onClick={() => void exportApkg()}
+            >
+              ⬇
+            </button>
+          )}
         </div>
 
+        {importMsg && (
+          <div className="c-muted" style={{ fontSize: 12, flexShrink: 0 }}>
+            {importMsg}
+          </div>
+        )}
+
+        {panel === 'add' && (
+          <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap', flexShrink: 0 }}>
+            <input className="c-input" list="flashcards-decks" value={deckDraft} placeholder={t('tool.flashcards.grid.deckPlaceholder')} aria-label={t('tool.flashcards.grid.deckPlaceholder')} style={{ flex: 1, minWidth: 70 }} onChange={(e) => setDeckDraft(e.target.value)} />
+            <datalist id="flashcards-decks">
+              {decks.map((d) => (<option key={d.deckId} value={d.name} />))}
+            </datalist>
+            <input className="c-input" value={front} placeholder={t('tool.flashcards.grid.frontPlaceholder')} aria-label={t('tool.flashcards.grid.frontPlaceholder')} style={{ flex: 1, minWidth: 70 }} onChange={(e) => setFront(e.target.value)} />
+            <input className="c-input" value={back} placeholder={t('tool.flashcards.grid.backPlaceholder')} aria-label={t('tool.flashcards.grid.backPlaceholder')} style={{ flex: 1, minWidth: 70 }} onChange={(e) => setBack(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void add(); }} />
+            <button className="c-btn c-btn--primary" aria-label={t('tool.flashcards.grid.add')} title={t('tool.flashcards.grid.add')} style={{ flexShrink: 0 }} onClick={() => void add()}>+</button>
+          </div>
+        )}
+
+        {panel === 'options' && options && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', flexShrink: 0, fontSize: 13, borderBottom: '1px solid var(--border-subtle)', paddingBottom: 'var(--space-2)' }}>
+            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-2)' }}>
+              {t('tool.flashcards.options.scheduler')}
+              <select className="c-input" value={options.scheduler} style={{ width: 110 }} onChange={(e) => void saveOptions({ scheduler: e.target.value as DeckOptionsDoc['scheduler'] })}>
+                <option value="fsrs">FSRS</option>
+                <option value="sm2">SM-2</option>
+              </select>
+            </label>
+            {options.scheduler === 'fsrs' && (
+              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-2)' }}>
+                {t('tool.flashcards.options.retention')}: {Math.round(options.desiredRetention * 100)}%
+                <input type="range" min={70} max={97} value={Math.round(options.desiredRetention * 100)} onChange={(e) => void saveOptions({ desiredRetention: Number(e.target.value) / 100 })} />
+              </label>
+            )}
+            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-2)' }}>
+              {t('tool.flashcards.options.newPerDay')}
+              <input className="c-input" type="number" min={0} value={options.newPerDay} style={{ width: 80 }} onChange={(e) => void saveOptions({ newPerDay: Math.max(0, Number(e.target.value) || 0) })} />
+            </label>
+            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-2)' }}>
+              {t('tool.flashcards.options.reviewsPerDay')}
+              <input className="c-input" type="number" min={0} value={options.reviewsPerDay} style={{ width: 80 }} onChange={(e) => void saveOptions({ reviewsPerDay: Math.max(0, Number(e.target.value) || 0) })} />
+            </label>
+            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-2)' }}>
+              {t('tool.flashcards.options.learningSteps')}
+              <input className="c-input" value={options.learningStepsMin.join(' ')} style={{ width: 100 }} onChange={(e) => void saveOptions({ learningStepsMin: e.target.value.split(/[\s,]+/).map(Number).filter((x) => x > 0) })} />
+            </label>
+          </div>
+        )}
+
+        <input
+          className="c-input"
+          value={search}
+          placeholder={t('tool.flashcards.browse.search')}
+          aria-label={t('tool.flashcards.browse.searchLabel')}
+          style={{ flexShrink: 0 }}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-          {stats.length === 0 ? (
+          {search.trim() ? (
+            found.length === 0 ? (
+              <div className="c-muted" style={{ textAlign: 'center', marginTop: 'var(--space-4)' }}>
+                {t('tool.flashcards.browse.noMatches')}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {found.map((c) => {
+                  const n = noteById.get(c.noteId);
+                  const label = n ? Object.values(n.fields)[0] ?? '' : c.id;
+                  return (
+                    <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                      <span
+                        style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: c.suspended ? 0.5 : 1 }}
+                        dangerouslySetInnerHTML={{ __html: label }}
+                      />
+                      {!c.suspended && (
+                        <button
+                          className="c-btn c-btn--ghost"
+                          style={{ flexShrink: 0, fontSize: 11 }}
+                          title={t('tool.flashcards.browse.suspend')}
+                          onClick={() => void suspendCard(c.id)}
+                        >
+                          ⏸
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ) : decks.length === 0 ? (
             <div className="c-muted" style={{ textAlign: 'center', marginTop: 'var(--space-4)' }}>
               {t('tool.flashcards.widget.empty')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-              {stats.map(({ deck, total, due }) => (
-                <div
-                  key={deck.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
-                >
-                  <span
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {deck.name}
+              {decks.map((d) => (
+                <div key={d.deckId} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                  <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {d.name}
+                  </span>
+                  <span className="c-muted" style={{ fontSize: 12, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                    {t('tool.flashcards.grid.cards', { count: d.total })}
                   </span>
                   <span
-                    className="c-muted"
-                    style={{ fontSize: 12, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}
+                    title={t('tool.flashcards.grid.due', { count: d.due })}
+                    style={{ fontSize: 12, fontVariantNumeric: 'tabular-nums', color: d.due > 0 ? 'var(--warning)' : 'var(--text-muted)', flexShrink: 0 }}
                   >
-                    {t('tool.flashcards.grid.cards', { count: total })}
-                  </span>
-                  <span
-                    title={t('tool.flashcards.grid.due', { count: due })}
-                    style={{
-                      fontSize: 12,
-                      fontVariantNumeric: 'tabular-nums',
-                      color: due > 0 ? 'var(--warning)' : 'var(--text-muted)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {due > 0 ? `● ${due}` : '✓'}
+                    {d.due > 0 ? `● ${d.due}` : '✓'}
                   </span>
                 </div>
               ))}
@@ -410,79 +454,54 @@ export function createTool(): CardoTool {
     );
   }
 
-  /* ── Stats variant: reviews per day ────────────────────────────────── */
-
-  function StatsView() {
-    const [logs, setLogs] = useState<ReviewLogDoc[]>([]);
-
+  /* Stats pane: counts + forecast + retention + heatmap ----------------- */
+  function StatsPane() {
+    const { collection } = useCollection(ctx);
+    const [events, setEvents] = useState<ReviewEvent[]>([]);
     useEffect(() => {
-      let mounted = true;
-      const load = () => {
-        const c = ctx;
-        if (!c) return;
-        void queryLogsIn(c.storage).then((list) => {
-          if (mounted) setLogs(list);
-        });
-      };
-      load();
-      const unsub = ctx?.storage.subscribe(() => load());
-      return () => {
-        mounted = false;
-        unsub?.();
-      };
+      if (!ctx) return;
+      void ctx.storage
+        .query<ReviewEvent>({ where: [{ field: 'type', op: '=', value: 'reviewEvent' }] })
+        .then(setEvents);
     }, []);
 
-    const series = reviewSeries(logs, 14, localDayKey());
-    const max = Math.max(1, ...series.map((s) => s.count));
-    const total = series.reduce((acc, s) => acc + s.count, 0);
-    const barW = 100 / series.length;
+    const today = localDayKey();
+    if (!collection) return <div className="c-muted">…</div>;
+    const counts = cardCounts(collection.cards, today, new Date().toISOString());
+    const fc = forecast(collection.cards, today, 14);
+    const ret = retention(events, { days: 30, today });
+    const cells = heatmapCells(events, today);
+    const maxFc = Math.max(1, ...fc.map((f) => f.count));
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 'var(--space-2)' }}>
-        <div className="c-muted" style={{ fontSize: 12, flexShrink: 0 }}>
-          {t('tool.flashcards.stats.title', { count: total })}
+        <div style={{ display: 'flex', gap: 'var(--space-2)', fontSize: 12, flexShrink: 0 }}>
+          <span title={t('tool.flashcards.stats.new')} style={{ color: 'var(--chart-1, var(--accent))' }}>● {counts.new}</span>
+          <span title={t('tool.flashcards.stats.learning')} style={{ color: 'var(--warning)' }}>● {counts.learning}</span>
+          <span title={t('tool.flashcards.stats.review')} style={{ color: 'var(--success)' }}>● {counts.review}</span>
+          <span className="c-muted" style={{ marginLeft: 'auto' }}>
+            {t('tool.flashcards.stats.retention')} {Math.round(ret * 100)}%
+          </span>
         </div>
-        {total === 0 ? (
-          <div className="c-muted" style={{ textAlign: 'center', marginTop: 'var(--space-4)' }}>
-            {t('tool.flashcards.stats.empty')}
-          </div>
-        ) : (
-          <svg
-            viewBox="0 0 100 40"
-            preserveAspectRatio="none"
-            role="img"
-            aria-label={t('tool.flashcards.stats.title', { count: total })}
-            style={{ flex: 1, minHeight: 0, width: '100%' }}
-          >
-            {series.map((s, i) => {
-              const h = (s.count / max) * 36;
-              return (
-                <rect
-                  key={s.date}
-                  x={i * barW + barW * 0.15}
-                  y={40 - h}
-                  width={barW * 0.7}
-                  height={h}
-                  fill="var(--accent)"
-                >
-                  <title>{`${s.date}: ${s.count}`}</title>
-                </rect>
-              );
-            })}
-          </svg>
-        )}
-        <div
-          className="c-muted"
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            fontSize: 10,
-            fontVariantNumeric: 'tabular-nums',
-            flexShrink: 0,
-          }}
-        >
-          <span>{series[0]?.date ?? ''}</span>
-          <span>{series[series.length - 1]?.date ?? ''}</span>
+
+        <div className="c-muted" style={{ fontSize: 11, flexShrink: 0 }}>{t('tool.flashcards.stats.forecast')}</div>
+        <svg viewBox="0 0 100 30" preserveAspectRatio="none" role="img" aria-label={t('tool.flashcards.stats.forecast')} style={{ width: '100%', height: 40, flexShrink: 0 }}>
+          {fc.map((f, i) => {
+            const h = (f.count / maxFc) * 28;
+            const w = 100 / fc.length;
+            return <rect key={f.date} x={i * w + w * 0.15} y={30 - h} width={w * 0.7} height={h} fill="var(--accent)"><title>{`${f.date}: ${f.count}`}</title></rect>;
+          })}
+        </svg>
+
+        <div className="c-muted" style={{ fontSize: 11, flexShrink: 0 }}>{t('tool.flashcards.stats.activity')}</div>
+        <div style={{ display: 'grid', gridAutoFlow: 'column', gridTemplateRows: 'repeat(7, 1fr)', gap: 1, flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {cells.map((cell) => (
+            <div
+              key={cell.date}
+              title={`${cell.date}: ${cell.count}`}
+              style={{ width: 8, height: 8, borderRadius: 2, background: cell.level === 0 ? 'var(--border-subtle)' : 'var(--chart-3, var(--accent))', opacity: cell.level === 0 ? 0.4 : cell.level * 0.25 }}
+            />
+          ))}
         </div>
       </div>
     );
@@ -492,24 +511,34 @@ export function createTool(): CardoTool {
     let body;
     switch (props.variant) {
       case 'grid':
-        body = <GridView />;
+        body = <ManagePane />;
         break;
       case 'stats':
-        body = <StatsView />;
+        body = <StatsPane />;
         break;
       case 'study':
       default:
-        body = <StudyView />;
+        body = <StudyPane />;
         break;
     }
     return <div style={{ height: '100%', padding: 'var(--space-3)' }}>{body}</div>;
   }
 
+  function buildContext(collection: Collection, language: string, today: string): string {
+    const de = language !== 'en';
+    const counts = cardCounts(collection.cards, today, new Date().toISOString());
+    if (collection.cards.length === 0) return de ? 'Noch keine Karteikarten.' : 'No flashcards yet.';
+    return de
+      ? `${collection.decks.length} Stapel, ${counts.total} Karten, ${counts.due} heute fällig.`
+      : `${collection.decks.length} decks, ${counts.total} cards, ${counts.due} due today.`;
+  }
+
   return {
     manifest: manifest as CardoTool['manifest'],
 
-    activate(context: ToolContext) {
+    async activate(context: ToolContext) {
       ctx = context;
+      await migrateIfNeeded(context.storage);
 
       context.commands.register({
         id: 'flashcards.add-card',
@@ -522,7 +551,7 @@ export function createTool(): CardoTool {
           if (!params.deck.trim() || !params.front.trim() || !params.back.trim()) {
             return { ok: false, messageKey: 'tool.flashcards.msg.invalidCard' };
           }
-          const { deck, card } = await addCardIn(context.storage, params, localDayKey());
+          const { deck, card } = await addNoteCard(context.storage, params, localDayKey());
           return {
             ok: true,
             data: { cardId: card.id, deckId: deck.id, deckName: deck.name },
@@ -539,13 +568,18 @@ export function createTool(): CardoTool {
         params: z.object({}),
         selfTestParams: {},
         async run(): Promise<CommandResult> {
-          const cards = await queryCardsIn(context.storage);
-          const due = dueCards(cards, localDayKey());
+          const collection = await loadCollection(context.storage);
+          const options = collection.options[0];
+          const queue = buildQueue(
+            collection.cards,
+            { newPerDay: options?.newPerDay ?? 20, reviewsPerDay: options?.reviewsPerDay ?? 200 },
+            localDayKey(),
+            new Date().toISOString(),
+          );
           return {
             ok: true,
-            data: { due: due.length },
-            messageKey:
-              due.length > 0 ? 'tool.flashcards.msg.dueReady' : 'tool.flashcards.msg.nothingDue',
+            data: { due: queue.length },
+            messageKey: queue.length > 0 ? 'tool.flashcards.msg.dueReady' : 'tool.flashcards.msg.nothingDue',
           };
         },
       });
@@ -558,20 +592,10 @@ export function createTool(): CardoTool {
         params: z.object({}),
         selfTestParams: {},
         async run(): Promise<CommandResult> {
-          const [decks, cards] = await Promise.all([
-            queryDecksIn(context.storage),
-            queryCardsIn(context.storage),
-          ]);
+          const collection = await loadCollection(context.storage);
           return {
             ok: true,
-            data: {
-              contextText: buildFlashcardsContext(
-                decks,
-                cards,
-                context.i18n.language,
-                localDayKey(),
-              ),
-            },
+            data: { contextText: buildContext(collection, context.i18n.language, localDayKey()) },
           };
         },
       });
@@ -587,89 +611,63 @@ export function createTool(): CardoTool {
       const today = localDayKey();
       switch (testId) {
         case 'sm2': {
-          // The SM-2 table from logic.test.ts, run in the packaged build.
-          const fresh = { ease: 2.5, intervalDays: 0, reps: 0 };
-          const table: Array<[Grade, number, number, number]> = [
-            [0, 2.5, 1, 0],
-            [2, 2.5, 1, 0],
-            [3, 2.36, 1, 1],
-            [4, 2.5, 1, 1],
-            [5, 2.6, 1, 1],
-          ];
-          for (const [grade, ease, intervalDays, reps] of table) {
-            const next = review(fresh, grade, '2026-07-15');
-            if (next.ease !== ease || next.intervalDays !== intervalDays || next.reps !== reps) {
-              return { status: 'fail', detail: `grade ${grade}: got ${JSON.stringify(next)}` };
-            }
+          const { options } = await ensureDefaults(testCtx.storage);
+          const sm2 = { ...options, scheduler: 'sm2' as const };
+          const easy = scheduleReview(newCardState(), 'easy', sm2);
+          if (!('days' in easy.interval) || easy.interval.days !== 4) {
+            return { status: 'fail', detail: `easy graduate expected 4 days, got ${JSON.stringify(easy.interval)}` };
           }
-          let c = { ...fresh };
-          const intervals: number[] = [];
-          for (const grade of [4, 4, 4] as const) {
-            const next = review(c, grade, '2026-07-15');
-            intervals.push(next.intervalDays);
-            c = { ...c, ...next };
+          const good = scheduleReview(easy.state, 'good', sm2);
+          if (!('days' in good.interval) || good.interval.days !== 10) {
+            return { status: 'fail', detail: `review good expected 10 days, got ${JSON.stringify(good.interval)}` };
           }
-          if (intervals.join(',') !== '1,6,15') {
-            return { status: 'fail', detail: `4,4,4 gave intervals ${intervals.join(',')}` };
-          }
-          for (let i = 0; i < 20; i += 1) c = { ...c, ...review(c, 3, '2026-07-15') };
-          if (c.ease !== 1.3) {
-            return { status: 'fail', detail: `ease floor violated: ${c.ease}` };
-          }
-          return { status: 'pass', detail: 'grade table, 1-6-15 ladder and ease floor ok' };
+          let s = easy.state;
+          for (let i = 0; i < 20; i += 1) s = scheduleReview(s, 'hard', sm2).state;
+          if (s.ease < 1.3 - 1e-9) return { status: 'fail', detail: `ease floor violated: ${s.ease}` };
+          return { status: 'pass', detail: 'SM-2 graduate/grow/ease-floor ok' };
         }
         case 'crud': {
-          const { deck, card } = await addCardIn(
+          const { deck, note, card } = await addNoteCard(
             testCtx.storage,
             { deck: 'selftest crud deck', front: 'F', back: 'B' },
             today,
           );
           const cardBack = await testCtx.storage.get<CardDoc>(card.id);
-          const deckBack = await testCtx.storage.get<DeckDoc>(deck.id);
+          const noteBack = await testCtx.storage.get<NoteDoc>(note.id);
           await testCtx.storage.delete(card.id);
+          await testCtx.storage.delete(note.id);
           await testCtx.storage.delete(deck.id);
           const gone = await testCtx.storage.get<CardDoc>(card.id);
-          if (
-            !cardBack ||
-            !deckBack ||
-            cardBack.front !== 'F' ||
-            cardBack.back !== 'B' ||
-            cardBack.deckId !== deck.id ||
-            cardBack.ease !== 2.5 ||
-            deckBack.name !== 'selftest crud deck'
-          ) {
+          if (!cardBack || !noteBack || cardBack.deckId !== deck.id || Object.values(noteBack.fields)[0] !== 'F') {
             return { status: 'fail', detail: `roundtrip mismatch: ${JSON.stringify(cardBack)}` };
           }
           if (gone !== null) return { status: 'fail', detail: 'card still present after delete' };
-          return { status: 'pass', detail: 'deck+card create → read → delete roundtrip ok' };
+          return { status: 'pass', detail: 'note+card create → read → delete ok' };
         }
         case 'due-flow': {
-          const { deck, card } = await addCardIn(
+          const { deck, note, card } = await addNoteCard(
             testCtx.storage,
             { deck: 'selftest due deck', front: 'F', back: 'B' },
             today,
           );
           try {
-            const allBefore = await queryCardsIn(testCtx.storage);
-            if (!dueCards(allBefore, today).some((x) => x.id === card.id)) {
+            const collection = await loadCollection(testCtx.storage);
+            const queueBefore = buildQueue(collection.cards, { newPerDay: 20, reviewsPerDay: 200 }, today, new Date().toISOString());
+            if (!queueBefore.some((x) => x.id === card.id)) {
               return { status: 'fail', detail: 'fresh card is not due' };
             }
-            const reviewed = await reviewCardIn(testCtx.storage, card, 5, today);
-            const allAfter = await queryCardsIn(testCtx.storage);
-            if (dueCards(allAfter, today).some((x) => x.id === card.id)) {
-              return { status: 'fail', detail: 'card still due after a grade-5 review' };
+            const { card: reviewed } = await persistAnswer(testCtx.storage, collection, card, 'easy', today, new Date());
+            if (reviewed.state.phase !== 'review') {
+              return { status: 'fail', detail: `easy did not graduate: ${JSON.stringify(reviewed.state)}` };
             }
             const stored = await testCtx.storage.get<CardDoc>(card.id);
-            const log = await testCtx.storage.get<ReviewLogDoc>(`log:${today}`);
-            if (!stored || stored.due !== reviewed.due || stored.reps !== 1) {
+            if (!stored || stored.state.phase !== 'review') {
               return { status: 'fail', detail: `review not persisted: ${JSON.stringify(stored)}` };
             }
-            if (!log || log.count < 1) {
-              return { status: 'fail', detail: 'review log counter was not bumped' };
-            }
-            return { status: 'pass', detail: `add → review → due moved to ${stored.due}` };
+            return { status: 'pass', detail: `add → review → graduated (due ${stored.due})` };
           } finally {
             await testCtx.storage.delete(card.id);
+            await testCtx.storage.delete(note.id);
             await testCtx.storage.delete(deck.id);
           }
         }

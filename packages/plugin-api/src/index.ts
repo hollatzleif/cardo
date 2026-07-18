@@ -89,6 +89,15 @@ export interface CommandSpec<P = unknown> {
   icon?: string;
   /** Example parameters for the diagnostics run against the scratch database. */
   selfTestParams?: P;
+  /**
+   * Conscious opt-out from self-test coverage, with a one-line reason. Use ONLY
+   * when a command genuinely cannot run against the scratch database (it must
+   * hit the network, start real audio, open a native dialog, …). The coverage
+   * gate accepts a command that has EITHER selfTestParams OR this flag – so a
+   * missing self-test is always a deliberate, reviewable choice, never a silent
+   * gap.
+   */
+  selfTestExempt?: string;
 }
 
 /* ── Services exposed to tools ────────────────────────────────────────── */
@@ -189,6 +198,94 @@ export interface SearchResult {
 
 export type SearchProvider = (query: string) => Promise<SearchResult[]>;
 
+/* ── Legal sources (paragraphs tool) ───────────────────────────────────── */
+
+export interface LegalSourceInfo {
+  id: string;
+  name: string;
+  jurisdiction: string;
+  /** Needs a user-supplied API key before it can fetch (e.g. FR / PISTE). */
+  requiresKey: boolean;
+  /** Hosts this source is allowed to contact. */
+  hosts: string[];
+}
+export interface LegalBook {
+  id: string;
+  name: string;
+}
+export interface LegalNorm {
+  id: string;
+  label: string;
+}
+export interface FetchedNorm {
+  text: string;
+  /** Date the text is current as of (yyyy-mm-dd, or empty). */
+  stand: string;
+  sourceUrl: string;
+}
+
+/**
+ * Read-only access to official legal sources (the paragraphs tool). Backed by
+ * the host's allow-listed, Rust-side adapters – tools never fetch legal sites
+ * themselves. Undefined outside the Tauri host (browser dev / diagnose
+ * scratch), so the tool must degrade to its offline path.
+ */
+export interface LegalApi {
+  sources(): Promise<LegalSourceInfo[]>;
+  listBooks(sourceId: string): Promise<LegalBook[]>;
+  listNorms(sourceId: string, book: string): Promise<LegalNorm[]>;
+  fetchNorm(sourceId: string, book: string, norm: string, section: string): Promise<FetchedNorm>;
+  pisteKeyPresent(): Promise<boolean>;
+  setPisteKey(clientId: string, clientSecret: string): Promise<void>;
+  clearPisteKey(): Promise<void>;
+}
+
+/* ── Anki import/export (flashcards tool) ──────────────────────────────── */
+
+export interface AnkiTemplateData {
+  name: string;
+  qfmt: string;
+  afmt: string;
+}
+export interface AnkiNoteTypeData {
+  id: string;
+  name: string;
+  fields: string[];
+  templates: AnkiTemplateData[];
+  css: string;
+  cloze: boolean;
+}
+export interface AnkiCardData {
+  id: string;
+  noteId: string;
+  ord: number;
+  deckId: string;
+  phase: string;
+  intervalDays: number;
+  ease: number;
+  reps: number;
+  lapses: number;
+}
+export interface AnkiCollection {
+  noteTypes: AnkiNoteTypeData[];
+  decks: Array<{ id: string; name: string }>;
+  notes: Array<{ id: string; noteTypeId: string; fields: string[]; tags: string[] }>;
+  cards: AnkiCardData[];
+  media: Array<{ name: string; dataBase64: string }>;
+}
+
+/**
+ * Native Anki `.apkg`/`.colpkg` import & export (flashcards tool). Opens the OS
+ * file dialog and parses/writes via the host's Rust adapter. Undefined outside
+ * the Tauri host (browser dev / diagnose scratch).
+ */
+export interface AnkiApi {
+  /** Pick an .apkg/.colpkg file and parse it; null if the user cancelled. */
+  importFile(): Promise<AnkiCollection | null>;
+  /** Pick a save path and write the collection as .apkg; false if cancelled. */
+  exportFile(collection: AnkiCollection): Promise<boolean>;
+}
+
 export interface ToolContext {
   storage: ToolStorage;
   events: EventBus;
@@ -211,6 +308,10 @@ export interface ToolContext {
   i18n: I18nApi;
   theme: ThemeTokensApi;
   files?: FilesApi;
+  /** Official legal sources (paragraphs tool); undefined outside the host. */
+  legal?: LegalApi;
+  /** Anki .apkg import/export (flashcards tool); undefined outside the host. */
+  anki?: AnkiApi;
 }
 
 /* ── Self-tests ───────────────────────────────────────────────────────── */

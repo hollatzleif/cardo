@@ -525,6 +525,7 @@ export function createTool(): CardoTool {
         // Deliberately NO selfTestParams: the diagnose command probe must
         // never hit the network, and a refresh has no offline no-op path
         // (unlike weather, which short-circuits on the missing place doc).
+        selfTestExempt: 'network fetch – no offline no-op path',
         async run(): Promise<CommandResult> {
           const { base } = await loadSettings(context);
           const outcome = await refresh(context, base, true);
