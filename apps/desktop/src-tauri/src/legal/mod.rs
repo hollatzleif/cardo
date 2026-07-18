@@ -11,11 +11,12 @@ use serde::Serialize;
 mod at;
 mod de;
 mod eu;
-mod fr;
 mod uk;
-// ch (Fedlex) is a client-rendered SPA with no server-parseable content and
-// akoma (its shared Akoma Ntoso parser) are kept on disk but not compiled until
-// a working Swiss data endpoint is wired up.
+// Not compiled (kept on disk for later):
+//  - ch (Fedlex): a client-rendered SPA with no server-parseable content.
+//  - akoma: the shared Akoma Ntoso parser ch used.
+//  - fr (Légifrance/PISTE): usable only with a user PISTE key + a key-entry UI
+//    that does not exist yet; shown as a dead option otherwise.
 
 pub type LegalResult<T> = std::result::Result<T, String>;
 
@@ -69,7 +70,6 @@ pub fn sources() -> Vec<Box<dyn LegalSource>> {
         Box::new(eu::EurLex),
         Box::new(uk::LegislationGovUk),
         Box::new(at::Ris),
-        Box::new(fr::Legifrance),
     ]
 }
 
@@ -137,13 +137,6 @@ pub async fn fetch_bytes(url: &str, hosts: &[String]) -> LegalResult<Vec<u8>> {
 
 const PISTE_SERVICE: &str = "de.cardo.legal";
 const PISTE_ENTRY: &str = "piste-key";
-
-/// The user's Légifrance/PISTE credentials, if set: (client_id, client_secret).
-pub(crate) fn piste_key() -> Option<(String, String)> {
-    let raw = keyring::Entry::new(PISTE_SERVICE, PISTE_ENTRY).ok()?.get_password().ok()?;
-    let (id, secret) = raw.split_once('\x1f')?;
-    Some((id.to_string(), secret.to_string()))
-}
 
 #[tauri::command]
 pub async fn legal_set_piste_key(client_id: String, client_secret: String) -> LegalResult<()> {

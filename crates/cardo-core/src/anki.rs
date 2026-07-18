@@ -133,13 +133,11 @@ pub async fn import_apkg(bytes: &[u8]) -> Result<AnkiImport, String> {
         file.read_to_end(&mut buf).map_err(|e| e.to_string())?;
         match name.as_str() {
             "collection.anki21" | "collection.anki2" => candidates.push((name, buf)),
-            "collection.anki21b" => {
-                return Err(
-                    "This deck uses the newest Anki format. Re-export it with \
-                     'Support older Anki versions' enabled."
-                        .into(),
-                )
-            }
+            // Newest format: a zstd-compressed schema-18 SQLite database.
+            "collection.anki21b" => match zstd::decode_all(Cursor::new(buf.as_slice())) {
+                Ok(plain) => candidates.push((name, plain)),
+                Err(e) => return Err(format!("could not decompress the collection: {e}")),
+            },
             "media" => media_map_raw = Some(buf),
             _ => {
                 numbered.insert(name, buf);
@@ -171,8 +169,12 @@ fn decode_media(
     numbered: &HashMap<String, Vec<u8>>,
 ) -> Result<Vec<AnkiMedia>, String> {
     let Some(raw) = media_map_raw else { return Ok(Vec::new()) };
-    let map: HashMap<String, String> =
-        serde_json::from_slice(raw).map_err(|e| format!("bad media map: {e}"))?;
+    // The legacy media map is a JSON `{ "0": "cat.jpg" }`. The newest format
+    // uses a protobuf manifest we do not parse – skip media rather than fail
+    // (notes and cards still import).
+    let Ok(map) = serde_json::from_slice::<HashMap<String, String>>(raw) else {
+        return Ok(Vec::new());
+    };
     let mut out = Vec::new();
     for (number, name) in map {
         if let Some(data) = numbered.get(&number) {
@@ -186,24 +188,121 @@ fn decode_media(
 async fn read_collection(path: &std::path::Path) -> Result<AnkiImport, String> {
     let pool = open_sqlite(path, true).await?;
 
+    // Schema 18 (newest) splits note types/decks into their own tables; older
+    // schemas keep them as JSON in the `col` row. Notes and cards are the same.
+    let (note_types, decks) = if table_exists(&pool, "notetypes").await {
+        (read_notetypes_v18(&pool).await?, read_decks_v18(&pool).await?)
+    } else {
+        read_col_v11(&pool).await?
+    };
+    let notes = read_notes(&pool).await?;
+    let cards = read_cards(&pool).await?;
+
+    pool.close().await;
+    Ok(AnkiImport { note_types, decks, notes, cards, media: Vec::new() })
+}
+
+async fn table_exists(pool: &SqlitePool, name: &str) -> bool {
+    sqlx::query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?")
+        .bind(name)
+        .fetch_optional(pool)
+        .await
+        .ok()
+        .flatten()
+        .is_some()
+}
+
+/// Schema 11: note types and decks live as JSON in the singleton `col` row.
+async fn read_col_v11(pool: &SqlitePool) -> Result<(Vec<AnkiNoteType>, Vec<AnkiDeck>), String> {
     let col = sqlx::query("SELECT models, decks FROM col LIMIT 1")
-        .fetch_one(&pool)
+        .fetch_one(pool)
         .await
         .map_err(|e| format!("unsupported collection schema: {e}"))?;
     let models: Value = serde_json::from_str(&col.try_get::<String, _>("models").map_err(|e| e.to_string())?)
         .map_err(|e| e.to_string())?;
     let decks: Value = serde_json::from_str(&col.try_get::<String, _>("decks").map_err(|e| e.to_string())?)
         .map_err(|e| e.to_string())?;
+    Ok((parse_models(&models), parse_decks(&decks)))
+}
 
-    let note_types = parse_models(&models);
-    let decks = parse_decks(&decks);
+/// Schema 18: note types from the notetypes/fields/templates tables. The
+/// template front/back live in a protobuf blob we do not decode, so a sensible
+/// default template is generated from the field names – good for Basic and most
+/// decks; complex or cloze templates degrade to a plain front/back.
+async fn read_notetypes_v18(pool: &SqlitePool) -> Result<Vec<AnkiNoteType>, String> {
+    let mut out = Vec::new();
+    for nt in sqlx::query("SELECT id, name FROM notetypes").fetch_all(pool).await.map_err(|e| e.to_string())? {
+        let ntid: i64 = nt.try_get("id").map_err(|e| e.to_string())?;
+        let name: String = nt.try_get("name").map_err(|e| e.to_string())?;
 
+        let mut fields = Vec::new();
+        for f in sqlx::query("SELECT name FROM fields WHERE ntid = ? ORDER BY ord")
+            .bind(ntid)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| e.to_string())?
+        {
+            fields.push(f.try_get::<String, _>("name").map_err(|e| e.to_string())?);
+        }
+        if fields.is_empty() {
+            fields = vec!["Front".into(), "Back".into()];
+        }
+
+        let mut tmpl_names = Vec::new();
+        for t in sqlx::query("SELECT name FROM templates WHERE ntid = ? ORDER BY ord")
+            .bind(ntid)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| e.to_string())?
+        {
+            tmpl_names.push(t.try_get::<String, _>("name").map_err(|e| e.to_string())?);
+        }
+        if tmpl_names.is_empty() {
+            tmpl_names.push("Card 1".to_string());
+        }
+
+        let front = format!("{{{{{}}}}}", fields[0]);
+        let back = default_back_template(&fields);
+        let templates = tmpl_names
+            .into_iter()
+            .map(|n| AnkiTemplate { name: n, qfmt: front.clone(), afmt: back.clone() })
+            .collect();
+        out.push(AnkiNoteType {
+            id: ntid.to_string(),
+            name,
+            fields,
+            templates,
+            css: String::new(),
+            cloze: false,
+        });
+    }
+    Ok(out)
+}
+
+fn default_back_template(fields: &[String]) -> String {
+    if fields.len() <= 1 {
+        return format!("{{{{{}}}}}", fields.first().map(String::as_str).unwrap_or("Front"));
+    }
+    let mut back = String::from("{{FrontSide}}\n\n<hr>\n\n");
+    for f in &fields[1..] {
+        back.push_str(&format!("{{{{{f}}}}}\n"));
+    }
+    back
+}
+
+async fn read_decks_v18(pool: &SqlitePool) -> Result<Vec<AnkiDeck>, String> {
+    let mut out = Vec::new();
+    for d in sqlx::query("SELECT id, name FROM decks").fetch_all(pool).await.map_err(|e| e.to_string())? {
+        let id: i64 = d.try_get("id").map_err(|e| e.to_string())?;
+        let name: String = d.try_get("name").map_err(|e| e.to_string())?;
+        out.push(AnkiDeck { id: id.to_string(), name: name.replace('\u{1f}', "::") });
+    }
+    Ok(out)
+}
+
+async fn read_notes(pool: &SqlitePool) -> Result<Vec<AnkiNote>, String> {
     let mut notes = Vec::new();
-    for row in sqlx::query("SELECT id, mid, tags, flds FROM notes")
-        .fetch_all(&pool)
-        .await
-        .map_err(|e| e.to_string())?
-    {
+    for row in sqlx::query("SELECT id, mid, tags, flds FROM notes").fetch_all(pool).await.map_err(|e| e.to_string())? {
         let flds: String = row.try_get("flds").map_err(|e| e.to_string())?;
         let tags: String = row.try_get("tags").map_err(|e| e.to_string())?;
         notes.push(AnkiNote {
@@ -213,10 +312,13 @@ async fn read_collection(path: &std::path::Path) -> Result<AnkiImport, String> {
             tags: tags.split_whitespace().map(str::to_string).collect(),
         });
     }
+    Ok(notes)
+}
 
+async fn read_cards(pool: &SqlitePool) -> Result<Vec<AnkiCard>, String> {
     let mut cards = Vec::new();
     for row in sqlx::query("SELECT id, nid, ord, did, type, ivl, factor, reps, lapses FROM cards")
-        .fetch_all(&pool)
+        .fetch_all(pool)
         .await
         .map_err(|e| e.to_string())?
     {
@@ -234,9 +336,7 @@ async fn read_collection(path: &std::path::Path) -> Result<AnkiImport, String> {
             lapses: row.try_get::<i64, _>("lapses").map_err(|e| e.to_string())?.max(0) as u32,
         });
     }
-
-    pool.close().await;
-    Ok(AnkiImport { note_types, decks, notes, cards, media: Vec::new() })
+    Ok(cards)
 }
 
 fn parse_models(models: &Value) -> Vec<AnkiNoteType> {
@@ -508,5 +608,72 @@ mod tests {
         let bytes = export_apkg(&c).await.unwrap();
         let back = import_apkg(&bytes).await.unwrap();
         assert!(back.note_types[0].cloze);
+    }
+
+    /// Build a minimal schema-18 collection (the newest Anki layout: note types
+    /// in their own tables) so the v18 read path can be exercised.
+    async fn make_v18_db(path: &std::path::Path) {
+        let pool = open_sqlite(path, false).await.unwrap();
+        for stmt in [
+            "CREATE TABLE notetypes (id integer primary key, name text, config blob)",
+            "CREATE TABLE fields (ntid integer, ord integer, name text, config blob)",
+            "CREATE TABLE templates (ntid integer, ord integer, name text, config blob)",
+            "CREATE TABLE decks (id integer primary key, name text, common blob, kind blob)",
+            "CREATE TABLE notes (id integer primary key, guid text, mid integer, mod integer, usn integer, tags text, flds text, sfld text, csum integer, flags integer, data text)",
+            "CREATE TABLE cards (id integer primary key, nid integer, did integer, ord integer, mod integer, usn integer, type integer, queue integer, due integer, ivl integer, factor integer, reps integer, lapses integer, left integer, odue integer, odid integer, flags integer, data text)",
+        ] {
+            sqlx::query(stmt).execute(&pool).await.unwrap();
+        }
+        sqlx::query("INSERT INTO notetypes (id, name) VALUES (1700, 'Basic')").execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO fields (ntid, ord, name) VALUES (1700, 0, 'Front'), (1700, 1, 'Back')").execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO templates (ntid, ord, name) VALUES (1700, 0, 'Card 1')").execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO decks (id, name) VALUES (1800, 'Spanish')").execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data) VALUES (1900, 'g', 1700, 0, 0, ' vocab ', ?, 'hola', 0, 0, '')")
+            .bind(format!("hola{}hallo", '\u{1f}'))
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data) VALUES (2000, 1900, 1800, 0, 0, 0, 2, 0, 0, 12, 2600, 3, 1, 0, 0, 0, 0, '')")
+            .execute(&pool)
+            .await
+            .unwrap();
+        pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn imports_the_newest_zstd_schema18_format() {
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("v18.anki2");
+        make_v18_db(&db_path).await;
+        let db_bytes = std::fs::read(&db_path).unwrap();
+        let compressed = zstd::encode_all(Cursor::new(&db_bytes[..]), 3).unwrap();
+
+        // An .apkg with only the zstd-compressed collection.anki21b.
+        let mut buf = Vec::new();
+        {
+            let mut zip = zip::ZipWriter::new(Cursor::new(&mut buf));
+            let opts: zip::write::FileOptions<()> = zip::write::FileOptions::default();
+            zip.start_file("collection.anki21b", opts).unwrap();
+            zip.write_all(&compressed).unwrap();
+            zip.start_file("media", opts).unwrap();
+            zip.write_all(b"{}").unwrap();
+            zip.finish().unwrap();
+        }
+
+        let import = import_apkg(&buf).await.unwrap();
+        assert_eq!(import.note_types.len(), 1);
+        assert_eq!(import.note_types[0].name, "Basic");
+        assert_eq!(import.note_types[0].fields, vec!["Front", "Back"]);
+        // Default template generated from field names.
+        assert_eq!(import.note_types[0].templates[0].qfmt, "{{Front}}");
+        assert_eq!(import.decks[0].name, "Spanish");
+        assert_eq!(import.notes[0].fields, vec!["hola", "hallo"]);
+        assert_eq!(import.notes[0].tags, vec!["vocab"]);
+        let card = &import.cards[0];
+        assert_eq!(card.phase, "review");
+        assert_eq!(card.interval_days, 12);
+        assert!((card.ease - 2.6).abs() < 1e-9);
+        assert_eq!(card.reps, 3);
+        assert_eq!(card.lapses, 1);
     }
 }

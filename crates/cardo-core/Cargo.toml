@@ -24,6 +24,8 @@ getrandom = "0.2"
 fsrs = "6.6.1"
 # Anki .apkg import/export: zip container around a SQLite collection.
 zip = { version = "2", default-features = false, features = ["deflate"] }
+# Newest Anki packages ship a zstd-compressed schema-18 collection.
+zstd = "0.13"
 
 [dev-dependencies]
 tokio = { workspace = true }

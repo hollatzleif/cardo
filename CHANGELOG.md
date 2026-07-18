@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.1 — Anki-Import & Rechtsquellen-Fixes
+
+- **Anki-Import versteht das neueste Format:** `.apkg`-Dateien im aktuellen
+  zstd-komprimierten Schema (Anki 2.1.50+) werden jetzt importiert (Notiztypen,
+  Felder, Decks, Notizen, Karten mit Lernstand). Komplexe/Cloze-Vorlagen fallen
+  dabei auf eine einfache Vorder-/Rückseite zurück, der Inhalt bleibt erhalten.
+- **Rechts-Adapter live gefixt:** AT (RIS) auf den richtigen Endpunkt umgestellt,
+  EU (EUR-Lex) auf HTML-Parsing; CH (SPA) und FR (braucht Nutzer-Schlüssel, noch
+  ohne Eingabe-UI) sind vorerst ausgeblendet. Aktive Quellen: DE, EU, UK, AT.
+  Klarere Fehlermeldung statt rohem HTTP-Code.
+
 ## 1.1.0 — Voll-Anki & Paragrafen-Wörterbuch
 
 ### Karteikarten: jetzt Anki-Klasse
