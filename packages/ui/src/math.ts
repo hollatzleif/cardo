@@ -1,6 +1,27 @@
 import katex from 'katex';
 
 /**
+ * Common LaTeX text-mode commands KaTeX does not implement, mapped to a
+ * supported equivalent. Without these, decks/notes that use e.g. `\textbullet`
+ * render a red error box instead of the symbol. Extend as real cards need it.
+ */
+const MACROS: Record<string, string> = {
+  '\\textbullet': '\\bullet',
+  '\\textperiodcentered': '\\cdot',
+  '\\textdegree': '^{\\circ}',
+  '\\textpm': '\\pm',
+  '\\texttimes': '\\times',
+  '\\textdiv': '\\div',
+  '\\textasciitilde': '\\sim',
+  '\\textasciicircum': '\\wedge',
+  '\\textbackslash': '\\backslash',
+  '\\textendash': '\\text{–}',
+  '\\textemdash': '\\text{—}',
+  '\\textrightarrow': '\\rightarrow',
+  '\\textleftarrow': '\\leftarrow',
+};
+
+/**
  * Renders a LaTeX snippet to a safe HTML string via KaTeX.
  *
  * `trust: false` (KaTeX default) blocks \href/\url and other command
@@ -18,6 +39,7 @@ export function renderMathHtml(tex: string, displayMode: boolean): string {
       trust: false,
       strict: false,
       output: 'htmlAndMathml',
+      macros: MACROS,
     });
   } catch {
     // renderToString with throwOnError:false almost never throws, but guard

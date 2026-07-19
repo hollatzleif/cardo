@@ -131,4 +131,47 @@ describe('renderCard end-to-end', () => {
     expect(out).toContain('costs $5 today');
     expect(out).not.toContain('katex');
   });
+
+  it('renders Anki [$]…[/$] inline latex without leaving bracket markers', () => {
+    const out = renderCard({
+      template: '{{Q}}',
+      fields: { Q: 'Write [$]\\pi_i(s_i) \\geq \\pi_i[/$] please' },
+      side: 'front',
+    });
+    expect(out).toContain('katex');
+    // The Anki delimiters must be gone – no stray "[]" / "[/]" around the math.
+    expect(out).not.toContain('[$]');
+    expect(out).not.toContain('[/$]');
+    expect(out).not.toContain('[/]');
+  });
+
+  it('renders Anki [latex]…[/latex] as display math', () => {
+    const out = renderCard({
+      template: '[latex]x^2 + y^2 = z^2[/latex]',
+      fields: {},
+      side: 'front',
+    });
+    expect(out).toContain('katex');
+    expect(out).not.toContain('[latex]');
+    expect(out).not.toContain('[/latex]');
+  });
+
+  it('renders the same-delimiter Anki inline form [$]…[$]', () => {
+    const out = renderCard({ template: '{{X}}', fields: { X: '[$]\\ldots[$]' }, side: 'front' });
+    expect(out).toContain('katex');
+    expect(out).not.toContain('katex-error');
+    // No stray bracket markers left around the formula.
+    expect(out).not.toMatch(/\[\$?\]/);
+  });
+
+  it('strips &nbsp; / tags inside a formula so KaTeX does not error out', () => {
+    const out = renderCard({
+      template: '{{X}}',
+      fields: { X: '[$]&nbsp;\\ldots&nbsp;[$]' },
+      side: 'front',
+    });
+    expect(out).toContain('katex');
+    expect(out).not.toContain('katex-error');
+    expect(out).not.toContain('nbsp');
+  });
 });

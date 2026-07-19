@@ -1,20 +1,44 @@
 # Changelog
 
-## 1.1.2 — Karteikarten-Bedienung & Rechts-Abruf-Fixes
+## 1.1.2 — Bedienbarkeit: Karteikarten, LaTeX, Board & Rechts-Abruf
 
-- **Karteikarten-Widget ist jetzt bedienbar:** eine sichtbare Leiste mit den drei
-  Ansichten **Verwalten · Lernen · Statistik**. Das Widget öffnet auf „Verwalten"
-  (die Stapel-Übersicht, wie Ankis Startbildschirm) — dort liegen **.apkg-Import**,
-  **Karte hinzufügen**, **Optionen** (Algorithmus/Retention/Lernplan) direkt sichtbar.
-  Ein Stapel-Klick startet die Lernrunde. Vorher steckten diese Knöpfe in einer
-  versteckten Widget-Variante, die kaum jemand fand.
-- **Rechts-Abruf: kein falsches „HTTP 404" mehr.** Beim schnellen Wechsel der
-  Rechtsordnung konnte eine langsam nachladende Länder-Bücherliste (Deutschlands
-  ~6000 Gesetze) die bereits gewählte andere Quelle überschreiben — dann ging die
-  Abfrage ans falsche Land und scheiterte. Jetzt gewinnt immer nur die aktuelle
-  Auswahl.
-- **Gesetzbuch-Suche statt endloser Liste:** die 6000 deutschen Gesetze stehen
-  nicht mehr in einem Riesen-Dropdown, sondern werden per Tippfeld durchsucht.
+### Karteikarten
+- **Widget ist jetzt bedienbar:** eine sichtbare Leiste mit den drei Ansichten
+  **Verwalten · Lernen · Statistik**. Das Widget öffnet auf „Verwalten" (die
+  Stapel-Übersicht, wie Ankis Startbildschirm) — dort liegen **.apkg-Import**,
+  **Karte hinzufügen** und **Optionen** (Algorithmus/Retention/Lernplan) direkt
+  sichtbar; ein Stapel-Klick startet die Lernrunde. Vorher steckten diese Knöpfe
+  in einer versteckten Widget-Variante, die kaum jemand fand.
+- **Lern-Ansicht endlich gestylt:** die früher zusammengeklebten Zähler (die als
+  „200000:05" erschienen), Timer, Karte und die farbigen Antwortknöpfe
+  (Nochmal/Schwer/Gut/Leicht) haben jetzt ein sauberes Layout.
+- **Tastatur nur im fokussierten Widget:** Leertaste/1–4/u steuern die Karten
+  nur, wenn das Karteikarten-Widget den Fokus hat — kein versehentliches
+  Umblättern mehr, während man in einem anderen Widget tippt.
+
+### LaTeX / Formeln
+- **Anki-Formeln werden gerendert:** Ankis Formel-Marker `[$]…[$]`, `[$]…[/$]`,
+  `[$$]…`, `[latex]…[/latex]` sowie MathJax `\(…\)` / `\[…\]` werden erkannt und
+  als Formel dargestellt (vorher blieben rohe Klammern oder eine rote Fehlerbox
+  stehen). `&nbsp;` und HTML-Reste in Formeln werden bereinigt.
+- **Mehr Befehle unterstützt:** Text-Befehle, die KaTeX nicht kennt (z. B.
+  `\textbullet`, `\textdegree`, `\texttimes`), werden auf ihr Symbol abgebildet.
+
+### Board (Widgets anordnen)
+- **Verschieben & Größe ändern funktionieren wieder** — beides läuft jetzt über
+  robuste Pointer-Events statt der Bibliotheks-Variante, die in der Desktop-App
+  ein Ziehen als Text-Auswahl missdeutete („markiert alles"). Sauberer Griff zum
+  Verschieben (⠿) und eine klare Ecke unten rechts zum Größe-Ändern.
+
+### Rechts-Abruf
+- **Deutschland: kein „HTTP 404" mehr.** Das Gesetz-Kürzel wird jetzt korrekt aus
+  dem amtlichen Verzeichnis gelesen (die Links zeigen direkt auf die `xml.zip`);
+  vorher bekam jedes deutsche Gesetz dieselbe kaputte Kennung und schlug fehl.
+- **Kein Länder-/Bücher-Durcheinander:** ein schneller Wechsel der Rechtsordnung
+  überschreibt nicht mehr die bereits gewählte Quelle mit einer langsam
+  nachladenden Liste — es gewinnt immer die aktuelle Auswahl.
+- **Gesetzbuch-Suche statt endloser Liste:** die ~6000 deutschen Gesetze werden
+  per Tippfeld durchsucht statt in einem Riesen-Dropdown.
 
 ## 1.1.1 — Anki-Import & Rechtsquellen-Fixes
 

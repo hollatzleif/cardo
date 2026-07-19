@@ -141,7 +141,11 @@ fn abbr_from_link(link: &str) -> Option<String> {
     let trimmed = link.trim().trim_end_matches('/');
     let parts: Vec<&str> = trimmed.split('/').filter(|s| !s.is_empty()).collect();
     let last = *parts.last()?;
-    let abbr = if last.ends_with(".html") {
+    // Each law's link points at a FILE inside the law's directory — the live TOC
+    // uses `…/<abbr>/xml.zip` (older docs used `…/<abbr>/index.html`). When the
+    // last segment is a file (has an extension), the abbreviation is the
+    // directory above it; a bare `…/<abbr>` link has no file segment.
+    let abbr = if last.contains('.') {
         parts.get(parts.len().checked_sub(2)?)?
     } else {
         &last
@@ -254,9 +258,11 @@ fn push_sp(buf: &mut String, s: &str) {
 mod tests {
     use super::*;
 
+    // The live TOC links point straight at each law's xml.zip; older docs used
+    // index.html. Both must map to the bare abbreviation.
     const TOC: &str = r#"<?xml version="1.0"?>
 <items>
-  <item><title>Bürgerliches Gesetzbuch</title><link>https://www.gesetze-im-internet.de/bgb/index.html</link></item>
+  <item><title>Bürgerliches Gesetzbuch</title><link>http://www.gesetze-im-internet.de/bgb/xml.zip</link></item>
   <item><title>Grundgesetz</title><link>https://www.gesetze-im-internet.de/gg/index.html</link></item>
 </items>"#;
 
@@ -282,7 +288,13 @@ mod tests {
 
     #[test]
     fn abbr_is_derived_from_the_link() {
+        // Live format: the link ends in the law's xml.zip.
+        assert_eq!(abbr_from_link("http://www.gesetze-im-internet.de/bgb/xml.zip").as_deref(), Some("bgb"));
+        // Abbreviations can carry digits, hyphens and underscores (umlauts).
+        assert_eq!(abbr_from_link("http://www.gesetze-im-internet.de/1-dm-goldm_nzg/xml.zip").as_deref(), Some("1-dm-goldm_nzg"));
+        // Legacy format: index.html.
         assert_eq!(abbr_from_link("https://www.gesetze-im-internet.de/bgb/index.html").as_deref(), Some("bgb"));
+        // Bare directory link.
         assert_eq!(abbr_from_link("https://www.gesetze-im-internet.de/gg/").as_deref(), Some("gg"));
         assert_eq!(abbr_from_link(""), None);
     }

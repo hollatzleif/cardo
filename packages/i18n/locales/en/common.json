@@ -21,6 +21,7 @@
     "pageRemoved": "Page \"{{name}}\" removed",
     "widgetVariant": "View",
     "moveWidget": "Move widget",
+    "resizeWidget": "Resize widget",
     "enterFullscreen": "Fullscreen",
     "exitFullscreen": "Exit fullscreen",
     "openFolder": "Open notes folder",
@@ -2097,6 +2098,11 @@
         "manage": "Manage",
         "study": "Study",
         "stats": "Stats"
+      },
+      "toolbar": {
+        "add": "Card",
+        "import": "Import",
+        "options": "Options"
       },
       "study": {
         "reveal": "Show answer",

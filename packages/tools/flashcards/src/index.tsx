@@ -299,36 +299,39 @@ export function createTool(): CardoTool {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 'var(--space-2)' }}>
-        <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 'var(--space-1)', flexShrink: 0 }}>
           <button
             className={`c-btn${panel === 'add' ? ' c-btn--primary' : ''}`}
-            style={{ flex: 1, minWidth: 60 }}
+            style={{ flex: 1, minWidth: 0, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+            title={t('tool.flashcards.grid.add')}
             onClick={() => setPanel((p) => (p === 'add' ? 'none' : 'add'))}
           >
-            ＋ {t('tool.flashcards.grid.add')}
+            ＋ {t('tool.flashcards.toolbar.add')}
           </button>
           {hasAnki && (
             <button
               className="c-btn"
-              style={{ flex: 1, minWidth: 60 }}
+              style={{ flex: 1, minWidth: 0, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+              title={t('tool.flashcards.import.button')}
               onClick={() => void importApkg()}
             >
-              ⬆ {t('tool.flashcards.import.button')}
+              ⬆ {t('tool.flashcards.toolbar.import')}
             </button>
           )}
           <button
             className={`c-btn${panel === 'options' ? ' c-btn--primary' : ''}`}
-            style={{ flex: 1, minWidth: 60 }}
+            style={{ flex: 1, minWidth: 0, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+            title={t('tool.flashcards.options.button')}
             onClick={() => setPanel((p) => (p === 'options' ? 'none' : 'options'))}
           >
-            ⚙ {t('tool.flashcards.options.button')}
+            ⚙ {t('tool.flashcards.toolbar.options')}
           </button>
           {hasAnki && (
             <button
               className="c-btn c-btn--ghost"
               title={t('tool.flashcards.export.button')}
               aria-label={t('tool.flashcards.export.button')}
-              style={{ flexShrink: 0 }}
+              style={{ flexShrink: 0, fontSize: 13 }}
               onClick={() => void exportApkg()}
             >
               ⬇
@@ -524,7 +527,7 @@ export function createTool(): CardoTool {
     const tabButton = (id: 'grid' | 'study' | 'stats', label: string) => (
       <button
         className={`c-btn${tab === id ? ' c-btn--primary' : ''}`}
-        style={{ flex: 1, minWidth: 0 }}
+        style={{ flex: 1, minWidth: 0, fontSize: 13, padding: '5px 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
         onClick={() => setTab(id)}
       >
         {label}

@@ -18,4 +18,14 @@ describe('renderMathHtml', () => {
   it('does not throw on invalid LaTeX (throwOnError:false)', () => {
     expect(() => renderMathHtml('\\frac{', false)).not.toThrow();
   });
+
+  it('renders text-mode commands KaTeX lacks via macros (\\textbullet)', () => {
+    const html = renderMathHtml('\\textbullet', false);
+    expect(html).toContain('katex');
+    // Must resolve to the bullet glyph, not fall through to the red error box.
+    // (KaTeX always echoes the source in a MathML <annotation>, so we check the
+    // rendered glyph, not the absence of the command name.)
+    expect(html).not.toContain('katex-error');
+    expect(html).toContain('∙');
+  });
 });

@@ -6,7 +6,7 @@
  * u undoes.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { renderCard } from './render';
 import type { CardDoc, NoteDoc, NoteTypeDoc } from './model';
 import type { QueueCounts, Rating } from './session';
@@ -109,32 +109,33 @@ export function StudyView(props: StudyViewProps): JSX.Element {
     [onRate],
   );
 
-  // Keyboard shortcuts.
-  useEffect(() => {
-    if (!card) return undefined;
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === ' ') {
-        e.preventDefault();
-        if (!revealed) setRevealed(true);
-        else rate('good');
-      } else if (revealed && ['1', '2', '3', '4'].includes(e.key)) {
-        rate((['again', 'hard', 'good', 'easy'] as const)[Number(e.key) - 1]!);
-      } else if (e.key.toLowerCase() === 'u' && canUndo) {
-        onUndo();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-    // card?.id (identity), not the card object, drives re-binding.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card?.id, revealed, canUndo, rate, onUndo]);
+  // Keyboard shortcuts are scoped to THIS widget: the handler sits on the study
+  // container (which is focusable), so Space/1–4/u only act when this card has
+  // keyboard focus. A global window listener would fire while the user types in
+  // another widget (e.g. hitting Space in a snippet editor would flip the card).
+  const onKey = (e: ReactKeyboardEvent): void => {
+    if (e.key === ' ') {
+      e.preventDefault();
+      if (!revealed) setRevealed(true);
+      else rate('good');
+    } else if (revealed && ['1', '2', '3', '4'].includes(e.key)) {
+      rate((['again', 'hard', 'good', 'easy'] as const)[Number(e.key) - 1]!);
+    } else if (e.key.toLowerCase() === 'u' && canUndo) {
+      onUndo();
+    }
+  };
 
   if (!card || !noteType || !note || !rendered) {
     return (
-      <div className="flashcards-study flashcards-study--empty">
-        <p className="flashcards-study__empty">{props.finished ? labels.done : labels.empty}</p>
+      <div
+        className="flashcards-study flashcards-study--empty"
+        style={{ display: 'flex', flexDirection: 'column', height: '100%', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-3)', textAlign: 'center' }}
+      >
+        <p className="flashcards-study__empty" style={{ margin: 0, color: 'var(--text-muted)' }}>
+          {props.finished ? labels.done : labels.empty}
+        </p>
         {canUndo && (
-          <button type="button" className="flashcards-study__undo" onClick={onUndo}>
+          <button type="button" className="flashcards-study__undo c-btn" onClick={onUndo}>
             {labels.undo}
           </button>
         )}
@@ -145,23 +146,50 @@ export function StudyView(props: StudyViewProps): JSX.Element {
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
   const ss = String(seconds % 60).padStart(2, '0');
 
+  const answerBtn = (rating: Rating, label: string, cls: string, color: string) => (
+    <button
+      type="button"
+      className={`flashcards-study__answer ${cls} c-btn`}
+      style={{ flex: 1, minWidth: 0, border: `1px solid ${color}`, color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+      onClick={() => rate(rating)}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <div className="flashcards-study">
+    <div
+      className="flashcards-study"
+      tabIndex={0}
+      onKeyDown={onKey}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 'var(--space-2)', outline: 'none' }}
+    >
       <style>{rendered.css}</style>
-      <header className="flashcards-study__bar">
-        <span className="flashcards-study__count flashcards-study__count--new">{props.counts.new}</span>
-        <span className="flashcards-study__count flashcards-study__count--learning">
-          {props.counts.learning}
+      <header
+        className="flashcards-study__bar"
+        style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: 13, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}
+      >
+        <span className="flashcards-study__count flashcards-study__count--new" style={{ color: 'var(--chart-1, var(--accent))' }} title={labels.again}>
+          ● {props.counts.new}
         </span>
-        <span className="flashcards-study__count flashcards-study__count--review">
-          {props.counts.review}
+        <span className="flashcards-study__count flashcards-study__count--learning" style={{ color: 'var(--warning)' }}>
+          ● {props.counts.learning}
         </span>
-        <span className="flashcards-study__timer">{`${mm}:${ss}`}</span>
+        <span className="flashcards-study__count flashcards-study__count--review" style={{ color: 'var(--success)' }}>
+          ● {props.counts.review}
+        </span>
+        <span className="flashcards-study__timer" style={{ marginLeft: 'auto', color: 'var(--text-muted)' }}>
+          {`${mm}:${ss}`}
+        </span>
       </header>
 
-      <div className="flashcards-study__card card">
+      <div
+        className="flashcards-study__card card"
+        style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)' }}
+      >
         <div
           className="flashcards-study__side"
+          style={{ width: '100%' }}
           // Content is sanitized by renderCard's allowlist sanitizer.
           dangerouslySetInnerHTML={{ __html: revealed ? rendered.back : rendered.front }}
         />
@@ -171,29 +199,22 @@ export function StudyView(props: StudyViewProps): JSX.Element {
         <button
           type="button"
           className="flashcards-study__show c-btn c-btn--primary"
+          style={{ flexShrink: 0 }}
           onClick={() => setRevealed(true)}
         >
           {labels.show}
         </button>
       ) : (
-        <div className="flashcards-study__answers">
-          <button type="button" className="flashcards-study__answer flashcards-study__answer--again" onClick={() => rate('again')}>
-            {labels.again}
-          </button>
-          <button type="button" className="flashcards-study__answer flashcards-study__answer--hard" onClick={() => rate('hard')}>
-            {labels.hard}
-          </button>
-          <button type="button" className="flashcards-study__answer flashcards-study__answer--good" onClick={() => rate('good')}>
-            {labels.good}
-          </button>
-          <button type="button" className="flashcards-study__answer flashcards-study__answer--easy" onClick={() => rate('easy')}>
-            {labels.easy}
-          </button>
+        <div className="flashcards-study__answers" style={{ display: 'flex', gap: 'var(--space-1)', flexShrink: 0 }}>
+          {answerBtn('again', labels.again, 'flashcards-study__answer--again', 'var(--danger)')}
+          {answerBtn('hard', labels.hard, 'flashcards-study__answer--hard', 'var(--warning)')}
+          {answerBtn('good', labels.good, 'flashcards-study__answer--good', 'var(--success)')}
+          {answerBtn('easy', labels.easy, 'flashcards-study__answer--easy', 'var(--accent)')}
         </div>
       )}
 
       {canUndo && (
-        <button type="button" className="flashcards-study__undo" onClick={onUndo}>
+        <button type="button" className="flashcards-study__undo c-btn c-btn--ghost" style={{ flexShrink: 0, fontSize: 12 }} onClick={onUndo}>
           {labels.undo}
         </button>
       )}

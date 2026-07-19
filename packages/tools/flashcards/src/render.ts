@@ -116,6 +116,48 @@ export function substitute(input: RenderInput): string {
   return out;
 }
 
+/* ── Anki / MathJax math delimiters → $…$ / $$…$$ ─────────────────────────── */
+
+/**
+ * Strip the HTML an Anki editor sprinkles inside a formula (tags, `&nbsp;`,
+ * escaped entities) so KaTeX gets clean TeX — otherwise `&nbsp;` alone makes it
+ * throw a parse error and render a red error box.
+ */
+function cleanMath(x: string): string {
+  return x
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&amp;/gi, '&')
+    .trim();
+}
+
+/**
+ * Anki fields carry math in several delimiter styles; normalise them to the
+ * `$…$` (inline) / `$$…$$` (display) forms extractMath understands, so imported
+ * cards render as maths instead of showing raw `[latex]…[/latex]` / `[$]…[$]`
+ * brackets (or a red KaTeX error) around the formula. Both the slash-closed
+ * (`[$]…[/$]`) and the same-delimiter (`[$]…[$]`) Anki forms are supported.
+ */
+export function convertAnkiMath(html: string): string {
+  const inline = (x: string): string => `$${cleanMath(x)}$`;
+  const block = (x: string): string => `$$${cleanMath(x)}$$`;
+  return html
+    .replace(/\[latex\]([\s\S]*?)\[\/latex\]/gi, (_m, x: string) => block(x))
+    // Slash-closed forms first, so they are consumed before the same-delimiter
+    // patterns can mis-pair across them.
+    .replace(/\[\$\$\]([\s\S]*?)\[\/\$\$\]/g, (_m, x: string) => block(x))
+    .replace(/\[\$\]([\s\S]*?)\[\/\$\]/g, (_m, x: string) => inline(x))
+    // Same-delimiter forms: [$$]…[$$] and [$]…[$].
+    .replace(/\[\$\$\]([\s\S]*?)\[\$\$\]/g, (_m, x: string) => block(x))
+    .replace(/\[\$\]([\s\S]*?)\[\$\]/g, (_m, x: string) => inline(x))
+    .replace(/\\\[([\s\S]*?)\\\]/g, (_m, x: string) => block(x))
+    .replace(/\\\(([\s\S]*?)\\\)/g, (_m, x: string) => inline(x));
+}
+
 /* ── Math (protected from the sanitizer via sentinels) ────────────────────── */
 
 // U+E001 (private use area) marks where trusted KaTeX output is re-inserted;
@@ -222,7 +264,7 @@ export function sanitizeHtml(html: string): string {
 
 /** Render one card side to sanitized HTML, with math and cloze applied. */
 export function renderCard(input: RenderInput): string {
-  const substituted = substitute(input);
+  const substituted = convertAnkiMath(substitute(input));
   const math: string[] = [];
   const withMath = extractMath(substituted, math);
   const sanitized = sanitizeHtml(withMath);

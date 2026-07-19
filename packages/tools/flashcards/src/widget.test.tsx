@@ -70,8 +70,8 @@ describe('flashcards widget tab bar', () => {
     const el = await mountWidget();
     const labels = buttons(el).map((b) => b.textContent ?? '');
     // ManagePane's toolbar: the add-card and options buttons.
-    expect(labels.some((l) => l.includes('tool.flashcards.grid.add'))).toBe(true);
-    expect(labels.some((l) => l.includes('tool.flashcards.options.button'))).toBe(true);
+    expect(labels.some((l) => l.includes('tool.flashcards.toolbar.add'))).toBe(true);
+    expect(labels.some((l) => l.includes('tool.flashcards.toolbar.options'))).toBe(true);
   });
 
   it('switches to the study view when the study tab is clicked', async () => {
@@ -86,6 +86,6 @@ describe('flashcards widget tab bar', () => {
     expect(el.textContent).toContain('tool.flashcards.widget.empty');
     // The manage-only add-card button is gone.
     const labels = buttons(el).map((b) => b.textContent ?? '');
-    expect(labels.some((l) => l.includes('tool.flashcards.grid.add'))).toBe(false);
+    expect(labels.some((l) => l.includes('tool.flashcards.toolbar.add'))).toBe(false);
   });
 });

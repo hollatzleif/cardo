@@ -21,6 +21,7 @@
     "pageRemoved": "Seite „{{name}}\" entfernt",
     "widgetVariant": "Ansicht",
     "moveWidget": "Widget verschieben",
+    "resizeWidget": "Größe ändern",
     "enterFullscreen": "Vollbild",
     "exitFullscreen": "Vollbild verlassen",
     "openFolder": "Notizordner öffnen",
@@ -2097,6 +2098,11 @@
         "manage": "Verwalten",
         "study": "Lernen",
         "stats": "Statistik"
+      },
+      "toolbar": {
+        "add": "Karte",
+        "import": "Import",
+        "options": "Optionen"
       },
       "study": {
         "reveal": "Antwort zeigen",

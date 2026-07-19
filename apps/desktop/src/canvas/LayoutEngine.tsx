@@ -13,7 +13,8 @@ import { liveTools } from '../host/tools';
 const Grid = WidthProvider(RGL);
 
 export const GRID_COLS = 12;
-const ROW_HEIGHT = 56;
+export const ROW_HEIGHT = 56;
+export const GRID_MARGIN = 12;
 
 export interface LayoutEngineProps {
   widgets: WidgetInstance[];
@@ -47,16 +48,21 @@ export function LayoutEngine({ widgets, editing, onPositionsChange, renderWidget
 
   return (
     <Grid
-      className="canvas-grid"
+      className={`canvas-grid${editing ? ' canvas-grid--editing' : ''}`}
       layout={layout}
       cols={GRID_COLS}
       rowHeight={ROW_HEIGHT}
-      margin={[12, 12]}
+      margin={[GRID_MARGIN, GRID_MARGIN]}
       // The .canvas already frames the grid; RGL's default 10px container
       // padding would stack on top and reserve phantom scroll space below.
       containerPadding={[0, 0]}
-      isDraggable={editing}
-      isResizable={editing}
+      // Both drag-to-move and drag-to-resize are handled by our own
+      // pointer-event code in WidgetFrame, not RGL's react-draggable: the
+      // WebView drops the mousemove events react-draggable relies on mid-drag
+      // (taking the gesture as a text selection), so RGL's built-in move/resize
+      // silently do nothing here. Pointer events + setPointerCapture are solid.
+      isDraggable={false}
+      isResizable={false}
       compactType="vertical"
       // Only the explicit grip handle starts a drag, so the title bar's
       // controls (variant picker, remove) and the widget body stay clickable

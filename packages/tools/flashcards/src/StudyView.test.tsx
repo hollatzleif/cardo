@@ -87,13 +87,16 @@ describe('StudyView', () => {
       />,
     );
 
+    // Keys are scoped to the widget: dispatch on the (focusable) study
+    // container, not window, so a keypress in another widget can't reach it.
+    const studyEl = () => container.querySelector('.flashcards-study')!;
     await act(async () => {
-      window.dispatchEvent(new window.KeyboardEvent('keydown', { key: ' ' }));
+      studyEl().dispatchEvent(new window.KeyboardEvent('keydown', { key: ' ', bubbles: true }));
     });
     expect(container.querySelector('.flashcards-study__answers')).not.toBeNull();
 
     await act(async () => {
-      window.dispatchEvent(new window.KeyboardEvent('keydown', { key: ' ' }));
+      studyEl().dispatchEvent(new window.KeyboardEvent('keydown', { key: ' ', bubbles: true }));
     });
     expect(onRate).toHaveBeenCalledWith('good');
   });
