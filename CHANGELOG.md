@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.3 — Zufallsrad: Optionen direkt im Widget
+
+### Zufalls-Auswahl
+- **Optionen lassen sich jetzt in jeder Ansicht eintragen:** die Ansichten
+  **Rad** und **Kompakt** haben einen eigenen, aufklappbaren Editor bekommen.
+  Vorher lag der Editor nur in der großen Ansicht — wer das Widget als Rad
+  aufs Board gelegt hatte, sah ein leeres Rad und keinen Weg, etwas
+  einzutragen. Solange noch keine Optionen da sind, klappt der Editor von
+  selbst auf.
+- **Gewichte zeigen jetzt die tatsächliche Wahrscheinlichkeit:** neben jedem
+  Regler steht das Ergebnis in Prozent (z. B. `25 %`) statt der nackten
+  Gewichtungszahl. Die Gewichtung dahinter bleibt unverändert — man sieht nur
+  endlich, was sie bewirkt.
+
 ## 1.1.2 — Bedienbarkeit: Karteikarten, LaTeX, Board & Rechts-Abruf
 
 ### Karteikarten

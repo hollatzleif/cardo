@@ -683,6 +683,99 @@ export function createTool(): CardoTool {
       </span>
     );
 
+    // Per-option weight sliders. Shared by every variant. The trailing label is
+    // the resulting probability (weight ÷ total), which is what people actually
+    // want to read off — the slider sets the relative weight behind it.
+    const totalWeight = options.reduce((sum, o) => sum + o.weight, 0);
+    const weightsEditor =
+      options.length > 0 ? (
+        <details style={{ flexShrink: 0 }}>
+          <summary className="c-muted" style={{ cursor: 'pointer', fontSize: '0.85em' }}>
+            {t('tool.random-picker.widget.advanced')}
+          </summary>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--space-1)',
+              marginTop: 'var(--space-1)',
+              maxHeight: '120px',
+              overflow: 'auto',
+            }}
+          >
+            {options.map((option, i) => (
+              <label
+                key={`${option.text}-${i}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
+              >
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    fontSize: '0.85em',
+                  }}
+                >
+                  {option.text}
+                </span>
+                <input
+                  type="range"
+                  min={MIN_WEIGHT}
+                  max={MAX_WEIGHT}
+                  step={1}
+                  value={option.weight}
+                  style={{ accentColor: 'var(--accent)', width: '100px', flexShrink: 0 }}
+                  aria-label={t('tool.random-picker.widget.weightLabel', { option: option.text })}
+                  title={t('tool.random-picker.widget.weightLabel', { option: option.text })}
+                  onChange={(e) => setWeight(i, Number(e.target.value))}
+                />
+                <span
+                  className="c-muted"
+                  style={{
+                    fontSize: '0.85em',
+                    width: '4ch',
+                    textAlign: 'right',
+                    fontVariantNumeric: 'tabular-nums',
+                    flexShrink: 0,
+                  }}
+                >
+                  {totalWeight > 0 ? `${Math.round((option.weight / totalWeight) * 100)}%` : '—'}
+                </span>
+              </label>
+            ))}
+          </div>
+        </details>
+      ) : null;
+
+    // A collapsible options editor so the wheel/compact views can edit their
+    // options AND weights too (the full view has the always-open textarea
+    // below). Opens automatically while there are no options yet, so an empty
+    // wheel prompts you to add some.
+    const collapsibleOptionsEditor = usesOptions ? (
+      <details open={options.length === 0} style={{ flexShrink: 0, width: '100%' }}>
+        <summary className="c-muted" style={{ cursor: 'pointer', fontSize: '0.85em' }}>
+          {t('tool.random-picker.widget.editOptions')}
+        </summary>
+        <textarea
+          className="c-input"
+          style={{ width: '100%', height: 84, resize: 'vertical', fontFamily: 'inherit', marginTop: 'var(--space-1)' }}
+          value={optionsDraft ?? texts.join('\n')}
+          placeholder={t('tool.random-picker.widget.optionsPlaceholder')}
+          aria-label={t('tool.random-picker.widget.optionsPlaceholder')}
+          onChange={(e) => setOptionsDraft(e.target.value)}
+          onBlur={() => {
+            if (optionsDraft !== null) {
+              setOptions(mergeOptions(parseItems(optionsDraft), options));
+              setOptionsDraft(null);
+            }
+          }}
+        />
+        {weightsEditor}
+      </details>
+    ) : null;
+
     if (variant === 'compact') {
       return (
         <div
@@ -698,6 +791,7 @@ export function createTool(): CardoTool {
         >
           {modeSelect}
           {usesOptions && options.length === 0 && emptyHint}
+          {collapsibleOptionsEditor}
           {invalidLine}
           {resultLine}
           {actionButton}
@@ -750,6 +844,7 @@ export function createTool(): CardoTool {
               </>
             )}
           </div>
+          {collapsibleOptionsEditor}
           {invalidLine}
           {resultLine}
           {actionButton}
@@ -797,66 +892,7 @@ export function createTool(): CardoTool {
                 }
               }}
             />
-            {options.length > 0 && (
-              <details style={{ flexShrink: 0 }}>
-                <summary className="c-muted" style={{ cursor: 'pointer', fontSize: '0.85em' }}>
-                  {t('tool.random-picker.widget.advanced')}
-                </summary>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 'var(--space-1)',
-                    marginTop: 'var(--space-1)',
-                    maxHeight: '120px',
-                    overflow: 'auto',
-                  }}
-                >
-                  {options.map((option, i) => (
-                    <label
-                      key={`${option.text}-${i}`}
-                      style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
-                    >
-                      <span
-                        style={{
-                          flex: 1,
-                          minWidth: 0,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          fontSize: '0.85em',
-                        }}
-                      >
-                        {option.text}
-                      </span>
-                      <input
-                        type="range"
-                        min={MIN_WEIGHT}
-                        max={MAX_WEIGHT}
-                        step={1}
-                        value={option.weight}
-                        style={{ accentColor: 'var(--accent)', width: '100px', flexShrink: 0 }}
-                        aria-label={t('tool.random-picker.widget.weightLabel', { option: option.text })}
-                        title={t('tool.random-picker.widget.weightLabel', { option: option.text })}
-                        onChange={(e) => setWeight(i, Number(e.target.value))}
-                      />
-                      <span
-                        className="c-muted"
-                        style={{
-                          fontSize: '0.85em',
-                          width: '2ch',
-                          textAlign: 'right',
-                          fontVariantNumeric: 'tabular-nums',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {option.weight}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </details>
-            )}
+            {weightsEditor}
             {mode === 'pick-n' && paramControls()}
           </>
         ) : (

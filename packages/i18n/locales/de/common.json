@@ -1748,9 +1748,10 @@
       },
       "widget": {
         "optionsPlaceholder": "Eine Option pro Zeile (oder durch Kommas getrennt) …",
+        "editOptions": "Optionen bearbeiten",
         "advanced": "Erweiterte Einstellungen",
         "weightLabel": "Gewicht von {{option}}",
-        "empty": "Trag zuerst deine Optionen ein – die große Ansicht hat den Editor.",
+        "empty": "Trag zuerst deine Optionen ein – der Editor ist gleich hier drunter.",
         "wheelLabel": "Glücksrad",
         "spin": "Drehen",
         "spinning": "Dreht sich …",

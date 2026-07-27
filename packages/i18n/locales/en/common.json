@@ -1748,9 +1748,10 @@
       },
       "widget": {
         "optionsPlaceholder": "One option per line (or comma-separated) …",
+        "editOptions": "Edit options",
         "advanced": "Advanced settings",
         "weightLabel": "Weight of {{option}}",
-        "empty": "Enter your options first – the full view has the editor.",
+        "empty": "Enter your options first – the editor is right below.",
         "wheelLabel": "Decision wheel",
         "spin": "Spin",
         "spinning": "Spinning …",
