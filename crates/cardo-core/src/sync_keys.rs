@@ -197,16 +197,69 @@ mod tests {
         assert_eq!(parsed.secret, key.secret);
     }
 
+    /// Positions of real base32 characters in a displayed key (dashes are
+    /// only grouping and get stripped before parsing).
+    fn payload_positions(shown: &str) -> Vec<usize> {
+        (0..shown.len()).filter(|&i| shown.as_bytes()[i] != b'-').collect()
+    }
+
     #[test]
-    fn typo_is_detected() {
-        let key = SyncKey::generate().unwrap();
-        let mut shown = key.display();
-        // Flip one payload character to a different alphabet character.
-        let idx = shown.len() - 2;
-        let original = shown.as_bytes()[idx];
-        let replacement = if original == b'A' { 'B' } else { 'A' };
-        shown.replace_range(idx..idx + 1, &replacement.to_string());
-        assert!(SyncKey::parse(&shown).is_err());
+    fn a_typo_in_any_character_is_detected() {
+        // The previous version of this test flipped `shown[len - 2]`, believing
+        // it to be a payload character. It is the DASH before the final group:
+        // 33 payload bytes encode to 53 base32 characters, and 53 in groups of
+        // four leaves a last group of exactly one. Replacing a separator
+        // lengthens the cleaned body instead of altering a character, and the
+        // result happened to be rejected only ~85% of the time — so the test
+        // failed at random and proved nothing about typo detection.
+        //
+        // This checks the property that was meant: every single-character typo
+        // in the key must be caught.
+        for _ in 0..20 {
+            let key = SyncKey::generate().unwrap();
+            let shown = key.display();
+            let positions = payload_positions(&shown);
+            // The final character is covered by its own test below.
+            for &idx in &positions[..positions.len() - 1] {
+                let original = shown.as_bytes()[idx] as char;
+                let replacement = if original == 'A' { 'B' } else { 'A' };
+                let mut typo = shown.clone();
+                typo.replace_range(idx..idx + 1, &replacement.to_string());
+                assert!(
+                    SyncKey::parse(&typo).is_err(),
+                    "typo at {idx} ({original} → {replacement}) slipped through: {typo}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_typo_in_the_final_character_never_yields_a_different_key() {
+        // 33 bytes = 264 bits, but 53 base32 characters carry 265. The spare
+        // bit is discarded on decode, so the last character holds only four
+        // meaningful bits and roughly 7% of typos there are NOT rejected.
+        //
+        // That is harmless, and this test pins down why: such a typo decodes
+        // to the very same payload, so the user still gets the correct key.
+        // What must never happen is a typo producing a DIFFERENT key that
+        // parses cleanly — that would sync against the wrong identity.
+        for _ in 0..50 {
+            let key = SyncKey::generate().unwrap();
+            let shown = key.display();
+            let last = *payload_positions(&shown).last().unwrap();
+
+            for replacement in ALPHABET.iter().map(|&b| b as char) {
+                let mut typo = shown.clone();
+                typo.replace_range(last..last + 1, &replacement.to_string());
+                if let Ok(parsed) = SyncKey::parse(&typo) {
+                    assert_eq!(
+                        (parsed.secret, parsed.license_id),
+                        (key.secret, key.license_id),
+                        "a typo in the last character produced a DIFFERENT key: {typo}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]
@@ -247,3 +300,4 @@ mod tests {
         assert!(SyncKey::parse("CRD1-TOO-SHORT").is_err());
     }
 }
+
