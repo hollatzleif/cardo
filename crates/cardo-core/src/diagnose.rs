@@ -3,22 +3,53 @@ use serde_json::json;
 
 use crate::storage::{Query, SqliteStorage, StorageAdapter, SCHEMA_VERSION};
 
-/// Rust-side self-test checks. They run against a SCRATCH database in a
-/// temporary directory – real user data is never touched. The TS layer
-/// merges these results into the full diagnose report.
+/// Rust-side check results. The `core:*` checks below run against a SCRATCH
+/// database in a temporary directory – real user data is never touched. The
+/// TS layer merges these results into the full diagnose report.
+///
+/// `cardo-doctor` reuses this type for its `env:*` checks so the TS bridge
+/// needs no second shape.
 #[derive(Debug, Clone, Serialize)]
 pub struct CoreCheckResult {
     pub id: String,
     pub status: String, // pass | warn | fail
     pub detail: Option<String>,
+    /// The check could not run here (capability absent, wrong platform).
+    /// Distinct from `pass`: it makes an unrunnable check visible instead of
+    /// silently counting as green.
+    #[serde(default)]
+    pub skipped: bool,
+}
+
+impl CoreCheckResult {
+    pub fn pass(id: &str) -> Self {
+        Self { id: id.into(), status: "pass".into(), detail: None, skipped: false }
+    }
+
+    pub fn pass_with(id: &str, detail: impl Into<String>) -> Self {
+        Self { id: id.into(), status: "pass".into(), detail: Some(detail.into()), skipped: false }
+    }
+
+    pub fn warn(id: &str, detail: impl Into<String>) -> Self {
+        Self { id: id.into(), status: "warn".into(), detail: Some(detail.into()), skipped: false }
+    }
+
+    pub fn fail(id: &str, detail: impl Into<String>) -> Self {
+        Self { id: id.into(), status: "fail".into(), detail: Some(detail.into()), skipped: false }
+    }
+
+    /// Not applicable on this machine — reported as its own state, never green.
+    pub fn skip(id: &str, detail: impl Into<String>) -> Self {
+        Self { id: id.into(), status: "warn".into(), detail: Some(detail.into()), skipped: true }
+    }
 }
 
 fn pass(id: &str) -> CoreCheckResult {
-    CoreCheckResult { id: id.into(), status: "pass".into(), detail: None }
+    CoreCheckResult::pass(id)
 }
 
 fn fail(id: &str, detail: impl Into<String>) -> CoreCheckResult {
-    CoreCheckResult { id: id.into(), status: "fail".into(), detail: Some(detail.into()) }
+    CoreCheckResult::fail(id, detail)
 }
 
 pub async fn run_core_checks(app_data_dir: &std::path::Path) -> Vec<CoreCheckResult> {

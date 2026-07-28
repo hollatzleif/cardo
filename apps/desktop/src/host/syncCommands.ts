@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { invoke } from '@tauri-apps/api/core';
 import i18next from 'i18next';
 import { isTauri } from './backend';
+import { getSyncStatus } from '../sync/syncStatus';
 import type { Host } from './services';
 
 /**
@@ -24,12 +25,27 @@ function describeStatus(status: SyncStatusDto): string {
   const t = (key: string, vars?: Record<string, unknown>) => String(i18next.t(key, vars));
   if (!status.hasKey) return t('sync.context.noKey');
   if (!status.enabled) return t('sync.context.disabled');
-  return t('sync.context.active', {
+
+  const base = t('sync.context.active', {
     transport: status.transport || '–',
     pending: status.unsyncedOps,
     devices: status.devices.length,
     last: status.lastSyncMs ? new Date(status.lastSyncMs).toLocaleString() : t('settings.sync.never'),
   });
+
+  // `sync_status` reports CONFIGURATION. It says nothing about whether the
+  // 5-minute background loop is actually succeeding — which is precisely how
+  // sync could be dead for days while everything looked configured and fine.
+  const health = getSyncStatus();
+  if (health.health === 'error') {
+    return `${base} ${t('sync.context.failing', {
+      count: health.consecutiveErrors,
+      message: health.message ?? '',
+    })}`;
+  }
+  if (health.health === 'revoked') return `${base} ${t('sync.context.revoked')}`;
+  if (health.health === 'join-denied') return `${base} ${t('sync.context.joinDenied')}`;
+  return base;
 }
 
 let registered = false;
@@ -88,8 +104,16 @@ export function registerSyncCommands(host: Host): void {
       try {
         const status = await invoke<SyncStatusDto>('sync_status');
         return { ok: true, data: { contextText: describeStatus(status) } };
-      } catch {
-        return { ok: true, data: { contextText: String(i18next.t('sync.context.noKey')) } };
+      } catch (e) {
+        // Previously this reported "no key configured" for ANY failure, so a
+        // broken sync told the assistant it was simply not set up — and the
+        // user was told the same. Report what actually went wrong.
+        return {
+          ok: true,
+          data: {
+            contextText: String(i18next.t('sync.context.unavailable', { error: String(e) })),
+          },
+        };
       }
     },
   });

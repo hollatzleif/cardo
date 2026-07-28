@@ -11,10 +11,21 @@ import { ToolRegistry, type HostServices } from './registry';
  */
 
 /** Report sections – rendered in this order (report + settings panel). */
-export type DiagnoseCategory = 'core' | 'tools' | 'ui' | 'network' | 'security';
+export type DiagnoseCategory =
+  | 'core'
+  | 'environment'
+  | 'tools'
+  | 'ui'
+  | 'network'
+  | 'security';
 
 export const DIAGNOSE_CATEGORIES: readonly DiagnoseCategory[] = [
   'core',
+  // Everything else here proves the CODE is correct, against a scratch
+  // backend. This category is the only one that looks at the actual
+  // INSTALLATION – a logged-out CLI, a second instance on the database, a
+  // stale bundle. Those broke real demos while every other check stayed green.
+  'environment',
   'tools',
   'ui',
   'network',
@@ -26,6 +37,12 @@ export interface DiagnoseCheck {
   titleKey: string;
   titleVars?: Record<string, string>;
   category: DiagnoseCategory;
+  /**
+   * The check could not run in this environment (capability absent, wrong
+   * platform). Carried through to the result so an unrunnable check stays
+   * visible instead of silently counting as green.
+   */
+  skipped?: boolean;
   run(): Promise<SelfTestResult>;
 }
 
@@ -35,6 +52,7 @@ export interface DiagnoseResult {
   titleVars?: Record<string, string>;
   category: DiagnoseCategory;
   status: 'pass' | 'warn' | 'fail';
+  skipped?: boolean;
   detail?: string;
   durationMs: number;
 }
@@ -47,7 +65,7 @@ export interface DiagnoseReport {
   themeId: string;
   activeTools: string[];
   results: DiagnoseResult[];
-  summary: { passed: number; warnings: number; failed: number };
+  summary: { passed: number; warnings: number; failed: number; skipped: number };
 }
 
 export async function runDiagnostics(
@@ -70,6 +88,7 @@ export async function runDiagnostics(
       titleVars: check.titleVars,
       category: check.category,
       status: outcome.status,
+      ...(check.skipped ? { skipped: true } : {}),
       detail: 'detail' in outcome ? outcome.detail : undefined,
       durationMs: Math.round(performance.now() - start),
     };
@@ -81,9 +100,13 @@ export async function runDiagnostics(
     ...meta,
     results,
     summary: {
-      passed: results.filter((r) => r.status === 'pass').length,
-      warnings: results.filter((r) => r.status === 'warn').length,
-      failed: results.filter((r) => r.status === 'fail').length,
+      // Skipped checks are counted only as skipped: rolling them into
+      // "warnings" would hide them, rolling them into "passed" would claim a
+      // guarantee that was never established.
+      passed: results.filter((r) => r.status === 'pass' && !r.skipped).length,
+      warnings: results.filter((r) => r.status === 'warn' && !r.skipped).length,
+      failed: results.filter((r) => r.status === 'fail' && !r.skipped).length,
+      skipped: results.filter((r) => r.skipped).length,
     },
   };
 }
@@ -203,6 +226,7 @@ export function buildToolChecks(
 /* ── Report rendering (human + machine readable in ONE file) ──────────── */
 
 const STATUS_ICON = { pass: '✅', warn: '⚠️', fail: '❌' } as const;
+const SKIPPED_ICON = '⏭️';
 
 export function renderReportMarkdown(
   report: DiagnoseReport,
@@ -224,6 +248,10 @@ export function renderReportMarkdown(
       failed: report.summary.failed,
     })}**`,
   );
+  if (report.summary.skipped > 0) {
+    lines.push('');
+    lines.push(`${SKIPPED_ICON} ${t('diagnose.skippedNote', { count: report.summary.skipped })}`);
+  }
   lines.push('');
   for (const category of DIAGNOSE_CATEGORIES) {
     const rows = report.results.filter((r) => r.category === category);
@@ -232,9 +260,9 @@ export function renderReportMarkdown(
     lines.push('');
     lines.push(
       `${t('diagnose.summary', {
-        passed: rows.filter((r) => r.status === 'pass').length,
-        warnings: rows.filter((r) => r.status === 'warn').length,
-        failed: rows.filter((r) => r.status === 'fail').length,
+        passed: rows.filter((r) => r.status === 'pass' && !r.skipped).length,
+        warnings: rows.filter((r) => r.status === 'warn' && !r.skipped).length,
+        failed: rows.filter((r) => r.status === 'fail' && !r.skipped).length,
       })}`,
     );
     lines.push('');
@@ -243,7 +271,8 @@ export function renderReportMarkdown(
     for (const r of rows) {
       const title = t(r.titleKey, r.titleVars).replace(/\|/g, '\\|');
       const detail = (r.detail ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
-      lines.push(`| ${STATUS_ICON[r.status]} | ${title} | ${detail} | ${r.durationMs} |`);
+      const icon = r.skipped ? SKIPPED_ICON : STATUS_ICON[r.status];
+      lines.push(`| ${icon} | ${title} | ${detail} | ${r.durationMs} |`);
     }
     lines.push('');
   }

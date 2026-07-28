@@ -10,25 +10,28 @@ import { MODEL_CATALOG, modelById } from './models';
  */
 
 describe('claudeCheck outside Tauri', () => {
+  // `loggedIn: null` means "undeterminable", which is the honest answer with
+  // no CLI to ask. It must never degrade to `false` – that would render as
+  // "you are logged out" and send the user chasing a login they already have.
+  const OFFLINE_SHAPE = {
+    installed: false,
+    version: null,
+    path: null,
+    loggedIn: null,
+  };
+
   it('degrades to "not installed" instead of throwing', async () => {
-    await expect(claudeCheck()).resolves.toEqual({
-      installed: false,
-      version: null,
-      path: null,
-    });
+    await expect(claudeCheck()).resolves.toEqual(OFFLINE_SHAPE);
   });
 
   it('cached variant returns the same shape (with and without force)', async () => {
-    await expect(claudeCheckCached()).resolves.toEqual({
-      installed: false,
-      version: null,
-      path: null,
-    });
-    await expect(claudeCheckCached({ force: true })).resolves.toEqual({
-      installed: false,
-      version: null,
-      path: null,
-    });
+    await expect(claudeCheckCached()).resolves.toEqual(OFFLINE_SHAPE);
+    await expect(claudeCheckCached({ force: true })).resolves.toEqual(OFFLINE_SHAPE);
+  });
+
+  it('never reports an unknown login state as logged out', async () => {
+    const result = await claudeCheck();
+    expect(result.loggedIn).not.toBe(false);
   });
 });
 

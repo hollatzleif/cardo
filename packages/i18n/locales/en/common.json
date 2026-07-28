@@ -203,7 +203,9 @@
       "gdriveUnconfigured": "Not available in this build yet: the Google OAuth app still needs to be registered (a one-time developer step). Until then, use the folder transport — same encryption, works today.",
       "undecryptable": "{{count}} blocks could NOT be decrypted — this device's key does not match the one that wrote them. Compare the key ID on both devices.",
       "pushAll": "Send everything again",
-      "pushAllHint": "Re-uploads your complete history — use after switching the transport or when another device is missing data. Safe: devices ignore blocks they already know."
+      "pushAllHint": "Re-uploads your complete history — use after switching the transport or when another device is missing data. Safe: devices ignore blocks they already know.",
+      "backgroundFailingTitle": "Background sync is failing",
+      "backgroundFailingBody": "The last {{count}} automatic sync rounds failed. Message: {{message}} — your devices are NOT syncing right now."
     }
   },
   "diagnose": {
@@ -217,7 +219,8 @@
       "fail": "Failed"
     },
     "summary": "{{passed}} passed · {{warnings}} warnings · {{failed}} failed",
-    "scratchNote": "All checks run against a disposable test database. Your real data is never touched.",
+    "scratchNote": "Apart from the “Environment” section, every check runs against a disposable test database – your real data is never touched. The environment checks look at your actual installation; they only read and change nothing.",
+    "skippedNote": "{{count}} check(s) skipped – not applicable on this machine. Not counted as passed.",
     "check": {
       "dbReadWrite": "Database readable and writable",
       "dbQuery": "Database queries work",
@@ -230,6 +233,7 @@
       "i18n": "Translations complete (EN/DE)",
       "storagePath": "App data folder writable",
       "widgetRender": "Widget \"{{widget}}\" of \"{{tool}}\" renders",
+      "widgetRenderVariant": "View \"{{variant}}\" of \"{{tool}}\" renders",
       "commandForms": "All command forms can be built",
       "assistantCatalog": "All tools are visible to the assistant",
       "tourAnchors": "All tour steps point to existing anchors",
@@ -259,10 +263,21 @@
       "legalHosts": "Legal sources only contact their allow-listed hosts",
       "keyInKeychain": "The OS keychain stores the sync key correctly",
       "customThemes": "All custom themes are complete",
-      "netGoogleDrive": "Google Drive API reachable (sync transport)"
+      "netGoogleDrive": "Google Drive API reachable (sync transport)",
+      "envDataDir": "App data folder found and writable",
+      "envDbLive": "Your real database is healthy and up to date",
+      "envSingleInstance": "Cardo is running only once (two instances break sync)",
+      "envClaudeCli": "Claude program found on this machine",
+      "envClaudeAuth": "Claude is signed in (otherwise the assistant fails)",
+      "envKeychain": "System keychain reachable",
+      "envSyncConfig": "Sync was active recently",
+      "envInstalledApp": "Installed app matches this version",
+      "envDiskSpace": "Enough free disk space",
+      "envDriveCredentials": "This build can authenticate with Google Drive"
     },
     "category": {
       "core": "Core",
+      "environment": "Environment",
       "tools": "Tools",
       "ui": "Interface",
       "network": "Network",
@@ -276,7 +291,8 @@
     },
     "detail": {
       "browserSkipped": "only available in the desktop app – skipped",
-      "noDesignDoc": "no design settings saved yet – skipped"
+      "noDesignDoc": "no design settings saved yet – skipped",
+      "noStylesheet": "no stylesheet loaded (test environment) – skipped"
     }
   },
   "market": {
@@ -2189,6 +2205,11 @@
         "how": "Create cards (organized into decks) and study the due ones one at a time: reveal the answer, then rate Again/Hard/Good/Easy. The scheduler — FSRS by default, classic SM-2 optional — plans each card so you review it right before you would forget it. The grid variant lists decks and has a card browser with Anki search (deck:, tag:, is:due …); the stats variant shows counts, a due forecast, retention and an activity heatmap. Decks import/export as Anki .apkg.",
         "setup": "No setup needed — drag the widget onto your board and go.",
         "bestFor": "Vocabulary, exam prep, anything memorized long-term — a few minutes of due cards per day beat cramming."
+      },
+      "variant": {
+        "study": "Study",
+        "grid": "Manage",
+        "stats": "Statistics"
       }
     },
     "mood": {
@@ -2240,6 +2261,11 @@
         "how": "Once a day, answer one question: how are you feeling, on a scale of 1–5 (emoji or numbers), plus an optional one-line note. The Calendar variant colors your months, Trend draws the 14-day curve with an average, and streaks reward keeping at it.",
         "setup": "Works immediately; week start and scale style (emoji vs. numbers) live in the settings (gear).",
         "bestFor": "Lightweight mood journaling: spotting patterns — bad Mondays, good outdoor days — without writing essays."
+      },
+      "variant": {
+        "today": "Today",
+        "calendar": "Calendar",
+        "trend": "Trend"
       }
     },
     "sleep-log": {
@@ -2295,6 +2321,11 @@
         "how": "Log each night with bedtime and wake time; Cardo computes the duration and shows the last 7 nights as bars against your goal, plus the 7-day average, a consistency score (standard deviation) and how many nights in a row you hit your goal.",
         "setup": "Works immediately; sleep goal in hours and 12/24-hour display live in the settings (gear).",
         "bestFor": "Getting your sleep rhythm honest: seeing whether “I sleep enough” survives contact with data."
+      },
+      "variant": {
+        "log": "Log",
+        "weekly-bar": "Weekly bars",
+        "summary": "Summary"
       }
     },
     "workout": {
@@ -2352,6 +2383,11 @@
         "how": "Log a session (like Push, Legs or Run) and add its exercises with sets, reps and weight — leave the weight empty for bodyweight moves. Cardo computes per-session and weekly volume and keeps your personal records per exercise.",
         "setup": "Works immediately; the weight unit (kg/lb) lives in the settings (gear).",
         "bestFor": "Strength training with progression: knowing what you lifted last time so you can beat it this time."
+      },
+      "variant": {
+        "log": "Log",
+        "weekly": "Weekly",
+        "records": "Records"
       }
     },
     "meal-planner": {
@@ -2585,6 +2621,11 @@
         "how": "Create a group with its members, then log each expense with who paid, the amount and (optionally) who took part. Cardo keeps a running balance of who owes whom and computes a settlement plan with the fewest possible transfers, which you tick off as people pay up.",
         "setup": "Create a group and list its members, comma-separated — that is the whole setup.",
         "bestFor": "Flat shares, trips with friends, team lunches — everywhere “I’ll get this one” needs a fair reckoning later."
+      },
+      "variant": {
+        "balances": "Balances",
+        "log": "Log",
+        "settle": "Settle up"
       }
     },
     "calculator": {
@@ -2635,6 +2676,11 @@
         "how": "Type a full expression — 2+3*4, sin(90), sqrt(2) — and get the result instantly from a safe built-in parser (no eval, ever). Trig works in degrees or radians via a toggle, and the history keeps past calculations ready to load back into the input. Basic, Scientific and Compact variants change the layout.",
         "setup": "Works immediately; default angle mode, thousands separator and history length live in the settings (gear).",
         "bestFor": "Quick math without leaving your dashboard: bills, conversions in your head made checkable, homework spot-checks."
+      },
+      "variant": {
+        "basic": "Basic",
+        "scientific": "Scientific",
+        "compact": "Compact"
       }
     },
     "color-tool": {
@@ -2691,6 +2737,11 @@
         "how": "Pick a base color and build harmonies from it — complementary, analogous, triadic or shades — then save the results as named palettes and copy any hex value with a click. The Contrast variant checks two colors against the WCAG thresholds (AA/AAA, normal and large text).",
         "setup": "No setup needed — drag the widget onto your board and go.",
         "bestFor": "Design work big and small: slides, websites, themes — and making sure your text stays readable."
+      },
+      "variant": {
+        "picker": "Picker",
+        "palette": "Palette",
+        "contrast": "Contrast"
       }
     },
     "snippets": {
@@ -2740,6 +2791,11 @@
         "how": "Store code snippets with a title, language and tags; lightweight syntax highlighting covers 8 languages. Full-text search and the tag filter find any snippet in seconds, and the copy button puts it on your clipboard.",
         "setup": "Works immediately; code font size and line wrapping live in the settings (gear).",
         "bestFor": "The commands and boilerplate you keep re-googling: shell one-liners, config blocks, SQL queries."
+      },
+      "variant": {
+        "list": "List",
+        "grid": "Grid",
+        "focused": "Focused"
       }
     },
     "currency": {
@@ -2796,6 +2852,11 @@
         "how": "Converts between about 30 currencies using an exchange-rate table that is cached locally and refreshed at most once per day — the widget always tells you how old its rates are, and conversions keep working offline against the cache. Converter, Rate board and Single pair variants suit different needs.",
         "setup": "Pick your base currency in the settings (gear). This tool goes online: at most once a day it contacts open.er-api.com, and the only thing sent is the three-letter code of your base currency — never amounts, never anything personal.",
         "bestFor": "Travel budgets, shopping in foreign stores, invoices in other currencies — quick conversions with honest data age."
+      },
+      "variant": {
+        "converter": "Converter",
+        "rate-board": "Rate board",
+        "single-pair": "Single pair"
       }
     },
     "rss": {
@@ -2852,6 +2913,11 @@
         "how": "Paste the URLs of the RSS or Atom feeds you want to follow; Cardo fetches them, counts unread articles and lets you mark things read or send an article straight to your Reading list. Everything fetched is cached, so you can read offline. List, Cards and Headlines variants change the density.",
         "setup": "Add at least one feed URL — that is all. This tool goes online: it contacts exactly the feed servers you add, no others, and each request is a plain download of that address; nothing about you or your reading behavior is sent.",
         "bestFor": "Following blogs and news on your terms: a chronological feed you chose, instead of an algorithm."
+      },
+      "variant": {
+        "list": "List",
+        "cards": "Cards",
+        "headlines": "Headlines"
       }
     },
     "soundscapes": {
@@ -2900,6 +2966,11 @@
         "how": "An ambience mixer with four bundled loops — rain, white noise, brown noise and a stream. Toggle any combination, set each track’s volume plus a master level, and let it play while you work. All sounds ship with Cardo: nothing is streamed, nothing goes online. It can even follow your Pomodoro: sound during focus phases, silence in breaks.",
         "setup": "No setup needed — press play. The Pomodoro coupling lives in the settings (gear).",
         "bestFor": "Masking noisy surroundings and settling into focus — open-plan offices, cafés, restless evenings."
+      },
+      "variant": {
+        "mixer": "Mixer",
+        "minimal": "Minimal",
+        "single": "Single sound"
       }
     },
     "legal-dictionary": {
@@ -3155,7 +3226,13 @@
       "delegateDone": "Handed over.",
       "modelMissing": "model missing",
       "switchToProfile": "Switch to {{name}}",
-      "proposalsTitle": "Suggestions ({{count}})"
+      "proposalsTitle": "Suggestions ({{count}})",
+      "modelMissingError": "This model has not been downloaded yet. Get it under Settings → Assistant.",
+      "busyError": "The assistant is already working on a request. Wait a moment and try again.",
+      "promptTooLongError": "The request is too long for the model’s context window. Shorten your text or start a new conversation.",
+      "backendInitError": "The AI engine failed to start. Restart Cardo; if that does not help, pick a different model under Settings → Assistant.",
+      "workspaceError": "The chosen workspace folder is not allowed. Pick a folder outside Cardo’s own data under Settings → Assistant.",
+      "notLoggedInError": "Claude is not signed in. Open a terminal and run “claude login”."
     },
     "rating": {
       "great": "Great",
@@ -3495,6 +3572,7 @@
       "cloudGroup": "Claude (your Anthropic account)",
       "detected": "✓ Claude Code CLI detected (v{{version}})",
       "detectedNoVersion": "✓ Claude Code CLI detected",
+      "loggedOut": "⚠ But not signed in – the assistant will fail on every request. Open a terminal and run “claude login”.",
       "notFound": "Claude Code CLI not found",
       "recheck": "Check again",
       "guideTitle": "Set up Claude in three steps",
@@ -3545,7 +3623,11 @@
     "context": {
       "noKey": "Sync: not set up (no key).",
       "disabled": "Sync: key present, but turned off on this device.",
-      "active": "Sync: on via {{transport}} · {{pending}} changes waiting · {{devices}} device(s) · last round: {{last}}."
+      "active": "Sync: on via {{transport}} · {{pending}} changes waiting · {{devices}} device(s) · last round: {{last}}.",
+      "failing": "WARNING: background sync has been failing for {{count}} round(s): {{message}}",
+      "revoked": "WARNING: this device was removed from the sync group.",
+      "joinDenied": "WARNING: the join request was denied.",
+      "unavailable": "Sync status unavailable: {{error}}"
     }
   },
   "layout": {

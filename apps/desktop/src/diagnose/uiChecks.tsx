@@ -64,6 +64,7 @@ async function renderWidgetProbe(
   factory: () => CardoTool,
   widgetId: string,
   defaultSize: { w: number; h: number },
+  variant?: string,
 ): Promise<SelfTestResult> {
   const host = getHost();
   const { registry } = createScratchContext(host.services);
@@ -101,6 +102,7 @@ async function renderWidgetProbe(
         createElement(instance.Widget, {
           instanceId: 'diag',
           widgetId,
+          variant,
           size: defaultSize,
           editing: false,
         }),
@@ -133,13 +135,21 @@ function widgetRenderChecks(): DiagnoseCheck[] {
   for (const factory of Object.values(toolFactories)) {
     const manifest = factory().manifest;
     for (const widget of manifest.widgets) {
-      checks.push({
-        id: `ui:widget:${manifest.id}:${widget.id}`,
-        titleKey: 'diagnose.check.widgetRender',
-        titleVars: { tool: manifest.id, widget: widget.id },
-        category: 'ui',
-        run: () => renderWidgetProbe(factory, widget.id, widget.defaultSize),
-      });
+      // Every declared view, not just the default: the frame passes `variant`
+      // in production and most tools branch on it, so probing only the default
+      // left the majority of render paths unchecked.
+      const variants: Array<string | undefined> = widget.variants.length
+        ? [...widget.variants]
+        : [undefined];
+      for (const variant of variants) {
+        checks.push({
+          id: `ui:widget:${manifest.id}:${widget.id}${variant ? `:${variant}` : ''}`,
+          titleKey: variant ? 'diagnose.check.widgetRenderVariant' : 'diagnose.check.widgetRender',
+          titleVars: { tool: manifest.id, widget: widget.id, ...(variant ? { variant } : {}) },
+          category: 'ui',
+          run: () => renderWidgetProbe(factory, widget.id, widget.defaultSize, variant),
+        });
+      }
     }
   }
   return checks;
@@ -270,6 +280,17 @@ function themeRoundtripCheck(): DiagnoseCheck {
     titleKey: 'diagnose.check.themeRoundtrip',
     category: 'ui',
     async run() {
+      // `--accent` is defined by the app stylesheet (layer 2), not inline by
+      // applyTheme. Without a loaded stylesheet — jsdom in CI — it resolves
+      // empty for EVERY theme, which reads as "all themes broken". Probe an
+      // unrelated stylesheet token first so the environment limit is reported
+      // as such instead of as 20 false failures.
+      const styleSheetLoaded =
+        getComputedStyle(document.documentElement).getPropertyValue('--space-3').trim() !== '';
+      if (!styleSheetLoaded) {
+        return { status: 'warn', detail: tt('diagnose.detail.noStylesheet') };
+      }
+
       const { themeId, accentToken } = useAppStore.getState();
       const broken: string[] = [];
       try {

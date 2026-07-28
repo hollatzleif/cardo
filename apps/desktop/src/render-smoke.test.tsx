@@ -243,28 +243,208 @@ afterEach(() => {
   expect(messages, `console.error during test:\n${messages.join('\n')}`).toEqual([]);
 });
 
-/* ── Every tool widget renders offline ──────────────────────────────────── */
+/* ── Every tool widget renders offline, in every declared variant ───────── */
+
+/**
+ * Something the user can actually operate. `:not([disabled])` is the whole
+ * point: the shipped empty-wheel bug rendered a hint plus a DISABLED action
+ * button, so "has a button" would have passed it.
+ */
+const AFFORDANCE_SELECTOR = [
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'textarea:not([disabled])',
+  'select:not([disabled])',
+  '[role="button"]',
+  'details > summary',
+  'a[href]',
+].join(', ');
+
+/**
+ * Views that are read-outs by design and will never offer a control.
+ * Verified: neither tool contains a single `<button>` or `onClick` anywhere.
+ * Adding to this list asserts the same about a new view.
+ */
+const DISPLAY_ONLY: ReadonlySet<string> = new Set<string>([
+  'clock:main:digital',
+  'clock:main:analog',
+  'clock:main:minimal',
+  'clock:main:words',
+  'clock:main:mono',
+  'today:main:standard',
+  'today:main:compact',
+  'today:main:agenda',
+]);
+
+/**
+ * KNOWN GAP — this list should shrink, never grow.
+ *
+ * These tools DO have controls, but with no data yet the view is a dead end:
+ * it states there is nothing here and offers no way to create the first
+ * entry. That is exactly the bug shipped in the random picker (an empty wheel
+ * with no way to enter options) and in the flashcards widget — the user hits
+ * it, not the developer, because the developer's install always has data.
+ *
+ * Each entry is a UX defect waiting to be fixed, not an accepted design.
+ */
+const EMPTY_STATE_NO_ACTION: ReadonlySet<string> = new Set<string>([
+  'assistant:main:classic', // "set one up in Settings" — but no button that goes there
+  'habits:main:week-grid',
+  'habits:main:streaks',
+  'stats:main:heatmap',
+  'stats:main:numbers',
+  'countdown:main:big',
+  'countdown:main:ring',
+  'decision-log:main:detail',
+  'decision-log:main:compact',
+  'okr:main:compact',
+  'okr:main:single-focus',
+  'color-tool:main:palette',
+]);
+
+function affordanceKey(toolId: string, widgetId: string, variant?: string): string {
+  return `${toolId}:${widgetId}:${variant ?? '-'}`;
+}
 
 describe('tool widgets render without crashing (network down)', () => {
   for (const [toolId, manifest] of manifests) {
     for (const widget of manifest.widgets) {
-      it(`${toolId}:${widget.id}`, async () => {
-        const tool = liveTools.get(toolId);
-        expect(tool, `tool "${toolId}" must be instantiated`).toBeDefined();
-        const Widget = tool!.Widget;
-        const { container, unmount } = await render(
-          <Widget
-            instanceId={`smoke-${toolId}-${widget.id}`}
-            widgetId={widget.id}
-            size={widget.defaultSize}
-            editing={false}
-          />,
-        );
-        expect(container.firstChild, 'widget rendered nothing at all').not.toBeNull();
-        await unmount();
+      // The production frame passes `variant` (WidgetFrame.tsx), and 36 of 48
+      // tools branch on it — so mounting only the default left the majority of
+      // rendering paths untested.
+      const variants: Array<string | undefined> = widget.variants.length
+        ? [...widget.variants]
+        : [undefined];
+
+      for (const variant of variants) {
+        const name = variant ? `${toolId}:${widget.id}:${variant}` : `${toolId}:${widget.id}`;
+        it(name, async () => {
+          const tool = liveTools.get(toolId);
+          expect(tool, `tool "${toolId}" must be instantiated`).toBeDefined();
+          const Widget = tool!.Widget;
+          const { container, unmount } = await render(
+            <Widget
+              instanceId={`smoke-${toolId}-${widget.id}-${variant ?? 'default'}`}
+              widgetId={widget.id}
+              variant={variant}
+              size={widget.defaultSize}
+              editing={false}
+            />,
+          );
+          expect(container.firstChild, 'widget rendered nothing at all').not.toBeNull();
+
+          const key = affordanceKey(toolId, widget.id, variant);
+          const affordances = container.querySelectorAll(AFFORDANCE_SELECTOR).length;
+
+          if (DISPLAY_ONLY.has(key) || EMPTY_STATE_NO_ACTION.has(key)) {
+            // Ratchet: the moment a listed view gains a control, this fails and
+            // forces the entry out of the list. Without it the lists would
+            // silently outlive the problems they describe.
+            expect(
+              affordances,
+              `"${name}" is listed as having no operable control, but renders ` +
+                `${affordances}. Remove it from DISPLAY_ONLY / EMPTY_STATE_NO_ACTION.`,
+            ).toBe(0);
+          } else {
+            expect(
+              affordances,
+              `"${name}" rendered no operable control — the user would be stuck. ` +
+                `If the view is a pure read-out, add "${key}" to DISPLAY_ONLY. ` +
+                `If it is an empty state that needs a way forward, fix it (preferred) ` +
+                `or add it to EMPTY_STATE_NO_ACTION.\n` +
+                `Rendered: ${container.innerHTML.replace(/ style="[^"]*"/g, '').slice(0, 300)}`,
+            ).toBeGreaterThan(0);
+          }
+
+          await unmount();
+        });
+      }
+    }
+  }
+});
+
+/**
+ * The frame now resolves `widget.variant ?? variants[0]` and passes that to
+ * the widget, so what the picker displays and what renders can no longer
+ * disagree. That only holds if the FIRST declared variant really is the view a
+ * widget shows when given none — otherwise the fix would silently change which
+ * view opens by default.
+ *
+ * Structure only (tags + classes), not text: clocks and counters legitimately
+ * render different characters on every tick.
+ */
+function structure(el: HTMLElement): string {
+  return [...el.querySelectorAll('*')]
+    .map((e) => `${e.tagName}.${typeof e.className === 'string' ? e.className : ''}`)
+    .join('|');
+}
+
+describe('the first declared variant is the default view', () => {
+  for (const [toolId, manifest] of manifests) {
+    for (const widget of manifest.widgets) {
+      if (widget.variants.length === 0) continue;
+      const first = widget.variants[0];
+
+      it(`${toolId}:${widget.id} → "${first}"`, async () => {
+        const Widget = liveTools.get(toolId)!.Widget;
+        const mount = async (variant?: string) => {
+          const { container, unmount } = await render(
+            <Widget
+              instanceId={`order-${toolId}-${widget.id}-${variant ?? 'default'}`}
+              widgetId={widget.id}
+              variant={variant}
+              size={widget.defaultSize}
+              editing={false}
+            />,
+          );
+          const shape = structure(container);
+          await unmount();
+          return shape;
+        };
+
+        const withoutVariant = await mount(undefined);
+        const withFirst = await mount(first);
+
+        expect(
+          withFirst,
+          `"${toolId}:${widget.id}" renders a different view for variant "${first}" than ` +
+            `for no variant at all. The manifest's variant order must start with the ` +
+            `widget's own default, or the picker will open a different view than before.`,
+        ).toBe(withoutVariant);
       });
     }
   }
+});
+
+describe('the affordance exemption lists stay honest', () => {
+  const declared = new Set<string>();
+  for (const [toolId, manifest] of manifests) {
+    for (const widget of manifest.widgets) {
+      const variants: Array<string | undefined> = widget.variants.length
+        ? [...widget.variants]
+        : [undefined];
+      for (const variant of variants) declared.add(affordanceKey(toolId, widget.id, variant));
+    }
+  }
+
+  it('reference only variants that actually exist', () => {
+    // A renamed or removed variant would otherwise leave a dead entry behind,
+    // silently exempting nothing while looking like it still covers something.
+    const stale = [...DISPLAY_ONLY, ...EMPTY_STATE_NO_ACTION].filter((k) => !declared.has(k));
+    expect(stale, `stale entries: ${stale.join(', ')}`).toEqual([]);
+  });
+
+  it('do not overlap', () => {
+    const both = [...DISPLAY_ONLY].filter((k) => EMPTY_STATE_NO_ACTION.has(k));
+    expect(both, `listed twice: ${both.join(', ')}`).toEqual([]);
+  });
+
+  it('cover a minority of all variants', () => {
+    // A blunt guard against the lists quietly becoming the norm: if more than
+    // a third of all views are exempt, the assertion has stopped meaning much.
+    const exempt = DISPLAY_ONLY.size + EMPTY_STATE_NO_ACTION.size;
+    expect(exempt / declared.size).toBeLessThan(0.34);
+  });
 });
 
 /* ── Surfaces ───────────────────────────────────────────────────────────── */

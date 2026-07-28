@@ -408,10 +408,15 @@ function ClaudeStatus({
 }) {
   const { t } = useTranslation();
   const installed = check?.installed === true;
+  // An installed but logged-out CLI is NOT a working setup: every request
+  // fails. Showing it green was the reason the assistant died mid-demo with
+  // no warning anywhere in the app.
+  const loggedOut = installed && check?.loggedIn === false;
+  const usable = installed && !loggedOut;
   return (
     <div className="as-claude-status">
       <div className="as-claude-status__line">
-        <span className={installed ? 'as-claude-status__ok' : 'as-claude-status__missing'}>
+        <span className={usable ? 'as-claude-status__ok' : 'as-claude-status__missing'}>
           {installed
             ? check?.version
               ? t('assistant.claude.detected', { version: check.version })
@@ -422,6 +427,9 @@ function ClaudeStatus({
           {t('assistant.claude.recheck')}
         </Button>
       </div>
+      {loggedOut && (
+        <p className="as-claude-status__missing">{t('assistant.claude.loggedOut')}</p>
+      )}
       {!installed && (
         <details className="as-claude-guide">
           <summary>{t('assistant.claude.guideTitle')}</summary>

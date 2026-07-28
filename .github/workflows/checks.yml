@@ -1,0 +1,146 @@
+# The single definition of "green". Called by ci.yml on every push/PR AND by
+# release.yml before it builds anything, so a tag can never ship code that has
+# not passed exactly these checks.
+#
+# Runs ONLY on Linux – macOS minutes count 10x in a private repo, so macOS is
+# reserved for release builds.
+name: Checks
+
+on:
+  workflow_call:
+    inputs:
+      full:
+        description: >-
+          Run every job unconditionally, skipping the "did Rust change?"
+          shortcut. Set by the release path: a release must verify the whole
+          tree, not just what the last commit touched.
+        type: boolean
+        default: false
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (eslint + stylelint + token guard)
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # Includes the headless diagnose run (apps/desktop/src/diagnose/
+      # headless.test.ts): 400+ self-tests that previously only ever ran when
+      # someone clicked the button in Settings → Diagnostics.
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Consistency checks (i18n, themes, manifests)
+        run: |
+          pnpm check:i18n
+          pnpm check:themes
+          pnpm check:manifests
+
+      - name: Website build
+        run: pnpm --filter @cardo/website build
+
+      - name: Poll worker security tests
+        run: node --test server/polls-worker/test/*.test.mjs
+
+  # Separate from `rust` below: cardo-doctor links no Tauri, no WebKit and no
+  # llama.cpp, so it builds in seconds and can run unconditionally. It is the
+  # binary behind `pnpm preflight`, and the one place where "works on a bare
+  # machine" has to be true — precisely when it matters most.
+  doctor:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # The ONLY system dependency this crate has. On Linux the keychain check
+      # goes through keyring → dbus-secret-service → libdbus-sys, whose build
+      # script needs the dbus headers via pkg-config. The `rust` job below gets
+      # them incidentally with the WebKit packages; this job installs nothing
+      # else, so it has to ask for them explicitly.
+      - name: Install dbus headers (for keyring)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libdbus-1-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo test -p cardo-doctor
+        run: cargo test -p cardo-doctor
+
+      # The failure mode this guards: the doctor panics or errors on a machine
+      # with no Cardo installation, no keychain and no Claude CLI. Every
+      # capability must degrade to "skipped" and the run must still exit 0.
+      - name: Bare-environment smoke run
+        run: cargo run -q -p cardo-doctor -- --ci --json
+
+  rust:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the change detection below needs a real merge base.
+          fetch-depth: 0
+
+      - name: Detect Rust changes
+        id: rust-changes
+        env:
+          FULL: ${{ inputs.full }}
+        run: |
+          set -euo pipefail
+          if [ "$FULL" = "true" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Full run requested – skipping change detection."
+            exit 0
+          fi
+          # Compare against the MERGE BASE, not HEAD^. `git diff HEAD^ HEAD`
+          # sees only the last commit, so a multi-commit PR or a merge commit
+          # could silently skip cargo test and clippy entirely.
+          if [ -n "${GITHUB_BASE_REF:-}" ]; then
+            git fetch --no-tags --depth=0 origin "$GITHUB_BASE_REF"
+            BASE=$(git merge-base "origin/$GITHUB_BASE_REF" HEAD)
+          else
+            BASE=$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)
+          fi
+          echo "Comparing against $BASE"
+          if git diff --name-only "$BASE" HEAD \
+             | grep -qE '\.(rs|toml|sql)$|^\.github/workflows/(ci|checks)\.yml$'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Tauri system dependencies
+        if: steps.rust-changes.outputs.changed == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.rust-changes.outputs.changed == 'true'
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        if: steps.rust-changes.outputs.changed == 'true'
+
+      - name: cargo test
+        if: steps.rust-changes.outputs.changed == 'true'
+        run: cargo test --workspace
+
+      - name: cargo clippy
+        if: steps.rust-changes.outputs.changed == 'true'
+        run: cargo clippy --workspace -- -D warnings

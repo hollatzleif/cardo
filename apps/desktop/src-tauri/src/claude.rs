@@ -10,6 +10,8 @@ use std::time::Duration;
 use serde_json::{json, Value};
 use tauri::Manager;
 
+use cardo_doctor::claude::{find_claude_cli, parse_version};
+
 type CmdResult<T> = Result<T, String>;
 
 /// Models the webview may request; passed through to `--model` as given.
@@ -104,17 +106,6 @@ fn build_claude_args(
     args
 }
 
-/// Leading version token of `claude --version` output,
-/// e.g. "2.1.209 (Claude Code)" → "2.1.209".
-fn parse_version(raw: &str) -> Option<String> {
-    let token = raw.split_whitespace().next()?;
-    if token.starts_with(|c: char| c.is_ascii_digit()) {
-        Some(token.to_string())
-    } else {
-        None
-    }
-}
-
 /// The CLI's `-p --output-format json` output is an object with a
 /// "result" string field. Returns None if the shape doesn't match.
 fn extract_result(stdout: &str) -> Option<String> {
@@ -144,29 +135,9 @@ fn auth_hint(stderr: &str) -> &'static str {
 
 /* ── CLI discovery ────────────────────────────────────────────────────── */
 
-/// First existing candidate: `which claude`, then the well-known install
-/// locations (GUI apps often run with a minimal PATH, so `which` alone
-/// is not enough).
-fn find_claude_cli() -> Option<PathBuf> {
-    if let Ok(out) = std::process::Command::new("which").arg("claude").output() {
-        if out.status.success() {
-            let found = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            if !found.is_empty() {
-                let path = PathBuf::from(found);
-                if path.is_file() {
-                    return Some(path);
-                }
-            }
-        }
-    }
-    let mut candidates = Vec::new();
-    if let Some(home) = std::env::var_os("HOME") {
-        candidates.push(PathBuf::from(home).join(".local").join("bin").join("claude"));
-    }
-    candidates.push(PathBuf::from("/usr/local/bin/claude"));
-    candidates.push(PathBuf::from("/opt/homebrew/bin/claude"));
-    candidates.into_iter().find(|p| p.is_file())
-}
+// `find_claude_cli` and `parse_version` live in `cardo-doctor` so the app and
+// the headless preflight resolve the CLI identically – see the module docs
+// there. Imported at the top of this file.
 
 /* ── Commands ─────────────────────────────────────────────────────────── */
 
@@ -189,14 +160,42 @@ pub async fn claude_check() -> Value {
         Ok(Ok(out)) if out.status.success() => out,
         _ => return not_installed,
     };
-    match parse_version(&String::from_utf8_lossy(&output.stdout)) {
-        Some(version) => json!({
-            "installed": true,
-            "version": version,
-            "path": path.to_string_lossy(),
-        }),
-        None => not_installed,
-    }
+    let Some(version) = parse_version(&String::from_utf8_lossy(&output.stdout)) else {
+        return not_installed;
+    };
+
+    // `--version` succeeds whether or not the CLI is logged in, so on its own
+    // it proves nothing about usability — that is exactly how the settings
+    // badge came to show a green "CLI detected" while every assistant request
+    // failed. `auth status --json` is a local credential lookup: no API call,
+    // no cost. Run on a blocking thread because it uses std::process.
+    let auth_path = path.clone();
+    let auth = tokio::task::spawn_blocking(move || cardo_doctor::claude::auth_status(&auth_path))
+        .await
+        .unwrap_or_else(|e| cardo_doctor::claude::AuthState::Unknown(e.to_string()));
+
+    let (logged_in, auth_detail) = match auth {
+        cardo_doctor::claude::AuthState::LoggedIn { method, subscription } => {
+            let detail = match (method, subscription) {
+                (Some(m), Some(s)) => format!("{m} ({s})"),
+                (Some(m), None) => m,
+                _ => "logged in".to_string(),
+            };
+            (Some(true), detail)
+        }
+        cardo_doctor::claude::AuthState::LoggedOut => (Some(false), "not logged in".to_string()),
+        // Deliberately null, not false: an undeterminable state must not be
+        // rendered as "logged out" — a false red is as bad as a false green.
+        cardo_doctor::claude::AuthState::Unknown(why) => (None, why),
+    };
+
+    json!({
+        "installed": true,
+        "version": version,
+        "path": path.to_string_lossy(),
+        "loggedIn": logged_in,
+        "authDetail": auth_detail,
+    })
 }
 
 /// Dirs the workspace must never equal or live under (raw + canonical,
@@ -458,16 +457,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn version_parsing() {
-        // Exactly the observed format of claude --version.
-        assert_eq!(parse_version("2.1.209 (Claude Code)").as_deref(), Some("2.1.209"));
-        assert_eq!(parse_version("  2.1.209 (Claude Code)\n").as_deref(), Some("2.1.209"));
-        assert_eq!(parse_version("1.0.0").as_deref(), Some("1.0.0"));
-        assert_eq!(parse_version(""), None);
-        assert_eq!(parse_version("   \n"), None);
-        assert_eq!(parse_version("error: not found"), None);
-    }
+    // `version_parsing` moved to crates/cardo-doctor/src/claude.rs together
+    // with the function it covers.
 
     #[test]
     fn result_extraction() {

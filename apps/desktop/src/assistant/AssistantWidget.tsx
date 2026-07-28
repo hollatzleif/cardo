@@ -393,9 +393,10 @@ export function AssistantWidget(props: WidgetProps) {
   }
 
   function errText(err: unknown): string {
-    return String(
-      t(api.isInsufficientRam(err) ? 'assistant.widget.ramError' : 'assistant.widget.generateError'),
-    );
+    // Rust computes a specific, actionable cause and sends it; this used to
+    // throw all of that away and show one generic sentence for everything
+    // except a RAM shortage. Now each cause keeps its own next step.
+    return String(t(api.ASSISTANT_ERROR_KEYS[api.classifyAssistantError(err)]));
   }
 
   function speakerName(speakerId?: string): string {

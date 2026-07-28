@@ -53,6 +53,17 @@ fn client_secret() -> String {
         .unwrap_or_else(|_| DEFAULT_CLIENT_SECRET.to_string())
 }
 
+/// Whether this build can talk to Google's token endpoint at all.
+///
+/// Without the secret every refresh is rejected with "client_secret is
+/// missing" — a locally built Cardo therefore cannot sync via Drive, however
+/// correct its settings look. Reported by the `env:drive-credentials` check so
+/// this is visible instead of failing silently in the background loop.
+/// Returns only a boolean; the secret itself never leaves this module.
+pub fn has_client_secret() -> bool {
+    !client_secret().is_empty()
+}
+
 fn refresh_entry() -> Result<keyring::Entry, String> {
     keyring::Entry::new(KEYCHAIN_SERVICE, KEYCHAIN_REFRESH_ENTRY).map_err(|e| e.to_string())
 }

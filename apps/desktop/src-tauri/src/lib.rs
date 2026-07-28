@@ -81,6 +81,32 @@ async fn diagnose_core(state: State<'_, AppState>) -> CmdResult<Vec<CoreCheckRes
     Ok(cardo_core::diagnose::run_core_checks(&state.app_data_dir).await)
 }
 
+/// Environment checks against the REAL installation — the only checks that
+/// look at live state instead of a scratch copy. Shared implementation with
+/// the headless `cardo-doctor` binary behind `pnpm preflight`, so the panel
+/// and the pre-demo command can never disagree.
+///
+/// Passing `tauri_data_dir` lets the check compare Tauri's own path resolution
+/// against the doctor's derivation; drift there would make `pnpm preflight`
+/// silently inspect a directory the app never uses.
+#[tauri::command]
+async fn diagnose_env(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> CmdResult<Vec<CoreCheckResult>> {
+    let ctx = cardo_doctor::EnvContext {
+        data_dir: state.app_data_dir.clone(),
+        tauri_data_dir: Some(state.app_data_dir.clone()),
+        expect_version: Some(app.package_info().version.to_string()),
+        self_pid: Some(std::process::id()),
+        // Only the app knows what it was compiled with.
+        drive_secret_present: Some(sync_gdrive::has_client_secret()),
+        skip: Vec::new(),
+        ci: false,
+    };
+    Ok(cardo_doctor::run_env_checks(&ctx).await)
+}
+
 #[tauri::command]
 fn app_info(app: tauri::AppHandle, state: State<'_, AppState>) -> Value {
     serde_json::json!({
@@ -336,7 +362,29 @@ fn layout_read_file(path: String) -> CmdResult<String> {
 }
 
 pub fn run() {
-    let builder = tauri::Builder::default()
+    let builder = tauri::Builder::default();
+
+    // MUST be the first plugin registered — Tauri requires it, and a second
+    // instance has to be turned away before it can open the database.
+    //
+    // Why this exists: two instances share one cardo.db. `max_connections(1)`
+    // in SqliteStorage serialises writes only WITHIN a process, and SyncConfig
+    // is rewritten wholesale from an in-memory cache — so a stale second
+    // instance silently reverts sync settings. That is the "sync suddenly
+    // stopped working" failure, and it cost a demo.
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+        // Someone launched Cardo again: surface the window that already exists
+        // instead of quietly starting a second copy.
+        use tauri::Manager;
+        if let Some(window) = app.webview_windows().values().next() {
+            let _ = window.unminimize();
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
+    }));
+
+    let builder = builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init());
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -372,6 +420,14 @@ pub fn run() {
                 }
             };
             let identity = LicenseKeyIdentity::new(storage.device_id());
+
+            // Restore the notes folder BEFORE the sync loop starts. It used to
+            // be in-memory only, so every launch began with no folder: the
+            // assistant silently got a different workspace than the user had
+            // chosen, and sync_files::sweep skipped the notes lane entirely.
+            let notes_state: tauri::State<'_, notes::NotesState> = app.state();
+            notes::restore_folder(&notes_state, &app_data_dir);
+
             app.manage(AppState { storage, identity, app_data_dir });
             sync::start_background_loop(app.handle().clone());
             Ok(())
@@ -382,6 +438,7 @@ pub fn run() {
             storage_delete,
             storage_query,
             diagnose_core,
+            diagnose_env,
             app_info,
             export_report,
             notes::notes_set_folder,

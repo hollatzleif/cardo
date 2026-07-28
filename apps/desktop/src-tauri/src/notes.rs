@@ -12,6 +12,45 @@ pub struct NotesState {
     dir: Mutex<Option<PathBuf>>,
 }
 
+/// Where the chosen folder is remembered between launches.
+///
+/// It used to live only in the `Mutex` above, which meant every restart reset
+/// it to `None`. The consequences were silent and confusing: the assistant got
+/// a different workspace than the user had picked, and `sync_files::sweep`
+/// skipped the entire notes lane because it saw no folder — so notes simply
+/// stopped syncing until someone re-picked the folder by hand.
+const FOLDER_FILE: &str = "notes-folder.json";
+
+fn folder_file(app_data_dir: &Path) -> PathBuf {
+    app_data_dir.join(FOLDER_FILE)
+}
+
+fn persist_folder(app_data_dir: &Path, dir: &Path) {
+    let payload = serde_json::json!({ "path": dir.to_string_lossy() });
+    // Best effort: failing to remember the folder must never break setting it.
+    let _ = std::fs::write(folder_file(app_data_dir), payload.to_string());
+}
+
+/// Reads the remembered folder back. Returns `None` if nothing was stored, the
+/// file is unreadable, or the folder has since been deleted or moved — a stale
+/// path would be worse than none, because every note operation would then fail
+/// against a directory that no longer exists.
+fn read_persisted_folder(app_data_dir: &Path) -> Option<PathBuf> {
+    let raw = std::fs::read_to_string(folder_file(app_data_dir)).ok()?;
+    let parsed: serde_json::Value = serde_json::from_str(&raw).ok()?;
+    let path = PathBuf::from(parsed.get("path")?.as_str()?);
+    path.is_dir().then_some(path)
+}
+
+/// Restores the notes folder at startup. Call once during setup, before the
+/// sync loop starts.
+pub fn restore_folder(state: &NotesState, app_data_dir: &Path) -> Option<PathBuf> {
+    let dir = read_persisted_folder(app_data_dir)?;
+    let mut guard = state.dir.lock().ok()?;
+    *guard = Some(dir.clone());
+    Some(dir)
+}
+
 #[derive(serde::Serialize)]
 pub struct NoteMeta {
     pub name: String,
@@ -51,16 +90,28 @@ fn note_path(dir: &Path, name: &str) -> CmdResult<PathBuf> {
     Ok(dir.join(name))
 }
 
-#[tauri::command]
-pub fn notes_set_folder(state: tauri::State<'_, NotesState>, path: String) -> CmdResult<String> {
-    let dir = PathBuf::from(&path);
+/// Core of `notes_set_folder`, separated so the default-folder command and the
+/// tests can reach it without an AppHandle.
+fn set_folder_inner(state: &NotesState, app_data_dir: &Path, path: &str) -> CmdResult<String> {
+    let dir = PathBuf::from(path);
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let canonical = dir.canonicalize().map_err(|e| e.to_string())?;
     if !canonical.is_dir() {
         return Err(format!("not a directory: {path}"));
     }
     *state.dir.lock().map_err(|_| "notes state poisoned".to_string())? = Some(canonical.clone());
+    persist_folder(app_data_dir, &canonical);
     Ok(canonical.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn notes_set_folder(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, NotesState>,
+    path: String,
+) -> CmdResult<String> {
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    set_folder_inner(&state, &app_data_dir, &path)
 }
 
 /// Zero-setup default: a visible "Cardo Notes" folder in the user's
@@ -75,7 +126,12 @@ pub fn notes_default_folder(
         .document_dir()
         .or_else(|_| app.path().app_data_dir())
         .map_err(|e| e.to_string())?;
-    notes_set_folder(state, base.join("Cardo Notes").to_string_lossy().to_string())
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    set_folder_inner(
+        &state,
+        &app_data_dir,
+        &base.join("Cardo Notes").to_string_lossy(),
+    )
 }
 
 #[tauri::command]
@@ -427,6 +483,61 @@ pub fn files_open_external(state: tauri::State<'_, NotesState>, name: String) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_notes_folder_survives_a_restart() {
+        // The bug this covers: NotesState was in-memory only, so every launch
+        // started with no folder. Claude then got a different workspace than
+        // the user picked, and the notes sync lane was skipped entirely.
+        let app_data = tempfile::tempdir().unwrap();
+        let notes = tempfile::tempdir().unwrap();
+
+        let first = NotesState::default();
+        let stored =
+            set_folder_inner(&first, app_data.path(), &notes.path().to_string_lossy()).unwrap();
+
+        // A fresh state stands in for the next launch.
+        let after_restart = NotesState::default();
+        assert_eq!(current_folder(&after_restart), None, "fresh state starts empty");
+
+        let restored = restore_folder(&after_restart, app_data.path());
+        assert!(restored.is_some(), "folder was not restored");
+        assert_eq!(
+            current_folder(&after_restart).unwrap().to_string_lossy(),
+            stored
+        );
+    }
+
+    #[test]
+    fn a_folder_that_no_longer_exists_is_not_restored() {
+        // A stale path is worse than none: every note operation would fail
+        // against a directory that is gone, instead of prompting for a new one.
+        let app_data = tempfile::tempdir().unwrap();
+        let notes = tempfile::tempdir().unwrap();
+        let state = NotesState::default();
+        set_folder_inner(&state, app_data.path(), &notes.path().to_string_lossy()).unwrap();
+
+        drop(notes); // user deleted or moved the folder
+
+        let after_restart = NotesState::default();
+        assert_eq!(restore_folder(&after_restart, app_data.path()), None);
+        assert_eq!(current_folder(&after_restart), None);
+    }
+
+    #[test]
+    fn restoring_without_a_stored_folder_is_a_no_op() {
+        let app_data = tempfile::tempdir().unwrap();
+        let state = NotesState::default();
+        assert_eq!(restore_folder(&state, app_data.path()), None);
+    }
+
+    #[test]
+    fn a_corrupt_store_does_not_panic() {
+        let app_data = tempfile::tempdir().unwrap();
+        std::fs::write(folder_file(app_data.path()), b"not json at all").unwrap();
+        let state = NotesState::default();
+        assert_eq!(restore_folder(&state, app_data.path()), None);
+    }
 
     #[test]
     fn file_kind_classifies_by_extension() {

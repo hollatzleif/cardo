@@ -47,6 +47,11 @@ async function bootstrap(): Promise<void> {
   registerWorkspaceCommands(host);
   const { registerSyncCommands } = await import('./host/syncCommands');
   registerSyncCommands(host);
+  // Start listening to the background sync lane. Without this its errors go
+  // nowhere: Rust emits sync:error/done/revoked/join-denied and, until now,
+  // nothing in the webview was listening at all.
+  const { initSyncStatus } = await import('./sync/syncStatus');
+  initSyncStatus();
   const { registerLayoutCommands } = await import('./host/layoutCommands');
   registerLayoutCommands(host);
 

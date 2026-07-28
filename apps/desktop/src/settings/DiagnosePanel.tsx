@@ -5,6 +5,7 @@ import { DIAGNOSE_CATEGORIES, type DiagnoseReport, type DiagnoseResult } from '@
 import { exportReport, runFullDiagnose } from '../diagnose/runDiagnose';
 
 const STATUS_ICON = { pass: '✅', warn: '⚠️', fail: '❌' } as const;
+const SKIPPED_ICON = '⏭️';
 
 function ResultRows({ results }: { results: DiagnoseResult[] }) {
   const { t } = useTranslation();
@@ -13,7 +14,7 @@ function ResultRows({ results }: { results: DiagnoseResult[] }) {
       <tbody>
         {results.map((r) => (
           <tr key={r.id}>
-            <td>{STATUS_ICON[r.status]}</td>
+            <td>{r.skipped ? SKIPPED_ICON : STATUS_ICON[r.status]}</td>
             <td>{t(r.titleKey, r.titleVars)}</td>
             <td className="c-muted">{r.detail ?? ''}</td>
             <td className="c-muted diagnose-panel__ms">{r.durationMs} ms</td>
@@ -86,6 +87,11 @@ export function DiagnosePanel() {
               })}
             </strong>
           </p>
+          {report.summary.skipped > 0 && (
+            <p className="c-muted">
+              {SKIPPED_ICON} {t('diagnose.skippedNote', { count: report.summary.skipped })}
+            </p>
+          )}
           {DIAGNOSE_CATEGORIES.map((category) => {
             const rows = report.results.filter((r) => r.category === category);
             if (rows.length === 0) return null;
@@ -95,9 +101,9 @@ export function DiagnosePanel() {
                   {t(`diagnose.category.${category}`)}{' '}
                   <span className="c-muted">
                     {t('diagnose.summary', {
-                      passed: rows.filter((r) => r.status === 'pass').length,
-                      warnings: rows.filter((r) => r.status === 'warn').length,
-                      failed: rows.filter((r) => r.status === 'fail').length,
+                      passed: rows.filter((r) => r.status === 'pass' && !r.skipped).length,
+                      warnings: rows.filter((r) => r.status === 'warn' && !r.skipped).length,
+                      failed: rows.filter((r) => r.status === 'fail' && !r.skipped).length,
                     })}
                   </span>
                 </h4>

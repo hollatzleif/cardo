@@ -78,6 +78,28 @@ for (const tool of tools) {
     if (!KEBAB.test(w.id ?? '')) fail(tool, `widget id "${w.id}" must be kebab-case`);
     if (!checkSize(w.defaultSize)) fail(tool, `widget "${w.id}": defaultSize must be integers 1–24`);
     if (!checkSize(w.minSize)) fail(tool, `widget "${w.id}": minSize must be integers 1–24`);
+
+    // Variants were previously unvalidated entirely: a typo produced a view
+    // the picker offered but no code handled, and nothing noticed.
+    if (w.variants !== undefined && !Array.isArray(w.variants)) {
+      fail(tool, `widget "${w.id}": variants must be an array`);
+      continue;
+    }
+    const variants = w.variants ?? [];
+    const seen = new Set();
+    for (const v of variants) {
+      if (!KEBAB.test(v ?? '')) fail(tool, `widget "${w.id}": variant "${v}" must be kebab-case`);
+      if (seen.has(v)) fail(tool, `widget "${w.id}": duplicate variant "${v}"`);
+      seen.add(v);
+      // The picker renders t(`tool.<id>.variant.<v>`); without the key the
+      // user sees the raw slug.
+      checkKey(tool, `tool.${m.id}.variant.${v}`, `widget "${w.id}" variant "${v}" label`);
+    }
+    // A single variant can never be switched away from – the picker only shows
+    // up at 2+, so a lone entry is always a mistake.
+    if (variants.length === 1) {
+      fail(tool, `widget "${w.id}": a single variant "${variants[0]}" is pointless (picker needs 2+)`);
+    }
   }
 
   for (const c of m.commands ?? []) {

@@ -1,5 +1,81 @@
 # Changelog
 
+## 1.2.0 — Cardo merkt selbst, wenn etwas nicht stimmt
+
+Bisher konnte Cardo prüfen, ob sein **Code** funktioniert – aber nicht, ob die
+**Installation auf deinem Rechner** gerade in Ordnung ist. Genau das ging
+mehrfach schief: der Assistent antwortete nicht, der Sync lief tagelang nicht
+mehr, und nichts in der App hat je darauf hingewiesen. Diese Version schließt
+diese Lücke.
+
+### Cardo läuft nur noch einmal
+- **Zweiter Start öffnet kein zweites Fenster mehr,** sondern holt das
+  vorhandene nach vorn. Zwei gleichzeitig laufende Instanzen teilen sich
+  dieselbe Datenbank – die ältere hat dabei still deine Sync-Einstellungen
+  zurückgesetzt. Das war die Ursache für „der Sync geht plötzlich nicht mehr“.
+
+### Sync sagt endlich Bescheid
+- **Fehlgeschlagene Hintergrund-Synchronisationen sind jetzt sichtbar.** Der
+  automatische Abgleich alle fünf Minuten meldete Fehler bisher an
+  niemanden – er konnte tagelang scheitern, während alles grün aussah. Jetzt
+  erscheint eine Warnung unter Einstellungen → Sync, und der Assistent kennt
+  den echten Zustand.
+- **Kein irreführendes „kein Schlüssel konfiguriert“ mehr:** Diese Meldung
+  erschien früher bei *jedem* Sync-Problem, auch wenn der Schlüssel längst
+  eingerichtet war. Jetzt steht dort, was tatsächlich schiefging.
+
+### Der Assistent sagt, was los ist
+- **Konkrete Fehlermeldungen statt „Da ist etwas schiefgelaufen“.** Cardo
+  wusste intern längst, woran es lag – Modell nicht heruntergeladen, Anfrage zu
+  lang, Ordner nicht erlaubt, Engine nicht gestartet, nicht angemeldet – und
+  hat das dann in einen einzigen nichtssagenden Satz verwandelt. Jetzt bekommst
+  du zu jeder Ursache den passenden nächsten Schritt.
+- **Warnung, wenn Claude nicht angemeldet ist.** Die Einstellungen zeigten
+  „✓ Claude Code CLI erkannt“ auch dann, wenn man ausgeloggt war – die Prüfung
+  hatte den Anmeldestatus schlicht nie abgefragt. Jetzt steht dort ein
+  deutlicher Hinweis samt Anleitung.
+
+### Notizen
+- **Der gewählte Notizordner überlebt jetzt einen Neustart.** Er wurde vorher
+  nur im Arbeitsspeicher gehalten und bei jedem Start vergessen. Danach bekam
+  der Assistent still einen anderen Arbeitsordner als den eingestellten, und
+  die Notizen wurden gar nicht mehr mitsynchronisiert.
+
+### Ansichten
+- **Die Ansichts-Auswahl zeigt jetzt die Ansicht, die wirklich zu sehen ist.**
+  Bei den Karteikarten stand im Auswahlfeld „Lernen“, während die
+  Stapelübersicht angezeigt wurde.
+- **33 Ansichten hatten gar keinen Namen** und erschienen als technische
+  Kürzel wie `rate-board`. Alle Ansichten von Taschenrechner, Farben,
+  Währungen, Karteikarten, Stimmung, RSS, Gemeinsamen Ausgaben, Schlaf,
+  Schnipseln, Klangkulissen und Training heißen jetzt verständlich.
+
+### Neu: Rubrik „Umgebung“ in der Diagnose
+- Zehn Prüfungen, die sich deine **tatsächliche** Installation ansehen statt
+  einer Testkopie: läuft Cardo doppelt, ist die echte Datenbank gesund, ist
+  Claude angemeldet, wann lief der Sync zuletzt, passt die installierte
+  Version, ist genug Platz frei. Sie lesen nur und ändern nichts.
+- **Erkennt selbstgebaute Versionen ohne Google-Zugangsdaten.** Diese werden
+  beim Bauen fest eingesetzt; fehlen sie, kann der Drive-Sync sein Zugriffs-
+  Token nie erneuern und scheitert bei jedem Durchlauf – bisher lautlos.
+- Nicht anwendbare Prüfungen werden jetzt als **übersprungen** ausgewiesen
+  statt stillschweigend als bestanden zu zählen.
+
+### Unter der Haube
+- **Neuer Befehl `pnpm preflight`** (für die Entwicklung): beantwortet in
+  Sekunden, ob die Installation vorführbereit ist.
+- **Die komplette Diagnose läuft jetzt automatisch in der CI** – 403 Prüfungen,
+  die vorher nur auf Knopfdruck in den Einstellungen liefen und deshalb bei
+  keinem einzigen Release geprüft wurden.
+- **Kein Release mehr aus rotem Zustand.** Ein Versions-Tag hat bisher
+  *überhaupt keine* Prüfung ausgelöst; zwischen Tag und fertigem Installer lag
+  kein einziger Test. Jetzt muss der getaggte Stand vollständig grün sein, und
+  die Version muss in allen vier Manifesten übereinstimmen.
+- **Widget-Prüfungen verdreifacht:** 121 statt 49 Darstellungen, jede Ansicht
+  einzeln – und jede muss mindestens ein bedienbares Element zeigen. Die beiden
+  zuletzt ausgelieferten Anzeigefehler hätten die alte Prüfung bestanden.
+- 1403 Frontend- und 143 Rust-Tests.
+
 ## 1.1.3 — Zufallsrad: Optionen direkt im Widget
 
 ### Zufalls-Auswahl

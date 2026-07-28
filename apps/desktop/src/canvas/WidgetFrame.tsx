@@ -88,6 +88,11 @@ export function WidgetFrame({
   const Widget = tool.Widget;
   const decl = tool.manifest.widgets.find((d) => d.id === widget.widgetId);
   const variants = decl?.variants ?? [];
+  // The picker used to display `variants[0]` as selected while passing
+  // `undefined` to the widget, so the widget rendered its own default. On
+  // flashcards the dropdown said "Study" while the deck list was on screen.
+  // Resolving it once here keeps what is shown and what is rendered identical.
+  const activeVariant = widget.variant ?? variants[0];
   const min = { w: decl?.minSize.w ?? 1, h: decl?.minSize.h ?? 1 };
   const commit = (pos: GridPos): void => {
     void updateWidgetPositions([{ instanceId: widget.instanceId, ...pos }]);
@@ -127,7 +132,7 @@ export function WidgetFrame({
           {variants.length > 1 && (
             <select
               className="c-input widget-frame__variant"
-              value={widget.variant ?? variants[0]}
+              value={activeVariant}
               title={t('canvas.widgetVariant')}
               onChange={(e) => void setWidgetVariant(widget.instanceId, e.target.value)}
             >
@@ -151,7 +156,7 @@ export function WidgetFrame({
         <Widget
           instanceId={widget.instanceId}
           widgetId={widget.widgetId}
-          variant={widget.variant}
+          variant={activeVariant}
           size={{ w: widget.w, h: widget.h }}
           editing={editing}
         />

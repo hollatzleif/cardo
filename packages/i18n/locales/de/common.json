@@ -203,7 +203,9 @@
       "gdriveUnconfigured": "In diesem Build noch nicht verfügbar: Die Google-OAuth-App muss einmalig registriert werden (Entwickler-Schritt). Bis dahin: Ordner-Transport nutzen — gleiche Verschlüsselung, funktioniert sofort.",
       "undecryptable": "{{count}} Blöcke konnten NICHT entschlüsselt werden — der Schlüssel dieses Geräts passt nicht zu dem, der sie geschrieben hat. Vergleiche die Schlüssel-ID auf beiden Geräten.",
       "pushAll": "Alles erneut senden",
-      "pushAllHint": "Lädt deine komplette Historie neu hoch — nach einem Transport-Wechsel oder wenn einem Gerät Daten fehlen. Ungefährlich: Geräte ignorieren Blöcke, die sie schon kennen."
+      "pushAllHint": "Lädt deine komplette Historie neu hoch — nach einem Transport-Wechsel oder wenn einem Gerät Daten fehlen. Ungefährlich: Geräte ignorieren Blöcke, die sie schon kennen.",
+      "backgroundFailingTitle": "Hintergrund-Sync scheitert",
+      "backgroundFailingBody": "Die letzten {{count}} automatischen Sync-Durchläufe sind fehlgeschlagen. Meldung: {{message}} — deine Geräte gleichen sich gerade NICHT ab."
     }
   },
   "diagnose": {
@@ -217,7 +219,8 @@
       "fail": "Fehlgeschlagen"
     },
     "summary": "{{passed}} bestanden · {{warnings}} Warnungen · {{failed}} fehlgeschlagen",
-    "scratchNote": "Alle Prüfungen laufen gegen eine Wegwerf-Testdatenbank. Deine echten Daten bleiben unberührt.",
+    "scratchNote": "Bis auf die Rubrik „Umgebung“ laufen alle Prüfungen gegen eine Wegwerf-Testdatenbank – deine echten Daten bleiben unberührt. Die Umgebungs-Prüfungen schauen sich deine tatsächliche Installation an; sie lesen nur und ändern nichts.",
+    "skippedNote": "{{count}} Prüfung(en) übersprungen – auf diesem Gerät nicht anwendbar. Nicht als bestanden gewertet.",
     "check": {
       "dbReadWrite": "Datenbank les- und schreibbar",
       "dbQuery": "Datenbank-Abfragen funktionieren",
@@ -230,6 +233,7 @@
       "i18n": "Übersetzungen vollständig (EN/DE)",
       "storagePath": "App-Datenordner beschreibbar",
       "widgetRender": "Widget „{{widget}}“ von „{{tool}}“ wird dargestellt",
+      "widgetRenderVariant": "Ansicht „{{variant}}“ von „{{tool}}“ wird dargestellt",
       "commandForms": "Alle Befehlsformulare lassen sich aufbauen",
       "assistantCatalog": "Alle Werkzeuge sind für den Assistenten sichtbar",
       "tourAnchors": "Alle Tour-Schritte zeigen auf vorhandene Anker",
@@ -259,10 +263,21 @@
       "legalHosts": "Rechtsquellen kontaktieren nur ihre freigegebenen Hosts",
       "keyInKeychain": "Der OS-Schlüsselbund speichert den Sync-Schlüssel korrekt",
       "customThemes": "Alle eigenen Themes sind vollständig",
-      "netGoogleDrive": "Google-Drive-API erreichbar (Sync-Transport)"
+      "netGoogleDrive": "Google-Drive-API erreichbar (Sync-Transport)",
+      "envDataDir": "App-Datenordner gefunden und beschreibbar",
+      "envDbLive": "Deine echte Datenbank ist gesund und aktuell",
+      "envSingleInstance": "Cardo läuft nur einmal (zwei Instanzen zerschießen den Sync)",
+      "envClaudeCli": "Claude-Programm auf dem Gerät gefunden",
+      "envClaudeAuth": "Claude ist angemeldet (sonst versagt der Assistent)",
+      "envKeychain": "System-Schlüsselbund erreichbar",
+      "envSyncConfig": "Sync war zuletzt vor kurzem aktiv",
+      "envInstalledApp": "Installierte App entspricht dieser Version",
+      "envDiskSpace": "Genug freier Speicherplatz",
+      "envDriveCredentials": "Dieser Build kann sich bei Google Drive anmelden"
     },
     "category": {
       "core": "Kern",
+      "environment": "Umgebung",
       "tools": "Tools",
       "ui": "Oberfläche",
       "network": "Netzwerk",
@@ -276,7 +291,8 @@
     },
     "detail": {
       "browserSkipped": "nur in der Desktop-App verfügbar – übersprungen",
-      "noDesignDoc": "noch keine Design-Einstellungen gespeichert – übersprungen"
+      "noDesignDoc": "noch keine Design-Einstellungen gespeichert – übersprungen",
+      "noStylesheet": "kein Stylesheet geladen (Testumgebung) – übersprungen"
     }
   },
   "market": {
@@ -2189,6 +2205,11 @@
         "how": "Erstelle Karten (in Stapeln geordnet) und lerne die fälligen einzeln: Antwort aufdecken, dann bewerten mit Nochmal/Schwer/Gut/Leicht. Der Scheduler — standardmäßig FSRS, klassisches SM-2 optional — terminiert jede Karte so, dass du sie kurz vor dem Vergessen wiederholst. Die Gitter-Variante listet Stapel und hat einen Karten-Browser mit Anki-Suche (deck:, tag:, is:due …); die Statistik-Variante zeigt Zählungen, eine Fälligkeits-Prognose, Retention und eine Aktivitäts-Heatmap. Stapel lassen sich als Anki-.apkg importieren/exportieren.",
         "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
         "bestFor": "Vokabeln, Prüfungsstoff, alles fürs Langzeitgedächtnis — ein paar Minuten fällige Karten am Tag schlagen jedes Pauken."
+      },
+      "variant": {
+        "study": "Lernen",
+        "grid": "Verwalten",
+        "stats": "Statistik"
       }
     },
     "mood": {
@@ -2240,6 +2261,11 @@
         "how": "Einmal am Tag eine Frage beantworten: Wie geht es dir, auf einer Skala von 1–5 (Emoji oder Zahlen), plus optional eine Zeile Notiz. Die Kalender-Variante färbt deine Monate ein, Trend zeichnet die 14-Tage-Kurve mit Durchschnitt, und Serien belohnen das Dranbleiben.",
         "setup": "Funktioniert sofort; Wochenstart und Skalenstil (Emoji oder Zahlen) stellst du im Zahnrad ein.",
         "bestFor": "Leichtes Stimmungstagebuch: Muster erkennen — schlechte Montage, gute Draußen-Tage — ohne Aufsätze zu schreiben."
+      },
+      "variant": {
+        "today": "Heute",
+        "calendar": "Kalender",
+        "trend": "Verlauf"
       }
     },
     "sleep-log": {
@@ -2295,6 +2321,11 @@
         "how": "Trag jede Nacht mit Zubettgeh- und Aufwachzeit ein; Cardo berechnet die Dauer und zeigt die letzten 7 Nächte als Balken gegen dein Ziel, dazu den 7-Tage-Durchschnitt, einen Konsistenzwert (Standardabweichung) und wie viele Nächte in Folge du dein Ziel erreicht hast.",
         "setup": "Funktioniert sofort; Schlafziel in Stunden und 12/24-Stunden-Anzeige stellst du im Zahnrad ein.",
         "bestFor": "Ehrlich werden beim Schlafrhythmus: prüfen, ob „Ich schlafe genug“ den Kontakt mit Daten überlebt."
+      },
+      "variant": {
+        "log": "Verlauf",
+        "weekly-bar": "Wochenbalken",
+        "summary": "Zusammenfassung"
       }
     },
     "workout": {
@@ -2352,6 +2383,11 @@
         "how": "Logge eine Einheit (etwa Push, Beine oder Lauf) und ergänze ihre Übungen mit Sätzen, Wiederholungen und Gewicht — lass das Gewicht leer für Körpergewichtsübungen. Cardo berechnet das Volumen pro Einheit und Woche und führt deine persönlichen Rekorde pro Übung.",
         "setup": "Funktioniert sofort; die Gewichtseinheit (kg/lb) stellst du im Zahnrad ein.",
         "bestFor": "Krafttraining mit Progression: wissen, was du letztes Mal bewegt hast, um es diesmal zu schlagen."
+      },
+      "variant": {
+        "log": "Verlauf",
+        "weekly": "Woche",
+        "records": "Bestleistungen"
       }
     },
     "meal-planner": {
@@ -2585,6 +2621,11 @@
         "how": "Leg eine Gruppe mit ihren Mitgliedern an und erfasse dann jede Ausgabe mit Zahler, Betrag und optional den Beteiligten. Cardo führt laufend Buch, wer wem wie viel schuldet, und berechnet einen Ausgleichsplan mit möglichst wenigen Überweisungen, den du abhakst, sobald gezahlt wurde.",
         "setup": "Gruppe anlegen und Mitglieder kommagetrennt eintragen — das ist schon die ganze Einrichtung.",
         "bestFor": "WGs, Reisen mit Freunden, Team-Mittagessen — überall, wo „Ich übernehm das mal“ später fair verrechnet werden soll."
+      },
+      "variant": {
+        "balances": "Salden",
+        "log": "Verlauf",
+        "settle": "Ausgleichen"
       }
     },
     "calculator": {
@@ -2635,6 +2676,11 @@
         "how": "Tipp einen ganzen Ausdruck — 2+3*4, sin(90), sqrt(2) — und bekomm das Ergebnis sofort von einem sicheren eingebauten Parser (niemals eval). Trigonometrie rechnet wahlweise in Grad oder Radiant, und der Verlauf hält alte Rechnungen bereit, um sie wieder ins Eingabefeld zu laden. Die Varianten Basis, Wissenschaftlich und Kompakt ändern das Layout.",
         "setup": "Funktioniert sofort; Standard-Winkelmodus, Tausendertrennzeichen und Verlaufslänge stellst du im Zahnrad ein.",
         "bestFor": "Schnelles Rechnen ohne das Dashboard zu verlassen: Rechnungen, Kopfrechen-Kontrollen, Hausaufgaben-Checks."
+      },
+      "variant": {
+        "basic": "Einfach",
+        "scientific": "Wissenschaftlich",
+        "compact": "Kompakt"
       }
     },
     "color-tool": {
@@ -2691,6 +2737,11 @@
         "how": "Wähle eine Basisfarbe und baue Harmonien daraus — komplementär, analog, triadisch oder Abstufungen —, speichere die Ergebnisse als benannte Paletten und kopiere jeden Hex-Wert per Klick. Die Kontrast-Variante prüft zwei Farben gegen die WCAG-Schwellen (AA/AAA, normaler und großer Text).",
         "setup": "Keine Einrichtung nötig — Widget aufs Board ziehen und loslegen.",
         "bestFor": "Designarbeit groß und klein: Folien, Websites, Themes — und die Gewissheit, dass dein Text lesbar bleibt."
+      },
+      "variant": {
+        "picker": "Farbwähler",
+        "palette": "Palette",
+        "contrast": "Kontrast"
       }
     },
     "snippets": {
@@ -2740,6 +2791,11 @@
         "how": "Speichere Code-Schnipsel mit Titel, Sprache und Tags; leichtes Syntax-Highlighting deckt 8 Sprachen ab. Volltextsuche und Tag-Filter finden jeden Schnipsel in Sekunden, und der Kopieren-Knopf legt ihn in die Zwischenablage.",
         "setup": "Funktioniert sofort; Code-Schriftgröße und Zeilenumbruch stellst du im Zahnrad ein.",
         "bestFor": "Die Befehle und Vorlagen, die du immer wieder googelst: Shell-Einzeiler, Config-Blöcke, SQL-Abfragen."
+      },
+      "variant": {
+        "list": "Liste",
+        "grid": "Raster",
+        "focused": "Fokussiert"
       }
     },
     "currency": {
@@ -2796,6 +2852,11 @@
         "how": "Rechnet zwischen rund 30 Währungen um — mit einer Kurstabelle, die lokal zwischengespeichert und höchstens einmal pro Tag aktualisiert wird. Das Widget sagt dir immer, wie alt seine Kurse sind, und offline rechnet es einfach mit dem Cache weiter. Die Varianten Umrechner, Kurstafel und Einzelpaar passen zu verschiedenen Bedürfnissen.",
         "setup": "Wähle deine Basiswährung im Zahnrad. Dieses Tool geht ins Internet: Höchstens einmal täglich kontaktiert es open.er-api.com, und gesendet wird nur der Drei-Buchstaben-Code deiner Basiswährung — nie Beträge, nie etwas Persönliches.",
         "bestFor": "Reisebudgets, Einkäufe in fremden Shops, Rechnungen in anderen Währungen — schnelle Umrechnung mit ehrlicher Kursangabe."
+      },
+      "variant": {
+        "converter": "Umrechner",
+        "rate-board": "Kurstafel",
+        "single-pair": "Ein Paar"
       }
     },
     "rss": {
@@ -2852,6 +2913,11 @@
         "how": "Füge die URLs der RSS- oder Atom-Feeds ein, denen du folgen willst; Cardo ruft sie ab, zählt ungelesene Artikel und lässt dich Gelesenes markieren oder einen Artikel direkt an deine Leseliste schicken. Alles Abgerufene wird zwischengespeichert, du kannst also offline lesen. Die Varianten Liste, Karten und Schlagzeilen ändern die Dichte.",
         "setup": "Mindestens eine Feed-URL hinzufügen — mehr nicht. Dieses Tool geht ins Internet: Es kontaktiert genau die Feed-Server, die du hinzufügst, keine anderen, und jede Anfrage ist ein schlichter Abruf dieser Adresse; nichts über dich oder dein Leseverhalten wird mitgesendet.",
         "bestFor": "Blogs und Nachrichten zu deinen Bedingungen verfolgen: ein chronologischer Feed nach deiner Wahl statt eines Algorithmus."
+      },
+      "variant": {
+        "list": "Liste",
+        "cards": "Karten",
+        "headlines": "Schlagzeilen"
       }
     },
     "soundscapes": {
@@ -2900,6 +2966,11 @@
         "how": "Ein Ambience-Mixer mit vier mitgelieferten Loops — Regen, weißes Rauschen, braunes Rauschen und ein Bach. Schalte beliebige Kombinationen an, regle jede Spur einzeln plus einen Master-Pegel und lass es beim Arbeiten laufen. Alle Klänge sind in Cardo enthalten: Nichts wird gestreamt, nichts geht ins Netz. Auf Wunsch folgt es deinem Pomodoro: Klang in Fokusphasen, Stille in Pausen.",
         "setup": "Keine Einrichtung nötig — einfach auf Play drücken. Die Pomodoro-Kopplung findest du im Zahnrad.",
         "bestFor": "Laute Umgebung ausblenden und in den Fokus finden — Großraumbüro, Café, unruhige Abende."
+      },
+      "variant": {
+        "mixer": "Mischpult",
+        "minimal": "Minimal",
+        "single": "Einzelklang"
       }
     },
     "legal-dictionary": {
@@ -3155,7 +3226,13 @@
       "delegateDone": "Übergeben.",
       "modelMissing": "Modell fehlt",
       "switchToProfile": "Zu {{name}} wechseln",
-      "proposalsTitle": "Vorschläge ({{count}})"
+      "proposalsTitle": "Vorschläge ({{count}})",
+      "modelMissingError": "Dieses Modell ist noch nicht heruntergeladen. Lade es unter Einstellungen → Assistent herunter.",
+      "busyError": "Der Assistent bearbeitet gerade schon eine Anfrage. Warte kurz und versuche es erneut.",
+      "promptTooLongError": "Die Anfrage ist zu lang für das Kontextfenster des Modells. Kürze deinen Text oder starte eine neue Unterhaltung.",
+      "backendInitError": "Die KI-Engine konnte nicht starten. Starte Cardo neu; hilft das nicht, wähle unter Einstellungen → Assistent ein anderes Modell.",
+      "workspaceError": "Der gewählte Arbeitsordner ist nicht erlaubt. Wähle unter Einstellungen → Assistent einen Ordner außerhalb von Cardos eigenen Daten.",
+      "notLoggedInError": "Claude ist nicht angemeldet. Öffne ein Terminal und führe „claude login“ aus."
     },
     "rating": {
       "great": "Sehr gut",
@@ -3495,6 +3572,7 @@
       "cloudGroup": "Claude (dein Anthropic-Konto)",
       "detected": "✓ Claude Code CLI erkannt (v{{version}})",
       "detectedNoVersion": "✓ Claude Code CLI erkannt",
+      "loggedOut": "⚠ Aber nicht angemeldet – der Assistent wird bei jeder Anfrage scheitern. Öffne ein Terminal und führe „claude login“ aus.",
       "notFound": "Claude Code CLI nicht gefunden",
       "recheck": "Erneut prüfen",
       "guideTitle": "Claude in drei Schritten einrichten",
@@ -3545,7 +3623,11 @@
     "context": {
       "noKey": "Sync: nicht eingerichtet (kein Schlüssel).",
       "disabled": "Sync: Schlüssel vorhanden, aber auf diesem Gerät ausgeschaltet.",
-      "active": "Sync: an über {{transport}} · {{pending}} Änderungen wartend · {{devices}} Gerät(e) · letzte Runde: {{last}}."
+      "active": "Sync: an über {{transport}} · {{pending}} Änderungen wartend · {{devices}} Gerät(e) · letzte Runde: {{last}}.",
+      "failing": "ACHTUNG: Der Hintergrund-Sync scheitert seit {{count}} Durchlauf/Durchläufen: {{message}}",
+      "revoked": "ACHTUNG: Dieses Gerät wurde aus der Sync-Gruppe entfernt.",
+      "joinDenied": "ACHTUNG: Die Beitrittsanfrage wurde abgelehnt.",
+      "unavailable": "Sync-Status nicht abrufbar: {{error}}"
     }
   },
   "layout": {

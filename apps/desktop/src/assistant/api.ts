@@ -46,6 +46,60 @@ export function isInsufficientRam(err: unknown): boolean {
     : err instanceof Error && err.message === INSUFFICIENT_RAM;
 }
 
+/**
+ * Actionable causes the Rust side actually distinguishes.
+ *
+ * The information was already being computed and sent — `assistant.rs` and
+ * `claude.rs` return seven different, specific errors — and the widget then
+ * collapsed all but one into a single "something went wrong". The user was
+ * told to check whether the model loads even when the real problem was a
+ * forbidden workspace or a prompt that was too long.
+ */
+export type AssistantErrorKind =
+  | 'insufficient-ram'
+  | 'model-not-downloaded'
+  | 'busy'
+  | 'prompt-too-long'
+  | 'backend-init'
+  | 'workspace-forbidden'
+  | 'not-logged-in'
+  | 'unknown';
+
+/** i18n key carrying a concrete next step for each cause. */
+export const ASSISTANT_ERROR_KEYS: Record<AssistantErrorKind, string> = {
+  'insufficient-ram': 'assistant.widget.ramError',
+  'model-not-downloaded': 'assistant.widget.modelMissingError',
+  busy: 'assistant.widget.busyError',
+  'prompt-too-long': 'assistant.widget.promptTooLongError',
+  'backend-init': 'assistant.widget.backendInitError',
+  'workspace-forbidden': 'assistant.widget.workspaceError',
+  'not-logged-in': 'assistant.widget.notLoggedInError',
+  unknown: 'assistant.widget.generateError',
+};
+
+/**
+ * Maps a Rust error onto its cause. Matching is on the stable English
+ * substrings the Rust side produces; anything unrecognised stays `unknown`,
+ * which keeps the previous generic message rather than guessing.
+ */
+export function classifyAssistantError(err: unknown): AssistantErrorKind {
+  const raw = (
+    typeof err === 'string' ? err : err instanceof Error ? err.message : String(err ?? '')
+  ).toLowerCase();
+
+  if (raw.includes(INSUFFICIENT_RAM)) return 'insufficient-ram';
+  if (raw.includes('is not downloaded')) return 'model-not-downloaded';
+  if (raw.includes('workspace not allowed')) return 'workspace-forbidden';
+  if (raw.includes('prompt too long')) return 'prompt-too-long';
+  if (raw.includes('backend init failed')) return 'backend-init';
+  // Checked late and anchored: "busy" is a common substring of other messages.
+  if (raw === 'busy' || raw.includes(': busy') || raw.includes('is busy')) return 'busy';
+  if (raw.includes('not logged in') || raw.includes('/login') || raw.includes('authentication')) {
+    return 'not-logged-in';
+  }
+  return 'unknown';
+}
+
 /** Context window used for every load – plenty for braindump + catalog. */
 export const CTX_TOKENS = 4096;
 
@@ -126,6 +180,17 @@ export interface ClaudeCheckResult {
   installed: boolean;
   version: string | null;
   path: string | null;
+  /**
+   * Whether the CLI is signed in. `null` means undeterminable (CLI too old,
+   * probe timed out) – deliberately distinct from `false`, so an unknown state
+   * is never rendered as "logged out".
+   *
+   * `installed` alone says nothing about usability: `claude --version`
+   * succeeds while logged out, which is how the badge stayed green while
+   * every assistant request failed.
+   */
+  loggedIn?: boolean | null;
+  authDetail?: string;
 }
 
 /** Marker contained in Rust error strings for auth/login problems. */
@@ -133,7 +198,7 @@ export const CLAUDE_ERROR_MARKER = 'claude-error';
 
 /** Detects the Claude Code CLI. Non-Tauri environments report "missing". */
 export async function claudeCheck(): Promise<ClaudeCheckResult> {
-  if (!inTauri()) return { installed: false, version: null, path: null };
+  if (!inTauri()) return { installed: false, version: null, path: null, loggedIn: null };
   return invoke('claude_check');
 }
 
@@ -151,7 +216,7 @@ export async function claudeCheckCached(opts?: { force?: boolean }): Promise<Cla
     return claudeCheckCache.result;
   }
   const result = await claudeCheck().catch(
-    (): ClaudeCheckResult => ({ installed: false, version: null, path: null }),
+    (): ClaudeCheckResult => ({ installed: false, version: null, path: null, loggedIn: null }),
   );
   claudeCheckCache = { at: now, result };
   return result;

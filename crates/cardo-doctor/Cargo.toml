@@ -1,0 +1,42 @@
+[package]
+name = "cardo-doctor"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# Environment ("is this installation healthy?") checks, deliberately split out
+# of `cardo-desktop`: that crate links Tauri, WebKit and llama.cpp, so any
+# binary there takes minutes to build – useless for a "run this before the
+# demo" command. This crate has no GUI dependencies and builds in seconds.
+
+[lib]
+name = "cardo_doctor"
+
+[[bin]]
+name = "cardo-doctor"
+path = "src/bin/cardo-doctor.rs"
+
+[dependencies]
+# Only for SCHEMA_VERSION – the expected on-disk schema of the live DB.
+cardo-core = { path = "../cardo-core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+# App data dir resolution, mirroring Tauri 2 semantics.
+dirs = "6"
+# Process list for the single-instance check.
+sysinfo = "0.35"
+# Keychain availability round-trip (own service namespace, never the app's).
+keyring = { version = "3", features = [
+  "apple-native",
+  "windows-native",
+  "sync-secret-service",
+] }
+# Read-only inspection of the live database.
+sqlx = { version = "0.8", default-features = false, features = [
+  "runtime-tokio",
+  "sqlite",
+] }
+
+[dev-dependencies]
+tempfile = "3"

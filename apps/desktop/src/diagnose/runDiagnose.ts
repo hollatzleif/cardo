@@ -32,20 +32,65 @@ const CORE_CHECK_TITLES: Record<string, string> = {
   'core:backup-roundtrip': 'diagnose.check.backupRoundtrip',
 };
 
-async function coreChecks(): Promise<DiagnoseCheck[]> {
-  if (!isTauri()) return [];
-  const results = await invoke<Array<{ id: string; status: string; detail: string | null }>>(
-    'diagnose_core',
-  );
-  return results.map((r) => ({
+/** Maps Rust environment-check ids to i18n title keys. */
+const ENV_CHECK_TITLES: Record<string, string> = {
+  'env:data-dir': 'diagnose.check.envDataDir',
+  'env:db-live': 'diagnose.check.envDbLive',
+  'env:single-instance': 'diagnose.check.envSingleInstance',
+  'env:claude-cli': 'diagnose.check.envClaudeCli',
+  'env:claude-auth': 'diagnose.check.envClaudeAuth',
+  'env:keychain': 'diagnose.check.envKeychain',
+  'env:sync-config': 'diagnose.check.envSyncConfig',
+  'env:drive-credentials': 'diagnose.check.envDriveCredentials',
+  'env:installed-app': 'diagnose.check.envInstalledApp',
+  'env:disk-space': 'diagnose.check.envDiskSpace',
+};
+
+interface RustCheckResult {
+  id: string;
+  status: string;
+  detail: string | null;
+  skipped?: boolean;
+}
+
+/**
+ * Replays an already-computed Rust result as a DiagnoseCheck. The work
+ * happened in the single `invoke` above; `run()` only reports it.
+ */
+function fromRustResult(
+  r: RustCheckResult,
+  category: 'core' | 'environment',
+  titles: Record<string, string>,
+): DiagnoseCheck {
+  return {
     id: r.id,
-    titleKey: CORE_CHECK_TITLES[r.id] ?? r.id,
-    category: 'core' as const,
+    titleKey: titles[r.id] ?? r.id,
+    category,
+    ...(r.skipped ? { skipped: true } : {}),
     run: async () =>
       r.status === 'pass'
-        ? { status: 'pass' }
+        ? r.detail
+          ? { status: 'pass', detail: r.detail }
+          : { status: 'pass' }
         : { status: r.status as 'warn' | 'fail', detail: r.detail ?? '' },
-  }));
+  };
+}
+
+async function coreChecks(): Promise<DiagnoseCheck[]> {
+  if (!isTauri()) return [];
+  const results = await invoke<RustCheckResult[]>('diagnose_core');
+  return results.map((r) => fromRustResult(r, 'core', CORE_CHECK_TITLES));
+}
+
+/**
+ * Environment checks — the only ones that look at the REAL installation
+ * rather than a scratch copy. Browser dev builds have no Tauri bridge, so
+ * they contribute nothing there.
+ */
+async function envChecks(): Promise<DiagnoseCheck[]> {
+  if (!isTauri()) return [];
+  const results = await invoke<RustCheckResult[]>('diagnose_env');
+  return results.map((r) => fromRustResult(r, 'environment', ENV_CHECK_TITLES));
 }
 
 function themeCheck(): DiagnoseCheck {
@@ -107,6 +152,7 @@ export async function runFullDiagnose(
   const host = getHost();
   const checks: DiagnoseCheck[] = [
     ...(await coreChecks()),
+    ...(await envChecks()),
     themeCheck(),
     i18nCheck(),
     ...Object.values(toolFactories).flatMap((factory) =>

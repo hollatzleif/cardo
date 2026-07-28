@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { Button, Input, Modal, qrMatrix } from '@cardo/ui';
 import { isTauri } from '../host/backend';
+import { getSyncStatus, subscribeSyncStatus } from '../sync/syncStatus';
 
 /**
  * Settings → Sync: key management, transport choice, the mandatory trust
@@ -101,6 +102,8 @@ export function SyncSection({
 }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<SyncStatus | null>(null);
+  // Health of the background loop, fed by the sync:* Tauri events.
+  const [health, setHealth] = useState(getSyncStatus());
   const [error, setError] = useState<string | null>(null);
   const [keyInput, setKeyInput] = useState('');
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
@@ -118,6 +121,8 @@ export function SyncSection({
       setError(String(err));
     }
   }, []);
+
+  useEffect(() => subscribeSyncStatus(setHealth), []);
 
   useEffect(() => {
     void refresh();
@@ -180,6 +185,20 @@ export function SyncSection({
 
   return (
     <>
+      {/* The background loop's own verdict. `sync_status` above only reports
+          CONFIGURATION – it looks identical whether every round succeeds or
+          every round fails, which is how sync stayed silently dead. */}
+      {health.health === 'error' && (
+        <Card>
+          <Row
+            label={`⚠️ ${t('settings.sync.backgroundFailingTitle')}`}
+            description={t('settings.sync.backgroundFailingBody', {
+              count: health.consecutiveErrors,
+              message: health.message ?? '',
+            })}
+          />
+        </Card>
+      )}
       {status.kicked && (
         <Card>
           <Row
