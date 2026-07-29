@@ -1,0 +1,293 @@
+---
+/**
+ * The assistant, operable.
+ *
+ * You pick a braindump, it "thinks", and proposal cards appear with Ja /
+ * Bearbeiten / Nein — which is the one thing about Cardo's assistant that a
+ * paragraph of prose never lands: **nothing happens until you say yes.**
+ * Accepting a card here shows the same ✓ Erledigt line the app shows.
+ *
+ * Structure and class names follow the real widget
+ * (`apps/desktop/src/assistant/AssistantWidget.tsx:1314-1400` and
+ * `assistant-widget.css`), so this is the app's own chat, not a lookalike.
+ *
+ * Everything is canned. There is no network call, no model, no telemetry —
+ * the site's privacy claims stay literally true. The delay before a reply is
+ * a `setTimeout`, not a request.
+ *
+ * Without JavaScript the first exchange is already in the markup, so the point
+ * still reads; only the interaction is lost.
+ */
+import Widget from '../Widget.astro';
+
+interface Props {
+  /** Board tabs this widget belongs to; see Widget.astro. */
+  pages?: string;
+}
+const { pages } = Astro.props;
+
+/** Canned exchanges. Keyed by the prompt the visitor can pick. */
+const scripts = [
+  {
+    prompt: 'Tax return by Friday, dentist on the 12th, and I should drink more water',
+    reply: 'Three things spotted. The proposals are below — none of them has happened yet.',
+    proposals: [
+      { kind: 'To-do', summary: 'Add task “Tax return 2025” for Friday' },
+      { kind: 'Appointment', summary: 'Dentist on the 12th at 09:00 into the calendar' },
+      { kind: 'Habit', summary: 'Add daily habit “2 l of water”' },
+    ],
+  },
+  {
+    prompt: 'Summarise what is still open this week',
+    reply: 'Four open tasks, two of them overdue. The rest is on track.',
+    proposals: [{ kind: 'Note', summary: 'Save the week’s overview as note “W31”' }],
+  },
+  {
+    prompt: 'Make me flashcards for § 823 BGB',
+    reply: 'Found the section in your dictionary and built four cards from it.',
+    proposals: [{ kind: 'Flashcards', summary: 'Add 4 cards to the deck “Tort law”' }],
+  },
+];
+---
+
+<Widget w={5} h={6} title="Assistant" id="assistant" pages={pages}>
+  <div class="aw-root" data-assistant data-scripts={JSON.stringify(scripts)}>
+    <div class="aw-scroll" data-aw-feed aria-live="polite">
+      <div class="aw-msg-row">
+        <div class="aw-msg aw-msg--user">{scripts[0].prompt}</div>
+      </div>
+      <div class="aw-turn">
+        <div class="aw-card c-card">
+          <div class="aw-speaker">
+            <span class="aw-avatar aw-avatar--sm" aria-hidden="true">◐</span>
+            <span class="aw-speaker__name">Ada replies</span>
+          </div>
+          <p class="aw-reply">{scripts[0].reply}</p>
+        </div>
+      </div>
+      {scripts[0].proposals.map((p) => (
+        <div class="aw-card c-card" data-proposal>
+          <div class="aw-speaker">
+            <span class="c-badge">{p.kind}</span>
+          </div>
+          <p class="aw-card__summary">{p.summary}</p>
+          <div class="aw-card__actions">
+            <button type="button" class="c-btn c-btn--primary" data-accept>Yes</button>
+            <button type="button" class="c-btn" data-edit>Edit</button>
+            <button type="button" class="c-btn c-btn--ghost" data-decline>No</button>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div class="aw-suggest">
+      <p class="aw-suggest__label">Try a braindump:</p>
+      <div class="aw-suggest__row">
+        {scripts.map((s, i) => (
+          <button type="button" class="c-btn aw-suggest__btn" data-script={i}>
+            {s.prompt.length > 46 ? `${s.prompt.slice(0, 46)}…` : s.prompt}
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+</Widget>
+
+<style is:global>
+  /* assistant-widget.css, the parts this replica needs.
+     is:global because the proposal cards are created client-side and would
+     not receive Astro's scoped-style attribute — the same reason polls.astro
+     gives. Every selector is namespaced under .aw-root. */
+  .aw-root {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+  .aw-root .aw-scroll {
+    flex: 1 1 auto;
+    /* Grows with the conversation instead of scrolling inside. */
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .aw-root .aw-msg-row { display: flex; justify-content: flex-end; min-width: 0; }
+  .aw-root .aw-msg {
+    max-width: 85%;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    white-space: pre-wrap;
+    font-size: 0.9em;
+  }
+  .aw-root .aw-msg--user { background: var(--bg-raised); border: 1px solid var(--border-subtle); }
+
+  .aw-root .aw-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 50%;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-subtle);
+    font-size: 0.8rem;
+    line-height: 1;
+    flex: 0 0 auto;
+  }
+  .aw-root .aw-speaker {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  .aw-root .aw-speaker__name { font-weight: 600; font-size: 0.85em; }
+
+  .aw-root .aw-card { padding: var(--space-3) var(--space-4); }
+  .aw-root .aw-reply,
+  .aw-root .aw-card__summary {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    margin: 0;
+    font-size: 0.9em;
+  }
+  .aw-root .aw-card__actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .aw-root .aw-card__actions .c-btn { padding: var(--space-1) var(--space-3); font-size: 0.85em; }
+  .aw-root .aw-card__status { margin: var(--space-2) 0 0; color: var(--text-muted); font-size: 0.85em; }
+  .aw-root .aw-card__status--ok { color: var(--success); }
+
+  .aw-root .aw-status { display: flex; align-items: center; gap: var(--space-2); font-size: 0.85em; }
+  .aw-root .aw-spinner {
+    width: 0.9em;
+    height: 0.9em;
+    border-radius: 50%;
+    border: 2px solid var(--border-subtle);
+    border-top-color: var(--accent);
+    animation: aw-spin 0.8s linear infinite;
+  }
+  @keyframes aw-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .aw-root .aw-spinner { animation: none; }
+  }
+
+  .aw-root .aw-suggest { flex: none; border-top: 1px solid var(--border-subtle); padding-top: var(--space-3); margin-top: var(--space-1); }
+  .aw-root .aw-suggest__label {
+    margin: 0 0 var(--space-2);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .aw-root .aw-suggest__row { display: flex; flex-direction: column; gap: var(--space-1); }
+  .aw-root .aw-suggest__btn {
+    font-size: 0.85em;
+    padding: var(--space-1) var(--space-2);
+    text-align: left;
+    justify-content: flex-start;
+  }
+</style>
+
+<script>
+  interface Proposal {
+    kind: string;
+    summary: string;
+  }
+  interface Script {
+    prompt: string;
+    reply: string;
+    proposals: Proposal[];
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-assistant]');
+
+  if (root) {
+    const feed = root.querySelector<HTMLElement>('[data-aw-feed]');
+    const scripts: Script[] = JSON.parse(root.dataset.scripts ?? '[]');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /** Turns a resolved proposal into the app's own "✓ Erledigt" line. */
+    const resolve = (card: HTMLElement, accepted: boolean): void => {
+      card.querySelector('.aw-card__actions')?.remove();
+      const status = document.createElement('p');
+      status.className = `aw-card__status${accepted ? ' aw-card__status--ok' : ''}`;
+      status.textContent = accepted ? '✓ Done' : 'Declined';
+      card.append(status);
+    };
+
+    const wire = (card: HTMLElement): void => {
+      card.querySelector('[data-accept]')?.addEventListener('click', () => resolve(card, true));
+      card.querySelector('[data-decline]')?.addEventListener('click', () => resolve(card, false));
+      // "Bearbeiten" exists in the app to change a proposal before applying it;
+      // spelling that out is more honest than a button that does nothing.
+      card.querySelector('[data-edit]')?.addEventListener('click', () => {
+        const note = card.querySelector('.aw-card__summary');
+        if (note) note.textContent = `${note.textContent} — in the real Cardo a form opens here.`;
+      });
+    };
+
+    root.querySelectorAll<HTMLElement>('[data-proposal]').forEach(wire);
+
+    const run = (script: Script): void => {
+      if (!feed) return;
+      feed.replaceChildren();
+
+      const prompt = document.createElement('div');
+      prompt.className = 'aw-msg-row';
+      prompt.innerHTML = '<div class="aw-msg aw-msg--user"></div>';
+      prompt.querySelector('.aw-msg')!.textContent = script.prompt;
+      feed.append(prompt);
+
+      const thinking = document.createElement('div');
+      thinking.className = 'aw-status';
+      thinking.innerHTML = '<span class="aw-spinner"></span><span class="c-muted">thinking…</span>';
+      feed.append(thinking);
+
+      // A pause makes it read as work happening. Reduced motion gets the
+      // answer immediately — a spinner is motion too.
+      window.setTimeout(
+        () => {
+          thinking.remove();
+
+          const turn = document.createElement('div');
+          turn.className = 'aw-turn';
+          turn.innerHTML =
+            '<div class="aw-card c-card"><div class="aw-speaker">' +
+            '<span class="aw-avatar aw-avatar--sm" aria-hidden="true">◐</span>' +
+            '<span class="aw-speaker__name">Ada replies</span></div>' +
+            '<p class="aw-reply"></p></div>';
+          turn.querySelector('.aw-reply')!.textContent = script.reply;
+          feed.append(turn);
+
+          for (const p of script.proposals) {
+            const card = document.createElement('div');
+            card.className = 'aw-card c-card';
+            card.dataset.proposal = '';
+            card.innerHTML =
+              '<div class="aw-speaker"><span class="c-badge"></span></div>' +
+              '<p class="aw-card__summary"></p>' +
+              '<div class="aw-card__actions">' +
+              '<button type="button" class="c-btn c-btn--primary" data-accept>Yes</button>' +
+              '<button type="button" class="c-btn" data-edit>Edit</button>' +
+              '<button type="button" class="c-btn c-btn--ghost" data-decline>No</button>' +
+              '</div>';
+            card.querySelector('.c-badge')!.textContent = p.kind;
+            card.querySelector('.aw-card__summary')!.textContent = p.summary;
+            feed.append(card);
+            wire(card);
+          }
+          feed.scrollTop = feed.scrollHeight;
+        },
+        reduced ? 0 : 700,
+      );
+    };
+
+    root.querySelectorAll<HTMLButtonElement>('[data-script]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const script = scripts[Number(button.dataset.script)];
+        if (script) run(script);
+      });
+    });
+  }
+</script>

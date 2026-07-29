@@ -1,0 +1,183 @@
+---
+/**
+ * The theme picker — the site demonstrating Cardo's theming by having it.
+ *
+ * Click a theme and the entire page recolours, exactly as the app does: the
+ * `data-theme` attribute on `<html>` switches which of the twenty
+ * `[data-theme="…"]` blocks in Base.astro wins. Nothing is fetched, nothing is
+ * computed at runtime; the palettes were baked in at build time from
+ * packages/themes, the same files the desktop app reads.
+ *
+ * Without JavaScript the list still renders with every theme name and its real
+ * colours — the information ("Cardo ships twenty themes, here they are")
+ * survives; only the switching is lost.
+ */
+import Widget from '../Widget.astro';
+import { allThemes, themeLabel } from '../../lib/theme';
+
+const dark = allThemes.filter((t) => t.appearance === 'dark');
+const light = allThemes.filter((t) => t.appearance === 'light');
+---
+
+<Widget title="Design">
+  <div class="theme" data-theme-widget>
+    <p class="theme__lead">
+      <strong>{allThemes.length} themes</strong> ship with Cardo. Pick one — this page
+      changes with it.
+    </p>
+
+    <div class="theme__group">
+      <p class="theme__label">Dark · {dark.length}</p>
+      <div class="theme__grid">
+        {dark.map((t) => (
+          <button
+            type="button"
+            class="sw"
+            data-theme-id={t.id}
+            style={`--sw-base:${t.palette.base};--sw-surface:${t.palette['surface-1']};--sw-accent:${t.palette['accent-1']}`}
+            aria-pressed="false"
+          >
+            <span class="sw__chip" aria-hidden="true"></span>
+            <span class="sw__name">{themeLabel(t)}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div class="theme__group">
+      <p class="theme__label">Light · {light.length}</p>
+      <div class="theme__grid">
+        {light.map((t) => (
+          <button
+            type="button"
+            class="sw"
+            data-theme-id={t.id}
+            style={`--sw-base:${t.palette.base};--sw-surface:${t.palette['surface-1']};--sw-accent:${t.palette['accent-1']}`}
+            aria-pressed="false"
+          >
+            <span class="sw__chip" aria-hidden="true"></span>
+            <span class="sw__name">{themeLabel(t)}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <p class="theme__foot">
+      <button type="button" class="theme__reset" data-theme-reset>Follow my system again</button>
+    </p>
+  </div>
+</Widget>
+
+<style>
+  .theme__lead { margin: 0 0 var(--space-3); color: var(--text-muted); }
+  .theme__lead strong { color: var(--text); font-weight: 600; }
+  .theme__group + .theme__group { margin-top: var(--space-3); }
+  .theme__label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 var(--space-2);
+  }
+  .theme__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: var(--space-1);
+  }
+
+  .sw {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 11px;
+    text-align: left;
+    cursor: pointer;
+    min-width: 0;
+  }
+  .sw:hover { background: var(--bg-widget-hover); color: var(--text); }
+  .sw[aria-pressed='true'] { border-color: var(--accent); color: var(--text); }
+
+  /* The swatch shows the theme's real base, surface and accent — the same
+     three values that decide how a Cardo board reads at a glance. */
+  .sw__chip {
+    width: 22px;
+    height: 14px;
+    flex: none;
+    border-radius: 3px;
+    border: 1px solid var(--border-subtle);
+    background: linear-gradient(
+      to right,
+      var(--sw-base) 0 40%,
+      var(--sw-surface) 40% 70%,
+      var(--sw-accent) 70% 100%
+    );
+  }
+  .sw__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .theme__foot { margin: var(--space-3) 0 0; }
+  .theme__reset {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .theme__reset:hover { color: var(--text); }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-theme-widget]');
+
+  if (root) {
+    const KEY = 'cardo-theme';
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-theme-id]')];
+
+    const mark = (id: string | null): void => {
+      for (const b of buttons) {
+        b.setAttribute('aria-pressed', String(b.dataset.themeId === id));
+      }
+    };
+
+    // The inline script in <head> already applied any saved theme before first
+    // paint; reflect that state in the buttons.
+    mark(document.documentElement.dataset.theme ?? null);
+
+    for (const button of buttons) {
+      button.addEventListener('click', () => {
+        const id = button.dataset.themeId;
+        if (!id) return;
+        document.documentElement.dataset.theme = id;
+        try {
+          localStorage.setItem(KEY, id);
+        } catch {
+          // Blocked storage: the choice still applies for this visit.
+        }
+        mark(id);
+        // Anything painting with its own copy of the colours (the WebGL hero)
+        // needs telling; CSS variables alone will not reach it.
+        window.dispatchEvent(new CustomEvent('cardo:themechange', { detail: { id } }));
+      });
+    }
+
+    root.querySelector('[data-theme-reset]')?.addEventListener('click', () => {
+      delete document.documentElement.dataset.theme;
+      try {
+        localStorage.removeItem(KEY);
+      } catch {
+        /* nothing to clear */
+      }
+      mark(null);
+      window.dispatchEvent(new CustomEvent('cardo:themechange', { detail: { id: null } }));
+    });
+  }
+</script>

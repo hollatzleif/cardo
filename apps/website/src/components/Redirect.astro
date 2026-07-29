@@ -1,0 +1,62 @@
+---
+/**
+ * A page that used to exist and now lives as a section of the landing page.
+ *
+ * Old URLs are linked from GitHub release notes, search results and other
+ * people's bookmarks, so they keep working rather than turning into 404s.
+ *
+ * Three mechanisms on purpose, because each covers a case the others miss:
+ *  - `<link rel="canonical">` tells search engines where the content moved
+ *  - a meta refresh works without JavaScript
+ *  - a visible link is what the visitor gets if both are blocked, which is
+ *    also the only thing that would show up if the fragment were wrong
+ */
+import { withBase } from '../lib/site';
+import { cssVars, darkTheme } from '../lib/theme';
+
+interface Props {
+  title: string;
+  /** Fragment on the landing page, without the '#'. */
+  anchor: string;
+  label: string;
+}
+const { title, anchor, label } = Astro.props;
+const target = `${withBase('/')}#${anchor}`;
+// This page stands alone (no Base layout), but its colours still come from the
+// theme package rather than being hand-copied back in.
+const vars = cssVars(darkTheme);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · Cardo</title>
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={target} />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="icon" type="image/png" href={withBase('/favicon.png')} />
+    <style set:html={`
+      :root { ${vars} }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--base);
+        color: var(--text);
+        text-align: center;
+        padding: 2rem;
+      }
+      a { color: var(--accent); }
+    `}></style>
+  </head>
+  <body>
+    <p>
+      {label} now lives on the main page.<br />
+      <a href={target}>Continue to Cardo →</a>
+    </p>
+  </body>
+</html>

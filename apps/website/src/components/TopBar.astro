@@ -1,0 +1,237 @@
+---
+/**
+ * The app's top bar, rebuilt from `apps/desktop/src/App.tsx:124-271` and
+ * `app.css:1-56`.
+ *
+ * Faithful details: it is `--bg-widget`, one shade LIGHTER than the canvas
+ * beneath it; the brand sits in `--accent`; the page tabs eat the middle with
+ * `flex: 1`; icons are plain unicode glyphs because the app has no icon set.
+ * Measured height ≈54 px (8 + 37 + 8 + 1).
+ *
+ * Two parts are live rather than decorative, because a bar full of buttons
+ * that do nothing invites clicking and then disappoints:
+ *
+ *  - **Page tabs** switch which widgets the board shows. That is the actual
+ *    feature — one board per area of life — and stating it in prose never
+ *    lands the way flipping between them does.
+ *  - **The inbox** opens the same panel the app uses (`.inbox__panel`,
+ *    `app.css:829`), so the badge means something.
+ *
+ * The remaining glyphs stay inert and are hidden from assistive technology,
+ * rather than pretending to be controls that lead nowhere.
+ */
+interface Props {
+  pages?: string[];
+}
+const { pages = ['Start', 'Work', 'Focus'] } = Astro.props;
+
+/** Canned notifications — no feed is fetched, see the site's privacy claims. */
+const inbox = [
+  { title: 'Cardo 1.2.0 is available', body: 'Installation checks, variant sweep, release gate.' },
+  { title: 'Poll: which tool next?', body: 'Three options, one vote per device — anonymous.' },
+  { title: 'Self-test passed', body: '412 checks, no failures.' },
+];
+---
+
+<header class="topbar">
+  <span class="topbar__brand">Cardo</span>
+
+  <div class="topbar__inbox-wrap">
+    <button type="button" class="c-btn c-btn--ghost topbar__inbox" data-inbox aria-expanded="false">
+      <span aria-hidden="true">✉</span>
+      <span class="topbar__inbox-badge">{inbox.length}</span>
+      <span class="sr-only">Notifications</span>
+    </button>
+    <div class="inbox__panel" data-inbox-panel hidden>
+      <p class="inbox__head">Inbox</p>
+      {inbox.map((item) => (
+        <div class="inbox__item">
+          <strong>{item.title}</strong>
+          <span class="c-muted">{item.body}</span>
+        </div>
+      ))}
+      <p class="inbox__foot c-muted">
+        Announcements and polls, fetched only if you switch the inbox on. Off by default.
+      </p>
+    </div>
+  </div>
+
+  {/* No name: this is a website, not someone's install. The app greets you by
+      name once it knows one; here it only shows the time-of-day part. */}
+  <span class="c-muted topbar__greeting" data-greeting>Good evening</span>
+
+  <nav class="topbar__pages" aria-label="Boards">
+    {pages.map((p, i) => (
+      <button
+        type="button"
+        class={`c-btn c-btn--ghost topbar__page${i === 0 ? ' topbar__page--active' : ''}`}
+        data-page={p.toLowerCase()}
+        aria-pressed={i === 0 ? 'true' : 'false'}
+      >{p}</button>
+    ))}
+  </nav>
+
+  <div class="topbar__actions">
+    <slot />
+    <span class="c-btn c-btn--ghost" aria-hidden="true">◎</span>
+    <span class="c-btn c-btn--ghost" aria-hidden="true">⊞</span>
+    <span class="c-btn c-btn--ghost" aria-hidden="true">⚙</span>
+  </div>
+</header>
+
+<style>
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-widget);
+    user-select: none;
+    position: relative;
+  }
+  .topbar__brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); }
+  .topbar__greeting { white-space: nowrap; }
+  .topbar__pages {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .topbar__pages::-webkit-scrollbar { display: none; }
+  .topbar__page--active { background: var(--bg-widget-hover); border-color: var(--accent); }
+  .topbar__actions { display: flex; gap: var(--space-2); }
+
+  .topbar__inbox-wrap { position: relative; }
+  .topbar__inbox { position: relative; padding: var(--space-1) var(--space-2); }
+  .topbar__inbox-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--accent);
+    color: var(--accent-text);
+    border-radius: 999px;
+    font-size: 0.62em;
+    font-weight: 700;
+    min-width: 15px;
+    height: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+  }
+
+  /* app.css:829 — the panel hangs below the 52 px bar. */
+  .inbox__panel {
+    position: absolute;
+    top: 44px;
+    left: 0;
+    z-index: 30;
+    width: min(320px, 80vw);
+    background: var(--bg-widget);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-widget);
+    padding: var(--space-3);
+    text-align: left;
+    user-select: text;
+  }
+  .inbox__head {
+    margin: 0 0 var(--space-2);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+  }
+  .inbox__item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-2) 0;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.85em;
+  }
+  .inbox__foot { margin: var(--space-2) 0 0; font-size: 12px; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 860px) {
+    .topbar__greeting { display: none; }
+  }
+  @media (max-width: 620px) {
+    .topbar { gap: var(--space-2); padding: var(--space-2); }
+    .topbar__actions :global(span) { display: none; }
+  }
+</style>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('.topbar');
+
+  if (bar) {
+    /* ── Greeting ──────────────────────────────────────────────────── */
+    const greeting = bar.querySelector<HTMLElement>('[data-greeting]');
+    if (greeting) {
+      const hour = new Date().getHours();
+      greeting.textContent =
+        hour < 11 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    }
+
+    /* ── Inbox ─────────────────────────────────────────────────────── */
+    const button = bar.querySelector<HTMLButtonElement>('[data-inbox]');
+    const panel = bar.querySelector<HTMLElement>('[data-inbox-panel]');
+
+    if (button && panel) {
+      const setOpen = (open: boolean): void => {
+        panel.hidden = !open;
+        button.setAttribute('aria-expanded', String(open));
+      };
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setOpen(panel.hidden);
+      });
+      // Click away and Escape both close it, as any real panel should.
+      document.addEventListener('click', (event) => {
+        if (!panel.hidden && !panel.contains(event.target as Node)) setOpen(false);
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !panel.hidden) {
+          setOpen(false);
+          button.focus();
+        }
+      });
+    }
+
+    /* ── Page tabs ─────────────────────────────────────────────────── */
+    const tabs = [...bar.querySelectorAll<HTMLButtonElement>('[data-page]')];
+    const widgets = [...document.querySelectorAll<HTMLElement>('[data-pages]')];
+
+    for (const tab of tabs) {
+      tab.addEventListener('click', () => {
+        const page = tab.dataset.page ?? '';
+        for (const other of tabs) {
+          const on = other === tab;
+          other.classList.toggle('topbar__page--active', on);
+          other.setAttribute('aria-pressed', String(on));
+        }
+        // A widget lists the boards it belongs to; anything not on this board
+        // simply is not there, exactly as in the app.
+        for (const widget of widgets) {
+          const on = (widget.dataset.pages ?? '').split(' ').includes(page);
+          widget.hidden = !on;
+        }
+      });
+    }
+  }
+</script>

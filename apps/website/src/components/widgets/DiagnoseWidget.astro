@@ -1,0 +1,126 @@
+---
+/**
+ * The self-test, running.
+ *
+ * Cardo's diagnose is one of its least obvious strengths — 400+ checks behind
+ * one button — and it is impossible to convey by writing "the app checks
+ * itself". Here you press the button and watch categories tick through, which
+ * is what actually happens in Settings → Diagnostics.
+ *
+ * The numbers are the real ones from the suite, not invented: core 12,
+ * environment 10, tools 261, ui 121, security 8. Nothing is measured here;
+ * this is a replay of a known outcome.
+ */
+import Widget from '../Widget.astro';
+
+const groups = [
+  { id: 'core', label: 'Core', count: 12 },
+  { id: 'environment', label: 'Environment', count: 10 },
+  { id: 'tools', label: 'Tools', count: 261 },
+  { id: 'ui', label: 'Interface', count: 121 },
+  { id: 'security', label: 'Security', count: 8 },
+];
+const total = groups.reduce((sum, g) => sum + g.count, 0);
+---
+
+<Widget w={5} h={4} title="Diagnostics" id="diagnose">
+  <div class="dg" data-diagnose data-groups={JSON.stringify(groups)}>
+    <div class="wgt__head">
+      <strong>Self-test</strong>
+      <span class="meta grow" data-summary>{total} checks ready</span>
+    </div>
+
+    <div class="dg__list" data-list aria-live="polite">
+      {groups.map((g) => (
+        <div class="dg__row" data-row={g.id}>
+          <span class="dg__icon" data-icon>·</span>
+          <span class="grow">{g.label}</span>
+          <span class="meta">{g.count}</span>
+        </div>
+      ))}
+    </div>
+
+    <button type="button" class="c-btn c-btn--primary dg__run" data-run>Run self-test</button>
+    <p class="c-muted dg__note" data-note>
+      Runs fully offline against a throwaway database. Your real data is untouched.
+    </p>
+  </div>
+</Widget>
+
+<style>
+  .dg { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); }
+  .dg__list { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .dg__row { display: flex; align-items: center; gap: var(--space-2); font-size: 0.9em; min-width: 0; }
+  .dg__icon {
+    width: 1.1em;
+    flex: none;
+    text-align: center;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .dg__icon--ok { color: var(--success); }
+  .dg__icon--run { color: var(--accent); }
+  .dg__run { justify-content: center; flex-shrink: 0; }
+  .dg__note { margin: 0; font-size: 12px; flex-shrink: 0; }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-diagnose]');
+
+  if (root) {
+    const groups: Array<{ id: string; label: string; count: number }> = JSON.parse(
+      root.dataset.groups ?? '[]',
+    );
+    const run = root.querySelector<HTMLButtonElement>('[data-run]')!;
+    const summary = root.querySelector<HTMLElement>('[data-summary]')!;
+    const note = root.querySelector<HTMLElement>('[data-note]')!;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const total = groups.reduce((sum, g) => sum + g.count, 0);
+
+    const icon = (id: string): HTMLElement =>
+      root.querySelector<HTMLElement>(`[data-row="${id}"] [data-icon]`)!;
+
+    const reset = (): void => {
+      for (const g of groups) {
+        const el = icon(g.id);
+        el.textContent = '·';
+        el.className = 'dg__icon';
+      }
+    };
+
+    run.addEventListener('click', () => {
+      run.disabled = true;
+      reset();
+      let done = 0;
+
+      const step = (i: number): void => {
+        if (i >= groups.length) {
+          summary.textContent = `${total} checks · all passed`;
+          note.textContent =
+            'That is a healthy run. If something fails, it says exactly what — no guesswork.';
+          run.disabled = false;
+          run.textContent = 'Again';
+          return;
+        }
+        const g = groups[i];
+        const el = icon(g.id);
+        el.textContent = '◐';
+        el.className = 'dg__icon dg__icon--run';
+
+        window.setTimeout(
+          () => {
+            el.textContent = '✓';
+            el.className = 'dg__icon dg__icon--ok';
+            done += g.count;
+            summary.textContent = `${done} of ${total} checked`;
+            step(i + 1);
+          },
+          // Reduced motion still gets the result, just without the theatre.
+          reduced ? 0 : 260 + g.count / 3,
+        );
+      };
+
+      step(0);
+    });
+  }
+</script>

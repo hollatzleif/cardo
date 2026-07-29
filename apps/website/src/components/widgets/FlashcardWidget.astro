@@ -1,0 +1,131 @@
+---
+/**
+ * A flashcard you actually review.
+ *
+ * Rebuilt from `packages/tools/flashcards/src/StudyView.tsx:149-222`: the
+ * new/learning/review dot bar, the centred card, and the four graded answer
+ * buttons as outline-coloured buttons (Nochmal red, Schwer amber, Gut green,
+ * Einfach accent) — the app uses no filled buttons there except primary.
+ *
+ * Grading a card shows the interval the scheduler would pick. That is the
+ * whole idea of spaced repetition in one gesture, where a paragraph about
+ * "FSRS" says nothing to someone who has not used Anki.
+ */
+import Widget from '../Widget.astro';
+
+const cards = [
+  { front: '§ 823 (1) BGB — protected interests?', back: 'Life, body, health, freedom, property, other rights' },
+  { front: 'What is a cloze deletion?', back: 'A gap text: {{c1::a passage}} is hidden while studying' },
+  { front: 'FSRS versus SM-2?', back: 'Models memory stability instead of fixed factors — fewer reviews at the same retention' },
+];
+---
+
+<Widget w={5} h={5} title="Flashcards" id="flashcards">
+  <div class="fc" data-flashcards data-cards={JSON.stringify(cards)}>
+    <header class="fc__bar">
+      <span style="color:var(--accent)">● <span data-count-new>12</span></span>
+      <span style="color:var(--warning)">● <span data-count-learn>4</span></span>
+      <span style="color:var(--success)">● <span data-count-review>31</span></span>
+      <span class="c-muted fc__timer">01:24</span>
+    </header>
+
+    <div class="fc__card" data-face aria-live="polite">
+      <p class="fc__front" data-front>{cards[0].front}</p>
+      <p class="fc__back" data-back hidden>{cards[0].back}</p>
+    </div>
+
+    <button type="button" class="c-btn c-btn--primary fc__show" data-show>Show answer</button>
+
+    <div class="fc__grades" data-grades hidden>
+      <button type="button" class="c-btn fc__grade fc__grade--again" data-grade="Again · in 1 min">Again</button>
+      <button type="button" class="c-btn fc__grade fc__grade--hard" data-grade="Hard · in 6 min">Hard</button>
+      <button type="button" class="c-btn fc__grade fc__grade--good" data-grade="Good · in 3 days">Good</button>
+      <button type="button" class="c-btn fc__grade fc__grade--easy" data-grade="Easy · in 8 days">Easy</button>
+    </div>
+
+    <p class="c-muted fc__hint" data-hint>The scheduler picks the next date — FSRS or classic SM-2.</p>
+  </div>
+</Widget>
+
+<style>
+  .fc { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); }
+  .fc__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 13px;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .fc__timer { margin-left: auto; }
+
+  .fc__card {
+    flex: 1;
+    min-height: 5.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+  }
+  .fc__front { margin: 0; font-weight: 600; }
+  .fc__back { margin: 0; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: var(--space-3); }
+
+  .fc__show { justify-content: center; flex-shrink: 0; }
+  .fc__grades { display: flex; gap: var(--space-1); flex-shrink: 0; }
+  .fc__grade { flex: 1; min-width: 0; justify-content: center; padding: var(--space-2) var(--space-1); font-size: 0.85em; }
+  /* Outline-coloured, as in the app — the colour carries the grade. */
+  .fc__grade--again { border-color: var(--danger); color: var(--danger); }
+  .fc__grade--hard { border-color: var(--warning); color: var(--warning); }
+  .fc__grade--good { border-color: var(--success); color: var(--success); }
+  .fc__grade--easy { border-color: var(--accent); color: var(--accent); }
+
+  .fc__hint { margin: 0; font-size: 12px; flex-shrink: 0; }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-flashcards]');
+
+  if (root) {
+    const cards: Array<{ front: string; back: string }> = JSON.parse(root.dataset.cards ?? '[]');
+    const front = root.querySelector<HTMLElement>('[data-front]')!;
+    const back = root.querySelector<HTMLElement>('[data-back]')!;
+    const show = root.querySelector<HTMLButtonElement>('[data-show]')!;
+    const grades = root.querySelector<HTMLElement>('[data-grades]')!;
+    const hint = root.querySelector<HTMLElement>('[data-hint]')!;
+    const counters = {
+      new: root.querySelector<HTMLElement>('[data-count-new]')!,
+      review: root.querySelector<HTMLElement>('[data-count-review]')!,
+    };
+    let index = 0;
+
+    const reveal = (): void => {
+      back.hidden = false;
+      show.hidden = true;
+      grades.hidden = false;
+    };
+
+    const next = (label: string): void => {
+      // The scheduler's answer is the point of the exercise, so say it.
+      hint.textContent = `${label} — that is how the scheduler spaces it.`;
+      counters.new.textContent = String(Math.max(0, Number(counters.new.textContent) - 1));
+      counters.review.textContent = String(Number(counters.review.textContent) + 1);
+
+      index = (index + 1) % cards.length;
+      front.textContent = cards[index].front;
+      back.textContent = cards[index].back;
+      back.hidden = true;
+      grades.hidden = true;
+      show.hidden = false;
+    };
+
+    show.addEventListener('click', reveal);
+    for (const button of grades.querySelectorAll<HTMLButtonElement>('[data-grade]')) {
+      button.addEventListener('click', () => next(button.dataset.grade ?? ''));
+    }
+  }
+</script>

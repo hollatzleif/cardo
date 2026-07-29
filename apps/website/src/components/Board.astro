@@ -1,0 +1,51 @@
+---
+/**
+ * A Cardo board, rebuilt in plain CSS.
+ *
+ * react-grid-layout with the app's parameters (`GRID_COLS = 12`,
+ * `ROW_HEIGHT = 56`, `GRID_MARGIN = 12` — canvas/LayoutEngine.tsx:15-17)
+ * produces geometry that CSS grid reproduces exactly, so the board on this
+ * page has the same proportions as the real one rather than an approximation.
+ *
+ * `editing` flips the board into edit mode. Showing both states is the
+ * clearest way to explain how the board works — the difference IS the feature.
+ */
+interface Props {
+  editing?: boolean;
+  class?: string;
+}
+const { editing = false, class: extra = '' } = Astro.props;
+---
+
+<div class={`canvas ${extra}`}>
+  <div class={`canvas-grid${editing ? ' canvas-grid--editing' : ''}`}>
+    <slot />
+  </div>
+</div>
+
+<style>
+  .canvas { padding: var(--space-3); }
+
+  .canvas-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    /* The app uses a fixed 56 px row and lets widgets scroll inside, because a
+       window has a fixed height. A page does not: forcing the same rhythm here
+       produced a scrollbar inside every widget, which is exactly what a
+       visitor should never have to deal with. The row is a MINIMUM instead, so
+       the board keeps its proportions but each widget grows to fit. */
+    grid-auto-rows: minmax(56px, auto);
+    gap: 12px;
+  }
+
+  /* Below the app's own breakpoint the twelve-column grid stops making sense;
+     widgets become full-width bands and keep their proportions via aspect. */
+  @media (max-width: 860px) {
+    .canvas-grid { grid-template-columns: repeat(6, 1fr); }
+    .canvas-grid > :global(.widget-frame) { grid-column: span 6 !important; }
+  }
+  @media (max-width: 520px) {
+    .canvas { padding: var(--space-2); }
+    .canvas-grid { gap: var(--space-2); }
+  }
+</style>

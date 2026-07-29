@@ -1,0 +1,142 @@
+---
+/**
+ * Sync, switched on — and what the storage provider gets to see.
+ *
+ * "End-to-end encrypted" is a phrase everyone claims. Turning it on here and
+ * watching the note turn into base64 next to it is the argument: Drive,
+ * Dropbox or a WebDAV server hold that block and nothing else.
+ *
+ * The ciphertext is a fixed string, not live crypto — doing real XChaCha20 in
+ * the browser would add a dependency and prove nothing more. Labelled as an
+ * illustration rather than passed off as a live encryption.
+ */
+import Widget from '../Widget.astro';
+---
+
+<Widget w={6} h={4} title="Sync" id="sync">
+  <div class="sy" data-sync>
+    <div class="wgt__head">
+      <label class="row sy__toggle">
+        <input type="checkbox" data-sync-toggle />
+        <span class="grow">Turn sync on</span>
+      </label>
+      <span class="c-badge" data-state>Off</span>
+    </div>
+
+    <div class="sy__cols">
+      <div class="sy__col">
+        <p class="sy__label">On your device</p>
+        <div class="sy__box">
+          <p class="sy__note">Dentist on the 12th at 9. Bring the insurance card.</p>
+        </div>
+      </div>
+
+      <div class="sy__arrow" aria-hidden="true">→</div>
+
+      <div class="sy__col">
+        <p class="sy__label">What your storage sees</p>
+        <div class="sy__box">
+          <p class="sy__cipher" data-cipher>— nothing yet —</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sy__key" data-keyrow hidden>
+      <span class="meta">Your key</span>
+      <code class="sy__code" data-key>CRD1-••••-••••-••••-••••</code>
+      <button type="button" class="c-btn sy__reveal" data-reveal-key>Show</button>
+    </div>
+
+    <p class="c-muted sy__note-foot" data-foot>
+      Optional und standardmäßig aus. Der Schlüssel entsteht auf deinem Gerät —
+      wir haben ihn nie.
+    </p>
+  </div>
+</Widget>
+
+<style>
+  .sy { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); }
+  .sy__toggle { cursor: pointer; }
+  .sy__toggle input { accent-color: var(--accent); flex: none; }
+
+  .sy__cols { display: flex; align-items: stretch; gap: var(--space-2); flex: 1; }
+  .sy__col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+  .sy__label { margin: 0; font-size: 12px; color: var(--text-muted); }
+  .sy__box {
+    flex: 1;
+    min-height: 4.5rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--bg-canvas);
+    padding: var(--space-2);
+  }
+  .sy__note { margin: 0; font-size: 0.85em; }
+  .sy__cipher {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    word-break: break-all;
+    line-height: 1.5;
+  }
+  .sy__arrow { align-self: center; color: var(--text-muted); flex: none; }
+
+  .sy__key { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+  .sy__code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sy__reveal { padding: var(--space-1) var(--space-2); font-size: 0.85em; }
+  .sy__note-foot { margin: 0; font-size: 12px; flex-shrink: 0; }
+
+  @media (max-width: 560px) {
+    .sy__cols { flex-direction: column; }
+    .sy__arrow { transform: rotate(90deg); }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-sync]');
+
+  if (root) {
+    const toggle = root.querySelector<HTMLInputElement>('[data-sync-toggle]')!;
+    const state = root.querySelector<HTMLElement>('[data-state]')!;
+    const cipher = root.querySelector<HTMLElement>('[data-cipher]')!;
+    const keyrow = root.querySelector<HTMLElement>('[data-keyrow]')!;
+    const keyCode = root.querySelector<HTMLElement>('[data-key]')!;
+    const foot = root.querySelector<HTMLElement>('[data-foot]')!;
+
+    // Illustrative, not produced by live crypto — see the component note.
+    const CIPHER =
+      'q7Vd2mKpX9tLbA4zRfN0eHsWjYcU8gTnEoIuPa6ZhMxQvB3rDkS1yFwCJlG5O' +
+      'nWpXtQeR8mZbKvA2sYfL0dHcNjU9gTiEoPuIa7ZhMxRvB4rDkS2yFwCJlG6Ok';
+    const KEY = 'CRD1-7QF3-M2XK-9DLA-4PVN-8SZT';
+
+    const apply = (): void => {
+      const on = toggle.checked;
+      state.textContent = on ? 'Active' : 'Off';
+      state.className = on ? 'c-badge c-badge--green' : 'c-badge';
+      cipher.textContent = on ? CIPHER : '— nothing yet —';
+      keyrow.hidden = !on;
+      foot.textContent = on
+        ? 'Same note, three devices — and the provider holds only the block on the right. Without your key it is worthless.'
+        : 'Optional and off by default. The key is generated on your device — we never see it.';
+    };
+
+    toggle.addEventListener('change', apply);
+
+    root.querySelector('[data-reveal-key]')?.addEventListener('click', (event) => {
+      const button = event.currentTarget as HTMLButtonElement;
+      const hidden = keyCode.textContent?.includes('•');
+      keyCode.textContent = hidden ? KEY : 'CRD1-••••-••••-••••-••••';
+      button.textContent = hidden ? 'Hide' : 'Show';
+    });
+
+    apply();
+  }
+</script>

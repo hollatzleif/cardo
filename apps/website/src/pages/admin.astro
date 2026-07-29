@@ -6,7 +6,9 @@ import Base from '../layouts/Base.astro';
 // the worker, session token kept in sessionStorage for this tab only.
 ---
 
-<Base title="Admin" description="Cardo feed administration.">
+{/* motion={false}: this page holds a session token, and keeping every
+    third-party bundle off it is what docs/SECURITY-NOTES.md relies on. */}
+<Base title="Admin" description="Cardo feed administration." motion={false}>
   <div id="admin">
     <h1>Admin</h1>
     <p class="admin-note">

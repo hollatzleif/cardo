@@ -1,0 +1,191 @@
+---
+/**
+ * One Cardo widget on the board.
+ *
+ * Corrected against the real app: in **view mode a widget has no title bar at
+ * all**. It is `c-card` plus `widget-body`, and nothing else — the toolbar with
+ * the title, the ⠿ grip, the variant select and the ✕ only appear in edit mode
+ * (`apps/desktop/src/canvas/WidgetFrame.tsx:112-175`). The earlier version of
+ * this component drew that toolbar permanently, i.e. it showed the edit-mode
+ * chrome as if it were the normal state.
+ *
+ * `editing` renders the other half deliberately, because the contrast between
+ * the two modes is itself the clearest demonstration of how the board works.
+ *
+ * Sizes come from the tools' own manifests and are expressed in the app's grid
+ * units: 12 columns, 56 px rows, 12 px gap (`canvas/LayoutEngine.tsx:15-17`).
+ */
+interface Props {
+  /** Shown only in edit mode, like the real frame. */
+  title?: string;
+  /** Grid units, as in the tool manifests. */
+  w?: number;
+  h?: number;
+  editing?: boolean;
+  /** Palette accent 1–8, mirroring widgetAccentStyle() in packages/ui. */
+  accent?: number;
+  /**
+   * Which board tabs this widget appears on. Omitted means "always visible",
+   * so widgets outside the demo board are unaffected.
+   */
+  pages?: string;
+  class?: string;
+  id?: string;
+}
+const {
+  title = '',
+  w = 4,
+  h = 4,
+  editing = false,
+  accent,
+  pages,
+  class: extra = '',
+  id,
+} = Astro.props;
+---
+
+<div
+  class={`c-card widget-frame${editing ? ' widget-frame--editing' : ''} ${extra}`}
+  style={`--w:${w};--h:${h}${accent ? `;--accent:var(--palette-accent-${accent})` : ''}`}
+  id={id}
+  data-widget
+  data-pages={pages}
+>
+  {editing && (
+    <div class="widget-frame__toolbar">
+      <span class="widget-frame__help" aria-hidden="true">?</span>
+      <span class="widget-frame__title">{title}</span>
+      <span class="widget-frame__drag" aria-hidden="true">⠿</span>
+      <span class="widget-frame__remove" aria-hidden="true">✕</span>
+    </div>
+  )}
+  <div class="widget-body"><slot /></div>
+  {editing && <span class="widget-frame__resize" aria-hidden="true"></span>}
+</div>
+
+<style>
+  /* Verbatim from apps/desktop/src/app.css:97-268 and packages/ui/src/base.css:91. */
+  .widget-frame {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    grid-column: span var(--w);
+    grid-row: span var(--h);
+    min-width: 0;
+  }
+  .widget-frame--editing {
+    border-style: dashed;
+    border-color: var(--accent);
+  }
+
+  .widget-frame__toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 12px;
+    flex: none;
+  }
+  .widget-frame__title {
+    color: var(--text-muted);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .widget-frame__help {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .widget-frame__drag {
+    color: var(--text-muted);
+    padding: 0 var(--space-1);
+    font-size: 14px;
+    line-height: 1;
+  }
+  .widget-frame__remove { padding: 0 var(--space-1); color: var(--danger); }
+
+  .widget-frame__resize {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    height: 20px;
+  }
+  .widget-frame__resize::after {
+    content: '';
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 9px;
+    height: 9px;
+    border-right: 2.5px solid var(--accent);
+    border-bottom: 2.5px solid var(--accent);
+    opacity: 0.8;
+  }
+
+  .widget-body {
+    flex: 1;
+    padding: var(--space-2);
+    /* Deliberately not `auto`: nothing on this page should scroll inside a
+       widget. The grid row is a minimum, so the widget grows instead. */
+    overflow: visible;
+    overflow-wrap: break-word;
+    min-width: 0;
+  }
+
+  /* ── The interior rhythm every tool repeats ──────────────────────────
+     Column flex, 8 px gap, 12 px padding, with a fixed head, a scrolling
+     middle and a fixed footer (todo/src/index.tsx:348, habits:362, …). */
+  .widget-body :global(.wgt) {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+  .widget-body :global(.wgt__head) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+  }
+  .widget-body :global(.wgt__body) { flex: 1; }
+  .widget-body :global(.wgt__foot) { display: flex; gap: var(--space-2); flex-shrink: 0; }
+
+  /* Recurring atoms: 8 px-gap row, status dot, ellipsised title, right-aligned
+     12 px tabular-nums meta. */
+  .widget-body :global(.row) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+  .widget-body :global(.grow) {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .widget-body :global(.meta) {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .widget-body :global(.dot) { width: 8px; height: 8px; border-radius: 999px; flex: none; }
+  .widget-body :global(.num) {
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+</style>

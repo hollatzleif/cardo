@@ -2,22 +2,52 @@
 interface Props {
   title: string;
   description?: string;
+  /**
+   * Load smooth scrolling (Lenis) on this page.
+   *
+   * `/admin` sets this to false. It holds a session token in sessionStorage,
+   * and docs/SECURITY-NOTES.md rests its XSS assessment on that page running
+   * no third-party code. Keeping the script off it preserves that literally
+   * rather than restating the claim more weakly.
+   */
+  motion?: boolean;
+  /**
+   * Render the site header.
+   *
+   * The landing page brings the app's own top bar, and stacking a second
+   * branded bar above it just repeated the word "Cardo" twice. Pages without
+   * that top bar (privacy, admin) still need a way back, so they keep it.
+   */
+  header?: boolean;
 }
 const {
   title,
   description = 'Cardo – your pivot point. A freely arrangeable dashboard that gathers everything in one calm place. Local-first, free, no account.',
+  motion = true,
+  header = true,
 } = Astro.props;
 import { FORUM_URL, PUBLIC_REPO_URL, withBase } from '../lib/site';
+import { allThemeBlocks, cssVars, darkTheme, lightTheme, SHAPE_VARS } from '../lib/theme';
 
+// Colours come from the same theme files the desktop app uses, resolved at
+// build time. See src/lib/theme.ts for why they are no longer written here.
+const darkVars = cssVars(darkTheme);
+const lightVars = cssVars(lightTheme);
+// All twenty themes, for the picker. 2 KB gzipped.
+const themeBlocks = allThemeBlocks();
+
+/**
+ * Everything except the privacy policy now lives on one page, so the nav
+ * points at sections rather than pages. `/privacy` stays a real page because a
+ * privacy policy has to be linkable and readable on its own.
+ */
 const nav = [
-  { href: withBase('/'), label: 'Home' },
-  { href: withBase('/download'), label: 'Download' },
-  { href: withBase('/docs'), label: 'Docs' },
-  { href: withBase('/docs/tutorial'), label: 'Tutorial' },
-  { href: withBase('/assistant'), label: 'Your Assistant' },
+  { href: `${withBase('/')}#assistant-detail`, label: 'Assistant' },
+  { href: `${withBase('/')}#tools`, label: 'Tools' },
+  { href: `${withBase('/')}#sync-detail`, label: 'Sync' },
+  { href: `${withBase('/')}#docs`, label: 'Docs' },
   { href: FORUM_URL, label: 'Forum', external: true },
-  { href: withBase('/polls'), label: 'Polls' },
-  { href: withBase('/donate'), label: 'Donate' },
+  { href: `${withBase('/')}#download`, label: 'Download' },
 ];
 const current = Astro.url.pathname;
 ---
@@ -39,24 +69,52 @@ const current = Astro.url.pathname;
     <link rel="icon" type="image/png" href={withBase('/favicon.png')} />
     <link rel="icon" type="image/x-icon" href={withBase('/favicon.ico')} sizes="any" />
     <link rel="apple-touch-icon" href={withBase('/apple-touch-icon.png')} />
+    <script is:inline>
+      // Before first paint, or the page flashes the system colours and then
+      // repaints in the chosen theme. Deliberately tiny and inline; a deferred
+      // module script would run far too late for this.
+      try {
+        var saved = localStorage.getItem('cardo-theme');
+        if (saved) document.documentElement.dataset.theme = saved;
+      } catch (e) {
+        // Private mode or blocked storage: fall back to prefers-color-scheme.
+      }
+    </script>
   </head>
   <body>
-    <header class="site-header">
-      <a class="brand" href={withBase('/')}>⊕ Cardo</a>
-      <nav>
-        {nav.map((item) => (
-          <a
-            href={item.href}
-            rel={item.external ? 'noopener' : undefined}
-            class={!item.external && (current === item.href || current === item.href + '/') ? 'active' : ''}
-          >{item.label}{item.external ? ' ↗' : ''}</a>
-        ))}
-      </nav>
-    </header>
-    <main>
+    <a class="skip-link" href="#main">Skip to content</a>
+    {header && (
+      <header class="site-header">
+        <a class="brand" href={withBase('/')}>⊕ Cardo</a>
+        <nav>
+          {nav.map((item) => (
+            <a
+              href={item.href}
+              rel={item.external ? 'noopener' : undefined}
+              class={!item.external && (current === item.href || current === item.href + '/') ? 'active' : ''}
+            >{item.label}{item.external ? ' ↗' : ''}</a>
+          ))}
+        </nav>
+      </header>
+    )}
+    {/* tabindex="-1" makes the skip link actually MOVE focus, not just scroll:
+        without it Safari and older Firefox jump the viewport and leave focus
+        behind in the header, which defeats the link's whole purpose. */}
+    <main id="main" tabindex="-1">
       <slot />
     </main>
     <footer class="site-footer">
+      {/* With the site header gone from the landing page, this is where the
+          section links live. On a single page they are anchors anyway. */}
+      {!header && (
+        <nav class="site-footer__nav" aria-label="Sections">
+          {nav.map((item) => (
+            <a href={item.href} rel={item.external ? 'noopener' : undefined}>
+              {item.label}{item.external ? ' ↗' : ''}
+            </a>
+          ))}
+        </nav>
+      )}
       <p>
         Cardo is local-first: your data stays on your device. No account, no tracking –
         this website sets no cookies either.
@@ -67,32 +125,19 @@ const current = Astro.url.pathname;
         <a href={withBase('/privacy')}>Privacy</a>
       </p>
     </footer>
-    <style is:global>
+    <style is:global set:html={`
       :root {
-        --base: #1e1e2e;
-        --surface-0: #313244;
-        --surface-1: #45475a;
-        --text: #cdd6f4;
-        --text-muted: #a6adc8;
-        --accent: #89b4fa;
-        --success: #a6e3a1;
-        --warning: #f9e2af;
-        --danger: #f38ba8;
+        ${darkVars}${SHAPE_VARS}
         --radius: 12px;
       }
       @media (prefers-color-scheme: light) {
         :root {
-          --base: #eff1f5;
-          --surface-0: #e6e9ef;
-          --surface-1: #ccd0da;
-          --text: #4c4f69;
-          --text-muted: #6c6f85;
-          --accent: #1e66f5;
-          --success: #40a02b;
-          --warning: #df8e1d;
-          --danger: #d20f39;
+          ${lightVars}
         }
       }
+      ${themeBlocks}
+    `}></style>
+    <style is:global>
       * { box-sizing: border-box; }
       body {
         margin: 0;
@@ -118,9 +163,112 @@ const current = Astro.url.pathname;
         border-top: 1px solid var(--surface-1); padding: 1.5rem 1.25rem; color: var(--text-muted);
         font-size: 0.9rem; text-align: center;
       }
+      .site-footer__nav {
+        display: flex; flex-wrap: wrap; justify-content: center;
+        gap: 0.25rem 1.25rem; margin-bottom: 1.25rem;
+      }
+      .site-footer__nav a { text-decoration: none; color: var(--text-muted); }
+      .site-footer__nav a:hover { color: var(--text); }
+      /* ── Shared page vocabulary ───────────────────────────────────────
+         Hairlines and typography carry the structure; boxes are the
+         exception, not the default. Every page uses these so the site reads
+         as one thing rather than nine. */
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin: 0 0 var(--space-4);
+      }
+      .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+      .prose { max-width: 64ch; color: var(--text-muted); }
+      .prose strong { color: var(--text); font-weight: 600; }
+
+      .section { padding: clamp(3rem, 8vw, 5.5rem) 0; }
+      .section + .section { border-top: 1px solid var(--border-subtle); }
+      .section > h2:first-of-type, .section__head h2 {
+        font-size: clamp(1.5rem, 3vw, 2.1rem);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+        margin: 0 0 var(--space-5);
+        max-width: 22ch;
+        text-wrap: balance;
+      }
+      .section h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin: 0 0 var(--space-2);
+      }
+
+      /* A list of items separated by rules instead of stacked boxes. */
+      .rows { list-style: none; margin: 0; padding: 0; }
+      .rows > li { padding: var(--space-5) 0; border-top: 1px solid var(--border-subtle); }
+      .rows > li:first-child { border-top: 0; }
+
+      /* ── The app's own components ─────────────────────────────────────
+         Copied from packages/ui/src/base.css so widgets on this page use the
+         real thing rather than a lookalike. Hand-copied rather than imported:
+         @cardo/ui would drag React in as a dependency, and adding any .css
+         file under apps/website puts the whole directory under stylelint's
+         color-no-hex rule. These are token-only and would pass either way. */
+      .c-card {
+        background: var(--bg-widget);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-widget);
+      }
+      .c-btn {
+        display: inline-flex; align-items: center; gap: var(--space-2);
+        padding: var(--space-2) var(--space-4);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        background: var(--bg-widget);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .c-btn:hover { background: var(--bg-widget-hover); }
+      .c-btn--primary {
+        background: var(--accent); color: var(--accent-text); border-color: var(--accent);
+      }
+      .c-btn--primary:hover { filter: brightness(1.1); background: var(--accent); }
+      .c-btn--ghost { background: transparent; border-color: transparent; }
+      .c-btn--ghost:hover { background: var(--bg-widget-hover); }
+      .c-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .c-input {
+        padding: var(--space-2) var(--space-3);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        background: var(--bg-canvas);
+        color: var(--text-primary);
+        outline: none;
+        width: 100%;
+      }
+      .c-input:focus { border-color: var(--accent); }
+      .c-input::placeholder { color: var(--text-muted); }
+      .c-badge {
+        display: inline-flex; align-items: center;
+        padding: 2px var(--space-2);
+        border-radius: 999px;
+        font-size: 12px;
+        border: 1px solid var(--border-subtle);
+      }
+      .c-badge--green {
+        background: color-mix(in srgb, var(--success) 20%, transparent);
+        color: var(--success); border-color: var(--success);
+      }
+      .c-badge--yellow {
+        background: color-mix(in srgb, var(--warning) 20%, transparent);
+        color: var(--warning); border-color: var(--warning);
+      }
+      .c-muted { color: var(--text-muted); }
+
       .card {
-        background: var(--surface-0); border: 1px solid var(--surface-1);
-        border-radius: var(--radius); padding: 1.25rem;
+        background: var(--bg-widget); border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md); padding: var(--space-5);
       }
       .btn {
         display: inline-block; background: var(--accent); color: var(--base);
@@ -140,10 +288,80 @@ const current = Astro.url.pathname;
         border-radius: 6px; padding: 0.1em 0.45em;
       }
       h1, h2, h3 { line-height: 1.25; }
+
+      /* Every sub-page opens the same way: one large, calm heading and a lead
+         paragraph, with generous air before the content starts. The old pages
+         ran straight from an h1 into a stack of boxes. */
+      main > h1 {
+        font-size: clamp(1.9rem, 4.2vw, 2.8rem);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        margin: clamp(1.5rem, 5vw, 3rem) 0 var(--space-5);
+        max-width: 20ch;
+        text-wrap: balance;
+      }
+      main > h1 + p {
+        max-width: 62ch;
+        color: var(--text-muted);
+        font-size: 1.05rem;
+        margin: 0 0 var(--space-6);
+        text-wrap: pretty;
+      }
+      /* The first section after the intro needs a rule; later ones get theirs
+         from the .section + .section pair. */
+      main > h1 ~ .section:first-of-type { border-top: 1px solid var(--border-subtle); }
       .badge {
         display: inline-block; padding: 0.1rem 0.6rem; border-radius: 999px; font-size: 0.8rem;
         border: 1px solid var(--success); color: var(--success);
       }
+
+      /* ── Keyboard access ──────────────────────────────────────────────
+         The site had no focus styling at all: keyboard users navigated by
+         browser default rings, which the sticky header could hide entirely. */
+      .skip-link {
+        position: absolute; left: 0.5rem; top: -3rem; z-index: 20;
+        background: var(--accent); color: var(--base);
+        padding: 0.5rem 1rem; border-radius: 0 0 8px 8px;
+        text-decoration: none; font-weight: 700;
+        transition: top 0.15s ease;
+      }
+      .skip-link:focus { top: 0; }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      .btn:focus-visible { outline-offset: 3px; }
+      /* Over the hero the accent colour is also the animated backdrop's own
+         colour, so an accent ring can vanish into it. Use the text colour and
+         a solid halo instead. */
+      .hero :focus-visible {
+        outline-color: var(--text);
+        box-shadow: 0 0 0 4px var(--base);
+      }
+      /* main only receives focus via the skip link; it must not draw a ring. */
+      main:focus { outline: none; }
+
+      /* Anchor targets must clear the sticky header, or a jump lands with the
+         heading hidden underneath it. */
+      :target, h1, h2, h3, section[id] { scroll-margin-top: 5rem; }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
     </style>
+    {motion && (
+      <script>
+        import { initMotion } from '../lib/motion';
+        initMotion();
+      </script>
+    )}
   </body>
 </html>
