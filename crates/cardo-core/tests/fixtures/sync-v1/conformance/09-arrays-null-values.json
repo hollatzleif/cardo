@@ -1,0 +1,251 @@
+{
+  "name": "09-arrays-null-values",
+  "description": "Arrays and nested objects are opaque field values (whole-value replace, element order matters). A null value is a present field; delete_field removes it. A remote set_field with value null stores null; a remote create with value null creates {}.",
+  "steps": [
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "arr",
+      "value": {
+        "list": [
+          1,
+          2,
+          3
+        ],
+        "nested": {
+          "a": [
+            {
+              "b": null
+            }
+          ]
+        },
+        "nul": null
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "arr",
+      "value": {
+        "list": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "nested": {
+          "a": [
+            {
+              "b": null
+            }
+          ]
+        },
+        "nul": null
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "arr",
+      "value": {
+        "list": [
+          4,
+          3,
+          2,
+          1
+        ],
+        "nested": {
+          "a": [
+            {
+              "b": null
+            }
+          ]
+        },
+        "nul": null
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "a-nul",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "arr",
+        "op": "set_field",
+        "field": "nul",
+        "value": "jetzt da",
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "a-list",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "arr",
+        "op": "set_field",
+        "field": "list",
+        "value": null,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "a-nested",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "arr",
+        "op": "delete_field",
+        "field": "nested",
+        "value": null,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "a-obj",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "arr",
+        "op": "set_field",
+        "field": "obj",
+        "value": {
+          "z": 1,
+          "a": [
+            null,
+            {},
+            -0.5,
+            1e-07
+          ]
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    },
+    {
+      "kind": "get",
+      "namespace": "todo",
+      "id": "arr",
+      "expectDoc": {
+        "list": null,
+        "nul": "jetzt da",
+        "obj": {
+          "a": [
+            null,
+            {},
+            -0.5,
+            1e-07
+          ],
+          "z": 1
+        }
+      }
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "a-empty",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "empty",
+        "op": "create",
+        "field": null,
+        "value": null,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "create"
+    },
+    {
+      "kind": "get",
+      "namespace": "todo",
+      "id": "empty",
+      "expectDoc": {}
+    }
+  ],
+  "expectDocs": {
+    "todo": {
+      "arr": {
+        "list": null,
+        "nul": "jetzt da",
+        "obj": {
+          "a": [
+            null,
+            {},
+            -0.5,
+            1e-07
+          ],
+          "z": 1
+        }
+      },
+      "empty": {}
+    }
+  },
+  "expectLocalOps": [
+    {
+      "namespace": "todo",
+      "docId": "arr",
+      "op": "create",
+      "field": null,
+      "value": {
+        "list": [
+          1,
+          2,
+          3
+        ],
+        "nested": {
+          "a": [
+            {
+              "b": null
+            }
+          ]
+        },
+        "nul": null
+      }
+    },
+    {
+      "namespace": "todo",
+      "docId": "arr",
+      "op": "set_field",
+      "field": "list",
+      "value": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "namespace": "todo",
+      "docId": "arr",
+      "op": "set_field",
+      "field": "list",
+      "value": [
+        4,
+        3,
+        2,
+        1
+      ]
+    }
+  ]
+}

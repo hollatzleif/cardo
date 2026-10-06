@@ -1,0 +1,306 @@
+{
+  "name": "06-local-change-log-rules",
+  "description": "set() diffs top-level fields (deep equality, key order irrelevant) in sorted key order: set_field for new/changed, then delete_field for removed. Unchanged set logs nothing; set after delete logs create; delete of missing/deleted doc logs nothing.",
+  "steps": [
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "a",
+      "value": {
+        "title": "x",
+        "n": 1
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "a",
+      "value": {
+        "title": "x",
+        "n": 1
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 0
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "a",
+      "value": {
+        "n": 1,
+        "title": "x"
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 0
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "a",
+      "value": {
+        "title": "y",
+        "n": 1,
+        "extra": null
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 2
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "a",
+      "value": {
+        "title": "y",
+        "extra": null
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "a",
+      "value": {
+        "title": "y"
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "delete",
+      "namespace": "todo",
+      "id": "a",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "delete",
+      "namespace": "todo",
+      "id": "a",
+      "expectOpsLogged": 0
+    },
+    {
+      "kind": "delete",
+      "namespace": "todo",
+      "id": "never",
+      "expectOpsLogged": 0
+    },
+    {
+      "kind": "get",
+      "namespace": "todo",
+      "id": "a",
+      "expectDoc": null
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "a",
+      "value": {
+        "title": "wieder"
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "b",
+      "value": {
+        "o": {
+          "x": 1,
+          "y": [
+            1,
+            2
+          ]
+        }
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "b",
+      "value": {
+        "o": {
+          "x": 1,
+          "y": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "b",
+      "value": {
+        "o": {
+          "y": [
+            1,
+            2,
+            3
+          ],
+          "x": 1
+        }
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 0
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "b",
+      "value": {
+        "o": {
+          "x": 1,
+          "y": [
+            3,
+            2,
+            1
+          ]
+        }
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "c",
+      "value": "not an object",
+      "expectError": true
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "c",
+      "value": [
+        1,
+        2
+      ],
+      "expectError": true
+    }
+  ],
+  "expectDocs": {
+    "todo": {
+      "a": {
+        "title": "wieder"
+      },
+      "b": {
+        "o": {
+          "x": 1,
+          "y": [
+            3,
+            2,
+            1
+          ]
+        }
+      }
+    }
+  },
+  "expectLocalOps": [
+    {
+      "namespace": "todo",
+      "docId": "a",
+      "op": "create",
+      "field": null,
+      "value": {
+        "title": "x",
+        "n": 1
+      }
+    },
+    {
+      "namespace": "todo",
+      "docId": "a",
+      "op": "set_field",
+      "field": "extra",
+      "value": null
+    },
+    {
+      "namespace": "todo",
+      "docId": "a",
+      "op": "set_field",
+      "field": "title",
+      "value": "y"
+    },
+    {
+      "namespace": "todo",
+      "docId": "a",
+      "op": "delete_field",
+      "field": "n",
+      "value": null
+    },
+    {
+      "namespace": "todo",
+      "docId": "a",
+      "op": "delete_field",
+      "field": "extra",
+      "value": null
+    },
+    {
+      "namespace": "todo",
+      "docId": "a",
+      "op": "delete_doc",
+      "field": null,
+      "value": null
+    },
+    {
+      "namespace": "todo",
+      "docId": "a",
+      "op": "create",
+      "field": null,
+      "value": {
+        "title": "wieder"
+      }
+    },
+    {
+      "namespace": "todo",
+      "docId": "b",
+      "op": "create",
+      "field": null,
+      "value": {
+        "o": {
+          "x": 1,
+          "y": [
+            1,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "namespace": "todo",
+      "docId": "b",
+      "op": "set_field",
+      "field": "o",
+      "value": {
+        "x": 1,
+        "y": [
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "namespace": "todo",
+      "docId": "b",
+      "op": "set_field",
+      "field": "o",
+      "value": {
+        "x": 1,
+        "y": [
+          3,
+          2,
+          1
+        ]
+      }
+    }
+  ]
+}

@@ -1,12 +1,21 @@
-# Deploys apps/website to GitHub Pages of the PUBLIC repo
-# (hollatzleif/cardo-app, branch gh-pages) on every website change.
+# Deploys apps/website AND the iPhone home-screen web app (apps/desktop
+# built with `--mode web`, served under /cardo-app/app/) to GitHub Pages of
+# the PUBLIC repo (hollatzleif/cardo-app, branch gh-pages). Both ship in one
+# publish, so a website deploy can never wipe the app or vice versa.
 # Needs the same RELEASE_TOKEN secret as release.yml (cross-repo push).
 name: Deploy website
 
 on:
   push:
     branches: [main]
-    paths: ['apps/website/**', '.github/workflows/deploy-website.yml']
+    paths:
+      - 'apps/website/**'
+      - 'apps/desktop/src/**'
+      - 'apps/desktop/vite/**'
+      - 'apps/desktop/*.html'
+      - 'apps/desktop/vite.config.ts'
+      - 'packages/**'
+      - '.github/workflows/deploy-website.yml'
   workflow_dispatch:
 
 jobs:
@@ -26,6 +35,16 @@ jobs:
 
       - name: Build website
         run: pnpm --filter @cardo/website build
+
+      # The Google OAuth *web* client id is public by design (it is visible in
+      # every page that signs in), so a repository variable is enough.
+      - name: Build iPhone web app
+        env:
+          VITE_GDRIVE_WEB_CLIENT_ID: ${{ vars.GDRIVE_WEB_CLIENT_ID }}
+        run: pnpm --filter @cardo/desktop build:web
+
+      - name: Put the web app under /app
+        run: cp -r apps/desktop/dist-web apps/website/dist/app
 
       - name: Publish to cardo-app gh-pages
         uses: peaceiris/actions-gh-pages@v4

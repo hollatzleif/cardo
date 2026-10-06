@@ -132,3 +132,69 @@ html[data-viewport='phone'] .widget-frame__variant {
   flex-basis: 100%;
   order: 10;
 }
+
+/* ── Web app: first-start join flow ── */
+.join-flow {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--space-4) + env(safe-area-inset-top)) var(--space-3)
+    calc(var(--space-4) + env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+.join-flow__card {
+  width: min(480px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  user-select: text;
+}
+.join-flow__title {
+  margin: 0;
+  font-size: 22px;
+}
+.join-flow__subtitle {
+  margin: 0;
+  font-size: 17px;
+}
+.join-flow__wide {
+  justify-content: center;
+  min-height: 48px;
+  font-size: 16px;
+}
+.join-flow__key {
+  min-height: 96px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  resize: vertical;
+}
+.join-flow__label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.join-flow__error {
+  color: var(--danger);
+  margin: 0;
+}
+.join-flow__progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+/* ── Web app: sync banner ── */
+.web-sync-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 14px;
+}
+.web-sync-banner__text {
+  flex: 1;
+  min-width: 0;
+}

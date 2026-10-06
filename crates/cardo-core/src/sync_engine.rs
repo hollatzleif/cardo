@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::error::Result;
+use crate::error::{CoreError, Result};
 use crate::storage::{ChangeNotice, SqliteStorage, SyncOp};
 use crate::sync::{EncryptedOp, SyncTransport};
 use crate::sync_crypto::SyncCipher;
@@ -29,6 +29,10 @@ pub struct SyncReport {
     pub skipped: usize,
     /// Blobs that failed to decrypt (wrong key / tampered) – surfaced, never fatal.
     pub undecryptable: usize,
+    /// Decrypted ops the storage refused (invalid namespace / id / field,
+    /// unknown op kind) – e.g. from a newer or buggy client. Counted and
+    /// skipped so one bad op cannot block the hub forever; never fatal.
+    pub rejected: usize,
     /// Document changes for UI refresh events.
     pub notices: Vec<ChangeNotice>,
 }
@@ -86,9 +90,6 @@ impl<'a> SyncEngine<'a> {
         let mut cursor = self.storage.cursor_get(&self.transport_id).await?;
         loop {
             let batch = transport.pull(cursor.clone()).await?;
-            if batch.ops.is_empty() {
-                break;
-            }
             report.pulled += batch.ops.len();
             for op in &batch.ops {
                 let plaintext = match self.cipher.decrypt(&op.op_id, &op.blob) {
@@ -109,16 +110,21 @@ impl<'a> SyncEngine<'a> {
                     report.skipped += 1;
                     continue;
                 }
-                match self.storage.apply_remote_op(&sync_op).await? {
-                    Some(notice) => {
+                match self.storage.apply_remote_op(&sync_op).await {
+                    Ok(Some(notice)) => {
                         report.applied += 1;
                         report.notices.push(notice);
                     }
-                    None => report.skipped += 1,
+                    Ok(None) => report.skipped += 1,
+                    Err(err) if is_rejection(&err) => report.rejected += 1,
+                    Err(err) => return Err(err),
                 }
             }
+            // The cursor is the only progress signal: an unchanged cursor
+            // means the transport has nothing further – stop (also guards
+            // against a transport that would otherwise make us spin).
             if batch.next_cursor == cursor {
-                break; // transport made no progress – avoid spinning
+                break;
             }
             cursor = batch.next_cursor;
             self.storage.cursor_set(&self.transport_id, &cursor).await?;
@@ -156,6 +162,20 @@ impl<'a> SyncEngine<'a> {
             }
         }
         Ok(())
+    }
+}
+
+/// Errors that describe a bad OP (validation / unknown kind) rather than a
+/// broken database or transport. Those are counted, not propagated.
+fn is_rejection(err: &CoreError) -> bool {
+    match err {
+        CoreError::Db(_) | CoreError::Io(_) => false,
+        CoreError::InvalidNamespace(_)
+        | CoreError::InvalidField(_)
+        | CoreError::InvalidId(_)
+        | CoreError::NotAnObject
+        | CoreError::Serde(_)
+        | CoreError::Other(_) => true,
     }
 }
 
@@ -401,5 +421,89 @@ mod tests {
         assert_eq!(report.applied, 0);
         assert!(report.undecryptable >= 1);
         assert!(b.get("todo", "1").await.unwrap().is_none());
+    }
+
+    /// A transport that keeps returning the same batch and cursor must not
+    /// make the pull loop spin.
+    #[tokio::test]
+    async fn pull_loop_terminates_when_cursor_is_unchanged() {
+        use crate::sync::{Cursor, PullBatch, PushAck};
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        struct Stuck {
+            calls: AtomicUsize,
+        }
+        #[async_trait::async_trait]
+        impl SyncTransport for Stuck {
+            async fn push(&self, ops: Vec<EncryptedOp>) -> Result<PushAck> {
+                Ok(PushAck { accepted: ops.len() })
+            }
+            async fn pull(&self, since: Cursor) -> Result<PullBatch> {
+                let n = self.calls.fetch_add(1, Ordering::SeqCst);
+                assert!(n < 10, "pull loop is spinning");
+                Ok(PullBatch {
+                    ops: vec![EncryptedOp { op_id: "x".into(), blob: vec![0; 40] }],
+                    next_cursor: since,
+                })
+            }
+        }
+
+        let dir = TempDir::new().unwrap();
+        let key = SyncKey::generate().unwrap().derive();
+        let a = device(&dir, "a").await;
+        let stuck = Stuck { calls: AtomicUsize::new(0) };
+        let report = SyncEngine::new(&a, &key.data_key, "test").sync_once(&stuck).await.unwrap();
+        assert_eq!(stuck.calls.load(Ordering::SeqCst), 1);
+        assert_eq!(report.undecryptable, 1);
+    }
+
+    /// One op the storage refuses (invalid namespace) is counted as rejected;
+    /// the rest of the round – including later valid ops – still applies,
+    /// and the cursor moves past it.
+    #[tokio::test]
+    async fn invalid_op_does_not_block_the_round() {
+        use crate::sync_crypto::SyncCipher;
+
+        let dir = TempDir::new().unwrap();
+        let hub = dir.path().join("hub");
+        let key = SyncKey::generate().unwrap().derive();
+        let transport = FolderTransport::new(&hub).unwrap();
+        let cipher = SyncCipher::new(&key.data_key);
+
+        let make = |op_id: &str, namespace: &str, doc_id: &str| {
+            let op = SyncOp {
+                op_id: op_id.into(),
+                device_id: "00000000-0000-4000-8000-000000000001".into(),
+                hlc: "1700000000000-0000-00000000-0000-4000-8000-000000000001".into(),
+                namespace: namespace.into(),
+                doc_id: doc_id.into(),
+                op: "create".into(),
+                field: None,
+                value: Some(json!({"title":"ok"})),
+                created_at: 1_700_000_000_000,
+            };
+            let plain = serde_json::to_vec(&op).unwrap();
+            EncryptedOp { op_id: op_id.into(), blob: cipher.encrypt(op_id, &plain).unwrap() }
+        };
+        transport
+            .push(vec![
+                make("op-bad", "Bad Namespace!", "1"),
+                make("op-bad-id", "todo", ""),
+                make("op-good", "todo", "1"),
+            ])
+            .await
+            .unwrap();
+
+        let b = device(&dir, "b").await;
+        let engine = SyncEngine::new(&b, &key.data_key, "test");
+        let report = engine.sync_once(&transport).await.unwrap();
+        assert_eq!(report.rejected, 2);
+        assert_eq!(report.applied, 1);
+        assert_eq!(b.get("todo", "1").await.unwrap().unwrap()["title"], "ok");
+
+        // Next round: cursor advanced, nothing re-read.
+        let again = engine.sync_once(&transport).await.unwrap();
+        assert_eq!(again.pulled, 0);
+        assert_eq!(again.rejected, 0);
     }
 }

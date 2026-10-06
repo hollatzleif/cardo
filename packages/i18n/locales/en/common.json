@@ -3670,5 +3670,62 @@
     "doneEditing": "✓ Done arranging",
     "arrange": "✎ Arrange & add widgets",
     "search": "Search & commands"
+  },
+  "web": {
+    "update": {
+      "available": "A new version of Cardo is ready.",
+      "reload": "Reload"
+    },
+    "join": {
+      "title": "Cardo on your iPhone",
+      "intro": "Want the same data here as on your computer? Connect this iPhone to your Cardo – sync runs end-to-end encrypted through your Google Drive.",
+      "connect": "Connect to my Cardo",
+      "notConfigured": "The Google access for the iPhone app has not been set up yet.",
+      "standalone": "Use without sync",
+      "standaloneHint": "You can connect later any time under Settings → Sync.",
+      "back": "Back",
+      "keyHint": "Paste your sync key. On your computer it is under Settings → Sync → Show key (\"Allow joining with this key\" must be on).",
+      "keyInvalid": "That is not a valid key: {{reason}}",
+      "deviceName": "Name of this device",
+      "next": "Next",
+      "googleHint": "Now sign in with the Google account your computer syncs with. Cardo only gets access to its own hidden folder – not to your files.",
+      "google": "Sign in with Google",
+      "googleFailed": "Google sign-in did not work ({{code}}). Please try again.",
+      "phase": {
+        "download": "Downloading your data …",
+        "check": "Checking the group …",
+        "register": "Registering this iPhone …",
+        "upload": "Almost done …"
+      },
+      "files": "{{read}} of {{total}} packages",
+      "keepOpen": "Please keep the app open until everything is loaded.",
+      "retry": "Try again",
+      "wrongKey": "Nothing could be decrypted with this key. Is it really the key from your computer?",
+      "denied": "Your computer is not accepting new devices right now. Turn on \"Allow joining with this key\" under Settings → Sync there and try again.",
+      "slotsFull": "All 10 device slots are in use. Remove an old device on your computer under Settings → Sync."
+    },
+    "sync": {
+      "paused": "Sync paused – Google wants you to sign in again briefly.",
+      "continueGoogle": "Continue with Google",
+      "failed": "Sync failed: {{message}}",
+      "retry": "Try again",
+      "revoked": "This iPhone was removed from the sync group.",
+      "notJoined": "This iPhone is not connected to your Cardo yet.",
+      "joinedAs": "Connected as \"{{name}}\" via Google Drive.",
+      "lastSync": "Last synced: {{when}}",
+      "state": {
+        "off": "Sync is off.",
+        "idle": "Everything is in sync.",
+        "syncing": "Syncing …",
+        "needs-google": "Waiting for Google sign-in.",
+        "error": "Last attempt failed.",
+        "revoked": "Removed from the group.",
+        "join-denied": "Joining not allowed."
+      },
+      "onlyWhileOpen": "On the iPhone, sync only runs while Cardo is open.",
+      "now": "Sync now",
+      "leave": "Stop syncing on this iPhone",
+      "leaveConfirm": "Stop syncing? Your data stays on this iPhone but is no longer synced."
+    }
   }
 }

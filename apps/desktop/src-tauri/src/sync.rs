@@ -153,7 +153,7 @@ fn forget_key() -> Result<(), String> {
 
 /// Minimal WebDAV carrier mirroring the folder transport's batch-file shape:
 /// one JSON file per pushed batch under `<base>/cardo-sync/ops/`, cursor =
-/// last processed filename (they sort chronologically).
+/// `cardo_core::LookbackCursor` over the (chronologically sorting) filenames.
 pub struct WebDavTransport {
     client: reqwest::Client,
     base: String,
@@ -276,12 +276,15 @@ impl SyncTransport for WebDavTransport {
     ) -> cardo_core::Result<cardo_core::sync::PullBatch> {
         self.ensure_dirs().await.map_err(cardo_core::CoreError::Other)?;
         let names = self.list_names().await.map_err(cardo_core::CoreError::Other)?;
+        // Look-back cursor: late-arriving files (lagging uploader clock, slow
+        // upload) that sort below the last name are still read, exactly once.
+        let mut cursor = cardo_core::LookbackCursor::parse(&since);
+        let due = cursor.select(&names, 50);
         let mut ops = Vec::new();
-        let mut cursor = since.clone();
-        for name in names.into_iter().filter(|n| n.as_str() > since.as_str()).take(50) {
+        for name in &due {
             let response = self
                 .client
-                .get(self.ops_url(&name))
+                .get(self.ops_url(name))
                 .basic_auth(&self.user, Some(&self.password))
                 .send()
                 .await
@@ -304,9 +307,9 @@ impl SyncTransport for WebDavTransport {
                 let Some(blob) = b64_decode_public(blob_b64) else { continue };
                 ops.push(cardo_core::sync::EncryptedOp { op_id: op_id.to_string(), blob });
             }
-            cursor = name;
         }
-        Ok(cardo_core::sync::PullBatch { ops, next_cursor: cursor })
+        cursor.advance(&due);
+        Ok(cardo_core::sync::PullBatch { ops, next_cursor: cursor.render() })
     }
 }
 

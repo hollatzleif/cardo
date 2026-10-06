@@ -1,0 +1,265 @@
+{
+  "name": "08-id-and-namespace-limits",
+  "description": "Doc ids: 1..128 UTF-8 BYTES (not chars), no control chars. Namespaces: 1..64 chars, at most one dot, each part [a-z][a-z0-9-]*.",
+  "steps": [
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "ääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääää",
+      "value": {
+        "ok": true
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1,
+      "note": "64 chars, 128 bytes"
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "ääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääa",
+      "value": {
+        "ok": false
+      },
+      "expectError": true,
+      "note": "65 chars, 129 bytes"
+    },
+    {
+      "kind": "get",
+      "namespace": "todo",
+      "id": "ääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääa",
+      "expectError": true
+    },
+    {
+      "kind": "delete",
+      "namespace": "todo",
+      "id": "ääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääa",
+      "expectError": true
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "l-129",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "ääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääa",
+        "op": "create",
+        "field": null,
+        "value": {},
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "l-x128",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "op": "create",
+        "field": null,
+        "value": {
+          "n": 128
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "create"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "l-x129",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "op": "create",
+        "field": null,
+        "value": {},
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "a\u0007b",
+      "value": {},
+      "expectError": true
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "zeile\numbruch",
+      "value": {},
+      "expectError": true
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "",
+      "value": {},
+      "expectError": true
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "Ordner/Notiz 🎉 – Grüße.md",
+      "value": {
+        "ok": true
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "Todo",
+      "id": "x",
+      "value": {},
+      "expectError": true
+    },
+    {
+      "kind": "set",
+      "namespace": "a.b.c",
+      "id": "x",
+      "value": {},
+      "expectError": true
+    },
+    {
+      "kind": "set",
+      "namespace": "1abc",
+      "id": "x",
+      "value": {},
+      "expectError": true
+    },
+    {
+      "kind": "set",
+      "namespace": "todo.",
+      "id": "x",
+      "value": {},
+      "expectError": true
+    },
+    {
+      "kind": "set",
+      "namespace": "to_do",
+      "id": "x",
+      "value": {},
+      "expectError": true
+    },
+    {
+      "kind": "set",
+      "namespace": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+      "id": "x",
+      "value": {},
+      "expectError": true
+    },
+    {
+      "kind": "set",
+      "namespace": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+      "id": "x",
+      "value": {
+        "ok": true
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "core.sync-control",
+      "id": "join-policy",
+      "value": {
+        "open": true
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "a1-b.c2-d",
+      "id": "x",
+      "value": {
+        "ok": true
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    }
+  ],
+  "expectDocs": {
+    "a1-b.c2-d": {
+      "x": {
+        "ok": true
+      }
+    },
+    "core.sync-control": {
+      "join-policy": {
+        "open": true
+      }
+    },
+    "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn": {
+      "x": {
+        "ok": true
+      }
+    },
+    "todo": {
+      "ääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääää": {
+        "ok": true
+      },
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": {
+        "n": 128
+      },
+      "Ordner/Notiz 🎉 – Grüße.md": {
+        "ok": true
+      }
+    }
+  },
+  "expectLocalOps": [
+    {
+      "namespace": "todo",
+      "docId": "ääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääääää",
+      "op": "create",
+      "field": null,
+      "value": {
+        "ok": true
+      }
+    },
+    {
+      "namespace": "todo",
+      "docId": "Ordner/Notiz 🎉 – Grüße.md",
+      "op": "create",
+      "field": null,
+      "value": {
+        "ok": true
+      }
+    },
+    {
+      "namespace": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+      "docId": "x",
+      "op": "create",
+      "field": null,
+      "value": {
+        "ok": true
+      }
+    },
+    {
+      "namespace": "core.sync-control",
+      "docId": "join-policy",
+      "op": "create",
+      "field": null,
+      "value": {
+        "open": true
+      }
+    },
+    {
+      "namespace": "a1-b.c2-d",
+      "docId": "x",
+      "op": "create",
+      "field": null,
+      "value": {
+        "ok": true
+      }
+    }
+  ]
+}

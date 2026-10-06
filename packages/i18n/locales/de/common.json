@@ -3670,5 +3670,62 @@
     "doneEditing": "✓ Fertig mit Anordnen",
     "arrange": "✎ Anordnen & Widgets hinzufügen",
     "search": "Suchen & Befehle"
+  },
+  "web": {
+    "update": {
+      "available": "Eine neue Cardo-Version ist da.",
+      "reload": "Neu laden"
+    },
+    "join": {
+      "title": "Cardo auf dem iPhone",
+      "intro": "Willst du hier dieselben Daten wie auf deinem Computer haben? Dann verbinde dieses iPhone mit deinem Cardo – der Abgleich läuft verschlüsselt über dein Google Drive.",
+      "connect": "Mit meinem Cardo verbinden",
+      "notConfigured": "Der Google-Zugang für die iPhone-App ist noch nicht eingetragen.",
+      "standalone": "Ohne Abgleich nutzen",
+      "standaloneHint": "Du kannst das später jederzeit unter Einstellungen → Sync nachholen.",
+      "back": "Zurück",
+      "keyHint": "Füge deinen Sync-Schlüssel ein. Du findest ihn am Computer unter Einstellungen → Sync → Schlüssel anzeigen (dort muss „Beitritt mit diesem Schlüssel erlauben“ eingeschaltet sein).",
+      "keyInvalid": "Das ist kein gültiger Schlüssel: {{reason}}",
+      "deviceName": "Name dieses Geräts",
+      "next": "Weiter",
+      "googleHint": "Jetzt mit dem Google-Konto anmelden, mit dem dein Computer synchronisiert. Cardo bekommt nur Zugriff auf seinen eigenen, versteckten Ordner – nicht auf deine Dateien.",
+      "google": "Mit Google anmelden",
+      "googleFailed": "Die Google-Anmeldung hat nicht geklappt ({{code}}). Bitte noch einmal versuchen.",
+      "phase": {
+        "download": "Deine Daten werden heruntergeladen …",
+        "check": "Gruppe wird geprüft …",
+        "register": "Dieses iPhone wird angemeldet …",
+        "upload": "Fast fertig …"
+      },
+      "files": "{{read}} von {{total}} Paketen",
+      "keepOpen": "Bitte die App offen lassen, bis alles geladen ist.",
+      "retry": "Noch einmal",
+      "wrongKey": "Mit diesem Schlüssel ließ sich nichts entschlüsseln. Ist es wirklich der Schlüssel von deinem Computer?",
+      "denied": "Der Computer lässt gerade keine neuen Geräte zu. Schalte dort unter Einstellungen → Sync „Beitritt mit diesem Schlüssel erlauben“ ein und versuche es erneut.",
+      "slotsFull": "Alle 10 Geräteplätze sind belegt. Entferne am Computer unter Einstellungen → Sync ein altes Gerät."
+    },
+    "sync": {
+      "paused": "Sync pausiert – Google möchte, dass du dich kurz neu anmeldest.",
+      "continueGoogle": "Weiter mit Google",
+      "failed": "Sync fehlgeschlagen: {{message}}",
+      "retry": "Erneut versuchen",
+      "revoked": "Dieses iPhone wurde aus der Sync-Gruppe entfernt.",
+      "notJoined": "Dieses iPhone ist noch nicht mit deinem Cardo verbunden.",
+      "joinedAs": "Verbunden als „{{name}}“ über Google Drive.",
+      "lastSync": "Zuletzt abgeglichen: {{when}}",
+      "state": {
+        "off": "Sync ist aus.",
+        "idle": "Alles abgeglichen.",
+        "syncing": "Gleicht gerade ab …",
+        "needs-google": "Wartet auf Google-Anmeldung.",
+        "error": "Letzter Versuch fehlgeschlagen.",
+        "revoked": "Aus der Gruppe entfernt.",
+        "join-denied": "Beitritt nicht erlaubt."
+      },
+      "onlyWhileOpen": "Auf dem iPhone wird nur abgeglichen, solange Cardo geöffnet ist.",
+      "now": "Jetzt abgleichen",
+      "leave": "Abgleich auf diesem iPhone beenden",
+      "leaveConfirm": "Abgleich beenden? Deine Daten bleiben auf diesem iPhone, werden aber nicht mehr abgeglichen."
+    }
   }
 }

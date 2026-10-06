@@ -53,6 +53,9 @@ jobs:
       - name: Website build
         run: pnpm --filter @cardo/website build
 
+      - name: iPhone web app build
+        run: pnpm --filter @cardo/desktop build:web
+
       - name: Poll worker security tests
         run: node --test server/polls-worker/test/*.test.mjs
 

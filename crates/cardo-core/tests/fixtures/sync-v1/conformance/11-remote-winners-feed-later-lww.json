@@ -1,0 +1,121 @@
+{
+  "name": "11-remote-winners-feed-later-lww",
+  "description": "Winning remote ops join the change log, so later remote ops compete against them; local writes after a remote win produce normal local ops.",
+  "steps": [
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "m",
+      "value": {
+        "a": 1,
+        "b": 1
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "m-a",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote",
+        "namespace": "todo",
+        "doc_id": "m",
+        "op": "set_field",
+        "field": "a",
+        "value": 2,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "m-a-older",
+        "device_id": "remote-device",
+        "hlc": "4000000000000-0000-remote",
+        "namespace": "todo",
+        "doc_id": "m",
+        "op": "set_field",
+        "field": "a",
+        "value": 3,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped",
+      "note": "newer than the local create but older than the winning remote op"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "m-b-older",
+        "device_id": "remote-device",
+        "hlc": "4000000000000-0000-remote",
+        "namespace": "todo",
+        "doc_id": "m",
+        "op": "set_field",
+        "field": "b",
+        "value": 3,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update",
+      "note": "field b has only the (older) local create to beat"
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "m",
+      "value": {
+        "a": 2,
+        "b": 3,
+        "c": 1
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "m-del-older",
+        "device_id": "remote-device",
+        "hlc": "4500000000000-0000-remote",
+        "namespace": "todo",
+        "doc_id": "m",
+        "op": "delete_doc",
+        "field": null,
+        "value": null,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    }
+  ],
+  "expectDocs": {
+    "todo": {
+      "m": {
+        "a": 2,
+        "b": 3,
+        "c": 1
+      }
+    }
+  },
+  "expectLocalOps": [
+    {
+      "namespace": "todo",
+      "docId": "m",
+      "op": "create",
+      "field": null,
+      "value": {
+        "a": 1,
+        "b": 1
+      }
+    },
+    {
+      "namespace": "todo",
+      "docId": "m",
+      "op": "set_field",
+      "field": "c",
+      "value": 1
+    }
+  ]
+}

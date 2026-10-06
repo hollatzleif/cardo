@@ -12,6 +12,8 @@ import { MODEL_CATALOG } from '../assistant/models';
 import { ProfileModal } from '../profile/ProfileModal';
 import { DiagnosePanel } from './DiagnosePanel';
 import { SyncSection } from './SyncSection';
+import { WebSyncSection } from '../sync/web/WebSyncSection';
+import { isWebApp } from '../host/platform';
 import { PollsPanel } from './PollsPanel';
 import { BackupSection } from './BackupSection';
 import {
@@ -297,10 +299,7 @@ function HelpSection() {
           {t('onboarding.restart')}
         </Button>
       </Row>
-      <Row
-        label={t('settings.docsLink')}
-        description={t('settings.docsLinkDesc')}
-      >
+      <Row label={t('settings.docsLink')} description={t('settings.docsLinkDesc')}>
         <span className="settings-page__url">{DOCS_URL}</span>
       </Row>
     </Card>
@@ -370,7 +369,9 @@ export function SettingsPage() {
   const [section, setSection] = useState<SectionId>('general');
   const [editingProfile, setEditingProfile] = useState(false);
 
-  const active = SECTIONS.find((s) => s.id === section) ?? SECTIONS[0]!;
+  // The phone has no local assistant engine and updates via its service worker.
+  const sections = isWebApp() ? SECTIONS.filter((s) => s.id !== 'assistant' && s.id !== 'updates') : SECTIONS;
+  const active = sections.find((s) => s.id === section) ?? sections[0]!;
 
   return (
     <div className="settings-page">
@@ -384,7 +385,7 @@ export function SettingsPage() {
           </button>
           <h1 className="settings-page__title">{t('settings.title')}</h1>
         </div>
-        {SECTIONS.map(({ id, glyph, labelKey }) => (
+        {sections.map(({ id, glyph, labelKey }) => (
           <button
             key={id}
             className={`settings-page__nav-item${id === section ? ' settings-page__nav-item--active' : ''}`}
@@ -414,7 +415,8 @@ export function SettingsPage() {
               </Wide>
             </Card>
           )}
-          {section === 'sync' && <SyncSection Card={Card} GroupLabel={GroupLabel} />}
+          {section === 'sync' &&
+            (isWebApp() ? <WebSyncSection /> : <SyncSection Card={Card} GroupLabel={GroupLabel} />)}
           {section === 'inboxPolls' && <InboxPollsSection />}
           {section === 'data' && <DataSection />}
           {section === 'updates' && <UpdatesSection />}
@@ -430,9 +432,7 @@ export function SettingsPage() {
         </div>
       </div>
 
-      {editingProfile && (
-        <ProfileModal initial={profile} onDone={() => setEditingProfile(false)} />
-      )}
+      {editingProfile && <ProfileModal initial={profile} onDone={() => setEditingProfile(false)} />}
     </div>
   );
 }

@@ -8,12 +8,15 @@
     "dev:vite": "vite",
     "build:vite": "tsc -p tsconfig.json --noEmit && vite build",
     "build": "tauri build",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "dev:web": "vite --mode web",
+    "build:web": "tsc -p tsconfig.json --noEmit && vite build --mode web"
   },
   "dependencies": {
     "@cardo/core": "workspace:*",
     "@cardo/i18n": "workspace:*",
     "@cardo/plugin-api": "workspace:*",
+    "@cardo/sync": "workspace:*",
     "@cardo/themes": "workspace:*",
     "@cardo/tool-alarm": "workspace:*",
     "@cardo/tool-bookmarks": "workspace:*",
@@ -64,6 +67,7 @@
     "@cardo/tool-workout": "workspace:*",
     "@cardo/tool-world-clock": "workspace:*",
     "@cardo/ui": "workspace:*",
+    "@noble/hashes": "^2.0.0",
     "@tauri-apps/api": "^2.2.0",
     "@tauri-apps/plugin-dialog": "^2.2.0",
     "@tauri-apps/plugin-global-shortcut": "^2.2.0",
@@ -87,6 +91,7 @@
     "@types/react-dom": "^18.3.2",
     "@types/react-grid-layout": "^1.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "fake-indexeddb": "^6.0.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.7"
   }

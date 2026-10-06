@@ -322,7 +322,7 @@ impl SyncTransport for GoogleDriveTransport {
         let mut page_token: Option<String> = None;
         loop {
             let mut url = format!(
-                "{FILES_URL}?spaces=appDataFolder&orderBy=name&fields=nextPageToken,files(id,name)&pageSize=100"
+                "{FILES_URL}?spaces=appDataFolder&orderBy=name&fields=nextPageToken,files(id,name)&pageSize=1000"
             );
             if let Some(t) = &page_token {
                 url.push_str(&format!("&pageToken={t}"));
@@ -345,7 +345,7 @@ impl SyncTransport for GoogleDriveTransport {
                 let (Some(name), Some(id)) = (file["name"].as_str(), file["id"].as_str()) else {
                     continue;
                 };
-                if name.ends_with(".cardo-ops") && name > since.as_str() {
+                if name.ends_with(".cardo-ops") {
                     names.push((name.to_string(), id.to_string()));
                 }
             }
@@ -355,10 +355,18 @@ impl SyncTransport for GoogleDriveTransport {
             }
         }
         names.sort();
+        names.dedup();
 
+        // Look-back cursor: files that sort below the last name read (lagging
+        // uploader clock, slow upload) are still read, exactly once.
+        let mut cursor = cardo_core::LookbackCursor::parse(&since);
+        let mut sorted: Vec<&str> = names.iter().map(|(name, _)| name.as_str()).collect();
+        sorted.dedup();
+        let due = cursor.select(&sorted, 50);
         let mut ops = Vec::new();
-        let mut cursor = since;
-        for (name, file_id) in names.into_iter().take(50) {
+        for name in &due {
+            // Same name twice (two uploads racing) – take the first id.
+            let Some((_, file_id)) = names.iter().find(|(n, _)| n == name) else { continue };
             let response = self
                 .client
                 .get(format!("{FILES_URL}/{file_id}?alt=media"))
@@ -381,9 +389,9 @@ impl SyncTransport for GoogleDriveTransport {
                 let Some(blob) = crate::sync::b64_decode_public(blob_b64) else { continue };
                 ops.push(EncryptedOp { op_id: op_id.to_string(), blob });
             }
-            cursor = name;
         }
-        Ok(PullBatch { ops, next_cursor: cursor })
+        cursor.advance(&due);
+        Ok(PullBatch { ops, next_cursor: cursor.render() })
     }
 }
 

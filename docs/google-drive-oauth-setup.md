@@ -32,3 +32,30 @@ Cardo beim Verbinden: „Google Drive is not configured in this build".
 - Alles, was in Drive liegt, ist vorher mit dem Data-Key verschlüsselt
   (XChaCha20-Poly1305) — Google sieht nur unlesbare `.cardo-ops`-Dateien
   im appDataFolder.
+
+## Zusätzlich für die iPhone-Web-App (einmalig, ~5 Minuten)
+
+Die Web-App (https://hollatzleif.github.io/cardo-app/app/) braucht einen
+eigenen OAuth-Client vom Typ **Webanwendung** im SELBEN Projekt „Cardo" –
+nur dann sieht sie denselben versteckten App-Ordner wie der Desktop.
+
+1. **Anmeldedaten → Anmeldedaten erstellen → OAuth-Client-ID**
+   - Anwendungstyp: **Webanwendung**, Name „Cardo Web (iPhone)".
+   - **Autorisierte JavaScript-Quellen:**
+     `https://hollatzleif.github.io` und `http://localhost:1430`
+   - **Autorisierte Weiterleitungs-URIs:**
+     `https://hollatzleif.github.io/cardo-app/app/oauth-callback.html`
+     und `http://localhost:1430/cardo-app/app/oauth-callback.html`
+2. Die Client-ID kopieren. Ein Client-**Secret** wird NICHT gebraucht – und
+   darf auch nirgends eingetragen werden (die Web-App ist öffentlich).
+3. Client-ID hinterlegen: im GitHub-Repo `hollatzleif/cardo` unter
+   **Settings → Secrets and variables → Actions → Variables** eine
+   Variable `GDRIVE_WEB_CLIENT_ID` anlegen. Der Website-Deploy baut sie in die
+   Web-App ein. (Lokal: `VITE_GDRIVE_WEB_CLIENT_ID=… pnpm --filter @cardo/desktop dev:web`.)
+4. Im Testing-Modus: das Google-Konto des iPhones muss als Testnutzer
+   eingetragen sein.
+
+Sicherheitsmodell der Web-App: Anmeldung über den OAuth-Token-Flow im
+Popup, ohne Google-Skript und ohne Secret. Das Zugriffstoken gilt etwa eine
+Stunde; danach zeigt die App „Sync pausiert · Weiter mit Google" – ein Tipp
+erneuert es. Es gibt kein Refresh-Token auf dem Telefon.

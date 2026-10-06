@@ -1,0 +1,178 @@
+{
+  "authToken": "885d8f3a1e2dbef6a2021ae2a515bce4081f9a595666d07b0570c30a48868655",
+  "dataKeyHex": "25b93973396c95c762d08a86b5f48957e18dfb346344271b362c66a4ccc21e8c",
+  "deviceId": "b1739c65-e4f8-460f-9f54-0ae254386d9c",
+  "dump": {
+    "misc.sub": {
+      "ü/1 ☃": {
+        "": "pua",
+        "Alpha": 2,
+        "a\"b": "quote",
+        "big": 1e+21,
+        "float": 1e-7,
+        "i": -42,
+        "large": 12345678901234567000,
+        "neg": -0.25,
+        "nested": {
+          "a": " \u0001/\\\t",
+          "b": [
+            1,
+            2.5,
+            {
+              "x": true,
+              "y": null
+            }
+          ]
+        },
+        "tinier": 1e-6,
+        "tiny": 0.00001,
+        "zeta": 1,
+        "é": "accent",
+        "😀": "emoji"
+      }
+    },
+    "todo": {
+      "1": {
+        "done": true,
+        "title": "buy oat milk"
+      }
+    }
+  },
+  "key": "CRD1-AFV7-DLUB-OXR3-6HEY-4SPR-EIS5-BK6G-X7B5-A6WI-SDOQ-TJYZ-L5BB-MICZ-O",
+  "licenseId": "6bf1ae8175e3bf1c",
+  "logs": {
+    "misc.sub/gone": [
+      {
+        "createdAt": 1791290659364,
+        "deviceId": "b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "field": null,
+        "hlc": "1791290659364-0000-b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "op": "create",
+        "opId": "01a1113e-5224-75b3-8c26-bd028f40ab1e",
+        "seq": 6,
+        "synced": true,
+        "value": {
+          "x": 1
+        }
+      },
+      {
+        "createdAt": 1791290659366,
+        "deviceId": "b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "field": null,
+        "hlc": "1791290659366-0000-b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "op": "delete_doc",
+        "opId": "01a1113e-5226-7fb3-b0dc-2a8b5a0787ec",
+        "seq": 7,
+        "synced": true,
+        "value": null
+      }
+    ],
+    "misc.sub/ü/1 ☃": [
+      {
+        "createdAt": 1791290659360,
+        "deviceId": "b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "field": null,
+        "hlc": "1791290659360-0000-b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "op": "create",
+        "opId": "01a1113e-5220-7573-baf3-faabbb080317",
+        "seq": 5,
+        "synced": true,
+        "value": {
+          "": "pua",
+          "Alpha": 2,
+          "a\"b": "quote",
+          "big": 1e+21,
+          "float": 1e-7,
+          "i": -42,
+          "large": 12345678901234567000,
+          "neg": -0.25,
+          "nested": {
+            "a": " \u0001/\\\t",
+            "b": [
+              1,
+              2.5,
+              {
+                "x": true,
+                "y": null
+              }
+            ]
+          },
+          "tinier": 1e-6,
+          "tiny": 0.00001,
+          "zeta": 1,
+          "é": "accent",
+          "😀": "emoji"
+        }
+      }
+    ],
+    "todo/1": [
+      {
+        "createdAt": 1791290659356,
+        "deviceId": "b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "field": null,
+        "hlc": "1791290659356-0000-b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "op": "create",
+        "opId": "01a1113e-521c-7943-821b-21a8fe59e366",
+        "seq": 1,
+        "synced": true,
+        "value": {
+          "done": false,
+          "prio": 3,
+          "title": "buy milk"
+        }
+      },
+      {
+        "createdAt": 1791290659358,
+        "deviceId": "b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "field": "done",
+        "hlc": "1791290659358-0000-b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "op": "set_field",
+        "opId": "01a1113e-521e-71f1-a404-da59666df165",
+        "seq": 2,
+        "synced": true,
+        "value": true
+      },
+      {
+        "createdAt": 1791290659358,
+        "deviceId": "b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "field": "title",
+        "hlc": "1791290659358-0001-b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "op": "set_field",
+        "opId": "01a1113e-521e-71f1-a404-da67c5494b5a",
+        "seq": 3,
+        "synced": true,
+        "value": "buy oat milk"
+      },
+      {
+        "createdAt": 1791290659358,
+        "deviceId": "b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "field": "prio",
+        "hlc": "1791290659358-0002-b1739c65-e4f8-460f-9f54-0ae254386d9c",
+        "op": "delete_field",
+        "opId": "01a1113e-521e-71f1-a404-da701fbf8fea",
+        "seq": 4,
+        "synced": true,
+        "value": null
+      }
+    ]
+  },
+  "pushed": 7,
+  "serde": [
+    {
+      "input": "{\"b\":1,\"a\":[true,false,null],\"A\":\"x\",\"_\":0,\"~\":1,\"ä\":2,\"😀\":3,\"\":4}",
+      "output": "{\"\":4,\"A\":\"x\",\"_\":0,\"a\":[true,false,null],\"b\":1,\"~\":1,\"ä\":2,\"😀\":3}"
+    },
+    {
+      "input": "[1e-7,1e+21,0.1,123456.789,1.7976931348623157e+308,5e-324,0.00001,0.000001,100000000000000000000,12345678901234567000,-9223372036854775808,-1.5e-10,2.5e+25,0.30000000000000004]",
+      "output": "[1e-7,1e+21,0.1,123456.789,1.7976931348623157e+308,5e-324,0.00001,1e-6,1e+20,12345678901234567000,-9223372036854775808,-1.5e-10,2.5e+25,0.30000000000000004]"
+    },
+    {
+      "input": "\"quote\\\" backslash\\\\ slash/ ctrl\\u0001\\u001f del\\u007f ls  tab\\t nl\\n cr\\r bs\\b ff\\f emoji😀\"",
+      "output": "\"quote\\\" backslash\\\\ slash/ ctrl\\u0001\\u001f del ls  tab\\t nl\\n cr\\r bs\\b ff\\f emoji😀\""
+    },
+    {
+      "input": "{\"nested\":{\"z\":{\"y\":{\"x\":[{\"b\":2,\"a\":1}]}}},\"num\":-0.0}",
+      "output": "{\"nested\":{\"z\":{\"y\":{\"x\":[{\"a\":1,\"b\":2}]}}},\"num\":-0.0}"
+    }
+  ]
+}

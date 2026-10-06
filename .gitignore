@@ -9,3 +9,4 @@ coverage/
 .wrangler/
 apps/desktop/src-tauri/gen/
 tsconfig.tsbuildinfo
+apps/desktop/dist-web

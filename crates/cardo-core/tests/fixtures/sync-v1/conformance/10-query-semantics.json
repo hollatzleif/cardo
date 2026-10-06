@@ -1,0 +1,1271 @@
+{
+  "name": "10-query-semantics",
+  "description": "Query = SQLite json_extract semantics: LIKE is a substring match ('%'||v||'%') where % and _ in v are wildcards and case folding is ASCII-only; missing/null fields are NULL (never match =, !=, <, LIKE); numbers sort/compare before text (no coercion); booleans are 1/0; ORDER BY puts NULL first ascending, text compares by UTF-8 bytes; deleted docs and other namespaces never appear. Unordered results compare as sets.",
+  "steps": [
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "q1",
+      "value": {
+        "title": "Rabatt 50% heute",
+        "n": 10,
+        "s": "10",
+        "tag": "a",
+        "done": true,
+        "f": 2.5
+      }
+    },
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "q2",
+      "value": {
+        "title": "Rabatt 500 Euro",
+        "n": 2,
+        "s": "9",
+        "tag": "b",
+        "done": false,
+        "f": -1
+      }
+    },
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "q3",
+      "value": {
+        "title": "abc_def",
+        "n": null,
+        "tag": "a"
+      }
+    },
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "q4",
+      "value": {
+        "title": "ABCxDEF",
+        "n": "7",
+        "tag": "c"
+      }
+    },
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "q5",
+      "value": {
+        "title": "Ärger über Öl",
+        "n": -5,
+        "tag": "b",
+        "done": true
+      }
+    },
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "q6",
+      "value": {
+        "tag": "a",
+        "n": 1
+      }
+    },
+    {
+      "kind": "delete",
+      "namespace": "q",
+      "id": "q6",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "set",
+      "namespace": "other",
+      "id": "o1",
+      "value": {
+        "tag": "a",
+        "n": 1
+      }
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": []
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        },
+        {
+          "title": "abc_def",
+          "n": null,
+          "tag": "a"
+        },
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "title",
+            "op": "like",
+            "value": "50%"
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        }
+      ],
+      "note": "% is a wildcard, not a literal"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "title",
+            "op": "like",
+            "value": "c_d"
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "abc_def",
+          "n": null,
+          "tag": "a"
+        },
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        }
+      ],
+      "note": "_ wildcard + ASCII case-insensitive"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "title",
+            "op": "like",
+            "value": "ABC"
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "abc_def",
+          "n": null,
+          "tag": "a"
+        },
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "title",
+            "op": "like",
+            "value": "ärger"
+          }
+        ]
+      },
+      "expectRows": [],
+      "note": "no case folding beyond ASCII"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "title",
+            "op": "like",
+            "value": "Ärger"
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "title",
+            "op": "like",
+            "value": ""
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        },
+        {
+          "title": "abc_def",
+          "n": null,
+          "tag": "a"
+        },
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": "like",
+            "value": "1"
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        }
+      ],
+      "note": "numbers are LIKE-matched as their text"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "tag",
+            "op": "!=",
+            "value": "a"
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        },
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "done",
+            "op": "!=",
+            "value": true
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        }
+      ],
+      "note": "!= never matches a missing field"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": "!=",
+            "value": 10
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        },
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ],
+      "note": "!= never matches a null field"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "done",
+            "op": "=",
+            "value": true
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "done",
+            "op": "=",
+            "value": 1
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ],
+      "note": "booleans are stored as 1/0"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "done",
+            "op": "=",
+            "value": false
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": "=",
+            "value": 10
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "s",
+            "op": "=",
+            "value": 10
+          }
+        ]
+      },
+      "expectRows": [],
+      "note": "number never equals text"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "s",
+            "op": "=",
+            "value": "10"
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": "=",
+            "value": "7"
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": ">",
+            "value": 5
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        }
+      ],
+      "note": "text is greater than every number"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": "<",
+            "value": "0"
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ],
+      "note": "every number is less than text"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": "<=",
+            "value": 2
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "f",
+            "op": ">=",
+            "value": -1
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "f",
+            "op": "<",
+            "value": 2.5
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "tag",
+            "op": "in",
+            "value": [
+              "a",
+              "c"
+            ]
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "abc_def",
+          "n": null,
+          "tag": "a"
+        },
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": "in",
+            "value": [
+              2,
+              "7",
+              -5
+            ]
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        },
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": "in",
+            "value": [
+              10.0
+            ]
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        }
+      ],
+      "note": "10.0 equals 10"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": "in",
+            "value": []
+          }
+        ]
+      },
+      "expectRows": []
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "tag",
+            "op": "=",
+            "value": "b"
+          },
+          {
+            "field": "n",
+            "op": "<",
+            "value": 0
+          }
+        ]
+      },
+      "expectRows": [
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ],
+      "note": "where clauses are ANDed"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [],
+        "orderBy": "n"
+      },
+      "expectRows": [
+        {
+          "title": "abc_def",
+          "n": null,
+          "tag": "a"
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        },
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        },
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        }
+      ],
+      "note": "NULL < numbers < text"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [],
+        "orderBy": "n",
+        "direction": "desc"
+      },
+      "expectRows": [
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        },
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        },
+        {
+          "title": "abc_def",
+          "n": null,
+          "tag": "a"
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [],
+        "orderBy": "n",
+        "direction": "desc",
+        "limit": 2
+      },
+      "expectRows": [
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        },
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "title",
+            "op": "like",
+            "value": "Rabatt"
+          }
+        ],
+        "orderBy": "s"
+      },
+      "expectRows": [
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        }
+      ],
+      "note": "text order: '10' < '9'"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "tag",
+            "op": "=",
+            "value": "a"
+          }
+        ],
+        "orderBy": "s"
+      },
+      "expectRows": [
+        {
+          "title": "abc_def",
+          "n": null,
+          "tag": "a"
+        },
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        }
+      ],
+      "note": "missing field sorts first ascending"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [],
+        "orderBy": "title"
+      },
+      "expectRows": [
+        {
+          "title": "ABCxDEF",
+          "n": "7",
+          "tag": "c"
+        },
+        {
+          "title": "Rabatt 50% heute",
+          "n": 10,
+          "s": "10",
+          "tag": "a",
+          "done": true,
+          "f": 2.5
+        },
+        {
+          "title": "Rabatt 500 Euro",
+          "n": 2,
+          "s": "9",
+          "tag": "b",
+          "done": false,
+          "f": -1
+        },
+        {
+          "title": "abc_def",
+          "n": null,
+          "tag": "a"
+        },
+        {
+          "title": "Ärger über Öl",
+          "n": -5,
+          "tag": "b",
+          "done": true
+        }
+      ],
+      "note": "binary collation: A < R < a < Ä"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [],
+        "limit": 0
+      },
+      "expectRows": [],
+      "ordered": false
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "a.b",
+            "op": "=",
+            "value": 1
+          }
+        ]
+      },
+      "expectError": true,
+      "note": "nested paths are not supported"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "n",
+            "op": "~",
+            "value": 1
+          }
+        ]
+      },
+      "expectError": true
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [],
+        "orderBy": "bad field"
+      },
+      "expectError": true
+    },
+    {
+      "kind": "query",
+      "namespace": "Q",
+      "query": {
+        "where": []
+      },
+      "expectError": true
+    }
+  ],
+  "expectDocs": {
+    "other": {
+      "o1": {
+        "tag": "a",
+        "n": 1
+      }
+    },
+    "q": {
+      "q1": {
+        "title": "Rabatt 50% heute",
+        "n": 10,
+        "s": "10",
+        "tag": "a",
+        "done": true,
+        "f": 2.5
+      },
+      "q2": {
+        "title": "Rabatt 500 Euro",
+        "n": 2,
+        "s": "9",
+        "tag": "b",
+        "done": false,
+        "f": -1
+      },
+      "q3": {
+        "title": "abc_def",
+        "n": null,
+        "tag": "a"
+      },
+      "q4": {
+        "title": "ABCxDEF",
+        "n": "7",
+        "tag": "c"
+      },
+      "q5": {
+        "title": "Ärger über Öl",
+        "n": -5,
+        "tag": "b",
+        "done": true
+      }
+    }
+  },
+  "expectLocalOps": [
+    {
+      "namespace": "q",
+      "docId": "q1",
+      "op": "create",
+      "field": null,
+      "value": {
+        "title": "Rabatt 50% heute",
+        "n": 10,
+        "s": "10",
+        "tag": "a",
+        "done": true,
+        "f": 2.5
+      }
+    },
+    {
+      "namespace": "q",
+      "docId": "q2",
+      "op": "create",
+      "field": null,
+      "value": {
+        "title": "Rabatt 500 Euro",
+        "n": 2,
+        "s": "9",
+        "tag": "b",
+        "done": false,
+        "f": -1
+      }
+    },
+    {
+      "namespace": "q",
+      "docId": "q3",
+      "op": "create",
+      "field": null,
+      "value": {
+        "title": "abc_def",
+        "n": null,
+        "tag": "a"
+      }
+    },
+    {
+      "namespace": "q",
+      "docId": "q4",
+      "op": "create",
+      "field": null,
+      "value": {
+        "title": "ABCxDEF",
+        "n": "7",
+        "tag": "c"
+      }
+    },
+    {
+      "namespace": "q",
+      "docId": "q5",
+      "op": "create",
+      "field": null,
+      "value": {
+        "title": "Ärger über Öl",
+        "n": -5,
+        "tag": "b",
+        "done": true
+      }
+    },
+    {
+      "namespace": "q",
+      "docId": "q6",
+      "op": "create",
+      "field": null,
+      "value": {
+        "tag": "a",
+        "n": 1
+      }
+    },
+    {
+      "namespace": "q",
+      "docId": "q6",
+      "op": "delete_doc",
+      "field": null,
+      "value": null
+    },
+    {
+      "namespace": "other",
+      "docId": "o1",
+      "op": "create",
+      "field": null,
+      "value": {
+        "tag": "a",
+        "n": 1
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@
  * and packages/themes/*.json (primitive palettes). Everywhere else: var(--…).
  */
 module.exports = {
-  ignoreFiles: ['**/dist/**', '**/node_modules/**', '**/target/**'],
+  ignoreFiles: ['**/dist/**', '**/dist-web/**', '**/node_modules/**', '**/target/**'],
   rules: {
     'color-no-hex': true,
     'function-disallowed-list': ['rgb', 'rgba', 'hsl', 'hsla', 'color'],

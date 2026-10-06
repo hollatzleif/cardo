@@ -1,0 +1,150 @@
+{
+  "name": "02-create-vs-field-lww",
+  "description": "create/delete_doc compete with MAX(hlc) over the whole doc; field ops with MAX(hlc) of the same field or any create/delete_doc. An older create loses to a newer field op (no merge of its other fields).",
+  "steps": [
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "c-field",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote",
+        "namespace": "notes",
+        "doc_id": "n1",
+        "op": "set_field",
+        "field": "title",
+        "value": "neu",
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update",
+      "note": "field op on a missing doc creates it"
+    },
+    {
+      "kind": "get",
+      "namespace": "notes",
+      "id": "n1",
+      "expectDoc": {
+        "title": "neu"
+      }
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "c-create-old",
+        "device_id": "remote-device",
+        "hlc": "4000000000000-0000-remote",
+        "namespace": "notes",
+        "doc_id": "n1",
+        "op": "create",
+        "field": null,
+        "value": {
+          "title": "alt",
+          "body": "x"
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "c-create-new",
+        "device_id": "remote-device",
+        "hlc": "6000000000000-0000-remote",
+        "namespace": "notes",
+        "doc_id": "n1",
+        "op": "create",
+        "field": null,
+        "value": {
+          "body": "ganz neu"
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "create",
+      "note": "a winning create replaces the whole doc"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "c-field-mid",
+        "device_id": "remote-device",
+        "hlc": "5500000000000-0000-remote",
+        "namespace": "notes",
+        "doc_id": "n1",
+        "op": "set_field",
+        "field": "title",
+        "value": "spaet aber alt",
+        "created_at": 1760000000000
+      },
+      "expect": "skipped",
+      "note": "older than the create, although newer than the field's last write"
+    },
+    {
+      "kind": "set",
+      "namespace": "notes",
+      "id": "n2",
+      "value": {
+        "a": 1
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "c-n2-old",
+        "device_id": "remote-device",
+        "hlc": "0000000000001-0000-remote",
+        "namespace": "notes",
+        "doc_id": "n2",
+        "op": "create",
+        "field": null,
+        "value": {
+          "b": 1
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "c-n2-new",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "notes",
+        "doc_id": "n2",
+        "op": "create",
+        "field": null,
+        "value": {
+          "b": 2
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "create"
+    }
+  ],
+  "expectDocs": {
+    "notes": {
+      "n1": {
+        "body": "ganz neu"
+      },
+      "n2": {
+        "b": 2
+      }
+    }
+  },
+  "expectLocalOps": [
+    {
+      "namespace": "notes",
+      "docId": "n2",
+      "op": "create",
+      "field": null,
+      "value": {
+        "a": 1
+      }
+    }
+  ]
+}

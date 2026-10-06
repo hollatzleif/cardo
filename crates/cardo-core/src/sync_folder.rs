@@ -6,17 +6,20 @@ use uuid::Uuid;
 
 use crate::error::{CoreError, Result};
 use crate::sync::{Cursor, EncryptedOp, PullBatch, PushAck, SyncTransport};
+use crate::sync_cursor::LookbackCursor;
 
 /// File-based transport: encrypted op batches as JSON files in one shared
 /// folder. Whatever syncs that folder between machines (iCloud Drive,
 /// Dropbox, Syncthing, a network share) becomes the carrier – the files
 /// themselves stay opaque. Also the reference implementation the WebDAV and
 /// Google Drive transports mirror (same batch-file shape, same
-/// lexicographic-filename cursor).
+/// look-back filename cursor).
 ///
 /// Layout: `<root>/ops/<created_ms:013>-<uuid>.cardo-ops` – zero-padded
 /// millis make names sort chronologically; the uuid departs ties between
-/// devices. The cursor is simply the last filename processed.
+/// devices. The cursor is a `LookbackCursor` (last filename + names already
+/// read within a look-back window), so files from devices with a lagging
+/// clock or a slow upload are still read – exactly once.
 pub struct FolderTransport {
     ops_dir: PathBuf,
 }
@@ -35,6 +38,8 @@ struct WireOp {
 }
 
 const BATCH_EXT: &str = "cardo-ops";
+/// Max batch files read per `pull` call.
+const PULL_FILES: usize = 50;
 
 impl FolderTransport {
     pub fn new(root: impl AsRef<Path>) -> Result<Self> {
@@ -78,15 +83,15 @@ impl SyncTransport for FolderTransport {
             .filter_map(|entry| entry.ok())
             .filter_map(|entry| entry.file_name().into_string().ok())
             .filter(|name| name.ends_with(BATCH_EXT) && !name.starts_with('.'))
-            .filter(|name| name.as_str() > since.as_str())
             .collect();
         names.sort();
 
-        let mut ops = Vec::new();
-        let mut cursor = since;
+        let mut cursor = LookbackCursor::parse(&since);
         // Bounded batch per pull call; the engine loops until drained.
-        for name in names.into_iter().take(50) {
-            let raw = std::fs::read(self.ops_dir.join(&name))?;
+        let due = cursor.select(&names, PULL_FILES);
+        let mut ops = Vec::new();
+        for name in &due {
+            let raw = std::fs::read(self.ops_dir.join(name))?;
             let batch: BatchFile = serde_json::from_slice(&raw)
                 .map_err(|e| CoreError::Other(format!("broken batch file {name}: {e}")))?;
             for op in batch.ops {
@@ -94,9 +99,9 @@ impl SyncTransport for FolderTransport {
                     .ok_or_else(|| CoreError::Other(format!("broken blob in {name}")))?;
                 ops.push(EncryptedOp { op_id: op.op_id, blob });
             }
-            cursor = name;
         }
-        Ok(PullBatch { ops, next_cursor: cursor })
+        cursor.advance(&due);
+        Ok(PullBatch { ops, next_cursor: cursor.render() })
     }
 }
 
@@ -187,6 +192,71 @@ mod tests {
         let second = t.pull(first.next_cursor.clone()).await.unwrap();
         assert!(second.ops.is_empty());
         assert_eq!(second.next_cursor, first.next_cursor);
+    }
+
+    fn write_batch(dir: &Path, name: &str, op_id: &str) {
+        let batch = BatchFile {
+            version: 1,
+            ops: vec![WireOp { op_id: op_id.into(), blob_b64: b64_encode(&[9, 9]) }],
+        };
+        std::fs::write(dir.join("ops").join(name), serde_json::to_vec(&batch).unwrap()).unwrap();
+    }
+
+    fn ms_of(name: &str) -> u64 {
+        crate::sync_cursor::name_ms(name).unwrap()
+    }
+
+    /// A batch whose name sorts BELOW the cursor (uploader clock behind, or a
+    /// slow upload) is still read – exactly once.
+    #[tokio::test]
+    async fn late_file_before_cursor_is_read_exactly_once() {
+        let dir = TempDir::new().unwrap();
+        let t = FolderTransport::new(dir.path()).unwrap();
+        t.push(vec![EncryptedOp { op_id: "op-1".into(), blob: vec![1] }]).await.unwrap();
+        let first = t.pull(String::new()).await.unwrap();
+        assert_eq!(first.ops.len(), 1);
+        let last = LookbackCursor::parse(&first.next_cursor).last;
+
+        let late = format!("{:013}-late.{BATCH_EXT}", ms_of(&last) - 5_000);
+        write_batch(dir.path(), &late, "op-late");
+        let too_old =
+            format!("{:013}-old.{BATCH_EXT}", ms_of(&last) - crate::sync_cursor::LOOKBACK_MS - 1);
+        write_batch(dir.path(), &too_old, "op-old");
+
+        let second = t.pull(first.next_cursor.clone()).await.unwrap();
+        let ids: Vec<&str> = second.ops.iter().map(|o| o.op_id.as_str()).collect();
+        assert_eq!(ids, vec!["op-late"]);
+
+        let third = t.pull(second.next_cursor.clone()).await.unwrap();
+        assert!(third.ops.is_empty(), "late file must not be read twice");
+        assert_eq!(third.next_cursor, second.next_cursor, "cursor is stable when idle");
+    }
+
+    /// A cursor stored by an older build (plain filename) keeps working.
+    #[tokio::test]
+    async fn legacy_filename_cursor_migrates() {
+        let dir = TempDir::new().unwrap();
+        let t = FolderTransport::new(dir.path()).unwrap();
+        let base: u64 = 1_700_000_000_000;
+        let a = format!("{base:013}-a.{BATCH_EXT}");
+        let late = format!("{:013}-late.{BATCH_EXT}", base - 5_000);
+        let newer = format!("{:013}-b.{BATCH_EXT}", base + 1);
+        write_batch(dir.path(), &a, "op-a");
+        write_batch(dir.path(), &late, "op-late");
+        write_batch(dir.path(), &newer, "op-b");
+
+        // Legacy cursor = last filename read by the old code.
+        let pulled = t.pull(a.clone()).await.unwrap();
+        let mut ids: Vec<&str> = pulled.ops.iter().map(|o| o.op_id.as_str()).collect();
+        ids.sort();
+        // The cursor file itself is not re-read; newer files and missed late
+        // files inside the window are.
+        assert_eq!(ids, vec!["op-b", "op-late"]);
+        assert!(pulled.next_cursor.starts_with('{'), "migrated to the new format");
+
+        let again = t.pull(pulled.next_cursor.clone()).await.unwrap();
+        assert!(again.ops.is_empty());
+        assert_eq!(again.next_cursor, pulled.next_cursor);
     }
 
     #[tokio::test]

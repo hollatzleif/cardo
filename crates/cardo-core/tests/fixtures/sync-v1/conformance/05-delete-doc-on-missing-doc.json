@@ -1,0 +1,89 @@
+{
+  "name": "05-delete-doc-on-missing-doc",
+  "description": "A winning delete_doc on a doc that never existed still reports 'applied' (notice) and is logged, so older ops for that doc lose afterwards. Local writes are never LWW-checked.",
+  "steps": [
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "g-del",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "ghost",
+        "op": "delete_doc",
+        "field": null,
+        "value": null,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "delete"
+    },
+    {
+      "kind": "get",
+      "namespace": "todo",
+      "id": "ghost",
+      "expectDoc": null
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "g-create-old",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote",
+        "namespace": "todo",
+        "doc_id": "ghost",
+        "op": "create",
+        "field": null,
+        "value": {
+          "x": 1
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "g-field-old",
+        "device_id": "remote-device",
+        "hlc": "0000000000001-0000-remote",
+        "namespace": "todo",
+        "doc_id": "ghost",
+        "op": "set_field",
+        "field": "x",
+        "value": 1,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "ghost",
+      "value": {
+        "x": 2
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1,
+      "note": "local write creates despite the newer remote tombstone"
+    }
+  ],
+  "expectDocs": {
+    "todo": {
+      "ghost": {
+        "x": 2
+      }
+    }
+  },
+  "expectLocalOps": [
+    {
+      "namespace": "todo",
+      "docId": "ghost",
+      "op": "create",
+      "field": null,
+      "value": {
+        "x": 2
+      }
+    }
+  ]
+}

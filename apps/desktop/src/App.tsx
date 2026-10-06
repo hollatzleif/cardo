@@ -16,6 +16,8 @@ import { getInboxState, onInboxChange } from './inbox/feed';
 import { setPaletteEditHandler } from './assistant';
 import { MobileTopbar } from './mobile/MobileTopbar';
 import { syncViewportAttribute, useIsPhone } from './mobile/viewport';
+import { isWebApp } from './host/platform';
+import { WebSyncBanner } from './sync/web/WebSyncBanner';
 
 function greetingKey(hour: number): string {
   if (hour < 11) return 'profile.greetingMorning';
@@ -277,6 +279,8 @@ export function App() {
           ⛶ {t('canvas.exitFullscreen')}
         </button>
       )}
+
+      {isWebApp() && <WebSyncBanner />}
 
       <main className="app__canvas">
         {settingsOpen ? <SettingsPage /> : marketOpen ? <ToolMarket /> : <Canvas />}

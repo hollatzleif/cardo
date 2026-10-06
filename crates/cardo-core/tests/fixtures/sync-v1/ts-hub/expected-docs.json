@@ -1,0 +1,86 @@
+{
+  "contacts": {
+    "Jürgen Müller–Lüdenscheidt": {
+      "address": {
+        "city": "Köln",
+        "geo": {
+          "lat": 51.2254,
+          "lng": 6.7763
+        },
+        "street": "Königsallee 1"
+      },
+      "balance": -1234,
+      "big": 9007199254740991,
+      "emoji": "👩‍💻🇩🇪",
+      "emptyObj": {},
+      "escapes": "tab\tquote\"backslash\\ newline\n",
+      "mixed": [
+        1,
+        "zwei",
+        null,
+        true,
+        {
+          "k": []
+        },
+        -0.5
+      ],
+      "name": "Jürgen Müller-Lüdenscheidt",
+      "neg": -42,
+      "nothing": "now something",
+      "phones": [
+        "+49 211 000000",
+        "+49 170 1234567"
+      ],
+      "ratio": 1,
+      "temp": -273.15,
+      "tiny": 1.5e-7,
+      "zero": 0
+    }
+  },
+  "core": {
+    "sync-devices": {
+      "devices": [
+        {
+          "deviceId": "6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+          "lastSeenMs": 1760000100000,
+          "name": "Heikes MacBook"
+        },
+        {
+          "deviceId": "0b8e1f2a-3c4d-4e5f-9a6b-7c8d9e0f1a2b",
+          "lastSeenMs": 1760000200000,
+          "name": "iPhone"
+        }
+      ]
+    }
+  },
+  "core.sync-control": {
+    "join-policy": {
+      "open": false,
+      "type": "join-policy"
+    }
+  },
+  "files.notes": {
+    "Grüße 🎉.md": {
+      "content": "# Grüße 🎉\r\n\r\nErste Zeile.\r\nZweite Zeile – mit Ümlaut.\r\n",
+      "hash": "faf09f795404d2ef2d88c1380d1213fe3903136d18ea7b4f852fff4833483d99"
+    }
+  },
+  "todo": {
+    "task-1": {
+      "done": true,
+      "prio": 3.5,
+      "tags": [
+        "einkauf",
+        "dringend",
+        "rewe"
+      ],
+      "title": "Milch & Brot kaufen",
+      "type": "task"
+    },
+    "task-2": {
+      "done": false,
+      "title": "Steuer 2025 (neu)",
+      "type": "task"
+    }
+  }
+}

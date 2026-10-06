@@ -1,0 +1,12 @@
+{
+  "authToken": "a6166abea3a8037f9ae31b2179a0dec6b785323ba39dcd52240e2959d636be68",
+  "checkHex": "cb222a60",
+  "comment": "FIXED TEST KEY – public, never use for real data. Regenerate via the ignored regenerate_key test.",
+  "dataKeyHex": "cde2b0986b1ca33373bee04363cdaf48ee9c3192abe6f77b15610347e1d19dfd",
+  "hkdfSalt": "cardo-sync-v1",
+  "key": "CRD1-AEZR-Z3VE-WVSH-QAME-KPYF-OBPP-FN3C-DNE4-IU6E-BKQI-DN5Y-Q4GL-EIVG-A",
+  "licenseId": "331ceea4b5647801",
+  "payloadHex": "01331ceea4b56478018453f05705ef2b7621b49c453c40aa081b7b8870cb222a60",
+  "secretHex": "8453f05705ef2b7621b49c453c40aa081b7b8870",
+  "version": 1
+}
