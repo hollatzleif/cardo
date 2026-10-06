@@ -186,3 +186,10 @@ textarea {
 .c-setup-guide__step-body {
   font-size: 13px;
 }
+
+/* Close button of every dialog. Hidden by default (desktop closes via the
+   backdrop or Escape); phones show it, because there a dialog fills the
+   screen and leaves no backdrop to tap (mobile.css). */
+.c-modal__close {
+  display: none;
+}

@@ -27,14 +27,17 @@ export interface LayoutEngineProps {
   renderWidget(widget: WidgetInstance): ReactNode;
 }
 
-export function LayoutEngine({ widgets, editing, onPositionsChange, renderWidget }: LayoutEngineProps) {
+export function LayoutEngine({
+  widgets,
+  editing,
+  onPositionsChange,
+  renderWidget,
+}: LayoutEngineProps) {
   const gutter = useGridGutter();
   const layout: Layout[] = useMemo(
     () =>
       widgets.map((w) => {
-        const decl = liveTools
-          .get(w.toolId)
-          ?.manifest.widgets.find((d) => d.id === w.widgetId);
+        const decl = liveTools.get(w.toolId)?.manifest.widgets.find((d) => d.id === w.widgetId);
         return {
           i: w.instanceId,
           x: w.x,

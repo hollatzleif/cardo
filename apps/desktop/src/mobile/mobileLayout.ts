@@ -8,13 +8,22 @@ import type { WidgetInstance } from '../state/appStore';
 
 /** Reading order of a grid: top to bottom, then left to right. */
 export function phoneOrder(widgets: readonly WidgetInstance[]): WidgetInstance[] {
-  return [...widgets].sort((a, b) => a.y - b.y || a.x - b.x || a.instanceId.localeCompare(b.instanceId));
+  return [...widgets].sort(
+    (a, b) => a.y - b.y || a.x - b.x || a.instanceId.localeCompare(b.instanceId),
+  );
 }
 
 export const PHONE_MAX_ROWS = 16;
+/** Rows a card is at least tall by default on the phone (content may make it taller). */
+export const PHONE_MIN_ROWS_CAP = 4;
 
 /** Card height in px for `h` grid rows at the given row height and gutter. */
-export function phoneCardHeight(h: number, rowHeight: number, gutter: number, minH: number): number {
+export function phoneCardHeight(
+  h: number,
+  rowHeight: number,
+  gutter: number,
+  minH: number,
+): number {
   const rows = Math.max(minH, Math.min(PHONE_MAX_ROWS, h));
   return rows * rowHeight + (rows - 1) * gutter;
 }
@@ -63,7 +72,11 @@ export function moveInPhoneOrder(
 }
 
 /** Grows (+1) or shrinks (-1) a widget's height within [minH, PHONE_MAX_ROWS]. */
-export function resizeInPhone(widget: WidgetInstance, delta: -1 | 1, minH: number): PositionUpdate | null {
+export function resizeInPhone(
+  widget: WidgetInstance,
+  delta: -1 | 1,
+  minH: number,
+): PositionUpdate | null {
   const h = Math.max(minH, Math.min(PHONE_MAX_ROWS, widget.h + delta));
   if (h === widget.h) return null;
   return { instanceId: widget.instanceId, x: widget.x, y: widget.y, w: widget.w, h };

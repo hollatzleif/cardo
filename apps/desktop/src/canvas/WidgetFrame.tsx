@@ -144,9 +144,10 @@ export function WidgetFrame({
       style={widgetAccentStyle(widget.accentToken)}
       data-tour-anchor={`widget:${widget.toolId}:${widget.widgetId}`}
     >
-      {!editing && chrome === 'default' && helpButton(true)}
-      {!editing && chrome === 'terminal' && (
-        // Terminal chrome: a panel header bar replaces the floating "?".
+      {!editing && chrome === 'default' && !mobile && helpButton(true)}
+      {!editing && (chrome === 'terminal' || mobile) && (
+        // Terminal chrome and the phone list: a header bar with the widget's
+        // name (orientation in a long list) replaces the floating "?".
         <div className="widget-frame__header">
           <span className="widget-frame__header-title">{t(tool.manifest.nameKey)}</span>
           {variants.length > 1 && activeVariant && (

@@ -88,8 +88,10 @@ export function buildHeadTags(o: { title: string; themeColor: string; csp: strin
 }
 
 /** The viewport tag the web build uses (edge to edge under the notch). */
+// maximum-scale=1 stops iOS from zooming into every focused input (pinch
+// zoom stays available – iOS ignores it for user gestures since iOS 10).
 export const WEB_VIEWPORT =
-  'width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content';
+  'width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content';
 
 /**
  * Service worker source. Strategy:

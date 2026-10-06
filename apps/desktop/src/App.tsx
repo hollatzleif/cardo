@@ -99,7 +99,14 @@ export function App() {
   // First start: profile → template picker → tour. If the app was closed
   // mid-onboarding, resume the tour on the next start (still skippable).
   useEffect(() => {
-    if (profile && !onboardingDone && !tourActive && !showTemplates) startTour();
+    // The guided tour points at desktop toolbar buttons the phone layout does
+    // not have, so on a phone onboarding ends after the template choice.
+    if (profile && !onboardingDone && !tourActive && !showTemplates) {
+      // Phone: offer the starter layouts (again, if the app was closed
+      // before choosing); picking one ends onboarding.
+      if (isPhone) setShowTemplates(true);
+      else startTour();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile, showTemplates]);
 
@@ -301,7 +308,8 @@ export function App() {
         <TemplatePicker
           onDone={() => {
             setShowTemplates(false);
-            startTour();
+            if (isPhone) void useAppStore.getState().endTour();
+            else startTour();
           }}
         />
       )}

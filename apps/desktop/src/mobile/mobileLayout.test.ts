@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { WidgetInstance } from '../state/appStore';
-import { moveInPhoneOrder, phoneCardHeight, phoneOrder, phoneWidgetCols, resizeInPhone } from './mobileLayout';
+import {
+  moveInPhoneOrder,
+  phoneCardHeight,
+  phoneOrder,
+  phoneWidgetCols,
+  resizeInPhone,
+} from './mobileLayout';
 
 const w = (id: string, x: number, y: number, h = 3): WidgetInstance =>
   ({ instanceId: id, toolId: 't', widgetId: 'main', x, y, w: 4, h }) as WidgetInstance;

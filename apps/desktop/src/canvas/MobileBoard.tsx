@@ -10,6 +10,7 @@ import {
   phoneWidgetCols,
   resizeInPhone,
   type PositionUpdate,
+  PHONE_MIN_ROWS_CAP,
 } from '../mobile/mobileLayout';
 
 /**
@@ -43,7 +44,17 @@ export function MobileBoard({
           <div
             key={widget.instanceId}
             className="mobile-board__item"
-            style={{ height: phoneCardHeight(widget.h, ROW_HEIGHT, gutter, minH) }}
+            // Cards grow with their content (no scroll boxes inside a
+            // scrolling page); the stored height is only the minimum, capped
+            // so empty widgets stay compact.
+            style={{
+              minHeight: phoneCardHeight(
+                Math.min(widget.h, PHONE_MIN_ROWS_CAP),
+                ROW_HEIGHT,
+                gutter,
+                minH,
+              ),
+            }}
           >
             <WidgetFrame
               widget={widget}
