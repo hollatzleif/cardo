@@ -4,6 +4,8 @@ import { useAppStore } from '../state/appStore';
 import { LayoutEngine } from './LayoutEngine';
 import { WidgetFrame } from './WidgetFrame';
 import { AddWidgetMenu } from './AddWidgetMenu';
+import { MobileBoard } from './MobileBoard';
+import { useIsPhone } from '../mobile/viewport';
 
 export function Canvas() {
   const { t } = useTranslation();
@@ -13,29 +15,40 @@ export function Canvas() {
   const updateWidgetPositions = useAppStore((s) => s.updateWidgetPositions);
   const removeWidget = useAppStore((s) => s.removeWidget);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const isPhone = useIsPhone();
 
   const page = pages.find((p) => p.id === currentPageId);
   if (!page) return null;
 
   const shortcut = navigator.platform.includes('Mac') ? '⌘E' : 'Ctrl+E';
+  const emptyHint = isPhone ? t('canvas.emptyHintPhone') : t('canvas.emptyHint', { shortcut });
 
   return (
     <div className="canvas">
       {page.widgets.length === 0 && !editing && (
-        <div className="canvas__empty c-muted">{t('canvas.emptyHint', { shortcut })}</div>
+        <div className="canvas__empty c-muted">{emptyHint}</div>
       )}
-      <LayoutEngine
-        widgets={page.widgets}
-        editing={editing}
-        onPositionsChange={(updates) => void updateWidgetPositions(updates)}
-        renderWidget={(widget) => (
-          <WidgetFrame
-            widget={widget}
-            editing={editing}
-            onRemove={() => void removeWidget(widget.instanceId)}
-          />
-        )}
-      />
+      {isPhone ? (
+        <MobileBoard
+          widgets={page.widgets}
+          editing={editing}
+          onPositionsChange={(updates) => void updateWidgetPositions(updates)}
+          onRemove={(instanceId) => void removeWidget(instanceId)}
+        />
+      ) : (
+        <LayoutEngine
+          widgets={page.widgets}
+          editing={editing}
+          onPositionsChange={(updates) => void updateWidgetPositions(updates)}
+          renderWidget={(widget) => (
+            <WidgetFrame
+              widget={widget}
+              editing={editing}
+              onRemove={() => void removeWidget(widget.instanceId)}
+            />
+          )}
+        />
+      )}
       {editing && (
         <button
           className="c-btn c-btn--primary canvas__add-button"

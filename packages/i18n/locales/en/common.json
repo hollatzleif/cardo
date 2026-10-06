@@ -30,7 +30,12 @@
       "how": "How it works",
       "setup": "Setup",
       "bestFor": "Best suited for"
-    }
+    },
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "shrinkWidget": "Shorter",
+    "growWidget": "Taller",
+    "emptyHintPhone": "This page is empty. Tap ☰ → Arrange to add widgets."
   },
   "palette": {
     "placeholder": "Type a command or search…",
@@ -3657,5 +3662,13 @@
       "failed": "That didn't work.",
       "desktopOnly": "Import from file works in the desktop app."
     }
+  },
+  "mobile": {
+    "backToBoard": "Board",
+    "page": "Page",
+    "menu": "Menu",
+    "doneEditing": "✓ Done arranging",
+    "arrange": "✎ Arrange & add widgets",
+    "search": "Search & commands"
   }
 }

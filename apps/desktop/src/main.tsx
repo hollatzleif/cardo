@@ -9,6 +9,7 @@ import 'react-resizable/css/styles.css';
 import 'katex/dist/katex.min.css';
 import './app.css';
 import './design/terminal-chrome.css';
+import './mobile/mobile.css';
 import { initHost } from './host';
 import { instantiateTools, liveTools } from './host/tools';
 import { initGlobalShortcuts } from './host/shortcuts';

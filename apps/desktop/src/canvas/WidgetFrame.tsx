@@ -84,14 +84,26 @@ function beginGridDrag(
   window.addEventListener('pointerup', onUp);
 }
 
+/** Touch controls that replace drag/resize grips on the single-column phone board. */
+export interface MobileFrameControls {
+  /** Columns the widget is told it has (phones are ~4 desktop columns wide). */
+  cols: number;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMove(direction: -1 | 1): void;
+  onResize(delta: -1 | 1): void;
+}
+
 export function WidgetFrame({
   widget,
   editing,
   onRemove,
+  mobile,
 }: {
   widget: WidgetInstance;
   editing: boolean;
   onRemove(): void;
+  mobile?: MobileFrameControls;
 }) {
   const { t } = useTranslation();
   const setWidgetVariant = useAppStore((s) => s.setWidgetVariant);
@@ -149,15 +161,54 @@ export function WidgetFrame({
         <div className="widget-frame__toolbar">
           {helpButton(false)}
           <span className="widget-frame__title">{t(tool.manifest.nameKey)}</span>
-          <span
-            className="widget-frame__drag"
-            role="button"
-            aria-label={t('canvas.moveWidget')}
-            title={t('canvas.moveWidget')}
-            onPointerDown={(e) => beginGridDrag(e, widget, 'move', min, commit)}
-          >
-            ⠿
-          </span>
+          {mobile ? (
+            <span className="widget-frame__mobile-controls">
+              <button
+                className="c-btn c-btn--ghost"
+                aria-label={t('canvas.moveUp')}
+                title={t('canvas.moveUp')}
+                disabled={!mobile.canMoveUp}
+                onClick={() => mobile.onMove(-1)}
+              >
+                ↑
+              </button>
+              <button
+                className="c-btn c-btn--ghost"
+                aria-label={t('canvas.moveDown')}
+                title={t('canvas.moveDown')}
+                disabled={!mobile.canMoveDown}
+                onClick={() => mobile.onMove(1)}
+              >
+                ↓
+              </button>
+              <button
+                className="c-btn c-btn--ghost"
+                aria-label={t('canvas.shrinkWidget')}
+                title={t('canvas.shrinkWidget')}
+                onClick={() => mobile.onResize(-1)}
+              >
+                −
+              </button>
+              <button
+                className="c-btn c-btn--ghost"
+                aria-label={t('canvas.growWidget')}
+                title={t('canvas.growWidget')}
+                onClick={() => mobile.onResize(1)}
+              >
+                +
+              </button>
+            </span>
+          ) : (
+            <span
+              className="widget-frame__drag"
+              role="button"
+              aria-label={t('canvas.moveWidget')}
+              title={t('canvas.moveWidget')}
+              onPointerDown={(e) => beginGridDrag(e, widget, 'move', min, commit)}
+            >
+              ⠿
+            </span>
+          )}
           {variants.length > 1 && (
             <select
               className="c-input widget-frame__variant"
@@ -186,11 +237,11 @@ export function WidgetFrame({
           instanceId={widget.instanceId}
           widgetId={widget.widgetId}
           variant={activeVariant}
-          size={{ w: widget.w, h: widget.h }}
+          size={{ w: mobile ? mobile.cols : widget.w, h: widget.h }}
           editing={editing}
         />
       </div>
-      {editing && (
+      {editing && !mobile && (
         <span
           className="widget-frame__resize"
           role="button"

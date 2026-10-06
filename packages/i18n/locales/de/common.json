@@ -30,7 +30,12 @@
       "how": "So funktioniert’s",
       "setup": "Einrichtung",
       "bestFor": "Am besten geeignet für"
-    }
+    },
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "shrinkWidget": "Niedriger",
+    "growWidget": "Höher",
+    "emptyHintPhone": "Diese Seite ist leer. Tippe auf ☰ → Anordnen, um Widgets hinzuzufügen."
   },
   "palette": {
     "placeholder": "Befehl eingeben oder suchen…",
@@ -3657,5 +3662,13 @@
       "failed": "Das hat nicht geklappt.",
       "desktopOnly": "Import aus Datei funktioniert in der Desktop-App."
     }
+  },
+  "mobile": {
+    "backToBoard": "Board",
+    "page": "Seite",
+    "menu": "Menü",
+    "doneEditing": "✓ Fertig mit Anordnen",
+    "arrange": "✎ Anordnen & Widgets hinzufügen",
+    "search": "Suchen & Befehle"
   }
 }
