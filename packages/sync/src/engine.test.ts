@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { b64Decode } from './b64';
 import { encodeBatchFile } from './batchFile';
 import { SyncCipher } from './cipher';
-import { SyncEngine } from './engine';
+import { PARK_STAMP, SyncEngine } from './engine';
 import { createIdbStore, type IdbStore } from './idb/store';
 import { deriveKeys, generateSyncKey } from './keys';
 import { MemoryHub } from './testing/memoryHub';
@@ -225,8 +225,55 @@ describe('SyncEngine (TS-specific behaviour)', () => {
     ]);
     const b = device();
     const report = await new SyncEngine(b, key, 'test').syncOnce(hub);
-    expect(report).toMatchObject({ pulled: 4, rejected: 2, undecryptable: 1, applied: 1 });
+    // Authentic but refused (bad namespace, unknown kind, not an op): parked.
+    expect(report).toMatchObject({ pulled: 4, rejected: 3, undecryptable: 0, applied: 1 });
     expect(await b.get('todo', '1')).toEqual({ ok: true });
+    expect(await b.parkedOps('another-build')).toHaveLength(3);
+    // The same build does not retry them every round.
+    expect(await new SyncEngine(b, key, 'test').syncOnce(hub)).toMatchObject({ unparked: 0, rejected: 0 });
+  });
+
+  it('parks an unknown op kind and applies it once a later build understands it', async () => {
+    const hub = new MemoryHub();
+    const key = newKey();
+    const cipher = new SyncCipher(key);
+    const future: SyncOp = {
+      op_id: 'op-future', device_id: 'newer', hlc: '0000000000005-0000-newer', namespace: 'todo',
+      doc_id: '1', op: 'merge_text', field: 't', value: 'x', created_at: 0,
+    };
+    await hub.push([{ opId: future.op_id, blob: cipher.encrypt(future.op_id, encodeSyncOp(future)) }]);
+    const b = device();
+    const engine = new SyncEngine(b, key, 'test');
+    expect(await engine.syncOnce(hub)).toMatchObject({ rejected: 1, applied: 0 });
+    const [parked] = await b.parkedOps('another-build');
+    expect(parked?.reason).toContain('unknown sync op');
+    expect(parked?.stamp).toBe(PARK_STAMP);
+
+    // "A later build learned merge_text": an older stamp + applicable payload.
+    const learned = { ...future, op: 'set_field' };
+    await b.parkOp({ opId: future.op_id, payload: encodeSyncOp(learned), reason: 'old', stamp: 'ts-apply-0' });
+    const later = await engine.syncOnce(hub);
+    expect(later).toMatchObject({ unparked: 1, applied: 1 });
+    expect(await b.get('todo', '1')).toEqual({ t: 'x' });
+    expect(await b.parkedOps('another-build')).toEqual([]);
+  });
+
+  it('emits one change event per document per batch and dedupes report.notices', async () => {
+    const hub = new MemoryHub();
+    const key = newKey();
+    const a = device();
+    for (let i = 0; i < 5; i++) await a.set('todo', '1', { n: i, extra: i % 2 === 0 ? 'x' : 'y' });
+    await a.set('todo', '2', { n: 1 });
+    await new SyncEngine(a, key, 'test').syncOnce(hub);
+
+    const b = device();
+    const events: string[] = [];
+    b.onChange((ev) => events.push(`${ev.docId}:${ev.operation}`));
+    const report = await new SyncEngine(b, key, 'test').syncOnce(hub);
+    expect(report.applied).toBeGreaterThan(2);
+    expect(report.notices.map((n) => n.docId)).toEqual(['1', '2']);
+    expect(events).toEqual(['1:update', '2:create']);
+    expect(await b.get('todo', '1')).toEqual({ n: 4, extra: 'x' });
   });
 
   it('the pull loop follows the cursor past empty batches and stops when it stalls', async () => {

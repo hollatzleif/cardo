@@ -126,8 +126,9 @@ async fn ts_hub_replays_into_fresh_sqlite_storage() {
     // Idempotent: cursor stops a second pull, a full re-pull skips everything.
     let again = SyncEngine::new(&s, &data_key, "ts-reader").pull_once(&transport).await.unwrap();
     assert_eq!(again.pulled, 0);
-    s.cursor_set("ts-reader", "").await.unwrap();
-    let re = SyncEngine::new(&s, &data_key, "ts-reader").pull_once(&transport).await.unwrap();
+    let reader = SyncEngine::new(&s, &data_key, "ts-reader");
+    reader.reset_cursor().await.unwrap();
+    let re = reader.pull_once(&transport).await.unwrap();
     assert_eq!((re.pulled, re.applied, re.skipped), (op_count, 0, op_count));
     assert_eq!(s.dump_all().await.unwrap(), expected);
     assert_eq!(s.unsynced_op_count().await.unwrap(), 0);

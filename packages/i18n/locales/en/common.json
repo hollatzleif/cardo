@@ -3702,7 +3702,8 @@
       "retry": "Try again",
       "wrongKey": "Nothing could be decrypted with this key. Is it really the key from your computer?",
       "denied": "Your computer is not accepting new devices right now. Turn on \"Allow joining with this key\" under Settings → Sync there and try again.",
-      "slotsFull": "All 10 device slots are in use. Remove an old device on your computer under Settings → Sync."
+      "slotsFull": "All 10 device slots are in use. Remove an old device on your computer under Settings → Sync.",
+      "replaceLocal": "This iPhone already has Cardo data of its own. Connecting replaces it with your computer's data. Continue?"
     },
     "sync": {
       "paused": "Sync paused – Google wants you to sign in again briefly.",

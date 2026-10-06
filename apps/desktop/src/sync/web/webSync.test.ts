@@ -16,6 +16,7 @@ import {
   DEVICES_NS,
   joinGroup,
   JoinDeniedError,
+  LocalDataError,
   loadConfig,
   RevokedError,
   runWebSyncRound,
@@ -57,7 +58,17 @@ describe('web sync join and rounds', () => {
     const phone = await store();
     // Something written on the phone before joining is wiped, not pushed.
     await phone.set('core.settings', 'core.language', { value: 'en' });
-    const outcome = await joinGroup(phone, hub, key.toLowerCase(), 'iPhone');
+    await expect(joinGroup(phone, hub, key, 'iPhone')).rejects.toBeInstanceOf(LocalDataError);
+    expect(await phone.get('core.settings', 'core.language')).toEqual({ value: 'en' });
+    const outcome = await joinGroup(
+      phone,
+      hub,
+      key.toLowerCase(),
+      'iPhone',
+      undefined,
+      undefined,
+      true,
+    );
     expect(outcome.wrongKeySuspected).toBe(false);
     expect(await phone.get('todo', '1')).toEqual({ title: 'Milch', done: false });
     expect(await phone.get('core.settings', 'core.language')).toEqual({ value: 'de' });
@@ -128,6 +139,16 @@ describe('web sync join and rounds', () => {
     await expect(runWebSyncRound(phone, hub)).rejects.toBeInstanceOf(RevokedError);
     expect((await loadConfig(phone))?.kicked).toBe(true);
     await expect(runWebSyncRound(phone, hub)).rejects.toBeInstanceOf(RevokedError);
+  });
+
+  it('does not rewrite its device entry every round', async () => {
+    const s = await store();
+    await upsertOwnDevice(s, 'iPhone', 1_000);
+    const before = await s.unsyncedOpCount();
+    await upsertOwnDevice(s, 'iPhone', 2_000);
+    expect(await s.unsyncedOpCount()).toBe(before);
+    await upsertOwnDevice(s, 'iPhone', 1_000 + 7 * 60 * 60 * 1000);
+    expect(await s.unsyncedOpCount()).toBeGreaterThan(before);
   });
 
   it('respects the ten device slots', async () => {

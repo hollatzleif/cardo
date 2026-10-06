@@ -1,9 +1,26 @@
 use serde::Serialize;
 
 use crate::error::{CoreError, Result};
-use crate::storage::{ChangeNotice, SqliteStorage, SyncOp};
+use crate::storage::{ChangeNotice, ParkedOp, SqliteStorage, SyncOp};
 use crate::sync::{EncryptedOp, SyncTransport};
 use crate::sync_crypto::SyncCipher;
+use crate::sync_cursor::LookbackCursor;
+
+/// Bump whenever this build learns to apply ops it refused before (new op
+/// kind, relaxed validator). Together with the crate version it forms the
+/// park stamp: ops parked by a build with another stamp are retried.
+pub const APPLY_VERSION: u32 = 1;
+
+pub fn park_stamp() -> String {
+    format!("rust-{}-apply-{APPLY_VERSION}", env!("CARGO_PKG_VERSION"))
+}
+
+/// Suffix of the sync_cursors row that holds the full look-back cursor. The
+/// plain `transport_id` row keeps holding only the last filename: builds
+/// from before the look-back cursor compare filenames against it with `>`,
+/// and a JSON value there (`{` sorts after every digit) would silently stop
+/// them from ever pulling again after a downgrade.
+pub const CURSOR_KEY_SUFFIX: &str = "#lookback1";
 
 /// The device-agnostic sync loop: pull → decrypt → LWW-apply, then
 /// drain the local change log → encrypt → push. Works against ANY
@@ -27,12 +44,18 @@ pub struct SyncReport {
     pub applied: usize,
     /// Duplicates, own echoes and LWW losers.
     pub skipped: usize,
-    /// Blobs that failed to decrypt (wrong key / tampered) – surfaced, never fatal.
+    /// Blobs that failed to decrypt (wrong key / tampered) – surfaced, never
+    /// fatal, dropped (not authentic).
     pub undecryptable: usize,
-    /// Decrypted ops the storage refused (invalid namespace / id / field,
-    /// unknown op kind) – e.g. from a newer or buggy client. Counted and
-    /// skipped so one bad op cannot block the hub forever; never fatal.
+    /// Authentic ops (they decrypted) this build could not parse or apply –
+    /// unknown op kind, invalid namespace / id / field, malformed JSON –
+    /// e.g. from a newer or buggy client. PARKED (`sync_parked`), not
+    /// dropped: a build with another park stamp retries them. Never fatal.
     pub rejected: usize,
+    /// Parked ops of another build that this build could now apply or skip.
+    pub unparked: usize,
+    /// Hub batch files that could not be parsed (skipped, marked read).
+    pub broken_files: usize,
     /// Document changes for UI refresh events.
     pub notices: Vec<ChangeNotice>,
 }
@@ -87,10 +110,34 @@ impl<'a> SyncEngine<'a> {
         transport: &dyn SyncTransport,
         report: &mut SyncReport,
     ) -> Result<()> {
-        let mut cursor = self.storage.cursor_get(&self.transport_id).await?;
+        let stamp = park_stamp();
+        // Ops a build with another stamp refused: retry once per build.
+        for parked in self.storage.parked_ops(&stamp).await? {
+            match self.apply_plaintext(&parked.payload).await? {
+                Outcome::Refused(reason) => {
+                    self.storage
+                        .park_op(&ParkedOp { reason, stamp: stamp.clone(), ..parked })
+                        .await?;
+                }
+                outcome => {
+                    self.storage.unpark_op(&parked.op_id).await?;
+                    report.unparked += 1;
+                    match outcome {
+                        Outcome::Applied(notice) => {
+                            report.applied += 1;
+                            report.notices.push(notice);
+                        }
+                        _ => report.skipped += 1,
+                    }
+                }
+            }
+        }
+
+        let mut cursor = self.load_cursor().await?;
         loop {
             let batch = transport.pull(cursor.clone()).await?;
             report.pulled += batch.ops.len();
+            report.broken_files += batch.broken_files;
             for op in &batch.ops {
                 let plaintext = match self.cipher.decrypt(&op.op_id, &op.blob) {
                     Ok(bytes) => bytes,
@@ -99,25 +146,23 @@ impl<'a> SyncEngine<'a> {
                         continue;
                     }
                 };
-                let sync_op: SyncOp = match serde_json::from_slice(&plaintext) {
-                    Ok(op) => op,
-                    Err(_) => {
-                        report.undecryptable += 1;
-                        continue;
-                    }
-                };
-                if self.exclude_namespaces.contains(&sync_op.namespace) {
-                    report.skipped += 1;
-                    continue;
-                }
-                match self.storage.apply_remote_op(&sync_op).await {
-                    Ok(Some(notice)) => {
+                match self.apply_plaintext(&plaintext).await? {
+                    Outcome::Applied(notice) => {
                         report.applied += 1;
                         report.notices.push(notice);
                     }
-                    Ok(None) => report.skipped += 1,
-                    Err(err) if is_rejection(&err) => report.rejected += 1,
-                    Err(err) => return Err(err),
+                    Outcome::Skipped => report.skipped += 1,
+                    Outcome::Refused(reason) => {
+                        report.rejected += 1;
+                        self.storage
+                            .park_op(&ParkedOp {
+                                op_id: op.op_id.clone(),
+                                payload: plaintext,
+                                reason,
+                                stamp: stamp.clone(),
+                            })
+                            .await?;
+                    }
                 }
             }
             // The cursor is the only progress signal: an unchanged cursor
@@ -127,9 +172,53 @@ impl<'a> SyncEngine<'a> {
                 break;
             }
             cursor = batch.next_cursor;
-            self.storage.cursor_set(&self.transport_id, &cursor).await?;
+            self.save_cursor(&cursor).await?;
         }
         Ok(())
+    }
+
+    /// Parses and applies one authentic plaintext. Store/IO errors propagate.
+    async fn apply_plaintext(&self, plaintext: &[u8]) -> Result<Outcome> {
+        let sync_op: SyncOp = match serde_json::from_slice(plaintext) {
+            Ok(op) => op,
+            Err(err) => return Ok(Outcome::Refused(format!("parse: {err}"))),
+        };
+        if self.exclude_namespaces.contains(&sync_op.namespace) {
+            return Ok(Outcome::Skipped);
+        }
+        match self.storage.apply_remote_op(&sync_op).await {
+            Ok(Some(notice)) => Ok(Outcome::Applied(notice)),
+            Ok(None) => Ok(Outcome::Skipped),
+            Err(err) if is_rejection(&err) => Ok(Outcome::Refused(err.to_string())),
+            Err(err) => Err(err),
+        }
+    }
+
+    fn cursor_key(&self) -> String {
+        format!("{}{CURSOR_KEY_SUFFIX}", self.transport_id)
+    }
+
+    /// The full cursor; falls back to the legacy row once (plain filename
+    /// from an older build, or JSON from a build before the split).
+    async fn load_cursor(&self) -> Result<String> {
+        let cursor = self.storage.cursor_get(&self.cursor_key()).await?;
+        if !cursor.is_empty() {
+            return Ok(cursor);
+        }
+        self.storage.cursor_get(&self.transport_id).await
+    }
+
+    async fn save_cursor(&self, cursor: &str) -> Result<()> {
+        self.storage.cursor_set(&self.cursor_key(), cursor).await?;
+        let legacy = LookbackCursor::parse(cursor).last;
+        self.storage.cursor_set(&self.transport_id, &legacy).await
+    }
+
+    /// Forgets the pull position: the next round re-reads the whole hub
+    /// (harmless – ops are deduplicated by id).
+    pub async fn reset_cursor(&self) -> Result<()> {
+        self.storage.cursor_set(&self.cursor_key(), "").await?;
+        self.storage.cursor_set(&self.transport_id, "").await
     }
 
     async fn push_pending(
@@ -165,17 +254,23 @@ impl<'a> SyncEngine<'a> {
     }
 }
 
-/// Errors that describe a bad OP (validation / unknown kind) rather than a
-/// broken database or transport. Those are counted, not propagated.
+enum Outcome {
+    Applied(ChangeNotice),
+    Skipped,
+    /// Authentic but not applicable by this build – parked.
+    Refused(String),
+}
+
+/// Validation errors that describe a bad (or too new) OP rather than a
+/// broken database: those park the op. Everything else propagates.
 fn is_rejection(err: &CoreError) -> bool {
     match err {
-        CoreError::Db(_) | CoreError::Io(_) => false,
         CoreError::InvalidNamespace(_)
         | CoreError::InvalidField(_)
         | CoreError::InvalidId(_)
-        | CoreError::NotAnObject
-        | CoreError::Serde(_)
-        | CoreError::Other(_) => true,
+        | CoreError::InvalidOp(_)
+        | CoreError::NotAnObject => true,
+        CoreError::Db(_) | CoreError::Io(_) | CoreError::Serde(_) | CoreError::Other(_) => false,
     }
 }
 
@@ -336,7 +431,7 @@ mod tests {
         engine_a.sync_once(&transport).await.unwrap();
         engine_b.sync_once(&transport).await.unwrap();
 
-        b.cursor_set("test", "").await.unwrap();
+        engine_b.reset_cursor().await.unwrap();
         let report = engine_b.sync_once(&transport).await.unwrap();
         assert_eq!(report.applied, 0);
         assert!(report.skipped >= 1);
@@ -444,6 +539,7 @@ mod tests {
                 Ok(PullBatch {
                     ops: vec![EncryptedOp { op_id: "x".into(), blob: vec![0; 40] }],
                     next_cursor: since,
+                    broken_files: 0,
                 })
             }
         }
@@ -501,9 +597,118 @@ mod tests {
         assert_eq!(report.applied, 1);
         assert_eq!(b.get("todo", "1").await.unwrap().unwrap()["title"], "ok");
 
-        // Next round: cursor advanced, nothing re-read.
+        // Refused ops are parked, not lost.
+        assert_eq!(b.parked_op_count().await.unwrap(), 2);
+
+        // Next round: cursor advanced, nothing re-read, parked ops are not
+        // retried by the same build.
         let again = engine.sync_once(&transport).await.unwrap();
         assert_eq!(again.pulled, 0);
         assert_eq!(again.rejected, 0);
+        assert_eq!(again.unparked, 0);
+        assert_eq!(b.parked_op_count().await.unwrap(), 2);
+    }
+
+    fn sealed(cipher: &SyncCipher, op: &SyncOp) -> EncryptedOp {
+        let plain = serde_json::to_vec(op).unwrap();
+        EncryptedOp { op_id: op.op_id.clone(), blob: cipher.encrypt(&op.op_id, &plain).unwrap() }
+    }
+
+    /// An op kind this build does not know (a newer client) is parked with
+    /// its plaintext; a later build (different stamp) applies it.
+    #[tokio::test]
+    async fn unknown_op_kind_is_parked_and_retried_by_a_later_build() {
+        let dir = TempDir::new().unwrap();
+        let hub = dir.path().join("hub");
+        let key = SyncKey::generate().unwrap().derive();
+        let transport = FolderTransport::new(&hub).unwrap();
+        let cipher = SyncCipher::new(&key.data_key);
+        let future = SyncOp {
+            op_id: "op-future".into(),
+            device_id: "00000000-0000-4000-8000-000000000001".into(),
+            hlc: "1700000000000-0000-00000000-0000-4000-8000-000000000001".into(),
+            namespace: "todo".into(),
+            doc_id: "1".into(),
+            op: "merge_text".into(),
+            field: Some("t".into()),
+            value: Some(json!("x")),
+            created_at: 1,
+        };
+        transport.push(vec![sealed(&cipher, &future)]).await.unwrap();
+        // Undecodable-but-authentic plaintext is parked too.
+        transport
+            .push(vec![EncryptedOp {
+                op_id: "op-garbled".into(),
+                blob: cipher.encrypt("op-garbled", br#"{"op_id":"op-garbled","created_at":1.0}"#).unwrap(),
+            }])
+            .await
+            .unwrap();
+
+        let b = device(&dir, "b").await;
+        let engine = SyncEngine::new(&b, &key.data_key, "test");
+        let report = engine.sync_once(&transport).await.unwrap();
+        assert_eq!((report.rejected, report.undecryptable), (2, 0));
+        let parked = b.parked_ops("another-build").await.unwrap();
+        assert_eq!(parked.len(), 2);
+        assert!(parked.iter().any(|p| p.op_id == "op-future" && p.reason.contains("unknown sync op")));
+
+        // Simulate "a later build learned merge_text": the stored plaintext is
+        // replaced by an applicable op and the stamp marks an older build.
+        let learned = SyncOp { op: "set_field".into(), ..future };
+        b.park_op(&ParkedOp {
+            op_id: learned.op_id.clone(),
+            payload: serde_json::to_vec(&learned).unwrap(),
+            reason: "old".into(),
+            stamp: "rust-0.0.0-apply-0".into(),
+        })
+        .await
+        .unwrap();
+        let later = engine.sync_once(&transport).await.unwrap();
+        assert_eq!(later.unparked, 1);
+        assert_eq!(later.applied, 1);
+        assert_eq!(b.get("todo", "1").await.unwrap().unwrap(), json!({"t": "x"}));
+        // The garbled one stays parked (same stamp, not retried).
+        assert_eq!(b.parked_op_count().await.unwrap(), 1);
+    }
+
+    /// The legacy cursor row keeps a plain filename (older builds compare it
+    /// with `>`); the full look-back cursor lives in its own row.
+    #[tokio::test]
+    async fn legacy_cursor_row_stays_a_plain_filename() {
+        let dir = TempDir::new().unwrap();
+        let hub = dir.path().join("hub");
+        let key = SyncKey::generate().unwrap().derive();
+        let transport = FolderTransport::new(&hub).unwrap();
+        let a = device(&dir, "a").await;
+        a.set("todo", "1", json!({"t": 1})).await.unwrap();
+        SyncEngine::new(&a, &key.data_key, "w").sync_once(&transport).await.unwrap();
+
+        let b = device(&dir, "b").await;
+        // A cursor stored by a pre-split build (JSON in the legacy row) migrates.
+        let engine = SyncEngine::new(&b, &key.data_key, "test");
+        engine.sync_once(&transport).await.unwrap();
+        let legacy = b.cursor_get("test").await.unwrap();
+        assert!(legacy.ends_with(".cardo-ops") && !legacy.starts_with('{'), "{legacy}");
+        let full = b.cursor_get(&format!("test{CURSOR_KEY_SUFFIX}")).await.unwrap();
+        assert!(full.starts_with('{'));
+        assert_eq!(LookbackCursor::parse(&full).last, legacy);
+    }
+
+    /// Broken hub files are counted in the report and do not block the round.
+    #[tokio::test]
+    async fn broken_batch_files_are_reported() {
+        let dir = TempDir::new().unwrap();
+        let hub = dir.path().join("hub");
+        let key = SyncKey::generate().unwrap().derive();
+        let transport = FolderTransport::new(&hub).unwrap();
+        std::fs::write(hub.join("ops").join("0000000000001-x.cardo-ops"), b"not json").unwrap();
+        let a = device(&dir, "a").await;
+        a.set("todo", "1", json!({"t": 1})).await.unwrap();
+        SyncEngine::new(&a, &key.data_key, "w").sync_once(&transport).await.unwrap();
+
+        let b = device(&dir, "b").await;
+        let report = SyncEngine::new(&b, &key.data_key, "test").sync_once(&transport).await.unwrap();
+        assert_eq!(report.broken_files, 1);
+        assert_eq!(report.applied, 1);
     }
 }

@@ -1,0 +1,17 @@
+{
+  "name": "13-integral-floats",
+  "description": "A remote op carrying an integral float (serde prints 2.0) pins what both sides agree on. Known difference, NOT covered here (JS cannot tell 2.0 from 2): a later set of {\"x\": 2} logs a set_field on the desktop but nothing on the PWA, and LIKE '2.0' matches only on the desktop (SQLite REAL text). See store.test.ts 'documents the integral-float limitation'.",
+  "steps": [
+    { "kind": "remote", "op": { "op_id": "r-f", "device_id": "remote", "hlc": "9999999999999-0000-remote", "namespace": "n", "doc_id": "f", "op": "create", "field": null, "value": { "x": 2.0, "y": [1.0, 2], "z": 2.5 }, "created_at": 1 }, "expect": "applied", "expectOperation": "create" },
+    { "kind": "get", "namespace": "n", "id": "f", "expectDoc": { "x": 2.0, "y": [1.0, 2], "z": 2.5 } },
+    { "kind": "query", "namespace": "n", "query": { "where": [{ "field": "x", "op": "=", "value": 2 }] }, "expectRows": [{ "x": 2.0, "y": [1.0, 2], "z": 2.5 }], "note": "SQLite compares REAL 2.0 = INTEGER 2 numerically" },
+    { "kind": "query", "namespace": "n", "query": { "where": [{ "field": "x", "op": ">", "value": 1.5 }] }, "expectRows": [{ "x": 2.0, "y": [1.0, 2], "z": 2.5 }] },
+    { "kind": "query", "namespace": "n", "query": { "where": [{ "field": "x", "op": "like", "value": "2" }] }, "expectRows": [{ "x": 2.0, "y": [1.0, 2], "z": 2.5 }] },
+    { "kind": "set", "namespace": "n", "id": "f", "value": { "x": 2.0, "y": [1.0, 2], "z": 2.5 }, "expectOperation": "update", "expectOpsLogged": 0, "note": "same value incl. float-ness: nothing logged on either side" },
+    { "kind": "set", "namespace": "n", "id": "f", "value": { "x": 2.0, "y": [1.0, 2], "z": 3.5 }, "expectOperation": "update", "expectOpsLogged": 1 }
+  ],
+  "expectDocs": { "n": { "f": { "x": 2.0, "y": [1.0, 2], "z": 3.5 } } },
+  "expectLocalOps": [
+    { "namespace": "n", "docId": "f", "op": "set_field", "field": "z", "value": 3.5 }
+  ]
+}

@@ -1,25 +1,26 @@
 import {
   batchFileName,
-  decodeBatchFile,
   encodeBatchFile,
   isBatchFileName,
-  BatchFileError,
+  parseCursor,
+  pullBatchFiles,
+  selectDue,
   type EncryptedOp,
   type PullBatch,
   type SyncTransport,
 } from '@cardo/sync';
 import { fetchWithTimeout } from '../../host/net';
-import { advance, parseCursor, renderCursor, selectNames } from './lookback';
 
 /**
  * Google Drive transport for the web app – the same hub as the desktop's
  * sync_gdrive.rs: encrypted batch files in the hidden appDataFolder, same
- * names and JSON. Only the local cursor differs (lookback, see lookback.ts).
+ * names, same JSON, same look-back cursor (@cardo/sync lookback.ts).
+ * One instance = one sync round: the hub is listed once and the listing is
+ * reused for every pull call of the round (a join reads hundreds of files).
  */
 
 const FILES_URL = 'https://www.googleapis.com/drive/v3/files';
 const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
-const FILES_PER_PULL = 50;
 const LIST_TIMEOUT_MS = 20_000;
 const FILE_TIMEOUT_MS = 30_000;
 
@@ -54,6 +55,10 @@ export interface DriveProgress {
 }
 
 export class DriveTransport implements SyncTransport {
+  private listing: Map<string, string> | null = null;
+  private filesTotal = 0;
+  private filesRead = 0;
+
   constructor(
     private readonly auth: DriveAuth,
     private readonly onProgress?: (p: DriveProgress) => void,
@@ -114,6 +119,8 @@ export class DriveTransport implements SyncTransport {
 
   async push(ops: EncryptedOp[]): Promise<void> {
     if (ops.length === 0) return;
+    // Our own upload changes the hub; a later pull this round must re-list.
+    this.listing = null;
     const boundary = 'cardo-sync-boundary';
     const metadata = JSON.stringify({ name: batchFileName(), parents: ['appDataFolder'] });
     const body =
@@ -131,30 +138,36 @@ export class DriveTransport implements SyncTransport {
   }
 
   async pull(since: string): Promise<PullBatch> {
-    const cursor = parseCursor(since);
-    const files = await this.listBatchFiles();
-    const names = [...files.keys()];
-    const next = selectNames(names, cursor, FILES_PER_PULL);
-    if (next.length === 0) return { ops: [], nextCursor: since };
-
-    const unread = selectNames(names, cursor, Number.MAX_SAFE_INTEGER).length;
-    const ops: EncryptedOp[] = [];
-    let done = 0;
-    for (const name of next) {
-      const id = files.get(name)!;
-      const text = await (
-        await this.request(`${FILES_URL}/${encodeURIComponent(id)}?alt=media`, {}, FILE_TIMEOUT_MS)
-      ).text();
-      try {
-        ops.push(...(decodeBatchFile(text) ?? []));
-      } catch (e) {
-        // A broken file must not wedge sync forever: skip it (it is marked
-        // as read below) – the engine reports nothing for it.
-        if (!(e instanceof BatchFileError)) throw e;
-      }
-      done++;
-      this.onProgress?.({ filesRead: done, filesTotal: unread });
+    const now = Date.now();
+    if (!this.listing) {
+      this.listing = await this.listBatchFiles();
+      // Progress counts the whole round, not just this batch of files.
+      this.filesTotal = selectDue(
+        parseCursor(since),
+        [...this.listing.keys()].sort(),
+        Number.MAX_SAFE_INTEGER,
+        now,
+      ).length;
+      this.filesRead = 0;
     }
-    return { ops, nextCursor: renderCursor(advance(cursor, next)) };
+    const files = this.listing;
+    const names = [...files.keys()];
+    return pullBatchFiles(
+      names,
+      since,
+      async (name) => {
+        const id = files.get(name)!;
+        const response = await this.request(
+          `${FILES_URL}/${encodeURIComponent(id)}?alt=media`,
+          {},
+          FILE_TIMEOUT_MS,
+        );
+        const text = await response.text();
+        this.filesRead++;
+        this.onProgress?.({ filesRead: this.filesRead, filesTotal: this.filesTotal });
+        return text;
+      },
+      now,
+    );
   }
 }

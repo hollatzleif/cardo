@@ -21,6 +21,20 @@ const MIGRATIONS: &[(i64, &str)] = &[
     (3, include_str!("../migrations/0003_sync.sql")),
 ];
 
+/// Purely additive tables that older builds can safely ignore. They are
+/// created on every open (`IF NOT EXISTS`) WITHOUT bumping `user_version`,
+/// so adding them never locks an older build out of the database.
+const ADDITIVE_SQL: &str = include_str!("../migrations/additive.sql");
+
+/// An authentic remote op (it decrypted) this build refused to apply.
+#[derive(Debug, Clone)]
+pub struct ParkedOp {
+    pub op_id: String,
+    pub payload: Vec<u8>,
+    pub reason: String,
+    pub stamp: String,
+}
+
 /// One change-log row in wire shape: what sync serializes, encrypts and
 /// applies. Field names are part of the sync protocol – do not rename.
 #[derive(Debug, Clone, Serialize, serde::Deserialize)]
@@ -177,6 +191,8 @@ impl SqliteStorage {
             }
         }
 
+        sqlx::raw_sql(ADDITIVE_SQL).execute(&pool).await?;
+
         // Device id: created once, then stable for the lifetime of this install.
         let device_id: Option<String> =
             sqlx::query_scalar("SELECT value FROM meta WHERE key = 'device_id'")
@@ -198,7 +214,18 @@ impl SqliteStorage {
             }
         };
 
-        Ok(Self { pool, hlc: Hlc::new(device_id) })
+        // The clock state is in memory: resume after everything this device
+        // has logged or applied, so a restart (or a wall clock that went
+        // backwards) never produces an hlc below one already in the log.
+        let hlc = Hlc::new(device_id);
+        let max_hlc: Option<String> = sqlx::query_scalar("SELECT MAX(hlc) FROM change_log")
+            .fetch_one(&pool)
+            .await?;
+        if let Some(max) = max_hlc {
+            hlc.observe(&max);
+        }
+
+        Ok(Self { pool, hlc })
     }
 
     pub fn device_id(&self) -> &str {
@@ -403,6 +430,57 @@ impl SqliteStorage {
         Ok(())
     }
 
+    /* ── Parked ops (refused by this build, retried by a later one) ───── */
+
+    /// Stores (or re-stamps) a refused op.
+    pub async fn park_op(&self, op: &ParkedOp) -> Result<()> {
+        sqlx::query(
+            "INSERT INTO sync_parked (op_id, payload, reason, stamp, parked_at) VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(op_id) DO UPDATE SET payload = excluded.payload,
+             reason = excluded.reason, stamp = excluded.stamp",
+        )
+        .bind(&op.op_id)
+        .bind(&op.payload)
+        .bind(&op.reason)
+        .bind(&op.stamp)
+        .bind(now_ms())
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// Parked ops refused by a build with a different stamp, oldest first.
+    pub async fn parked_ops(&self, current_stamp: &str) -> Result<Vec<ParkedOp>> {
+        let rows = sqlx::query(
+            "SELECT op_id, payload, reason, stamp FROM sync_parked WHERE stamp != ?
+             ORDER BY parked_at, op_id",
+        )
+        .bind(current_stamp)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows
+            .into_iter()
+            .map(|row| ParkedOp {
+                op_id: row.get("op_id"),
+                payload: row.get("payload"),
+                reason: row.get("reason"),
+                stamp: row.get("stamp"),
+            })
+            .collect())
+    }
+
+    pub async fn parked_op_count(&self) -> Result<i64> {
+        Ok(sqlx::query_scalar("SELECT COUNT(*) FROM sync_parked").fetch_one(&self.pool).await?)
+    }
+
+    pub async fn unpark_op(&self, op_id: &str) -> Result<()> {
+        sqlx::query("DELETE FROM sync_parked WHERE op_id = ?")
+            .bind(op_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
     /// Applies one remote op with last-writer-wins per field (doc-level ops
     /// dominate their document). Returns a notice when the document actually
     /// changed, None when the op was a duplicate or lost the LWW race.
@@ -413,6 +491,8 @@ impl SqliteStorage {
         if self.is_op_known(&op.op_id).await? {
             return Ok(None);
         }
+        // HLC receive rule: a local edit made after this op sorts after it.
+        self.hlc.observe(&op.hlc);
 
         let mut tx = self.pool.begin().await?;
 
@@ -474,7 +554,7 @@ impl SqliteStorage {
                     let field = op
                         .field
                         .clone()
-                        .ok_or_else(|| CoreError::Other("field op without field".into()))?;
+                        .ok_or_else(|| CoreError::InvalidOp("field op without field".into()))?;
                     validate_field(&field)?;
                     let existing: Option<String> = sqlx::query_scalar(
                         "SELECT data FROM documents WHERE namespace = ? AND id = ?",
@@ -531,7 +611,7 @@ impl SqliteStorage {
                     });
                 }
                 other => {
-                    return Err(CoreError::Other(format!("unknown sync op \"{other}\"")));
+                    return Err(CoreError::InvalidOp(format!("unknown sync op \"{other}\"")));
                 }
             }
 
@@ -954,6 +1034,117 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(like.len(), 1);
+    }
+
+    /// The contract the PWA's IndexedDB store mirrors (packages/sync
+    /// idb/store.ts `liveDocs`): without ORDER BY, rows come out of
+    /// idx_docs_ns_updated, i.e. by (updated_at, rowid); ORDER BY sorts
+    /// stably on top of that (ties keep that order, also for DESC and with
+    /// LIMIT). The rowid is assigned on first insert and kept by upserts.
+    #[tokio::test]
+    async fn query_scan_order_is_updated_at_then_rowid() {
+        let (s, _dir) = open_temp().await;
+        for id in ["c", "a", "d", "b", "e", "f"] {
+            s.set("q", id, json!({"p": 1, "k": id})).await.unwrap();
+        }
+        for (id, t) in [("c", 10), ("a", 30), ("d", 20), ("b", 20), ("e", 30), ("f", 10)] {
+            sqlx::query("UPDATE documents SET updated_at = ? WHERE id = ?")
+                .bind(t)
+                .bind(id)
+                .execute(&s.pool)
+                .await
+                .unwrap();
+        }
+        let ids = |v: Vec<Value>| -> String {
+            v.iter().map(|d| d["k"].as_str().unwrap().to_string()).collect()
+        };
+        let q = |order_by: Option<&str>, direction: Option<&str>, limit: Option<i64>| Query {
+            where_: vec![],
+            order_by: order_by.map(Into::into),
+            direction: direction.map(Into::into),
+            limit,
+        };
+        assert_eq!(ids(s.query("q", q(None, None, None)).await.unwrap()), "cfdbae");
+        assert_eq!(ids(s.query("q", q(None, None, Some(2))).await.unwrap()), "cf");
+        assert_eq!(ids(s.query("q", q(Some("p"), None, None)).await.unwrap()), "cfdbae");
+        assert_eq!(ids(s.query("q", q(Some("p"), Some("desc"), Some(3))).await.unwrap()), "cfd");
+        assert_eq!(ids(s.query("q", q(Some("nope"), None, None)).await.unwrap()), "cfdbae");
+        let filtered = Query {
+            where_: vec![FieldFilter { field: "k".into(), op: "in".into(), value: json!(["a", "b", "c"]) }],
+            ..Default::default()
+        };
+        assert_eq!(ids(s.query("q", filtered).await.unwrap()), "cba");
+
+        // Delete + re-create keeps the rowid: a tie with f (10) still puts c first.
+        s.delete("q", "c").await.unwrap();
+        s.set("q", "c", json!({"p": 1, "k": "c"})).await.unwrap();
+        sqlx::query("UPDATE documents SET updated_at = 10 WHERE id = 'c'")
+            .execute(&s.pool)
+            .await
+            .unwrap();
+        assert_eq!(ids(s.query("q", q(None, None, Some(2))).await.unwrap()), "cf");
+    }
+
+    /// Receive rule: after applying a remote op from a clock that runs
+    /// ahead, the next local edit of that field still wins everywhere.
+    #[tokio::test]
+    async fn local_edit_after_remote_op_sorts_after_it() {
+        let (s, _dir) = open_temp().await;
+        s.set("todo", "1", json!({"t": "local"})).await.unwrap();
+        let ahead = now_ms() + 60 * 60 * 1000; // remote clock one hour ahead
+        let remote_hlc = format!("{ahead:013}-0000-remote");
+        s.apply_remote_op(&SyncOp {
+            op_id: "r1".into(),
+            device_id: "remote".into(),
+            hlc: remote_hlc.clone(),
+            namespace: "todo".into(),
+            doc_id: "1".into(),
+            op: "set_field".into(),
+            field: Some("t".into()),
+            value: Some(json!("remote")),
+            created_at: 1,
+        })
+        .await
+        .unwrap()
+        .expect("remote op wins");
+        s.set("todo", "1", json!({"t": "edited after"})).await.unwrap();
+        let log = s.change_log_for("todo", "1").await.unwrap();
+        let last = log.last().unwrap();
+        assert_eq!(last["value"], "edited after");
+        assert!(last["hlc"].as_str().unwrap() > remote_hlc.as_str());
+
+        // A wildly future hlc (beyond the drift cap) is not observed.
+        let far = format!("{:013}-0000-remote", now_ms() + 30 * 24 * 60 * 60 * 1000);
+        s.hlc.observe(&far);
+        assert!(s.hlc.now() < far);
+    }
+
+    /// The clock resumes after the log on reopen (it is in-memory only).
+    #[tokio::test]
+    async fn hlc_resumes_after_the_log_on_reopen() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("hlc.db");
+        let max;
+        {
+            let s = SqliteStorage::open(&path).await.unwrap();
+            let ahead = now_ms() + 60 * 60 * 1000;
+            s.apply_remote_op(&SyncOp {
+                op_id: "r1".into(),
+                device_id: "remote".into(),
+                hlc: format!("{ahead:013}-0005-remote"),
+                namespace: "todo".into(),
+                doc_id: "1".into(),
+                op: "create".into(),
+                field: None,
+                value: Some(json!({"t": 1})),
+                created_at: 1,
+            })
+            .await
+            .unwrap();
+            max = format!("{ahead:013}-0005-remote");
+        }
+        let s = SqliteStorage::open(&path).await.unwrap();
+        assert!(s.hlc.now() > max);
     }
 
     #[tokio::test]

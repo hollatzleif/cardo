@@ -9,10 +9,74 @@ import { ValidationError } from './types';
 
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 
-/** JSON round trip: drops undefined/functions, applies toJSON, NaN → null. */
+/**
+ * JSON round trip: drops undefined/functions, applies toJSON, NaN → null,
+ * and replaces lone UTF-16 surrogates (in keys and values) with U+FFFD.
+ * Rust strings cannot hold a lone surrogate and serde_json rejects its
+ * `\udXXX` escape, so without this the desktop would drop the op while the
+ * phone keeps the value. Cleaning here keeps the stored doc, the change log
+ * and the wire bytes identical.
+ */
 export function normalizeDoc<T = JsonValue>(value: unknown): T {
   const text = JSON.stringify(value);
-  return (text === undefined ? null : JSON.parse(text)) as T;
+  if (text === undefined) return null as T;
+  const parsed: unknown = JSON.parse(text);
+  // JSON.stringify writes lone surrogates as `\udXXX` escapes (paired ones
+  // stay raw), so this cheap test finds every candidate (false positives
+  // such as an escaped backslash before "ud8" only cost the deep walk).
+  return (/\\u[dD][89a-fA-F]/.test(text) ? wellFormedDeep(parsed) : parsed) as T;
+}
+
+/** True when `s` has no unpaired UTF-16 surrogate. */
+export function isWellFormed(s: string): boolean {
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    if (c < 0xd800 || c > 0xdfff) continue;
+    if (c <= 0xdbff && i + 1 < s.length) {
+      const next = s.charCodeAt(i + 1);
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        i++;
+        continue;
+      }
+    }
+    return false;
+  }
+  return true;
+}
+
+/** `String.prototype.toWellFormed`: lone surrogates → U+FFFD. */
+export function toWellFormed(s: string): string {
+  if (isWellFormed(s)) return s;
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    if (c >= 0xd800 && c <= 0xdbff && i + 1 < s.length) {
+      const next = s.charCodeAt(i + 1);
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        out += s[i]! + s[i + 1]!;
+        i++;
+        continue;
+      }
+    }
+    out += c >= 0xd800 && c <= 0xdfff ? '\ufffd' : s[i]!;
+  }
+  return out;
+}
+
+/** Own enumerable data property – also for "__proto__" (serde Map semantics). */
+export function setOwn(obj: Record<string, unknown>, key: string, value: unknown): void {
+  Object.defineProperty(obj, key, { value, enumerable: true, writable: true, configurable: true });
+}
+
+function wellFormedDeep(value: unknown): unknown {
+  if (typeof value === 'string') return toWellFormed(value);
+  if (Array.isArray(value)) return value.map(wellFormedDeep);
+  if (isPlainObject(value)) {
+    const out: Record<string, unknown> = {};
+    for (const key of Object.keys(value)) setOwn(out, toWellFormed(key), wellFormedDeep(value[key]));
+    return out;
+  }
+  return value;
 }
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -87,8 +151,9 @@ function write(value: unknown): string | undefined {
     case 'number':
       return formatJsonNumber(value);
     case 'string':
-      // JSON.stringify escapes exactly like serde_json for well-formed strings.
-      return JSON.stringify(value);
+      // JSON.stringify escapes exactly like serde_json for well-formed
+      // strings; lone surrogates become U+FFFD (serde cannot parse them).
+      return JSON.stringify(toWellFormed(value));
     case 'undefined':
     case 'function':
     case 'symbol':
@@ -105,7 +170,7 @@ function write(value: unknown): string | undefined {
   const parts: string[] = [];
   for (const key of sortedKeys(rec)) {
     const v = write(rec[key]);
-    if (v !== undefined) parts.push(`${JSON.stringify(key)}:${v}`);
+    if (v !== undefined) parts.push(`${JSON.stringify(toWellFormed(key))}:${v}`);
   }
   return `{${parts.join(',')}}`;
 }
@@ -130,8 +195,12 @@ function hasControl(text: string): boolean {
   return false;
 }
 
+/**
+ * A lone UTF-16 surrogate makes an id Rust cannot represent (and serde
+ * cannot parse), so such ids are invalid here instead of silently diverging.
+ */
 export function isValidId(id: string): boolean {
-  return id.length > 0 && utf8Length(id) <= 128 && !hasControl(id);
+  return id.length > 0 && utf8Length(id) <= 128 && !hasControl(id) && isWellFormed(id);
 }
 
 export function isValidField(field: string): boolean {

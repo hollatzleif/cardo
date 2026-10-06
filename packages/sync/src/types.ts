@@ -30,6 +30,8 @@ export interface EncryptedOp {
 export interface PullBatch {
   ops: EncryptedOp[];
   nextCursor: string;
+  /** Batch files that could not be parsed; skipped (and marked read). */
+  brokenFiles?: number;
 }
 
 export interface SyncTransport {
@@ -54,12 +56,33 @@ export interface SyncReport {
   applied: number;
   /** Duplicates, own echoes, LWW losers and excluded namespaces. */
   skipped: number;
-  /** Blobs that failed to decrypt or parse – surfaced, never fatal. */
+  /** Blobs that failed to decrypt (wrong key / tampered) – surfaced, never fatal. */
   undecryptable: number;
-  /** Ops that decrypted but failed validation (TS-only; Rust aborts the round). */
+  /**
+   * Authentic ops (they decrypted) this build cannot parse or apply –
+   * unknown op kind, invalid id/field, malformed JSON. They are parked, not
+   * dropped, and retried by a later build (see `PARK_STAMP`).
+   */
   rejected: number;
-  /** Document changes for UI refresh events. */
+  /** Parked ops of an older build that this build applied (or skipped) now. */
+  unparked: number;
+  /** Hub batch files the transport could not parse (skipped). */
+  brokenFiles: number;
+  /** Document changes for UI refresh events: one per document (the last). */
   notices: ChangeNotice[];
+}
+
+/** An authentic op this build refused, kept for a later build. */
+export interface ParkedOp {
+  opId: string;
+  payload: Uint8Array;
+  reason: string;
+  stamp: string;
+}
+
+export interface ApplyOptions {
+  /** false: do not emit a change event (the caller batches them via `emitChanges`). */
+  emit?: boolean;
 }
 
 /** What the sync engine needs from a local store (Rust `SqliteStorage` sync half). */
@@ -80,7 +103,14 @@ export interface SyncStore {
    * invalid namespace/id, or – only when the op would win – an invalid
    * field or unknown op kind.
    */
-  applyRemoteOp(op: SyncOp): Promise<ChangeNotice | null>;
+  applyRemoteOp(op: SyncOp, options?: ApplyOptions): Promise<ChangeNotice | null>;
+  /** Emits change events for notices applied with `emit: false` (one batch). */
+  emitChanges?(notices: readonly ChangeNotice[]): void;
+  /** Stores (or re-stamps) a refused op. */
+  parkOp(op: ParkedOp): Promise<void>;
+  /** Parked ops whose stamp differs from `currentStamp` (a different build refused them). */
+  parkedOps(currentStamp: string): Promise<ParkedOp[]>;
+  unparkOp(opId: string): Promise<void>;
 }
 
 export type ValidationKind = 'namespace' | 'id' | 'field' | 'op' | 'not-an-object';

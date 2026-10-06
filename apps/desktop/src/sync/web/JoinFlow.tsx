@@ -7,6 +7,7 @@ import { driveAuth } from './webClient';
 import {
   joinGroup,
   JoinDeniedError,
+  LocalDataError,
   normalizeKey,
   SlotsFullError,
   type JoinProgress,
@@ -50,7 +51,7 @@ export function JoinFlow({ store, onDone }: { store: IdbStore; onDone(): void })
     }
   };
 
-  async function join() {
+  async function join(replaceLocalData = false) {
     setStep('joining');
     try {
       const transport = new DriveTransport(driveAuth(), (p) =>
@@ -62,6 +63,8 @@ export function JoinFlow({ store, onDone }: { store: IdbStore; onDone(): void })
         key,
         deviceName.trim() || defaultDeviceName(),
         (p) => setProgress((prev) => ({ ...prev, ...p })),
+        undefined,
+        replaceLocalData,
       );
       if (outcome.wrongKeySuspected) {
         setError(t('web.join.wrongKey'));
@@ -71,6 +74,12 @@ export function JoinFlow({ store, onDone }: { store: IdbStore; onDone(): void })
       await requestPersistence();
       onDone();
     } catch (e) {
+      if (e instanceof LocalDataError && !replaceLocalData) {
+        // This phone was used on its own: its data would be replaced by the computer's.
+        if (window.confirm(t('web.join.replaceLocal'))) return join(true);
+        setStep('choose');
+        return;
+      }
       setError(
         e instanceof JoinDeniedError
           ? t('web.join.denied')

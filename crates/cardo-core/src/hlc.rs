@@ -1,6 +1,26 @@
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+/// Remote hlcs further ahead of the local wall clock are not observed.
+pub const MAX_DRIFT_MS: u64 = 24 * 60 * 60 * 1000;
+
+fn wall_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+/// `(<ms>, <counter>)` of `<ms:013>-<counter:04>-…`.
+fn parse(hlc: &str) -> Option<(u64, u32)> {
+    let b = hlc.as_bytes();
+    if b.len() < 19 || b[13] != b'-' || b[18] != b'-' {
+        return None;
+    }
+    let digits = |r: std::ops::Range<usize>| b[r.clone()].iter().all(u8::is_ascii_digit).then(|| &hlc[r]);
+    Some((digits(0..13)?.parse().ok()?, digits(14..18)?.parse().ok()?))
+}
+
 /// Hybrid Logical Clock.
 ///
 /// Produces strictly monotonic, lexically sortable timestamps of the form
@@ -29,11 +49,25 @@ impl Hlc {
         &self.device_id
     }
 
+    /// HLC receive rule: after seeing `remote`, every later `now()` sorts
+    /// after it. Remote clocks more than `MAX_DRIFT_MS` ahead of the local
+    /// wall clock are ignored, so one device with a wildly wrong clock (or a
+    /// forged op) cannot drag this clock into the far future. Mirrors
+    /// `observeHlc` in packages/sync/src/hlc.ts.
+    pub fn observe(&self, remote: &str) {
+        let Some((ms, counter)) = parse(remote) else { return };
+        if ms > wall_ms().saturating_add(MAX_DRIFT_MS) {
+            return;
+        }
+        let mut s = self.state.lock().expect("hlc lock poisoned");
+        if (ms, counter) > (s.last_ms, s.counter) {
+            s.last_ms = ms;
+            s.counter = counter;
+        }
+    }
+
     pub fn now(&self) -> String {
-        let wall_ms = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_millis() as u64)
-            .unwrap_or(0);
+        let wall_ms = wall_ms();
         let mut s = self.state.lock().expect("hlc lock poisoned");
         if wall_ms > s.last_ms {
             s.last_ms = wall_ms;
@@ -63,5 +97,18 @@ mod tests {
             assert!(next > prev, "{next} should sort after {prev}");
             prev = next;
         }
+    }
+
+    #[test]
+    fn observe_moves_past_a_remote_clock_within_the_drift_cap() {
+        let hlc = Hlc::new("dev-a");
+        let ahead = format!("{:013}-0042-dev-b", wall_ms() + 60_000);
+        hlc.observe(&ahead);
+        assert!(hlc.now() > ahead);
+        let far = format!("{:013}-0000-dev-b", wall_ms() + 2 * MAX_DRIFT_MS);
+        hlc.observe(&far);
+        assert!(hlc.now() < far);
+        hlc.observe("garbage");
+        hlc.observe("0000000000001-0000-old");
     }
 }

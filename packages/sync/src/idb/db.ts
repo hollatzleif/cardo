@@ -1,6 +1,7 @@
 /** IndexedDB schema and small promise helpers (no dependencies). */
 
-export const SCHEMA_VERSION = 1;
+/** 2: `parked` store (ops this build refused, kept for a later upgrade). */
+export const SCHEMA_VERSION = 2;
 
 export const STORES = {
   docs: 'docs',
@@ -10,6 +11,7 @@ export const STORES = {
   cursors: 'cursors',
   meta: 'meta',
   local: 'local',
+  parked: 'parked',
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -21,6 +23,14 @@ export interface DocRecord {
   createdAt: number;
   updatedAt: number;
   deleted: boolean;
+  /**
+   * SQLite rowid stand-in: assigned when the (ns, id) record is first
+   * created and kept forever (tombstones and resurrections included), like
+   * the rowid of a `documents` row that is only ever upserted. Ties of
+   * `updatedAt` are broken by it in query results. Absent on records written
+   * before it existed (they sort first, then by id).
+   */
+  rowSeq?: number;
 }
 
 export interface LogRecord {
@@ -37,6 +47,16 @@ export interface LogRecord {
   created_at: number;
   /** 0 | 1 – booleans are not valid IndexedDB keys. */
   synced: number;
+}
+
+export interface ParkedRecord {
+  op_id: string;
+  /** Decrypted op bytes (authentic: the AEAD check passed). */
+  payload: Uint8Array;
+  reason: string;
+  /** `PARK_STAMP` of the build that refused it. */
+  stamp: string;
+  parkedAt: number;
 }
 
 export interface AppliedRecord {
@@ -66,6 +86,9 @@ export function openDatabase(factory: IDBFactory, name: string): Promise<IDBData
       if (!db.objectStoreNames.contains(STORES.cursors)) db.createObjectStore(STORES.cursors);
       if (!db.objectStoreNames.contains(STORES.meta)) db.createObjectStore(STORES.meta);
       if (!db.objectStoreNames.contains(STORES.local)) db.createObjectStore(STORES.local);
+      if (!db.objectStoreNames.contains(STORES.parked)) {
+        db.createObjectStore(STORES.parked, { keyPath: 'op_id' });
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error ?? new Error(`cannot open ${name}`));

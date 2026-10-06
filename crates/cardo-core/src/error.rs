@@ -14,6 +14,10 @@ pub enum CoreError {
     InvalidField(String),
     #[error("invalid document id: {0}")]
     InvalidId(String),
+    /// A sync op this build cannot apply (unknown op kind, field op
+    /// without a field).
+    #[error("invalid sync op: {0}")]
+    InvalidOp(String),
     #[error("document value must be a JSON object")]
     NotAnObject,
     #[error("io error: {0}")]

@@ -24,6 +24,34 @@ export function tickHlc(state: HlcState, wallMs: number): HlcState {
   return counter > 9999 ? { lastMs: state.lastMs + 1, counter: 0 } : { lastMs: state.lastMs, counter };
 }
 
+/**
+ * Remote hlcs further ahead of the local wall clock than this are not
+ * observed: one device with a wildly wrong clock (or a forged op) must not
+ * drag every other device's clock into the far future.
+ */
+export const MAX_HLC_DRIFT_MS = 24 * 60 * 60 * 1000;
+
+const HLC_RE = /^(\d{13})-(\d{4})-/;
+
+/** `<ms>-<counter>` of an hlc string, or null when it is not one. */
+export function parseHlc(hlc: string): HlcState | null {
+  const m = HLC_RE.exec(hlc);
+  return m ? { lastMs: Number(m[1]), counter: Number(m[2]) } : null;
+}
+
+/**
+ * HLC receive rule (pure): after seeing a remote hlc, the next local tick
+ * sorts after it, so a local edit made after applying a remote op always
+ * wins against that op on every device. Same rule as `Hlc::observe` in
+ * hlc.rs.
+ */
+export function observeHlc(state: HlcState, remoteHlc: string, wallMs: number): HlcState {
+  const r = parseHlc(remoteHlc);
+  if (!r || r.lastMs > wallMs + MAX_HLC_DRIFT_MS) return state;
+  if (r.lastMs > state.lastMs || (r.lastMs === state.lastMs && r.counter > state.counter)) return r;
+  return state;
+}
+
 export function isHlcState(value: unknown): value is HlcState {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
@@ -49,5 +77,9 @@ export class Hlc {
   now(): string {
     this.#state = tickHlc(this.#state, this.#wall());
     return formatHlc(this.#state, this.deviceId);
+  }
+
+  observe(remoteHlc: string): void {
+    this.#state = observeHlc(this.#state, remoteHlc, this.#wall());
   }
 }

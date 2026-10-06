@@ -1,0 +1,390 @@
+{
+  "name": "12-query-scan-order",
+  "description": "Query results without ORDER BY come in SQLite scan order (idx_docs_ns_updated: updated_at, then rowid); ORDER BY sorts stably on top of it, so ties and LIMIT keep that order. The PWA mirrors it with updatedAt + a first-insert sequence.",
+  "steps": [
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "c",
+      "value": {
+        "p": 1,
+        "k": "c"
+      }
+    },
+    {
+      "kind": "sleep",
+      "ms": 5,
+      "note": "keeps updated_at strictly increasing between writes"
+    },
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "a",
+      "value": {
+        "p": 1,
+        "k": "a"
+      }
+    },
+    {
+      "kind": "sleep",
+      "ms": 5,
+      "note": "keeps updated_at strictly increasing between writes"
+    },
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "d",
+      "value": {
+        "p": 1,
+        "k": "d"
+      }
+    },
+    {
+      "kind": "sleep",
+      "ms": 5,
+      "note": "keeps updated_at strictly increasing between writes"
+    },
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "b",
+      "value": {
+        "p": 1,
+        "k": "b"
+      }
+    },
+    {
+      "kind": "sleep",
+      "ms": 5,
+      "note": "keeps updated_at strictly increasing between writes"
+    },
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "c",
+      "value": {
+        "p": 1,
+        "k": "c",
+        "v": 2
+      },
+      "expectOperation": "update",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "sleep",
+      "ms": 5,
+      "note": "keeps updated_at strictly increasing between writes"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {},
+      "ordered": true,
+      "expectRows": [
+        {
+          "k": "a",
+          "p": 1
+        },
+        {
+          "k": "d",
+          "p": 1
+        },
+        {
+          "k": "b",
+          "p": 1
+        },
+        {
+          "k": "c",
+          "p": 1,
+          "v": 2
+        }
+      ],
+      "note": "no ORDER BY: scan order of idx_docs_ns_updated = updated_at, then rowid"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "orderBy": "p",
+        "limit": 2
+      },
+      "expectRows": [
+        {
+          "k": "a",
+          "p": 1
+        },
+        {
+          "k": "d",
+          "p": 1
+        }
+      ],
+      "note": "all p tie: the stable sort keeps scan order, LIMIT cuts after it"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "orderBy": "p",
+        "direction": "desc",
+        "limit": 3
+      },
+      "expectRows": [
+        {
+          "k": "a",
+          "p": 1
+        },
+        {
+          "k": "d",
+          "p": 1
+        },
+        {
+          "k": "b",
+          "p": 1
+        }
+      ],
+      "note": "DESC keeps scan order for ties too"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "orderBy": "k",
+        "direction": "desc"
+      },
+      "expectRows": [
+        {
+          "k": "d",
+          "p": 1
+        },
+        {
+          "k": "c",
+          "p": 1,
+          "v": 2
+        },
+        {
+          "k": "b",
+          "p": 1
+        },
+        {
+          "k": "a",
+          "p": 1
+        }
+      ]
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "where": [
+          {
+            "field": "k",
+            "op": "in",
+            "value": [
+              "c",
+              "b",
+              "a"
+            ]
+          }
+        ]
+      },
+      "ordered": true,
+      "expectRows": [
+        {
+          "k": "a",
+          "p": 1
+        },
+        {
+          "k": "b",
+          "p": 1
+        },
+        {
+          "k": "c",
+          "p": 1,
+          "v": 2
+        }
+      ]
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "r-a",
+        "device_id": "remote",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "q",
+        "doc_id": "a",
+        "op": "set_field",
+        "field": "s",
+        "value": "r",
+        "created_at": 1
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    },
+    {
+      "kind": "sleep",
+      "ms": 5,
+      "note": "keeps updated_at strictly increasing between writes"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "limit": 3
+      },
+      "ordered": true,
+      "expectRows": [
+        {
+          "k": "d",
+          "p": 1
+        },
+        {
+          "k": "b",
+          "p": 1
+        },
+        {
+          "k": "c",
+          "p": 1,
+          "v": 2
+        }
+      ],
+      "note": "a remote winner sets updated_at = now: a moves to the end"
+    },
+    {
+      "kind": "delete",
+      "namespace": "q",
+      "id": "d",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "sleep",
+      "ms": 5,
+      "note": "keeps updated_at strictly increasing between writes"
+    },
+    {
+      "kind": "set",
+      "namespace": "q",
+      "id": "d",
+      "value": {
+        "p": 1,
+        "k": "d"
+      },
+      "expectOperation": "create"
+    },
+    {
+      "kind": "query",
+      "namespace": "q",
+      "query": {
+        "orderBy": "p"
+      },
+      "expectRows": [
+        {
+          "k": "b",
+          "p": 1
+        },
+        {
+          "k": "c",
+          "p": 1,
+          "v": 2
+        },
+        {
+          "k": "a",
+          "p": 1,
+          "s": "r"
+        },
+        {
+          "k": "d",
+          "p": 1
+        }
+      ],
+      "note": "re-created doc: new updated_at; its old rowid only matters for ties"
+    }
+  ],
+  "expectDocs": {
+    "q": {
+      "a": {
+        "k": "a",
+        "p": 1,
+        "s": "r"
+      },
+      "b": {
+        "k": "b",
+        "p": 1
+      },
+      "c": {
+        "k": "c",
+        "p": 1,
+        "v": 2
+      },
+      "d": {
+        "k": "d",
+        "p": 1
+      }
+    }
+  },
+  "expectLocalOps": [
+    {
+      "namespace": "q",
+      "docId": "c",
+      "op": "create",
+      "field": null,
+      "value": {
+        "k": "c",
+        "p": 1
+      }
+    },
+    {
+      "namespace": "q",
+      "docId": "a",
+      "op": "create",
+      "field": null,
+      "value": {
+        "k": "a",
+        "p": 1
+      }
+    },
+    {
+      "namespace": "q",
+      "docId": "d",
+      "op": "create",
+      "field": null,
+      "value": {
+        "k": "d",
+        "p": 1
+      }
+    },
+    {
+      "namespace": "q",
+      "docId": "b",
+      "op": "create",
+      "field": null,
+      "value": {
+        "k": "b",
+        "p": 1
+      }
+    },
+    {
+      "namespace": "q",
+      "docId": "c",
+      "op": "set_field",
+      "field": "v",
+      "value": 2
+    },
+    {
+      "namespace": "q",
+      "docId": "d",
+      "op": "delete_doc",
+      "field": null,
+      "value": null
+    },
+    {
+      "namespace": "q",
+      "docId": "d",
+      "op": "create",
+      "field": null,
+      "value": {
+        "k": "d",
+        "p": 1
+      }
+    }
+  ]
+}

@@ -13,6 +13,8 @@ import {
   normalizeDoc,
   stableStringify,
 } from './json';
+import { advanceCursor, LOOKBACK_MS, parseCursor, renderCursor, selectDue } from './lookback';
+import { readFixture } from './testing/fixtures';
 import { uuidV4, uuidV7 } from './uuid';
 import { decodeSyncOp, encodeSyncOp, parseSyncOp, serializeSyncOp } from './wire';
 import type { SyncOp } from './types';
@@ -111,6 +113,44 @@ describe('SyncOp wire format', () => {
     expect(() => parseSyncOp('not json')).toThrow();
     expect(() => decodeSyncOp(Uint8Array.of(0xff, 0xfe))).toThrow();
   });
+
+  it('accepts exactly what serde accepts (Rust-verified wire-parse.json)', () => {
+    const vectors = readFixture<Array<{ name: string; text: string; ok: boolean; canonical?: string }>>(
+      'wire-parse.json',
+    );
+    expect(vectors.length).toBeGreaterThan(40);
+    // Known, documented differences of re-serialization (not of acceptance):
+    // JS has no integral floats (serde keeps 1e-400 as 0.0) and created_at
+    // beyond 2^53 loses precision. Acceptance is identical for all of them.
+    const reserializeDiffers = new Set(['value 1e-400 underflows to 0', 'created_at above 2^53', 'created_at i64 max', 'created_at i64 min']);
+    for (const v of vectors) {
+      let parsed: SyncOp | null = null;
+      try {
+        parsed = parseSyncOp(v.text);
+      } catch {
+        parsed = null;
+      }
+      expect(parsed !== null, v.name).toBe(v.ok);
+      if (parsed && v.canonical !== undefined && !reserializeDiffers.has(v.name)) {
+        expect(serializeSyncOp(parsed), v.name).toBe(v.canonical);
+      }
+    }
+    // '__proto__' inside the value is an own key, as in serde's Map.
+    const proto = parseSyncOp(vectors.find((v) => v.name === '__proto__ key inside value')!.text);
+    expect(Object.keys(proto.value as object)).toEqual(['__proto__', 'p']);
+  });
+
+  it('never puts a lone surrogate on the wire (serde would drop the op)', () => {
+    const lone = { ...op, doc_id: 'a\ud83d', value: { t: 'x\ud83d', ['k\udc00']: ['\ud800'] } };
+    const text = serializeSyncOp(lone);
+    expect(text).not.toMatch(/\\u[dD][89a-fA-F]/);
+    const back = parseSyncOp(text);
+    expect(back.doc_id).toBe('a\ufffd');
+    expect(back.value).toEqual({ t: 'x\ufffd', ['k\ufffd']: ['\ufffd'] });
+    // Paired surrogates (emoji) are untouched.
+    expect(parseSyncOp(serializeSyncOp({ ...op, value: { t: '😀' } })).value).toEqual({ t: '😀' });
+    expect(normalizeDoc({ t: 'cut \ud83d', ok: '😀', ['\udc00']: 1 })).toEqual({ t: 'cut \ufffd', ok: '😀', '\ufffd': 1 });
+  });
 });
 
 describe('batch files', () => {
@@ -121,12 +161,17 @@ describe('batch files', () => {
     // Drive writes serde_json::Value (sorted keys) – also accepted.
     expect(decodeBatchFile('{"ops":[{"blob_b64":"BAU=","op_id":"op-2"}],"version":1}')).toHaveLength(1);
   });
-  it('skips unknown versions and broken entries', () => {
-    expect(decodeBatchFile('{"version":2,"ops":[]}')).toBeNull();
+  it('reads any version like Rust decode_batch_file and drops broken entries', () => {
+    // Rust does not check `version`; neither does the port (parity, so no
+    // device skips a file another device reads).
+    expect(decodeBatchFile('{"version":2,"ops":[]}')).toEqual([]);
+    expect(decodeBatchFile('{"ops":[{"op_id":"a","blob_b64":"AA=="}]}')).toEqual([{ opId: 'a', blob: Uint8Array.of(0) }]);
     expect(decodeBatchFile('{"version":1,"ops":[{"op_id":"x"},{"op_id":"y","blob_b64":"A"},{"op_id":"z","blob_b64":"AA=="}]}')).toEqual([
       { opId: 'z', blob: Uint8Array.of(0) },
     ]);
     expect(() => decodeBatchFile('{nope')).toThrow();
+    expect(() => decodeBatchFile('{"version":1,"ops":"x"}')).toThrow();
+    expect(() => decodeBatchFile('[]')).toThrow();
   });
   it('names sort chronologically and hidden temp files are ignored', () => {
     const name = batchFileName(42, '7207d29d-db8e-4811-bf81-784c1bb97552');
@@ -135,17 +180,66 @@ describe('batch files', () => {
     expect(isBatchFileName(`.${name}.tmp`)).toBe(false);
     expect(isBatchFileName('notes.txt')).toBe(false);
   });
-  it('pull advances the cursor over skipped files and stops at the limit', async () => {
+  it('pull skips broken files (counted, marked read) and stops at the limit', async () => {
     const files = new Map<string, string>();
-    files.set(batchFileName(1), '{"version":9,"ops":[]}');
+    files.set(batchFileName(1), '{broken');
     for (let i = 2; i < 60; i++) files.set(batchFileName(i), encodeBatchFile([{ opId: `op-${i}`, blob: Uint8Array.of(i) }]));
     const read = async (n: string) => files.get(n)!;
-    const first = await pullBatchFiles([...files.keys()], '', read);
+    const first = await pullBatchFiles([...files.keys()], '', read, 1000);
     expect(first.ops).toHaveLength(49);
-    const second = await pullBatchFiles([...files.keys()], first.nextCursor, read);
+    expect(first.brokenFiles).toBe(1);
+    const second = await pullBatchFiles([...files.keys()], first.nextCursor, read, 1000);
     expect(second.ops).toHaveLength(9);
-    const third = await pullBatchFiles([...files.keys()], second.nextCursor, read);
-    expect(third).toEqual({ ops: [], nextCursor: second.nextCursor });
+    expect(second.brokenFiles).toBe(0);
+    const third = await pullBatchFiles([...files.keys()], second.nextCursor, read, 1000);
+    expect(third).toEqual({ ops: [], nextCursor: second.nextCursor, brokenFiles: 0 });
+    // A plain filename (legacy cursor) is accepted and migrated; like Rust it
+    // re-reads the window once (harmless: ops are deduplicated by id).
+    const legacy = await pullBatchFiles([...files.keys()], batchFileName(59, 'zzzz'), read, 1000);
+    expect(legacy.nextCursor.startsWith('{')).toBe(true);
+    expect(legacy.ops.map((o) => o.opId)).toContain('op-2');
+  });
+});
+
+describe('look-back cursor (sync_cursor.rs port)', () => {
+  const name = (ms: number, tag: string) => `${String(ms).padStart(13, '0')}-${tag}.cardo-ops`;
+  const LATER = Number.MAX_SAFE_INTEGER;
+
+  it('renders like Rust and migrates a plain name', () => {
+    expect(renderCursor(parseCursor(''))).toBe('');
+    const c = advanceCursor(parseCursor(''), [name(1_000_000, 'b'), name(999_000, 'a')], LATER);
+    expect(renderCursor(c)).toBe(
+      `{"last":"${name(1_000_000, 'b')}","seen":["${name(999_000, 'a')}","${name(1_000_000, 'b')}"]}`,
+    );
+    expect(parseCursor(renderCursor(c))).toEqual(c);
+    expect(parseCursor(name(5, 'x'))).toEqual({ last: name(5, 'x'), seen: [] });
+  });
+
+  it('a late file inside the window is read exactly once', () => {
+    const base = 1_700_000_000_000;
+    let c = advanceCursor(parseCursor(''), [name(base, 'x')], LATER);
+    const late = name(base - 5_000, 'late');
+    const ancient = name(base - LOOKBACK_MS - 1, 'ancient');
+    const newer = name(base + 1, 'new');
+    const all = [late, ancient, name(base, 'x'), newer].sort();
+    const due = selectDue(c, all, 50, LATER);
+    expect(due).toEqual([late, newer]);
+    c = advanceCursor(c, due, LATER);
+    expect(selectDue(c, all, 50, LATER)).toEqual([]);
+  });
+
+  it('a file named far in the future does not hide on-time files', () => {
+    const now = 1_700_000_000_000;
+    const future = name(now + 2 * LOOKBACK_MS, 'fast');
+    let c = advanceCursor(parseCursor(''), [future], now);
+    const onTime = [1, 2, 3].map((i) => name(now + i * 60_000, 'ok'));
+    const all = [...onTime, future].sort();
+    expect(selectDue(c, all, 50, LATER)).toEqual([]); // anchored at `last`: lost
+    const readerNow = now + 4 * 60_000;
+    const due = selectDue(c, all, 50, readerNow);
+    expect(due).toEqual(onTime);
+    c = advanceCursor(c, due, readerNow);
+    expect(selectDue(c, all, 50, readerNow)).toEqual([]);
   });
 });
 

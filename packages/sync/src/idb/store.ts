@@ -10,7 +10,15 @@
  *  - applyRemoteOp(): LWW per field, see below.
  *
  * Object stores: docs [ns,id]; log (seq, unique op_id, synced index);
- * clocks [ns, docId, slot] → max hlc; applied; cursors; meta; local.
+ * clocks [ns, docId, slot] → max hlc; applied; cursors; meta; local;
+ * parked (authentic ops this build refused, see engine.ts).
+ *
+ * Query/scan order: SQLite answers `SELECT … WHERE namespace = ?` through
+ * idx_docs_ns_updated, i.e. by (updated_at, rowid); ORDER BY sorts stably on
+ * top of that. `rowSeq` (see db.ts) stands in for the rowid.
+ *
+ * Remote ops also feed the local hlc (receive rule, `observeHlc`): a local
+ * edit made after applying a remote op always sorts after it.
  *
  * The `clocks` store replaces Rust's `MAX(hlc)` queries over the change log
  * (which never shrinks, so a running max is exact). Slots: `#all` (every
@@ -26,18 +34,26 @@ import type { ChangeEvent, StorageQuery } from '@cardo/plugin-api';
 import type { StorageBackend } from '@cardo/core';
 
 import { compareUtf8 } from '../bytes';
-import { formatHlc, HLC_ZERO, isHlcState, tickHlc, type HlcState } from '../hlc';
+import { formatHlc, HLC_ZERO, isHlcState, observeHlc, tickHlc, type HlcState } from '../hlc';
 import {
   deepEqual,
   isPlainObject,
   normalizeDoc,
+  setOwn,
   sortedKeys,
   stableStringify,
   validateField,
   validateId,
   validateNamespace,
 } from '../json';
-import { ValidationError, type ChangeNotice, type SyncOp, type SyncStore } from '../types';
+import {
+  ValidationError,
+  type ApplyOptions,
+  type ChangeNotice,
+  type ParkedOp,
+  type SyncOp,
+  type SyncStore,
+} from '../types';
 import { uuidV4, uuidV7 } from '../uuid';
 import {
   inTransaction,
@@ -49,6 +65,7 @@ import {
   type AppliedRecord,
   type DocRecord,
   type LogRecord,
+  type ParkedRecord,
   type StoreName,
 } from './db';
 import { runQuery, validateQuery } from './query';
@@ -97,8 +114,13 @@ export interface IdbStore extends StorageBackend, SyncStore {
   localGet<T = unknown>(key: string): Promise<T | null>;
   localSet(key: string, value: unknown): Promise<void>;
   localDelete(key: string): Promise<void>;
-  /** Clears documents, log, clocks, applied ops, cursors and local values; keeps device id and hlc. */
+  /**
+   * Clears documents, log, clocks, applied/parked ops, cursors and local
+   * values; keeps device id and hlc. Emits a `delete` event per live doc.
+   */
   wipe(): Promise<void>;
+  /** No documents (live or tombstoned) and no change-log entries. */
+  isPristine(): Promise<boolean>;
   close(): void;
 }
 
@@ -109,7 +131,8 @@ const fieldSlot = (field: string) => `f:${field}`;
 
 interface BroadcastMessage {
   db: string;
-  event: ChangeEvent;
+  event?: ChangeEvent;
+  events?: ChangeEvent[];
 }
 
 function toSyncOp(rec: LogRecord): SyncOp {
@@ -141,7 +164,9 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
     channel = new BroadcastChannel(BROADCAST_CHANNEL);
     (channel as unknown as { unref?: () => void }).unref?.();
     channel.onmessage = (msg: MessageEvent<BroadcastMessage>) => {
-      if (msg.data?.db === dbName && msg.data.event) deliver(msg.data.event);
+      if (msg.data?.db !== dbName) return;
+      if (msg.data.event) deliver(msg.data.event);
+      for (const ev of msg.data.events ?? []) deliver(ev);
     };
   }
 
@@ -161,6 +186,17 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
       channel?.postMessage({ db: dbName, event: ev } satisfies BroadcastMessage);
     } catch {
       // channel closed – local listeners already got it
+    }
+  }
+
+  /** Many events, one cross-tab message. */
+  function emitMany(events: readonly ChangeEvent[]) {
+    if (events.length === 0) return;
+    for (const ev of events) deliver(ev);
+    try {
+      channel?.postMessage({ db: dbName, events: [...events] } satisfies BroadcastMessage);
+    } catch {
+      // channel closed – local listeners already got them
     }
   }
 
@@ -191,6 +227,15 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
   async function readHlc(tx: IDBTransaction): Promise<HlcState> {
     const raw = (await req(tx.objectStore(STORES.meta).get('hlc'))) as unknown;
     return isHlcState(raw) ? raw : HLC_ZERO;
+  }
+
+  /** Next rowid stand-in for a (ns, id) record created right now. */
+  async function nextRowSeq(tx: IDBTransaction): Promise<number> {
+    const meta = tx.objectStore(STORES.meta);
+    const raw = (await req(meta.get('docSeq'))) as unknown;
+    const next = (Number.isSafeInteger(raw) ? (raw as number) : 0) + 1;
+    meta.put(next, 'docSeq');
+    return next;
   }
 
   async function bumpClock(tx: IDBTransaction, ns: string, id: string, slot: string, hlc: string) {
@@ -253,8 +298,10 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
   async function write(namespace: string, id: string, value: Record<string, unknown>): Promise<ChangeNotice> {
     validateNamespace(namespace);
     validateId(id);
-    if (!isPlainObject(value)) throw new ValidationError('not-an-object', id, 'value is not an object');
-    const doc = normalizeDoc<Record<string, unknown>>(value);
+    // Check what Rust would receive (the JSON the bridge serializes), not the
+    // raw JS value: e.g. a Date serializes to a string → not an object.
+    const doc = normalizeDoc<unknown>(value);
+    if (!isPlainObject(doc)) throw new ValidationError('not-an-object', id, 'value is not an object');
 
     const notice = await run(
       [STORES.docs, STORES.log, STORES.clocks, STORES.meta],
@@ -274,6 +321,7 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
             createdAt: existing?.createdAt ?? t,
             updatedAt: t,
             deleted: false,
+            rowSeq: existing ? existing.rowSeq : await nextRowSeq(tx),
           } satisfies DocRecord);
           logger.log(namespace, id, 'create', null, doc);
           operation = 'create';
@@ -327,21 +375,29 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
     return notice;
   }
 
+  /** Live docs of a namespace in SQLite scan order: (updatedAt, rowSeq). */
   async function liveDocs(namespace: string): Promise<DocRecord[]> {
     const rows = await run([STORES.docs], 'readonly', async (tx) => {
       const range = IDBKeyRange.bound([namespace], [namespace, []]);
       return (await req(tx.objectStore(STORES.docs).getAll(range))) as DocRecord[];
     });
-    return rows.filter((r) => !r.deleted).sort((a, b) => compareUtf8(a.id, b.id));
+    return rows
+      .filter((r) => !r.deleted)
+      .sort(
+        (a, b) =>
+          a.updatedAt - b.updatedAt || (a.rowSeq ?? 0) - (b.rowSeq ?? 0) || compareUtf8(a.id, b.id),
+      );
   }
+
+  const byId = (a: DocRecord, b: DocRecord) => compareUtf8(a.id, b.id);
 
   /* ── SyncStore ─────────────────────────────────────────────────────── */
 
-  async function applyRemoteOp(op: SyncOp): Promise<ChangeNotice | null> {
+  async function applyRemoteOp(op: SyncOp, options: ApplyOptions = {}): Promise<ChangeNotice | null> {
     validateNamespace(op.namespace);
     validateId(op.doc_id);
     const notice = await run(
-      [STORES.docs, STORES.log, STORES.clocks, STORES.applied],
+      [STORES.docs, STORES.log, STORES.clocks, STORES.applied, STORES.meta],
       'readwrite',
       async (tx): Promise<ChangeNotice | null> => {
         const log = tx.objectStore(STORES.log);
@@ -349,6 +405,11 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
         const known =
           (await req(log.index('op_id').count(op.op_id))) + (await req(applied.count(op.op_id)));
         if (known > 0) return null;
+
+        // HLC receive rule: later local writes sort after this op.
+        const clock = await readHlc(tx);
+        const observed = observeHlc(clock, op.hlc, now());
+        if (observed !== clock) tx.objectStore(STORES.meta).put(observed, 'hlc');
 
         const isFieldOp = op.op === 'set_field' || op.op === 'delete_field';
         // Latest local knowledge this op competes against (Rust MAX(hlc) queries).
@@ -372,6 +433,7 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
                 createdAt: existing?.createdAt ?? t,
                 updatedAt: t,
                 deleted: false,
+                rowSeq: existing ? existing.rowSeq : await nextRowSeq(tx),
               } satisfies DocRecord);
               result = { namespace: op.namespace, docId: op.doc_id, operation: 'create', ops_logged: 1 };
               break;
@@ -383,7 +445,9 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
               const existing = (await req(docs.get(key))) as DocRecord | undefined;
               // A field op on a tombstoned doc resurrects its old data (Rust parity).
               const doc: Record<string, unknown> = isPlainObject(existing?.data) ? { ...existing.data } : {};
-              if (op.op === 'set_field') doc[op.field] = op.value ?? null;
+              // setOwn: a field named "__proto__" must become an own key
+              // (serde Map), not hit the prototype setter.
+              if (op.op === 'set_field') setOwn(doc, op.field, op.value ?? null);
               else delete doc[op.field];
               docs.put({
                 ns: op.namespace,
@@ -392,6 +456,7 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
                 createdAt: existing?.createdAt ?? t,
                 updatedAt: t,
                 deleted: false,
+                rowSeq: existing ? existing.rowSeq : await nextRowSeq(tx),
               } satisfies DocRecord);
               result = { namespace: op.namespace, docId: op.doc_id, operation: 'update', ops_logged: 1 };
               break;
@@ -427,7 +492,9 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
         return result;
       },
     );
-    if (notice) emit({ namespace: notice.namespace, docId: notice.docId, operation: notice.operation });
+    if (notice && options.emit !== false) {
+      emit({ namespace: notice.namespace, docId: notice.docId, operation: notice.operation });
+    }
     return notice;
   }
 
@@ -469,12 +536,12 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
 
     async listIds(namespace) {
       validateNamespace(namespace);
-      return (await liveDocs(namespace)).map((r) => r.id);
+      return (await liveDocs(namespace)).sort(byId).map((r) => r.id);
     },
 
     async listWithMeta(namespace) {
       validateNamespace(namespace);
-      return (await liveDocs(namespace)).map((r) => ({
+      return (await liveDocs(namespace)).sort(byId).map((r) => ({
         id: r.id,
         data: r.data,
         createdAt: r.createdAt,
@@ -533,9 +600,29 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
     },
 
     async wipe() {
-      const stores = [STORES.docs, STORES.log, STORES.clocks, STORES.applied, STORES.cursors, STORES.local];
-      await run(stores, 'readwrite', async (tx) => {
+      const stores = [
+        STORES.docs,
+        STORES.log,
+        STORES.clocks,
+        STORES.applied,
+        STORES.cursors,
+        STORES.local,
+        STORES.parked,
+      ];
+      const gone = await run(stores, 'readwrite', async (tx) => {
+        const docs = (await req(tx.objectStore(STORES.docs).getAll())) as DocRecord[];
         for (const name of stores) await req(tx.objectStore(name).clear());
+        return docs.filter((r) => !r.deleted);
+      });
+      // Open views must not keep showing wiped data.
+      emitMany(gone.map((r) => ({ namespace: r.ns, docId: r.id, operation: 'delete' as const })));
+    },
+
+    async isPristine() {
+      return run([STORES.docs, STORES.log], 'readonly', async (tx) => {
+        const docs = await req(tx.objectStore(STORES.docs).count());
+        const log = await req(tx.objectStore(STORES.log).count());
+        return docs === 0 && log === 0;
       });
     },
 
@@ -627,6 +714,40 @@ export function createIdbStore(dbName: string, options: IdbStoreOptions = {}): I
     },
 
     applyRemoteOp,
+
+    emitChanges(notices) {
+      emitMany(notices.map((n) => ({ namespace: n.namespace, docId: n.docId, operation: n.operation })));
+    },
+
+    async parkOp(op: ParkedOp) {
+      await run([STORES.parked], 'readwrite', async (tx) => {
+        await req(
+          tx.objectStore(STORES.parked).put({
+            op_id: op.opId,
+            payload: op.payload,
+            reason: op.reason,
+            stamp: op.stamp,
+            parkedAt: now(),
+          } satisfies ParkedRecord),
+        );
+      });
+    },
+
+    async parkedOps(currentStamp) {
+      const rows = await run([STORES.parked], 'readonly', async (tx) => {
+        return (await req(tx.objectStore(STORES.parked).getAll())) as ParkedRecord[];
+      });
+      return rows
+        .filter((r) => r.stamp !== currentStamp)
+        .sort((a, b) => a.parkedAt - b.parkedAt)
+        .map((r) => ({ opId: r.op_id, payload: r.payload, reason: r.reason, stamp: r.stamp }));
+    },
+
+    async unparkOp(opId) {
+      await run([STORES.parked], 'readwrite', async (tx) => {
+        await req(tx.objectStore(STORES.parked).delete(opId));
+      });
+    },
   };
   return store;
 }

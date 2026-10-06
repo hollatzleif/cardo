@@ -11,7 +11,8 @@
  *  - `like` = `LIKE '%' || ? || '%'`: ASCII case-insensitive, `%`/`_` in the
  *    needle act as wildcards.
  *  - `in` = `IN (SELECT value FROM json_each(<value as JSON text>))`.
- *  - ORDER BY puts NULL first on asc; ties keep id order.
+ *  - ORDER BY puts NULL first on asc and is a stable sort: ties keep the
+ *    input (scan) order, also for DESC and before LIMIT.
  */
 import type { StorageQuery } from '@cardo/plugin-api';
 
@@ -87,7 +88,10 @@ export function validateQuery(q: StorageQuery): void {
   if (q.orderBy !== undefined && q.orderBy !== null) validateField(q.orderBy);
 }
 
-/** `rows` must already be live docs of one namespace in id byte order. */
+/**
+ * `rows` must already be the live docs of one namespace in SQLite scan
+ * order (updated_at, then rowid – see idb/store.ts `liveDocs`).
+ */
 export function runQuery<T>(rows: readonly T[], q: StorageQuery, dataOf: (row: T) => unknown): T[] {
   validateQuery(q);
   let out = [...rows];

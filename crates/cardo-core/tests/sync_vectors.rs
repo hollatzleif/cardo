@@ -564,8 +564,9 @@ async fn rust_hub_replays_into_fresh_storage() {
     // Second pull is a no-op (cursor), full re-pull is idempotent.
     let again = SyncEngine::new(&s, &data_key, "fixture-reader").pull_once(&transport).await.unwrap();
     assert_eq!(again.pulled, 0);
-    s.cursor_set("fixture-reader", "").await.unwrap();
-    let re = SyncEngine::new(&s, &data_key, "fixture-reader").pull_once(&transport).await.unwrap();
+    let reader = SyncEngine::new(&s, &data_key, "fixture-reader");
+    reader.reset_cursor().await.unwrap();
+    let re = reader.pull_once(&transport).await.unwrap();
     assert_eq!((re.pulled, re.applied, re.skipped), (op_count, 0, op_count));
     assert_eq!(s.dump_all().await.unwrap(), read_json("rust-hub/expected-docs.json"));
     // Nothing local to push: the reader produced no ops of its own.

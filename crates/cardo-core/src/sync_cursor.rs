@@ -7,10 +7,18 @@
 //! cursor and would never be read.
 //!
 //! `LookbackCursor` keeps the last name plus the set of names already read
-//! inside a sliding window (`LOOKBACK_MS`) before it. A name is due when it
-//! sorts after `last`, or when it falls inside the window and was not seen
-//! yet. Each file is therefore read exactly once, as long as it shows up
-//! within the window. Only local cursor state changes; the hub format does not.
+//! inside a sliding window (`LOOKBACK_MS`). A name is due when it sorts after
+//! `last`, or when it falls inside the window and was not seen yet. Each file
+//! is therefore read exactly once, as long as it shows up within the window.
+//! Only local cursor state changes; the hub format does not.
+//!
+//! The window ends at `min(ms(last), reader_now)`, not at `ms(last)` alone:
+//! `last` carries the UPLOADER's clock, and one file from a device whose
+//! clock runs ahead would otherwise push the window past every correctly
+//! named file that follows (they would never be due again on any reader).
+//! Clamped to the reader's own clock, a future-dated file costs nothing.
+//! Uploaders lagging by more than the window are still missed – the window
+//! is a day to cover realistic phone/desktop clock skew.
 //!
 //! Stored form: a legacy plain filename (still accepted and migrated) or
 //! compact JSON `{"last":"…","seen":["…",…]}` (struct field order, sorted set:
@@ -20,9 +28,17 @@ use std::collections::BTreeSet;
 
 use serde::{Deserialize, Serialize};
 
-/// How far before `last` (by the filename's millisecond prefix) late files
-/// are still picked up.
-pub const LOOKBACK_MS: u64 = 10 * 60 * 1000;
+/// How far before the window anchor (`min(ms(last), now)`) late files are
+/// still picked up.
+pub const LOOKBACK_MS: u64 = 24 * 60 * 60 * 1000;
+
+/// The reader's wall clock in ms (the `now_ms` argument of the methods).
+pub fn now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LookbackCursor {
@@ -71,20 +87,21 @@ impl LookbackCursor {
     }
 
     /// Lower bound (inclusive, in ms) of the look-back window, if `last`
-    /// carries a parsable timestamp.
-    fn window_floor(&self) -> Option<u64> {
-        name_ms(&self.last).map(|ms| ms.saturating_sub(LOOKBACK_MS))
+    /// carries a parsable timestamp. Anchored at the earlier of `last`'s
+    /// uploader timestamp and the reader's clock (see module docs).
+    fn window_floor(&self, now_ms: u64) -> Option<u64> {
+        name_ms(&self.last).map(|ms| ms.min(now_ms).saturating_sub(LOOKBACK_MS))
     }
 
-    /// Whether `name` is due for reading.
-    pub fn is_due(&self, name: &str) -> bool {
+    /// Whether `name` is due for reading (`now_ms`: the reader's clock).
+    pub fn is_due(&self, name: &str, now_ms: u64) -> bool {
         if name > self.last.as_str() {
             return true;
         }
         if name == self.last || self.seen.contains(name) {
             return false;
         }
-        match (self.window_floor(), name_ms(name)) {
+        match (self.window_floor(now_ms), name_ms(name)) {
             (Some(floor), Some(ms)) => ms >= floor,
             _ => false,
         }
@@ -92,19 +109,19 @@ impl LookbackCursor {
 
     /// Names (from an ascending-sorted list) due for reading, oldest first,
     /// at most `take` of them.
-    pub fn select<S: AsRef<str>>(&self, names_sorted: &[S], take: usize) -> Vec<String> {
+    pub fn select<S: AsRef<str>>(&self, names_sorted: &[S], take: usize, now_ms: u64) -> Vec<String> {
         names_sorted
             .iter()
             .map(AsRef::as_ref)
-            .filter(|name| self.is_due(name))
+            .filter(|name| self.is_due(name, now_ms))
             .take(take)
             .map(str::to_string)
             .collect()
     }
 
     /// Records processed names: `last` moves to the max, `seen` keeps only
-    /// names still inside the window.
-    pub fn advance<S: AsRef<str>>(&mut self, processed: &[S]) {
+    /// names still inside the window. Use the same `now_ms` as for `select`.
+    pub fn advance<S: AsRef<str>>(&mut self, processed: &[S], now_ms: u64) {
         // `last` itself was processed too (a migrated legacy cursor has it
         // outside `seen`); keep it from becoming due once `last` moves on.
         if !self.last.is_empty() {
@@ -117,7 +134,7 @@ impl LookbackCursor {
             }
             self.seen.insert(name.to_string());
         }
-        match self.window_floor() {
+        match self.window_floor(now_ms) {
             Some(floor) => self
                 .seen
                 .retain(|name| name_ms(name).is_some_and(|ms| ms >= floor)),
@@ -129,6 +146,10 @@ impl LookbackCursor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A reader clock far ahead of every test name: the window is anchored
+    /// at `last` (the uploader timestamp), as before the clamp.
+    const LATER: u64 = u64::MAX;
 
     fn name(ms: u64, tag: &str) -> String {
         format!("{ms:013}-{tag}.cardo-ops")
@@ -155,9 +176,9 @@ mod tests {
     #[test]
     fn render_is_deterministic() {
         let mut a = LookbackCursor::default();
-        a.advance(&[name(1_000_000, "b"), name(999_000, "a")]);
+        a.advance(&[name(1_000_000, "b"), name(999_000, "a")], LATER);
         let mut b = LookbackCursor::default();
-        b.advance(&[name(999_000, "a"), name(1_000_000, "b")]);
+        b.advance(&[name(999_000, "a"), name(1_000_000, "b")], LATER);
         assert_eq!(a.render(), b.render());
         assert_eq!(LookbackCursor::parse(&a.render()), a);
     }
@@ -166,7 +187,7 @@ mod tests {
     fn late_file_inside_window_is_selected_once() {
         let base = 1_700_000_000_000;
         let mut c = LookbackCursor::default();
-        c.advance(&[name(base, "x")]);
+        c.advance(&[name(base, "x")], LATER);
 
         let late = name(base - 5_000, "late");
         let ancient = name(base - LOOKBACK_MS - 1, "ancient");
@@ -174,10 +195,10 @@ mod tests {
         let mut all = vec![late.clone(), ancient.clone(), name(base, "x"), newer.clone()];
         all.sort();
 
-        let due = c.select(&all, 50);
+        let due = c.select(&all, 50, LATER);
         assert_eq!(due, vec![late.clone(), newer.clone()]);
-        c.advance(&due);
-        assert!(c.select(&all, 50).is_empty(), "nothing is read twice");
+        c.advance(&due, LATER);
+        assert!(c.select(&all, 50, LATER).is_empty(), "nothing is read twice");
         assert_eq!(c.last, newer);
     }
 
@@ -185,22 +206,64 @@ mod tests {
     fn seen_is_trimmed_to_window() {
         let base = 1_700_000_000_000;
         let mut c = LookbackCursor::default();
-        c.advance(&[name(base, "a")]);
-        c.advance(&[name(base + LOOKBACK_MS + 1, "b")]);
+        c.advance(&[name(base, "a")], LATER);
+        c.advance(&[name(base + LOOKBACK_MS + 1, "b")], LATER);
         assert!(!c.seen.contains(&name(base, "a")));
         assert!(c.seen.contains(&name(base + LOOKBACK_MS + 1, "b")));
         // The trimmed name is outside the window, so it never becomes due.
-        assert!(!c.is_due(&name(base, "a")));
+        assert!(!c.is_due(&name(base, "a"), LATER));
     }
 
     #[test]
     fn take_limits_and_keeps_order() {
         let mut c = LookbackCursor::default();
         let names: Vec<String> = (0..5).map(|i| name(1_000_000 + i, "n")).collect();
-        let first = c.select(&names, 2);
+        let first = c.select(&names, 2, LATER);
         assert_eq!(first, names[..2].to_vec());
-        c.advance(&first);
-        let rest = c.select(&names, 50);
+        c.advance(&first, LATER);
+        let rest = c.select(&names, 50, LATER);
         assert_eq!(rest, names[2..].to_vec());
+    }
+
+    /// One file named two days in the future (uploader clock ahead by more
+    /// than the window) must not hide the on-time files that follow it.
+    #[test]
+    fn future_dated_file_does_not_hide_later_files() {
+        let now = 1_700_000_000_000;
+        let ahead = 2 * LOOKBACK_MS;
+        let mut c = LookbackCursor::default();
+        let future = name(now + ahead, "fast-clock");
+        c.advance(&[future.clone()], now);
+        assert_eq!(c.last, future);
+
+        // On-time files written over the next minutes sort below `last`.
+        let on_time: Vec<String> = (1..=3).map(|i| name(now + i * 60_000, "ok")).collect();
+        let mut all = on_time.clone();
+        all.push(future.clone());
+        all.sort();
+        let reader_now = now + 4 * 60_000;
+        // Anchored at the uploader timestamp (the old rule) they were lost.
+        assert!(c.select(&all, 50, LATER).is_empty());
+        let due = c.select(&all, 50, reader_now);
+        assert_eq!(due, on_time, "on-time files are due although they sort below last");
+        c.advance(&due, reader_now);
+        assert!(c.select(&all, 50, reader_now).is_empty(), "read exactly once");
+
+        // Once real time passes the future name, everything is normal.
+        let later = name(now + ahead + 1, "after");
+        all.push(later.clone());
+        all.sort();
+        assert_eq!(c.select(&all, 50, now + ahead + 2), vec![later]);
+    }
+
+    /// An uploader lagging by an hour (inside the one-day window) is read.
+    #[test]
+    fn lagging_uploader_inside_window_is_read() {
+        let now = 1_700_000_000_000;
+        let mut c = LookbackCursor::default();
+        c.advance(&[name(now, "x")], now);
+        let lagging = name(now - 60 * 60 * 1000, "slow-clock");
+        let all = vec![lagging.clone(), name(now, "x")];
+        assert_eq!(c.select(&all, 50, now + 1000), vec![lagging]);
     }
 }

@@ -3702,7 +3702,8 @@
       "retry": "Noch einmal",
       "wrongKey": "Mit diesem Schlüssel ließ sich nichts entschlüsseln. Ist es wirklich der Schlüssel von deinem Computer?",
       "denied": "Der Computer lässt gerade keine neuen Geräte zu. Schalte dort unter Einstellungen → Sync „Beitritt mit diesem Schlüssel erlauben“ ein und versuche es erneut.",
-      "slotsFull": "Alle 10 Geräteplätze sind belegt. Entferne am Computer unter Einstellungen → Sync ein altes Gerät."
+      "slotsFull": "Alle 10 Geräteplätze sind belegt. Entferne am Computer unter Einstellungen → Sync ein altes Gerät.",
+      "replaceLocal": "Auf diesem iPhone gibt es schon eigene Cardo-Daten. Beim Verbinden werden sie durch die Daten deines Computers ersetzt. Fortfahren?"
     },
     "sync": {
       "paused": "Sync pausiert – Google möchte, dass du dich kurz neu anmeldest.",

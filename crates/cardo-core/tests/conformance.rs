@@ -122,6 +122,10 @@ async fn run_scenario(scenario: &Value) -> Vec<String> {
                     }
                 }
             }
+            "sleep" => {
+                let ms = step["ms"].as_u64().expect("sleep needs ms");
+                tokio::time::sleep(std::time::Duration::from_millis(ms)).await;
+            }
             other => panic!("unknown step kind {other}"),
         }
     }

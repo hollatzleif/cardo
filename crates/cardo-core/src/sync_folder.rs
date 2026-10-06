@@ -4,9 +4,9 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::error::{CoreError, Result};
+use crate::error::Result;
 use crate::sync::{Cursor, EncryptedOp, PullBatch, PushAck, SyncTransport};
-use crate::sync_cursor::LookbackCursor;
+use crate::sync_cursor::{now_ms, LookbackCursor};
 
 /// File-based transport: encrypted op batches as JSON files in one shared
 /// folder. Whatever syncs that folder between machines (iCloud Drive,
@@ -87,22 +87,43 @@ impl SyncTransport for FolderTransport {
         names.sort();
 
         let mut cursor = LookbackCursor::parse(&since);
+        let now = now_ms();
         // Bounded batch per pull call; the engine loops until drained.
-        let due = cursor.select(&names, PULL_FILES);
+        let due = cursor.select(&names, PULL_FILES, now);
         let mut ops = Vec::new();
+        let mut broken_files = 0;
         for name in &due {
+            // IO errors abort the pull (retry next round); a file that reads
+            // fine but cannot be parsed is skipped and marked read.
             let raw = std::fs::read(self.ops_dir.join(name))?;
-            let batch: BatchFile = serde_json::from_slice(&raw)
-                .map_err(|e| CoreError::Other(format!("broken batch file {name}: {e}")))?;
-            for op in batch.ops {
-                let blob = b64_decode(&op.blob_b64)
-                    .ok_or_else(|| CoreError::Other(format!("broken blob in {name}")))?;
-                ops.push(EncryptedOp { op_id: op.op_id, blob });
+            match decode_batch_file(&raw) {
+                Some(batch) => ops.extend(batch),
+                None => broken_files += 1,
             }
         }
-        cursor.advance(&due);
-        Ok(PullBatch { ops, next_cursor: cursor.render() })
+        cursor.advance(&due, now);
+        Ok(PullBatch { ops, next_cursor: cursor.render(), broken_files })
     }
+}
+
+/// Decodes a hub batch file – the one reader shared by the folder, WebDAV
+/// and Google Drive transports (and mirrored by `decodeBatchFile` in
+/// packages/sync). `None` = the file is broken (not JSON, not an object, no
+/// `ops` array). `version` is not checked. Single entries without a string
+/// `op_id`/`blob_b64` or with broken base64 are dropped; the rest of the file
+/// still counts.
+pub fn decode_batch_file(raw: &[u8]) -> Option<Vec<EncryptedOp>> {
+    let value: serde_json::Value = serde_json::from_slice(raw).ok()?;
+    let ops = value.as_object()?.get("ops")?.as_array()?;
+    Some(
+        ops.iter()
+            .filter_map(|op| {
+                let op_id = op.get("op_id")?.as_str()?;
+                let blob = b64_decode(op.get("blob_b64")?.as_str()?)?;
+                Some(EncryptedOp { op_id: op_id.to_string(), blob })
+            })
+            .collect(),
+    )
 }
 
 /* ── std-only base64 (RFC 4648) ───────────────────────────────────────── */
@@ -257,6 +278,36 @@ mod tests {
         let again = t.pull(pulled.next_cursor.clone()).await.unwrap();
         assert!(again.ops.is_empty());
         assert_eq!(again.next_cursor, pulled.next_cursor);
+    }
+
+    /// A broken file (not JSON, or no ops array) is counted, skipped and
+    /// marked read – it must not block every later pull.
+    #[tokio::test]
+    async fn broken_batch_file_is_skipped_not_fatal() {
+        let dir = TempDir::new().unwrap();
+        let t = FolderTransport::new(dir.path()).unwrap();
+        let base: u64 = 1_700_000_000_000;
+        std::fs::write(dir.path().join("ops").join(format!("{base:013}-a.{BATCH_EXT}")), b"{nope").unwrap();
+        std::fs::write(
+            dir.path().join("ops").join(format!("{:013}-b.{BATCH_EXT}", base + 1)),
+            br#"{"version":1,"ops":"x"}"#,
+        )
+        .unwrap();
+        write_batch(dir.path(), &format!("{:013}-c.{BATCH_EXT}", base + 2), "op-c");
+        // A bad entry drops only itself.
+        std::fs::write(
+            dir.path().join("ops").join(format!("{:013}-d.{BATCH_EXT}", base + 3)),
+            br#"{"version":1,"ops":[{"op_id":"bad","blob_b64":"!!"},{"op_id":"op-d","blob_b64":"CQk="}]}"#,
+        )
+        .unwrap();
+
+        let first = t.pull(String::new()).await.unwrap();
+        let ids: Vec<&str> = first.ops.iter().map(|o| o.op_id.as_str()).collect();
+        assert_eq!(ids, vec!["op-c", "op-d"]);
+        assert_eq!(first.broken_files, 2);
+        let second = t.pull(first.next_cursor.clone()).await.unwrap();
+        assert!(second.ops.is_empty());
+        assert_eq!(second.broken_files, 0, "broken files are not re-read");
     }
 
     #[tokio::test]

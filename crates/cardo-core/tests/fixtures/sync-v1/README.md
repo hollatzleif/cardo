@@ -20,6 +20,7 @@ Verified by `cargo test -p cardo-core` (`tests/sync_vectors.rs`,
 | `rust-hub/plaintext.json` | Every pushed `SyncOp` in push order (matches the hub order). Each blob decrypts to exactly `JSON.stringify`-equivalent serde output of the op: field order `op_id, device_id, hlc, namespace, doc_id, op, field, value, created_at`, with nested object keys sorted by byte order. Absent `field`/`value` are `null`. |
 | `rust-hub/expected-docs.json` | `dump_all()` of the writer: `{namespace: {docId: doc}}` of live docs. A fresh store that pulls the hub must end up with exactly this. Every op must apply (single-writer history). Covers: several namespaces (`todo`, `contacts`, `files.notes`, `core`, `core.sync-control`), umlaut/emoji/dash doc ids, set_field/delete_field/delete_doc, re-create after delete, a doc created and deleted in one batch, the `core/sync-devices` registry, nested objects/arrays/null, negative ints, floats (`1.0`, `1.5e-7`, `-273.15`), `2^53-1`, escapes. |
 | `conformance/*.json` | Declarative storage/LWW scenarios (below). |
+| `wire-parse.json` | `[{name, text, ok, canonical?}]`: SyncOp plaintexts and whether `serde_json::from_str::<SyncOp>` accepts them (`tests/wire_parse.rs`). The TS decoder must accept exactly the same set: integer-only `created_at` within i64 (no `1.0`, `1e3`, `-0`), no duplicate known fields, no lone-surrogate escapes in decoded strings, finite numbers, nesting ≤ 127, unknown fields only syntax-checked, serde's 9-element sequence form. `canonical` = serde re-serialization. Refill with `CARDO_WRITE_VECTORS=1 cargo test -p cardo-core --test wire_parse`. |
 | `ts-hub/` | The reverse direction: the same scripted writer sequence as `rust-hub/`, written by the **TypeScript port** (IndexedDB store + `SyncEngine` + folder hub). Same layout (`ops/`, `plaintext.json`, `expected-docs.json`). `tests/sync_interop.rs` checks that every blob is byte-identical to `serde_json::to_string` of the op, that every batch file is byte-identical to serde's `BatchFile`, and that a fresh `SqliteStorage` pulling it ends up equal to `expected-docs.json` (= `rust-hub/expected-docs.json` with `ratio: 1.0` → `1`, since JS has no integral floats). Regenerate from the repo root with `CARDO_WRITE_VECTORS=1 pnpm vitest run packages/sync -t "writes the ts-hub"`. |
 
 ## Conformance scenario format
@@ -35,7 +36,8 @@ Verified by `cargo test -p cardo-core` (`tests/sync_vectors.rs`,
     { "kind": "remote", "op": { SyncOp wire shape },
       "expect": "applied" | "skipped" | "error", "expectOperation": "create" | "update" | "delete"? },
     { "kind": "query",  "namespace": "q", "query": { "where": [{field, op, value}], "orderBy"?, "direction"?, "limit"? },
-      "expectRows": [ … ], "ordered": bool?, "expectError": true? }
+      "expectRows": [ … ], "ordered": bool?, "expectError": true? },
+    { "kind": "sleep",  "ms": 5 }
   ],
   "expectDocs": { dump_all() after all steps },
   "expectLocalOps": [ { "namespace", "docId", "op", "field", "value" } ]
@@ -56,6 +58,8 @@ Verified by `cargo test -p cardo-core` (`tests/sync_vectors.rs`,
 * `expectLocalOps` is the device's own change log in write order (ids, hlc,
   timestamps ignored). Remote winners are logged too, but as already synced,
   so they are not part of it. Absent `field`/`value` are `null`.
+* `sleep` waits (real time) so that later writes get a strictly greater
+  `updated_at` – used where the scan order matters.
 * `note` fields are informational.
 
 Scenarios: 01 field op on deleted doc resurrects · 02 create vs field LWW
@@ -68,7 +72,10 @@ duplicate op id skipped · 08 id byte limit (128 UTF-8 bytes) with umlauts
 and namespace rules · 09 arrays / null values · 10 query semantics (LIKE
 `%`/`_`/ASCII-only case folding, `!=` on missing/null, NULL ordering, `in`,
 numbers vs text, booleans as 1/0, binary text order, invalid queries) · 11
-remote winners feed later LWW.
+remote winners feed later LWW · 12 query scan order (no ORDER BY →
+`updated_at`, then rowid via idx_docs_ns_updated; ORDER BY is a stable sort
+on top of it, also for DESC and with LIMIT) · 13 integral floats (`2.0`):
+what both sides agree on; the known JS limitation is documented there.
 
 The conformance JSON files are maintained by hand. When you add a scenario,
 run `cargo test -p cardo-core --test conformance`. Rust is the reference: a

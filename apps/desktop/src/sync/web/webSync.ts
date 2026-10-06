@@ -23,6 +23,8 @@ export const CONTROL_NS = 'core.sync-control';
 export const EXCLUDED_NAMESPACES = ['core.layout'] as const;
 export const DEVICE_SLOTS = 10;
 export const TRANSPORT_ID = 'gdrive';
+/** Like the desktop: rewrite our registry entry at most every 6 h (each rewrite is a hub file). */
+export const DEVICE_SEEN_REFRESH_MS = 6 * 60 * 60 * 1000;
 
 /** Device-only sync settings, kept in the store's local (never synced) area. */
 export interface WebSyncConfig {
@@ -58,6 +60,14 @@ export class SlotsFullError extends Error {
   constructor() {
     super(`all ${DEVICE_SLOTS} device slots are in use`);
     this.name = 'SlotsFullError';
+  }
+}
+
+/** Joining would replace data that exists only on this phone. */
+export class LocalDataError extends Error {
+  constructor() {
+    super('this device already has data of its own');
+    this.name = 'LocalDataError';
   }
 }
 
@@ -102,6 +112,15 @@ export async function upsertOwnDevice(
     devices: [],
   };
   const all = Array.isArray(doc.devices) ? (doc.devices as Array<Record<string, unknown>>) : [];
+  const fresh = all.some(
+    (d) =>
+      d?.deviceId === own &&
+      d.name === name &&
+      typeof d.lastSeenMs === 'number' &&
+      nowMs - d.lastSeenMs >= 0 &&
+      nowMs - d.lastSeenMs < DEVICE_SEEN_REFRESH_MS,
+  );
+  if (fresh) return;
   const others = all.filter((d) => d?.deviceId !== own);
   if (others.length >= DEVICE_SLOTS) throw new SlotsFullError();
   others.push({ deviceId: own, name, lastSeenMs: nowMs, kind: 'web' });
@@ -169,7 +188,9 @@ export interface JoinOutcome {
 
 /**
  * First join: wipe the phone, download EVERYTHING, then check the gate and
- * register. Nothing synced is written before the download is complete –
+ * register. A phone that already holds data of its own is only wiped when
+ * the user explicitly agreed (`replaceLocalData`) – otherwise LocalDataError.
+ * Nothing synced is written before the download is complete –
  * otherwise defaults written by a fresh phone would win last-writer-wins
  * and overwrite the desktop's documents.
  */
@@ -180,8 +201,10 @@ export async function joinGroup(
   deviceName: string,
   onProgress: (p: JoinProgress) => void = () => {},
   nowMs: () => number = Date.now,
+  replaceLocalData = false,
 ): Promise<JoinOutcome> {
   const normalized = normalizeKey(key);
+  if (!replaceLocalData && !(await store.isPristine())) throw new LocalDataError();
   await store.wipe();
   const engine = engineFor(store, normalized);
 

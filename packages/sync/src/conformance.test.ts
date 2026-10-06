@@ -18,7 +18,8 @@ import type { ChangeNotice } from './types';
 import { parseSyncOp } from './wire';
 
 interface Step {
-  kind: 'set' | 'delete' | 'get' | 'remote' | 'query';
+  kind: 'set' | 'delete' | 'get' | 'remote' | 'query' | 'sleep';
+  ms?: number;
   namespace?: string;
   id?: string;
   value?: Record<string, unknown>;
@@ -132,6 +133,9 @@ async function runScenario(scenario: Scenario, dbName: string): Promise<string[]
         }
         break;
       }
+      case 'sleep':
+        await new Promise((resolve) => setTimeout(resolve, step.ms ?? 0));
+        break;
       default:
         throw new Error(`unknown step kind ${String((step as { kind: unknown }).kind)}`);
     }

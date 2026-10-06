@@ -22,6 +22,7 @@ import { SyncEngine } from './engine';
 import { createIdbStore, type IdbStore } from './idb/store';
 import { deepEqual, stableStringify } from './json';
 import { deriveKeys, displaySyncKey, generateSyncKey, parseSyncKey, SyncKeyError } from './keys';
+import { parseCursor } from './lookback';
 import { notesContentHash } from './notes';
 import { FolderHub } from './testing/folderHub';
 import {
@@ -283,7 +284,7 @@ describe('sync-v1 fixtures from cardo-core', () => {
     const names = hubFileNames(rustHub);
     expect(names.length).toBeGreaterThanOrEqual(3);
     const batch = await new FolderHub(rustHub).pull('');
-    expect(batch.nextCursor).toBe(names[names.length - 1]);
+    expect(parseCursor(batch.nextCursor).last).toBe(names[names.length - 1]);
     expect(batch.ops).toHaveLength(plaintext.length);
 
     const integralFloatOps: string[] = [];

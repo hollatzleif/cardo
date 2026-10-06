@@ -369,7 +369,7 @@ describe('query (SQLite json_extract semantics)', () => {
     expect(ids(await s.query('todo', { where: [{ field: 'done', op: 'in', value: [true] }] }))).toEqual(['old task']);
   });
 
-  it('orderBy asc puts missing/null first and keeps id order for ties', async () => {
+  it('orderBy asc puts missing/null first and keeps scan order for ties', async () => {
     const s = await seeded();
     expect(ids(await s.query('todo', { orderBy: 'p' }))).toEqual([
       'no prio', '100%_done', 'old task', 'Plan more', 'write plan', 'text prio',
@@ -379,5 +379,130 @@ describe('query (SQLite json_extract semantics)', () => {
     ]);
     expect(await s.query('todo', { limit: 0 })).toEqual([]);
     expect(await s.query('todo', { limit: -1 })).toHaveLength(6);
+  });
+});
+
+describe('IdbStore review regressions', () => {
+  it('scan order is (updatedAt, first-insert seq) like SQLite idx_docs_ns_updated + rowid', async () => {
+    let t = 1_000;
+    const s = open(undefined, () => t);
+    for (const id of ['c', 'a', 'd', 'b']) {
+      t += 3;
+      await s.set('q', id, { p: 1, k: id });
+    }
+    t += 3;
+    await s.set('q', 'c', { p: 1, k: 'c', touched: true });
+    const ks = (rows: unknown[]) => rows.map((r) => (r as { k: string }).k).join('');
+    // The finding's sequence, checked against SqliteStorage by the reviewer.
+    expect(ks(await s.query('q', {}))).toBe('adbc');
+    expect(ks(await s.query('q', { orderBy: 'p', limit: 2 }))).toBe('ad');
+    expect(ks(await s.query('q', { orderBy: 'p', direction: 'desc', limit: 2 }))).toBe('ad');
+    // listIds stays in id order (Rust list_ids ORDER BY id).
+    expect(await s.listIds('q')).toEqual(['a', 'b', 'c', 'd']);
+
+    // Same millisecond: the first-insert sequence breaks the tie (rowid),
+    // and survives delete + re-create (an upsert keeps the rowid).
+    t = 5_000;
+    const u = open(undefined, () => t);
+    for (const id of ['z', 'y', 'x']) await u.set('q', id, { k: id });
+    expect(ks(await u.query('q', {}))).toBe('zyx');
+    await u.delete('q', 'z');
+    await u.set('q', 'z', { k: 'z' });
+    expect(ks(await u.query('q', {}))).toBe('zyx');
+    // A remote op moves its doc to the end (updated_at = now).
+    t = 6_000;
+    await u.applyRemoteOp(remote({ namespace: 'q', doc_id: 'y', op: 'set_field', field: 'k', value: 'y', hlc: hlcAt(9_999_999_999_999) }));
+    expect(ks(await u.query('q', {}))).toBe('zxy');
+  });
+
+  it("a remote set_field '__proto__' becomes an own key (serde Map parity)", async () => {
+    const s = open();
+    await s.set('todo', 'a', { p: 1 });
+    const notice = await s.applyRemoteOp(
+      remote({ doc_id: 'a', op: 'set_field', field: '__proto__', value: { evil: 1 }, hlc: hlcAt(9_999_999_999_999) }),
+    );
+    expect(notice).toMatchObject({ operation: 'update' });
+    const doc = (await s.get('todo', 'a')) as Record<string, unknown>;
+    expect(Object.keys(doc).sort()).toEqual(['__proto__', 'p']);
+    expect(Object.getOwnPropertyDescriptor(doc, '__proto__')?.value).toEqual({ evil: 1 });
+    expect(Object.getPrototypeOf(doc)).toBe(Object.prototype);
+    // A later local write diffs it like Rust (removing it logs delete_field).
+    expect((await s.write('todo', 'a', { p: 1 })).ops_logged).toBe(1);
+    expect((await s.changeLogFor('todo', 'a')).at(-1)).toMatchObject({ op: 'delete_field', field: '__proto__' });
+  });
+
+  it('write() checks the serialized value: a Date is not an object document', async () => {
+    const s = open();
+    await expect(s.write('todo', 'z', new Date(0) as unknown as Record<string, unknown>)).rejects.toThrow(ValidationError);
+    expect(await s.get('todo', 'z')).toBeNull();
+    expect(await s.unsyncedOpCount()).toBe(0);
+    // Dates INSIDE a doc serialize to strings, as through the Tauri bridge.
+    await s.set('todo', 'd', { at: new Date(0) });
+    expect(await s.get('todo', 'd')).toEqual({ at: '1970-01-01T00:00:00.000Z' });
+  });
+
+  it('lone surrogates never reach the store, the log or the wire', async () => {
+    const s = open();
+    await s.set('notes', 'n', { title: 'cut \ud83d', ok: '😀', ['k\udc00']: ['\ud800'] });
+    const want = { title: 'cut \ufffd', ok: '😀', ['k\ufffd']: ['\ufffd'] };
+    expect(await s.get('notes', 'n')).toEqual(want);
+    const [op] = await s.unsyncedOps(10, []);
+    expect(op?.value).toEqual(want);
+    // An id Rust cannot represent is refused instead of silently diverging.
+    await expect(s.set('notes', 'x\ud83d', {})).rejects.toThrow(ValidationError);
+  });
+
+  it('documents the integral-float limitation (serde 2.0 vs JS 2)', async () => {
+    // Rust keeps Float(2.0) apart from Int(2); JS cannot. A remote 2.0 is
+    // stored as 2, so a later write of {x: 2} logs nothing here while the
+    // desktop would log a set_field (values stay equal; only the change logs
+    // differ) and `like '2.0'` matches only on the desktop. Known, accepted.
+    const s = open();
+    await s.applyRemoteOp(remote({ doc_id: 'f', op: 'create', value: { x: 2.0 }, hlc: hlcAt(9_999_999_999_999) }));
+    expect((await s.write('todo', 'f', { x: 2 })).ops_logged).toBe(0);
+    expect(await s.query('todo', { where: [{ field: 'x', op: '=', value: 2 }] })).toHaveLength(1);
+    expect(await s.query('todo', { where: [{ field: 'x', op: 'like', value: '2.0' }] })).toHaveLength(0);
+  });
+
+  it('observes remote hlcs: a local edit after a remote op (clock ahead) wins', async () => {
+    let t = 1_000_000;
+    const s = open(undefined, () => t);
+    await s.set('todo', '1', { t: 'local' });
+    const remoteHlc = hlcAt(t + 60 * 60 * 1000); // remote clock one hour ahead
+    await s.applyRemoteOp(remote({ op: 'set_field', field: 't', value: 'remote', hlc: remoteHlc }));
+    t += 10;
+    await s.set('todo', '1', { t: 'edited after' });
+    const last = (await s.changeLogFor('todo', '1')).at(-1)!;
+    expect(last.value).toBe('edited after');
+    expect(last.hlc > remoteHlc).toBe(true);
+    // Beyond the drift cap (a day) a remote clock is ignored.
+    const far = hlcAt(t + 2 * 24 * 60 * 60 * 1000);
+    await s.applyRemoteOp(remote({ doc_id: '2', op: 'create', value: {}, hlc: far }));
+    await s.set('todo', '3', {});
+    expect((await s.changeLogFor('todo', '3'))[0]!.hlc < far).toBe(true);
+  });
+
+  it('wipe() tells open views and isPristine() reports an empty store', async () => {
+    const s = open();
+    expect(await s.isPristine()).toBe(true);
+    await s.set('todo', '1', { a: 1 });
+    await s.set('todo', '2', { a: 1 });
+    await s.delete('todo', '2');
+    expect(await s.isPristine()).toBe(false);
+    const events: string[] = [];
+    s.onChange((ev) => events.push(`${ev.namespace}/${ev.docId}:${ev.operation}`));
+    await s.wipe();
+    expect(events).toEqual(['todo/1:delete']);
+    expect(await s.isPristine()).toBe(true);
+  });
+
+  it('applyRemoteOp({emit:false}) + emitChanges batches the events', async () => {
+    const s = open();
+    const events: string[] = [];
+    s.onChange((ev) => events.push(`${ev.docId}:${ev.operation}`));
+    await s.applyRemoteOp(remote({ doc_id: 'a', op: 'create', value: {}, hlc: hlcAt(10) }), { emit: false });
+    expect(events).toEqual([]);
+    s.emitChanges!([{ namespace: 'todo', docId: 'a', operation: 'create', ops_logged: 1 }]);
+    expect(events).toEqual(['a:create']);
   });
 });
