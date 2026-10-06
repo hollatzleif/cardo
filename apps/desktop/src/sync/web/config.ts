@@ -6,7 +6,8 @@
  * overrides it for local testing.
  */
 export const GDRIVE_WEB_CLIENT_ID: string =
-  (import.meta.env.VITE_GDRIVE_WEB_CLIENT_ID as string | undefined) ?? '';
+  (import.meta.env.VITE_GDRIVE_WEB_CLIENT_ID as string | undefined) ||
+  '1057427798264-vgbtrp8fa0gu7eri6of29vlm5vfhhg4h.apps.googleusercontent.com';
 
 export const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 export const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';

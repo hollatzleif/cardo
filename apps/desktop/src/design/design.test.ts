@@ -62,6 +62,6 @@ describe('design presets', () => {
 
   it('market terminal preset uses the terminal chrome, square corners and a tight gutter', () => {
     const preset = DESIGN_PRESETS.find((p) => p.id === 'market-terminal');
-    expect(preset?.design).toMatchObject({ chrome: 'terminal', radius: 0, gutter: 2 });
+    expect(preset?.design).toMatchObject({ chrome: 'terminal', radius: 0, gutter: 5 });
   });
 });

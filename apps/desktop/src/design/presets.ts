@@ -58,14 +58,15 @@ export const DESIGN_PRESETS: DesignPreset[] = [
     descKey: 'design.preset.marketTerminal.desc',
     themeId: 'market-terminal',
     design: {
-      fontPreset: 'system',
+      fontPreset: 'monospace',
+      fontScale: 90,
       density: 'compact',
       radius: 0,
       shadow: false,
-      border: true,
+      border: false,
       cardStyle: 'flat',
       chrome: 'terminal',
-      gutter: 2,
+      gutter: 5,
     },
   },
 ];

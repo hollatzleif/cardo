@@ -11,8 +11,15 @@ html[data-design-chrome='terminal'] {
 
 /* ── Canvas & top bar ── */
 html[data-design-chrome='terminal'] .topbar {
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-widget);
+  border-bottom: none;
+  background: var(--bg-canvas);
+}
+/* The frame around the panels is as thin as the gaps between them. */
+html[data-design-chrome='terminal'] .canvas {
+  padding: var(--grid-gutter, var(--space-3));
+}
+html[data-design-chrome='terminal'] .topbar .c-muted {
+  color: color-mix(in srgb, var(--text-primary) 65%, var(--bg-canvas));
 }
 html[data-design-chrome='terminal'] .topbar__page,
 html[data-design-chrome='terminal'] .topbar__brand {
@@ -21,7 +28,9 @@ html[data-design-chrome='terminal'] .topbar__brand {
   font-size: 0.8em;
 }
 html[data-design-chrome='terminal'] .topbar__page--active {
-  box-shadow: inset 0 -2px 0 var(--accent);
+  background: var(--bg-widget);
+  border-color: var(--bg-widget);
+  color: var(--text-primary);
 }
 
 /* ── Panels ── */
@@ -37,19 +46,18 @@ html[data-design-chrome='terminal'] .widget-frame__header {
   gap: var(--space-2);
   height: var(--terminal-header-height);
   padding: 0 var(--space-1) 0 var(--space-2);
-  background: var(--bg-raised);
+  background: var(--bg-widget);
   border-bottom: 1px solid var(--border-subtle);
-  box-shadow: inset 2px 0 0 var(--accent);
   font-size: var(--terminal-label-size);
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
   white-space: nowrap;
   user-select: none;
 }
 html[data-design-chrome='terminal'] .widget-frame__header-title {
-  color: var(--accent);
+  color: color-mix(in srgb, var(--text-primary) 78%, var(--text-muted));
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
@@ -88,12 +96,17 @@ html[data-design-chrome='terminal'] .c-btn {
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+/* Primary/active controls: light cyan with dark text, like terminal tabs. */
+html[data-design-chrome='terminal'] .c-btn--primary {
+  color: var(--palette-surface-0);
+}
 html[data-design-chrome='terminal'] .c-btn--ghost {
   text-transform: none;
   letter-spacing: normal;
 }
 html[data-design-chrome='terminal'] .c-input {
   border-radius: 0;
+  background: color-mix(in srgb, var(--bg-widget) 80%, black);
   padding: var(--space-1) var(--space-2);
   font-variant-numeric: tabular-nums;
 }
