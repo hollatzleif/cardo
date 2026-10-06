@@ -3056,7 +3056,8 @@
     "nightOwl": "Night Owl",
     "flexokiLight": "Flexoki Light",
     "catppuccinFrappe": "Catppuccin Frappé",
-    "rosePineDawn": "Rosé Pine Dawn"
+    "rosePineDawn": "Rosé Pine Dawn",
+    "market-terminal": "Market Terminal"
   },
   "design": {
     "title": "Design",
@@ -3118,7 +3119,13 @@
         "compact": "Compact",
         "normal": "Normal",
         "airy": "Airy"
-      }
+      },
+      "chrome": "Widget frame",
+      "chromeOption": {
+        "default": "Standard",
+        "terminal": "Terminal (header bar, square)"
+      },
+      "gutter": "Gap between widgets"
     },
     "reset": {
       "title": "Reset",
@@ -3147,6 +3154,10 @@
       "editorial": {
         "name": "Editorial / clean",
         "desc": "GitHub light, airy, fine hairlines."
+      },
+      "marketTerminal": {
+        "name": "Market Terminal",
+        "desc": "Dark, dense, square – panels with a header bar, hairlines, aligned figures."
       }
     },
     "theme": {

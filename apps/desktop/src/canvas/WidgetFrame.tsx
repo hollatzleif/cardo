@@ -4,9 +4,24 @@ import { widgetAccentStyle } from '@cardo/ui';
 import { useAppStore, type WidgetInstance } from '../state/appStore';
 import { liveTools } from '../host/tools';
 import { WidgetHelp } from './WidgetHelp';
-import { GRID_COLS, GRID_MARGIN } from './LayoutEngine';
+import { GRID_COLS } from './LayoutEngine';
+import { getGridGutter, useDesignChrome } from '../design/design';
 
 type GridPos = { x: number; y: number; w: number; h: number };
+
+/**
+ * Column/row pitch of the grid in px, derived from a rendered grid item:
+ * an item spanning `w` columns is `w` pitches wide minus one gutter.
+ */
+export function gridPitch(
+  itemWidth: number,
+  itemHeight: number,
+  w: number,
+  h: number,
+  gutter: number,
+): { x: number; y: number } {
+  return { x: (itemWidth + gutter) / w, y: (itemHeight + gutter) / h };
+}
 
 /**
  * Pointer-event drag for a widget's move and resize grips. We roll our own
@@ -34,8 +49,9 @@ function beginGridDrag(
 
   const startX = e.clientX;
   const startY = e.clientY;
-  const pitchX = (item.offsetWidth + GRID_MARGIN) / widget.w;
-  const pitchY = (item.offsetHeight + GRID_MARGIN) / widget.h;
+  const pitch = gridPitch(item.offsetWidth, item.offsetHeight, widget.w, widget.h, getGridGutter());
+  const pitchX = pitch.x;
+  const pitchY = pitch.y;
   let last: GridPos = { x: widget.x, y: widget.y, w: widget.w, h: widget.h };
 
   const onMove = (ev: PointerEvent): void => {
@@ -81,6 +97,7 @@ export function WidgetFrame({
   const setWidgetVariant = useAppStore((s) => s.setWidgetVariant);
   const updateWidgetPositions = useAppStore((s) => s.updateWidgetPositions);
   const [helpOpen, setHelpOpen] = useState(false);
+  const chrome = useDesignChrome();
   const tool = liveTools.get(widget.toolId);
   if (!tool) {
     return <div className="c-card widget-frame widget-frame--missing">?</div>;
@@ -115,7 +132,19 @@ export function WidgetFrame({
       style={widgetAccentStyle(widget.accentToken)}
       data-tour-anchor={`widget:${widget.toolId}:${widget.widgetId}`}
     >
-      {!editing && helpButton(true)}
+      {!editing && chrome === 'default' && helpButton(true)}
+      {!editing && chrome === 'terminal' && (
+        // Terminal chrome: a panel header bar replaces the floating "?".
+        <div className="widget-frame__header">
+          <span className="widget-frame__header-title">{t(tool.manifest.nameKey)}</span>
+          {variants.length > 1 && activeVariant && (
+            <span className="widget-frame__header-variant">
+              {t(`tool.${widget.toolId}.variant.${activeVariant}`, { defaultValue: activeVariant })}
+            </span>
+          )}
+          {helpButton(false)}
+        </div>
+      )}
       {editing && (
         <div className="widget-frame__toolbar">
           {helpButton(false)}

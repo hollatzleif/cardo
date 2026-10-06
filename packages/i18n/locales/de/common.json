@@ -3056,7 +3056,8 @@
     "nightOwl": "Night Owl",
     "flexokiLight": "Flexoki Light",
     "catppuccinFrappe": "Catppuccin Frappé",
-    "rosePineDawn": "Rosé Pine Dawn"
+    "rosePineDawn": "Rosé Pine Dawn",
+    "market-terminal": "Börsen-Terminal"
   },
   "design": {
     "title": "Design",
@@ -3118,7 +3119,13 @@
         "compact": "Kompakt",
         "normal": "Normal",
         "airy": "Luftig"
-      }
+      },
+      "chrome": "Widget-Rahmen",
+      "chromeOption": {
+        "default": "Standard",
+        "terminal": "Terminal (Kopfzeile, eckig)"
+      },
+      "gutter": "Abstand zwischen Widgets"
     },
     "reset": {
       "title": "Zurücksetzen",
@@ -3147,6 +3154,10 @@
       "editorial": {
         "name": "Editorial / Clean",
         "desc": "GitHub Hell, luftig, feine Trennlinien."
+      },
+      "marketTerminal": {
+        "name": "Börsen-Terminal",
+        "desc": "Dunkel, dicht, eckig – Panels mit Kopfzeile, feine Linien, Zahlen in Spalten."
       }
     },
     "theme": {

@@ -31,12 +31,14 @@ export function buildCapabilities(
   const design = de
     ? [
         `Im Erscheinungsbild anpassbar: Schriftart (${fonts}), Dichte (${densities}), ` +
-          `Ecken-Radius, Widget-Schatten und -Rahmen, Hintergrundbild/-farbe und Akzentfarbe. ` +
+          `Ecken-Radius, Widget-Schatten und -Rahmen, Widget-Rahmenstil (Standard oder Terminal mit Kopfzeile), ` +
+          `Abstand zwischen Widgets, Hintergrundbild/-farbe und Akzentfarbe. ` +
           `Jede Einstellung bleibt frei wählbar – Cardo erzwingt keinen Look.`,
       ]
     : [
         `Customizable under Appearance: font (${fonts}), density (${densities}), ` +
-          `corner radius, widget shadow and border, background image/color and accent color. ` +
+          `corner radius, widget shadow and border, widget frame (standard or terminal with a header bar), ` +
+          `gap between widgets, background image/color and accent color. ` +
           `Every setting stays freely selectable — Cardo never forces a look.`,
       ];
 

@@ -8,6 +8,7 @@ import 'react-resizable/css/styles.css';
 // same-origin by Vite, so the app's CSP (default-src 'self') serves them.
 import 'katex/dist/katex.min.css';
 import './app.css';
+import './design/terminal-chrome.css';
 import { initHost } from './host';
 import { instantiateTools, liveTools } from './host/tools';
 import { initGlobalShortcuts } from './host/shortcuts';

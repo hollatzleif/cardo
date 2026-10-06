@@ -1,0 +1,29 @@
+{
+  "id": "market-terminal",
+  "nameKey": "theme.market-terminal",
+  "appearance": "dark",
+  "license": {
+    "spdx": "MIT",
+    "source": "https://github.com/hollatzleif/cardo"
+  },
+  "palette": {
+    "base": "#0a0c0f",
+    "surface-0": "#101317",
+    "surface-1": "#161a20",
+    "surface-2": "#262c35",
+    "text": "#d8dee6",
+    "text-muted": "#8b95a3",
+    "accent-1": "#ff9f1c",
+    "accent-2": "#4ea8de",
+    "accent-3": "#c77dff",
+    "accent-4": "#2ec4b6",
+    "accent-5": "#ffd166",
+    "accent-6": "#ef476f",
+    "accent-7": "#8ecae6",
+    "accent-8": "#b5e48c",
+    "success": "#26c281",
+    "warning": "#f4b942",
+    "danger": "#ef4f5f",
+    "info": "#4ea8de"
+  }
+}

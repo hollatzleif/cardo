@@ -3,6 +3,7 @@ import RGL, { WidthProvider, type Layout } from 'react-grid-layout';
 import type { ReactNode } from 'react';
 import type { WidgetInstance } from '../state/appStore';
 import { liveTools } from '../host/tools';
+import { useGridGutter } from '../design/design';
 
 /**
  * LayoutEngine – thin abstraction over react-grid-layout.
@@ -14,6 +15,7 @@ const Grid = WidthProvider(RGL);
 
 export const GRID_COLS = 12;
 export const ROW_HEIGHT = 56;
+/** Default gap between widgets; the active design may override it (useGridGutter). */
 export const GRID_MARGIN = 12;
 
 export interface LayoutEngineProps {
@@ -26,6 +28,7 @@ export interface LayoutEngineProps {
 }
 
 export function LayoutEngine({ widgets, editing, onPositionsChange, renderWidget }: LayoutEngineProps) {
+  const gutter = useGridGutter();
   const layout: Layout[] = useMemo(
     () =>
       widgets.map((w) => {
@@ -52,7 +55,7 @@ export function LayoutEngine({ widgets, editing, onPositionsChange, renderWidget
       layout={layout}
       cols={GRID_COLS}
       rowHeight={ROW_HEIGHT}
-      margin={[GRID_MARGIN, GRID_MARGIN]}
+      margin={[gutter, gutter]}
       // The .canvas already frames the grid; RGL's default 10px container
       // padding would stack on top and reserve phantom scroll space below.
       containerPadding={[0, 0]}

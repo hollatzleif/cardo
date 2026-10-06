@@ -36,7 +36,7 @@ export const lightTheme = byId(LIGHT_ID);
 /**
  * Every theme the app ships, for the site's own theme picker.
  *
- * Shipping all twenty costs 2 KB gzipped — cheap enough that demonstrating
+ * Shipping all twenty-one costs 2 KB gzipped — cheap enough that demonstrating
  * Cardo's theming beats describing it. Sorted dark first, then light, so the
  * picker opens on the appearances most visitors will see.
  */
