@@ -151,6 +151,35 @@ describe('web sync join and rounds', () => {
     expect(await s.unsyncedOpCount()).toBeGreaterThan(before);
   });
 
+  it('resumes an interrupted join without wiping what was downloaded', async () => {
+    const hub = new MemoryHub();
+    const key = displaySyncKey(generateSyncKey());
+    const pc = await desktop(hub, key);
+    for (let i = 0; i < 60; i++) {
+      await pc.s.set('todo', `t${i}`, { title: `Aufgabe ${i}` });
+      await pc.sync(); // one batch file per round → more than one pull batch
+    }
+    const phone = await store();
+    // A transport that dies after the first batch of files.
+    let pulls = 0;
+    const flaky = {
+      push: (ops: Parameters<MemoryHub['push']>[0]) => hub.push(ops),
+      pull: async (since: string) => {
+        if (++pulls > 1) throw new Error('Fetch is aborted');
+        return hub.pull(since);
+      },
+    };
+    await expect(joinGroup(phone, flaky, key, 'iPhone')).rejects.toThrow('Fetch is aborted');
+    const partial = Object.keys((await phone.dumpAll()).todo ?? {}).length;
+    expect(partial).toBeGreaterThan(0);
+    expect(partial).toBeLessThan(60);
+
+    // Retry: no LocalDataError, no wipe, finishes the rest.
+    await joinGroup(phone, hub, key, 'iPhone');
+    expect(Object.keys((await phone.dumpAll()).todo ?? {}).length).toBe(60);
+    expect((await loadConfig(phone))?.joined).toBe(true);
+  });
+
   it('respects the ten device slots', async () => {
     const s = await store();
     await s.set(DEVICES_NS, DEVICES_DOC, {

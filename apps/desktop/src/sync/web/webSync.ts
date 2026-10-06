@@ -40,6 +40,13 @@ export interface WebSyncConfig {
 }
 
 export const CONFIG_KEY = 'sync.web.config';
+/** Set while a join is underway; lets an interrupted download resume. */
+export const JOIN_PENDING_KEY = 'sync.web.joining';
+
+export async function pendingJoinKey(store: IdbStore): Promise<string | null> {
+  const pending = await store.localGet<{ key?: unknown }>(JOIN_PENDING_KEY);
+  return typeof pending?.key === 'string' ? pending.key : null;
+}
 
 export async function loadConfig(store: IdbStore): Promise<WebSyncConfig | null> {
   return store.localGet<WebSyncConfig>(CONFIG_KEY);
@@ -204,8 +211,14 @@ export async function joinGroup(
   replaceLocalData = false,
 ): Promise<JoinOutcome> {
   const normalized = normalizeKey(key);
-  if (!replaceLocalData && !(await store.isPristine())) throw new LocalDataError();
-  await store.wipe();
+  // An interrupted join with the same key resumes: what was downloaded stays
+  // (the engine saved its cursor after every batch of files).
+  const resuming = (await pendingJoinKey(store)) === normalized;
+  if (!resuming) {
+    if (!replaceLocalData && !(await store.isPristine())) throw new LocalDataError();
+    await store.wipe();
+    await store.localSet(JOIN_PENDING_KEY, { key: normalized });
+  }
   const engine = engineFor(store, normalized);
 
   onProgress({ phase: 'download' });
@@ -229,6 +242,7 @@ export async function joinGroup(
   report.pushed = pushed.pushed;
 
   await saveConfig(store, { joined: true, key: normalized, deviceName, lastSyncMs: nowMs() });
+  await store.localDelete(JOIN_PENDING_KEY);
   return { report, wrongKeySuspected: false };
 }
 

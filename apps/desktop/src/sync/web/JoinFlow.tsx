@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { IdbStore } from '@cardo/sync';
-import { DriveTransport } from './driveTransport';
+import { DriveError, DriveTransport } from './driveTransport';
 import { beginGoogleAuth, currentToken, GoogleAuthError, isGoogleConfigured } from './googleAuth';
 import { driveAuth } from './webClient';
 import {
@@ -9,6 +9,7 @@ import {
   JoinDeniedError,
   LocalDataError,
   normalizeKey,
+  pendingJoinKey,
   SlotsFullError,
   type JoinProgress,
 } from './webSync';
@@ -39,6 +40,13 @@ export function JoinFlow({ store, onDone }: { store: IdbStore; onDone(): void })
     JoinProgress & { filesRead?: number; filesTotal?: number }
   >({ phase: 'download' });
   const [error, setError] = useState<string | null>(null);
+
+  // An interrupted join resumes: keep the key so "Noch einmal" just continues.
+  useEffect(() => {
+    void pendingJoinKey(store).then((pending) => {
+      if (pending) setKey(pending);
+    });
+  }, [store]);
 
   const checkKey = () => {
     try {
@@ -85,9 +93,11 @@ export function JoinFlow({ store, onDone }: { store: IdbStore; onDone(): void })
           ? t('web.join.denied')
           : e instanceof SlotsFullError
             ? t('web.join.slotsFull')
-            : e instanceof Error
-              ? e.message
-              : String(e),
+            : e instanceof DriveError
+              ? t('web.join.network', { detail: e.message })
+              : e instanceof Error
+                ? e.message
+                : String(e),
       );
       setStep('error');
     }
@@ -219,7 +229,10 @@ export function JoinFlow({ store, onDone }: { store: IdbStore; onDone(): void })
         {step === 'error' && (
           <>
             <p className="join-flow__error">{error}</p>
-            <button className="c-btn c-btn--primary join-flow__wide" onClick={() => setStep('key')}>
+            <button
+              className="c-btn c-btn--primary join-flow__wide"
+              onClick={() => (key && currentToken() ? void join() : setStep('key'))}
+            >
               {t('web.join.retry')}
             </button>
             <button className="c-btn c-btn--ghost" onClick={() => setStep('choose')}>
