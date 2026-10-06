@@ -311,7 +311,7 @@ describe('sync-v1 fixtures from cardo-core', () => {
       expect(new TextDecoder().decode(cipher.decrypt(fromFixture.op_id, fresh))).toBe(tsFromBlob);
     });
     // Only the documented `"ratio":1.0` create differs (JS has no 1.0 ≠ 1).
-    expect(integralFloatOps.length).toBeLessThanOrEqual(1);
+    expect(integralFloatOps).toHaveLength(1);
   });
 
   it('rust-hub: a fresh IndexedDB store pulling the hub equals expected-docs.json', async () => {
