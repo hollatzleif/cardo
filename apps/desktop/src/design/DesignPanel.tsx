@@ -13,10 +13,14 @@ import {
   saveDesign,
   BACKGROUND_FITS,
   CARD_STYLES,
+  CHROMES,
+  DEFAULT_GUTTER,
+  MAX_GUTTER,
   DENSITIES,
   FONT_PRESETS,
   type BackgroundFit,
   type CardStyle,
+  type Chrome,
   type Density,
   type DesignOverrides,
   type FontPreset,
@@ -476,6 +480,41 @@ export function DesignPanel({ onClose }: { onClose(): void }) {
               </option>
             ))}
           </select>
+        </label>
+        <label className="design-row">
+          <span className="design-row__label">{t('design.layout.chrome')}</span>
+          <select
+            className="c-input"
+            value={d.chrome ?? 'default'}
+            onChange={(e) => {
+              const chrome = e.target.value as Chrome;
+              update({ chrome: chrome === 'default' ? undefined : chrome });
+            }}
+          >
+            {CHROMES.map((chrome) => (
+              <option key={chrome} value={chrome}>
+                {t(`design.layout.chromeOption.${chrome}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="design-row">
+          <span className="design-row__label">
+            {t('design.layout.gutter')}
+            <span className="design-row__value">{d.gutter ?? DEFAULT_GUTTER}px</span>
+          </span>
+          <input
+            type="range"
+            className="design-slider"
+            min={0}
+            max={MAX_GUTTER}
+            step={1}
+            value={d.gutter ?? DEFAULT_GUTTER}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              update({ gutter: value === DEFAULT_GUTTER ? undefined : value });
+            }}
+          />
         </label>
       </Section>
 

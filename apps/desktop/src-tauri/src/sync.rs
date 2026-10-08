@@ -153,12 +153,15 @@ fn forget_key() -> Result<(), String> {
 
 /// Minimal WebDAV carrier mirroring the folder transport's batch-file shape:
 /// one JSON file per pushed batch under `<base>/cardo-sync/ops/`, cursor =
-/// last processed filename (they sort chronologically).
+/// `cardo_core::LookbackCursor` over the (chronologically sorting) filenames.
 pub struct WebDavTransport {
     client: reqwest::Client,
     base: String,
     user: String,
     password: String,
+    /// Hub listing of the first pull, reused for the rest of the round (one
+    /// transport per round) – see GoogleDriveTransport::listing.
+    listing: std::sync::Mutex<Option<Vec<String>>>,
 }
 
 impl WebDavTransport {
@@ -175,6 +178,7 @@ impl WebDavTransport {
             base,
             user: user.to_string(),
             password: password.to_string(),
+            listing: std::sync::Mutex::new(None),
         })
     }
 
@@ -274,14 +278,27 @@ impl SyncTransport for WebDavTransport {
         &self,
         since: cardo_core::sync::Cursor,
     ) -> cardo_core::Result<cardo_core::sync::PullBatch> {
-        self.ensure_dirs().await.map_err(cardo_core::CoreError::Other)?;
-        let names = self.list_names().await.map_err(cardo_core::CoreError::Other)?;
+        let cached = self.listing.lock().expect("listing lock").clone();
+        let names = match cached {
+            Some(names) => names,
+            None => {
+                self.ensure_dirs().await.map_err(cardo_core::CoreError::Other)?;
+                let names = self.list_names().await.map_err(cardo_core::CoreError::Other)?;
+                *self.listing.lock().expect("listing lock") = Some(names.clone());
+                names
+            }
+        };
+        // Look-back cursor: late-arriving files (lagging uploader clock, slow
+        // upload) that sort below the last name are still read, exactly once.
+        let mut cursor = cardo_core::LookbackCursor::parse(&since);
+        let now = cardo_core::sync_cursor::now_ms();
+        let due = cursor.select(&names, 50, now);
         let mut ops = Vec::new();
-        let mut cursor = since.clone();
-        for name in names.into_iter().filter(|n| n.as_str() > since.as_str()).take(50) {
+        let mut broken_files = 0;
+        for name in &due {
             let response = self
                 .client
-                .get(self.ops_url(&name))
+                .get(self.ops_url(name))
                 .basic_auth(&self.user, Some(&self.password))
                 .send()
                 .await
@@ -292,21 +309,19 @@ impl SyncTransport for WebDavTransport {
                     response.status()
                 )));
             }
-            let body: Value = response
-                .json()
+            // Download errors are retried; an unparsable file is skipped and
+            // marked read so it cannot wedge this device.
+            let raw = response
+                .bytes()
                 .await
                 .map_err(|e| cardo_core::CoreError::Other(e.to_string()))?;
-            for op in body["ops"].as_array().into_iter().flatten() {
-                let (Some(op_id), Some(blob_b64)) = (op["op_id"].as_str(), op["blob_b64"].as_str())
-                else {
-                    continue;
-                };
-                let Some(blob) = b64_decode_public(blob_b64) else { continue };
-                ops.push(cardo_core::sync::EncryptedOp { op_id: op_id.to_string(), blob });
+            match cardo_core::sync_folder::decode_batch_file(&raw) {
+                Some(batch) => ops.extend(batch),
+                None => broken_files += 1,
             }
-            cursor = name;
         }
-        Ok(cardo_core::sync::PullBatch { ops, next_cursor: cursor })
+        cursor.advance(&due, now);
+        Ok(cardo_core::sync::PullBatch { ops, next_cursor: cursor.render(), broken_files })
     }
 }
 
@@ -322,25 +337,6 @@ pub(crate) fn b64_public(data: &[u8]) -> String {
         out.push(if chunk.len() > 2 { T[n as usize & 63] as char } else { '=' });
     }
     out
-}
-
-pub(crate) fn b64_decode_public(text: &str) -> Option<Vec<u8>> {
-    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let cleaned: Vec<u8> = text.bytes().filter(|&b| b != b'=').collect();
-    let mut out = Vec::with_capacity(cleaned.len() * 3 / 4);
-    for chunk in cleaned.chunks(4) {
-        let mut n: u32 = 0;
-        for &c in chunk {
-            n = (n << 6) | T.iter().position(|&a| a == c)? as u32;
-        }
-        match chunk.len() {
-            4 => out.extend_from_slice(&[(n >> 16) as u8, (n >> 8) as u8, n as u8]),
-            3 => out.extend_from_slice(&[(n >> 10) as u8, (n >> 2) as u8]),
-            2 => out.push((n >> 4) as u8),
-            _ => return None,
-        }
-    }
-    Some(out)
 }
 
 /* ── Engine plumbing ──────────────────────────────────────────────────── */
@@ -376,6 +372,9 @@ fn transport_cursor_id(config: &SyncConfig) -> String {
     }
 }
 
+/// How stale our own `lastSeenMs` may get before a round rewrites it.
+const DEVICE_SEEN_REFRESH_MS: i64 = 6 * 60 * 60 * 1000;
+
 async fn upsert_own_device(storage: &SqliteStorage, device_name: &str) -> Result<(), String> {
     let device_id = storage.device_id().to_string();
     let mut doc = storage
@@ -384,6 +383,23 @@ async fn upsert_own_device(storage: &SqliteStorage, device_name: &str) -> Result
         .map_err(|e| e.to_string())?
         .unwrap_or_else(|| json!({ "devices": [] }));
     let devices = doc["devices"].as_array().cloned().unwrap_or_default();
+    let now_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0);
+    // Every rewrite of the registry is a change-log op and a hub file. Keep
+    // the entry fresh (the UI shows the day), but do not write every round:
+    // only when it is missing (e.g. lost to a concurrent LWW rewrite), the
+    // name changed, or it is older than DEVICE_SEEN_REFRESH_MS.
+    if devices.iter().any(|d| {
+        d["deviceId"].as_str() == Some(device_id.as_str())
+            && d["name"].as_str() == Some(device_name)
+            && d["lastSeenMs"]
+                .as_i64()
+                .is_some_and(|seen| (0..DEVICE_SEEN_REFRESH_MS).contains(&(now_ms - seen)))
+    }) {
+        return Ok(());
+    }
     let mut devices: Vec<Value> =
         devices.into_iter().filter(|d| d["deviceId"].as_str() != Some(&device_id)).collect();
     if devices.len() >= DEVICE_SLOTS {
@@ -392,10 +408,7 @@ async fn upsert_own_device(storage: &SqliteStorage, device_name: &str) -> Result
     devices.push(json!({
         "deviceId": device_id,
         "name": device_name,
-        "lastSeenMs": std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis() as i64)
-            .unwrap_or(0),
+        "lastSeenMs": now_ms,
     }));
     doc["devices"] = Value::Array(devices);
     storage.set(DEVICES_NS, DEVICES_DOC, doc).await.map_err(|e| e.to_string())?;

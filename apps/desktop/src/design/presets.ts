@@ -52,4 +52,21 @@ export const DESIGN_PRESETS: DesignPreset[] = [
     themeId: 'github-light',
     design: { fontPreset: 'humanist', density: 'normal', radius: 8, shadow: false, border: true },
   },
+  {
+    id: 'market-terminal',
+    nameKey: 'design.preset.marketTerminal.name',
+    descKey: 'design.preset.marketTerminal.desc',
+    themeId: 'market-terminal',
+    design: {
+      fontPreset: 'monospace',
+      fontScale: 90,
+      density: 'compact',
+      radius: 0,
+      shadow: false,
+      border: false,
+      cardStyle: 'flat',
+      chrome: 'terminal',
+      gutter: 5,
+    },
+  },
 ];

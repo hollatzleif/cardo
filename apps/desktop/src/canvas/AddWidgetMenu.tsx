@@ -60,9 +60,7 @@ export function AddWidgetMenu({ onClose }: { onClose(): void }) {
                     label={t(`market.privacyBadge.${tool.manifest.privacy.level}`)}
                   />
                 </span>
-                <span className="c-muted add-widget__desc">
-                  {t(tool.manifest.descriptionKey)}
-                </span>
+                <span className="c-muted add-widget__desc">{t(tool.manifest.descriptionKey)}</span>
                 <span className="add-widget__add">+ {t('canvas.addWidget')}</span>
               </button>
             ))}

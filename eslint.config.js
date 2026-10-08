@@ -14,7 +14,7 @@ const noHardcodedColors = {
 };
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/target/**', '**/*.gen.ts', '**/.astro/**'] },
+  { ignores: ['**/dist/**', '**/dist-web/**', '**/node_modules/**', '**/target/**', '**/*.gen.ts', '**/.astro/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

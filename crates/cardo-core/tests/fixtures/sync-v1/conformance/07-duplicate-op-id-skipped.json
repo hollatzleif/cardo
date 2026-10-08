@@ -1,0 +1,97 @@
+{
+  "name": "07-duplicate-op-id-skipped",
+  "description": "Every applied op id (winner or loser) is remembered; a re-delivered id is skipped regardless of its content or hlc.",
+  "steps": [
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "d-1",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote",
+        "namespace": "todo",
+        "doc_id": "d",
+        "op": "create",
+        "field": null,
+        "value": {
+          "v": 1
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "create"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "d-1",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote",
+        "namespace": "todo",
+        "doc_id": "d",
+        "op": "create",
+        "field": null,
+        "value": {
+          "v": 1
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "d-1",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "d",
+        "op": "create",
+        "field": null,
+        "value": {
+          "v": 99
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "d-2",
+        "device_id": "remote-device",
+        "hlc": "0000000000001-0000-remote",
+        "namespace": "todo",
+        "doc_id": "d",
+        "op": "set_field",
+        "field": "v",
+        "value": 0,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "d-2",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "d",
+        "op": "set_field",
+        "field": "v",
+        "value": 0,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped",
+      "note": "loser ids are remembered too"
+    }
+  ],
+  "expectDocs": {
+    "todo": {
+      "d": {
+        "v": 1
+      }
+    }
+  },
+  "expectLocalOps": []
+}

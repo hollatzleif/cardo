@@ -3,6 +3,7 @@
 //! the Rust StorageAdapter, which records the change log atomically.
 
 mod assistant;
+mod calendar_feed;
 mod claude;
 mod legal;
 mod notes;
@@ -477,6 +478,7 @@ pub fn run() {
             legal::legal_set_piste_key,
             legal::legal_piste_key_present,
             legal::legal_clear_piste_key,
+            calendar_feed::calendar_fetch_ics,
             net_probe,
             assistant::assistant_hw_info,
             assistant::assistant_list_models,

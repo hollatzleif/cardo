@@ -1,0 +1,264 @@
+{
+  "name": "04-invalid-ops-lose-silently-or-error",
+  "description": "Field names are validated ([A-Za-z0-9_-], 1..64) and op kinds checked ONLY when the remote op would win: a loser is recorded as skipped, a winner errors and is NOT recorded (re-applying errors again). Namespace and doc id are validated up front.",
+  "steps": [
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "t",
+      "value": {
+        "title": "a"
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-old-dot",
+        "device_id": "remote-device",
+        "hlc": "0000000000001-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "set_field",
+        "field": "bad.field",
+        "value": 1,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-new-dot",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "set_field",
+        "field": "bad.field",
+        "value": 1,
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-new-dot",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "set_field",
+        "field": "bad.field",
+        "value": 1,
+        "created_at": 1760000000000
+      },
+      "expect": "error",
+      "note": "not recorded after an error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-old-space",
+        "device_id": "remote-device",
+        "hlc": "0000000000001-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "set_field",
+        "field": "with space",
+        "value": 1,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-new-empty",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "delete_field",
+        "field": "",
+        "value": null,
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-new-nofield",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "set_field",
+        "field": null,
+        "value": 1,
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-new-long",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "set_field",
+        "field": "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "value": 1,
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-new-umlaut",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "set_field",
+        "field": "größe",
+        "value": 1,
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-old-kind",
+        "device_id": "remote-device",
+        "hlc": "0000000000001-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "rename",
+        "field": null,
+        "value": null,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-new-kind",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "rename",
+        "field": null,
+        "value": null,
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-ns",
+        "device_id": "remote-device",
+        "hlc": "0000000000001-0000-remote",
+        "namespace": "Todo",
+        "doc_id": "t",
+        "op": "create",
+        "field": null,
+        "value": {},
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-ns3",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "a.b.c",
+        "doc_id": "t",
+        "op": "create",
+        "field": null,
+        "value": {},
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-id",
+        "device_id": "remote-device",
+        "hlc": "0000000000001-0000-remote",
+        "namespace": "todo",
+        "doc_id": "",
+        "op": "create",
+        "field": null,
+        "value": {},
+        "created_at": 1760000000000
+      },
+      "expect": "error"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-ok",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "set_field",
+        "field": "ok_field-1",
+        "value": true,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "i-ok-64",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t",
+        "op": "set_field",
+        "field": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "value": 64,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    }
+  ],
+  "expectDocs": {
+    "todo": {
+      "t": {
+        "title": "a",
+        "ok_field-1": true,
+        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": 64
+      }
+    }
+  },
+  "expectLocalOps": [
+    {
+      "namespace": "todo",
+      "docId": "t",
+      "op": "create",
+      "field": null,
+      "value": {
+        "title": "a"
+      }
+    }
+  ]
+}

@@ -26,7 +26,10 @@ function task(overrides: Partial<TaskDoc>): TaskDoc {
 
 describe('makeTask', () => {
   it('applies defaults and stores the id inside the doc', () => {
-    const t = makeTask({ title: '  Buy milk  ', list: 'list:inbox' }, new Date('2026-07-01T10:00:00Z'));
+    const t = makeTask(
+      { title: '  Buy milk  ', list: 'list:inbox' },
+      new Date('2026-07-01T10:00:00Z'),
+    );
     expect(t.id.startsWith('task:')).toBe(true);
     expect(t.title).toBe('Buy milk');
     expect(t.priority).toBe('medium');
@@ -38,7 +41,13 @@ describe('makeTask', () => {
   });
 
   it('keeps optional fields when provided', () => {
-    const t = makeTask({ title: 'a', list: 'l', priority: 'high', category: ' work ', due: '2026-07-20' });
+    const t = makeTask({
+      title: 'a',
+      list: 'l',
+      priority: 'high',
+      category: ' work ',
+      due: '2026-07-20',
+    });
     expect(t.priority).toBe('high');
     expect(t.category).toBe('work');
     expect(t.due).toBe('2026-07-20');
@@ -94,11 +103,26 @@ describe('sortOpenTasks', () => {
     const highLate = task({ id: 'task:2', priority: 'high', due: '2026-08-01' });
     const highEarly = task({ id: 'task:3', priority: 'high', due: '2026-07-01' });
     const highNoDue = task({ id: 'task:4', priority: 'high' });
-    const mediumOld = task({ id: 'task:5', priority: 'medium', createdAt: '2026-01-01T00:00:00.000Z' });
-    const mediumNew = task({ id: 'task:6', priority: 'medium', createdAt: '2026-06-01T00:00:00.000Z' });
+    const mediumOld = task({
+      id: 'task:5',
+      priority: 'medium',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+    const mediumNew = task({
+      id: 'task:6',
+      priority: 'medium',
+      createdAt: '2026-06-01T00:00:00.000Z',
+    });
 
     const sorted = sortOpenTasks([lowNoDue, mediumNew, highLate, mediumOld, highNoDue, highEarly]);
-    expect(sorted.map((t) => t.id)).toEqual(['task:3', 'task:2', 'task:4', 'task:5', 'task:6', 'task:1']);
+    expect(sorted.map((t) => t.id)).toEqual([
+      'task:3',
+      'task:2',
+      'task:4',
+      'task:5',
+      'task:6',
+      'task:1',
+    ]);
   });
 });
 
@@ -193,10 +217,24 @@ describe('computeTodayData', () => {
     const dueTodayMed = task({ id: 'task:dt', priority: 'medium', due: TODAY });
     const highNoDue = task({ id: 'task:hi', priority: 'high', list: 'list:work' });
     const futureLow = task({ id: 'task:fu', priority: 'low', due: '2026-08-01' });
-    const doneToday = task({ id: 'task:dn', done: true, status: 'done', completedAt: '2026-07-11T09:00:00' });
-    const doneEarlier = task({ id: 'task:de', done: true, status: 'done', completedAt: '2026-07-01T09:00:00' });
+    const doneToday = task({
+      id: 'task:dn',
+      done: true,
+      status: 'done',
+      completedAt: '2026-07-11T09:00:00',
+    });
+    const doneEarlier = task({
+      id: 'task:de',
+      done: true,
+      status: 'done',
+      completedAt: '2026-07-01T09:00:00',
+    });
 
-    const data = computeTodayData([futureLow, doneEarlier, highNoDue, doneToday, dueTodayMed, overdueLow], lists, TODAY);
+    const data = computeTodayData(
+      [futureLow, doneEarlier, highNoDue, doneToday, dueTodayMed, overdueLow],
+      lists,
+      TODAY,
+    );
     expect(data.open.map((i) => i.id)).toEqual(['task:od', 'task:dt', 'task:hi']);
     expect(data.overdue).toBe(1);
     expect(data.dueToday).toBe(1);
@@ -204,8 +242,19 @@ describe('computeTodayData', () => {
   });
 
   it('maps item fields: list name, overdue flag, optional due', () => {
-    const overdueTask = task({ id: 'task:od', title: 'pay bill', priority: 'high', due: '2026-07-01', list: 'list:work' });
-    const highNoDue = task({ id: 'task:hi', title: 'plan', priority: 'high', list: 'list:unknown' });
+    const overdueTask = task({
+      id: 'task:od',
+      title: 'pay bill',
+      priority: 'high',
+      due: '2026-07-01',
+      list: 'list:work',
+    });
+    const highNoDue = task({
+      id: 'task:hi',
+      title: 'plan',
+      priority: 'high',
+      list: 'list:unknown',
+    });
     const data = computeTodayData([overdueTask, highNoDue], lists, TODAY);
     expect(data.open[0]).toEqual({
       id: 'task:od',
@@ -241,7 +290,13 @@ describe('computeTodayData', () => {
   });
 
   it('ignores completed tasks for open/overdue/dueToday and future completions for completedToday', () => {
-    const doneOverdue = task({ id: 'task:a', done: true, status: 'done', due: '2026-07-01', completedAt: '2026-07-10T08:00:00' });
+    const doneOverdue = task({
+      id: 'task:a',
+      done: true,
+      status: 'done',
+      due: '2026-07-01',
+      completedAt: '2026-07-10T08:00:00',
+    });
     const data = computeTodayData([doneOverdue], lists, TODAY);
     expect(data.open).toHaveLength(0);
     expect(data.overdue).toBe(0);

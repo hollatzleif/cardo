@@ -31,6 +31,11 @@ pub struct PushAck {
 pub struct PullBatch {
     pub ops: Vec<EncryptedOp>,
     pub next_cursor: Cursor,
+    /// Batch files that could not be parsed (not JSON / no `ops` array).
+    /// They are skipped AND marked read: one malformed file from a buggy
+    /// client must not wedge every reader. Transport/IO/HTTP failures stay
+    /// errors (worth retrying).
+    pub broken_files: usize,
 }
 
 /// MVP: sync is off, nothing moves.

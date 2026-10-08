@@ -1,0 +1,65 @@
+{
+  "cases": [
+    {
+      "name": "empty",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text": "",
+      "utf8Hex": ""
+    },
+    {
+      "name": "ascii",
+      "sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+      "text": "abc",
+      "utf8Hex": "616263"
+    },
+    {
+      "name": "umlauts NFC",
+      "sha256": "6f60edc83713dec4456e8920edbdc32867246e74d34e60ed23ae052a7b89e9ad",
+      "text": "Grüße aus Köln – Äpfel, Öl, Übermut, ß",
+      "utf8Hex": "4772c3bcc39f6520617573204bc3b66c6e20e2809320c3847066656c2c20c3966c2c20c39c6265726d75742c20c39f"
+    },
+    {
+      "name": "umlauts NFD (no normalization!)",
+      "sha256": "8fdd8199ef9bb897b2a93f0ba5333b5d66a38b12b38c183fadce10fcca070f0b",
+      "text": "Grüße",
+      "utf8Hex": "477275cc88c39f65"
+    },
+    {
+      "name": "emoji incl. ZWJ + flag",
+      "sha256": "fd5a69cadf32c33b7bfa5a43586410fd2d74e6f4cb7d015b83ba47cd589ebbdf",
+      "text": "Notiz 🎉👩‍💻🇩🇪 done ✅",
+      "utf8Hex": "4e6f74697a20f09f8e89f09f91a9e2808df09f92bbf09f87a9f09f87aa20646f6e6520e29c85"
+    },
+    {
+      "name": "CRLF line endings",
+      "sha256": "a87b0ca98ec17aa04cb22078683889cf4b99dcd224e9b93ecbcb1e803a37bdb1",
+      "text": "# Titel\r\n\r\n- Punkt 1\r\n- Punkt 2\r\n",
+      "utf8Hex": "2320546974656c0d0a0d0a2d2050756e6b7420310d0a2d2050756e6b7420320d0a"
+    },
+    {
+      "name": "LF line endings",
+      "sha256": "0e07d1583e0cac337811438cbfebdba2c0be2e1f004095a016cf7ebac40eddca",
+      "text": "# Titel\n\n- Punkt 1\n- Punkt 2\n",
+      "utf8Hex": "2320546974656c0a0a2d2050756e6b7420310a2d2050756e6b7420320a"
+    },
+    {
+      "name": "BOM is hashed as-is",
+      "sha256": "45658cd25beed237cef3a7aba7694e14b2bd036ca396c12788c046c5de02f80b",
+      "text": "﻿mit BOM",
+      "utf8Hex": "efbbbf6d697420424f4d"
+    },
+    {
+      "name": "tabs, NUL-free control chars",
+      "sha256": "6d8f692e3c50254be40df968917001cb26321dbe45a1bb3f037cc3826394d5cc",
+      "text": "a\tb\u000bc\u001f",
+      "utf8Hex": "6109620b631f"
+    },
+    {
+      "name": "long markdown",
+      "sha256": "6cb405818c8456befe344500b0730c39e3966bbfe61a36fefc02bf2916e7bb72",
+      "text": "Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. ",
+      "utf8Hex": "4c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e204c6f72656d20697073756d20646f6c6f722073697420616d65742e20"
+    }
+  ],
+  "comment": "files.notes hash = lowercase hex SHA-256 over the raw UTF-8 bytes of the file content, exactly as read (no newline or Unicode normalization, BOM kept). Mirrors content_hash() in apps/desktop/src-tauri/src/sync_files.rs. Doc value is {content, hash}."
+}

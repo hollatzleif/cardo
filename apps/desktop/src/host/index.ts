@@ -1,9 +1,9 @@
-import { createHost, type Host } from './services';
+import { createHost, type Host, type HostOverrides } from './services';
 
 let hostInstance: Host | null = null;
 
-export function initHost(): Host {
-  if (!hostInstance) hostInstance = createHost();
+export function initHost(overrides?: HostOverrides): Host {
+  if (!hostInstance) hostInstance = createHost(overrides);
   return hostInstance;
 }
 

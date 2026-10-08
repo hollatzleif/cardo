@@ -1,0 +1,108 @@
+{
+  "name": "03-exact-tie-loses",
+  "description": "Remote must be STRICTLY greater; hlc comparison is plain byte-wise string comparison (a longer string with equal prefix is greater).",
+  "steps": [
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "t-create",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote",
+        "namespace": "todo",
+        "doc_id": "x",
+        "op": "create",
+        "field": null,
+        "value": {
+          "v": 1
+        },
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "create"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "t-field-tie",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote",
+        "namespace": "todo",
+        "doc_id": "x",
+        "op": "set_field",
+        "field": "v",
+        "value": 2,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "t-del-tie",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote",
+        "namespace": "todo",
+        "doc_id": "x",
+        "op": "delete_doc",
+        "field": null,
+        "value": null,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "t-field-b",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote-b",
+        "namespace": "todo",
+        "doc_id": "x",
+        "op": "set_field",
+        "field": "v",
+        "value": 3,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "t-field-a",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote-a",
+        "namespace": "todo",
+        "doc_id": "x",
+        "op": "set_field",
+        "field": "v",
+        "value": 4,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "t-field-b-tie",
+        "device_id": "remote-device",
+        "hlc": "5000000000000-0000-remote-b",
+        "namespace": "todo",
+        "doc_id": "x",
+        "op": "set_field",
+        "field": "v",
+        "value": 5,
+        "created_at": 1760000000000
+      },
+      "expect": "skipped"
+    }
+  ],
+  "expectDocs": {
+    "todo": {
+      "x": {
+        "v": 3
+      }
+    }
+  },
+  "expectLocalOps": []
+}

@@ -1,6 +1,7 @@
 import catppuccinLatte from '../catppuccin-latte.json';
 import catppuccinMocha from '../catppuccin-mocha.json';
 import nord from '../nord.json';
+import marketTerminal from '../market-terminal.json';
 import dracula from '../dracula.json';
 import githubLight from '../github-light.json';
 import gruvboxDark from '../gruvbox-dark.json';
@@ -72,6 +73,7 @@ export const themes: Theme[] = [
   flexokiLight,
   catppuccinFrappe,
   rosePineDawn,
+  marketTerminal,
 ] as Theme[];
 
 export const defaultThemeId = 'catppuccin-mocha';

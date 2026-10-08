@@ -1,0 +1,279 @@
+[
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1}",
+    "name": "canonical",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1}",
+    "name": "whitespace around tokens",
+    "ok": true,
+    "text": " \n{\"op_id\" : \"0190a0a0-0000-7000-8000-000000000001\" ,\t\"device_id\" : \"d\" ,\t\"hlc\" : \"1700000000000-0000-d\" ,\t\"namespace\" : \"todo\" ,\t\"doc_id\" : \"1\" ,\t\"op\" : \"set_field\" ,\t\"field\" : \"t\" ,\t\"value\" : \"x\" ,\t\"created_at\" : 1}\r\n"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":0}",
+    "name": "created_at 0",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":0}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":-5}",
+    "name": "created_at negative",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":-5}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":9223372036854775807}",
+    "name": "created_at i64 max",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":9223372036854775807}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":-9223372036854775808}",
+    "name": "created_at i64 min",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":-9223372036854775808}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":9007199254740993}",
+    "name": "created_at above 2^53",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":9007199254740993}"
+  },
+  {
+    "name": "created_at i64 max + 1",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":9223372036854775808}"
+  },
+  {
+    "name": "created_at i64 min - 1",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":-9223372036854775809}"
+  },
+  {
+    "name": "created_at 1.0 is a float",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1.0}"
+  },
+  {
+    "name": "created_at 1e3 is a float",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1e3}"
+  },
+  {
+    "name": "created_at 1E3 is a float",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1E3}"
+  },
+  {
+    "name": "created_at -0 is a float for serde",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":-0}"
+  },
+  {
+    "name": "created_at string",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":\"1\"}"
+  },
+  {
+    "name": "created_at missing",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\"}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":null,\"value\":null,\"created_at\":1}",
+    "name": "field and value missing",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":null,\"value\":null,\"created_at\":1}",
+    "name": "field null value null",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":null,\"value\":null,\"created_at\":1}"
+  },
+  {
+    "name": "field is a number",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":5,\"value\":1,\"created_at\":1}"
+  },
+  {
+    "name": "duplicate op_id",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1,\"op_id\":\"x\"}"
+  },
+  {
+    "name": "duplicate value",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1,\"value\":2}"
+  },
+  {
+    "name": "duplicate created_at",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1,\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1}",
+    "name": "unknown field ignored, duplicates too",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1,\"zz\":1,\"zz\":[2]}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":{\"a\":2},\"created_at\":1}",
+    "name": "duplicate keys inside value: last wins",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":{\"a\":1,\"a\":2},\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":{\"__proto__\":{\"evil\":1},\"p\":1},\"created_at\":1}",
+    "name": "__proto__ key inside value",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":{\"__proto__\":{\"evil\":1},\"p\":1},\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"😀\",\"created_at\":1}",
+    "name": "paired surrogate escape",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"\\ud83d\\ude00\",\"created_at\":1}"
+  },
+  {
+    "name": "lone leading surrogate in value",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"\\ud83d\",\"created_at\":1}"
+  },
+  {
+    "name": "lone trailing surrogate in value",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"\\ude00\",\"created_at\":1}"
+  },
+  {
+    "name": "leading surrogate + non-surrogate escape",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"\\ud800\\u0041\",\"created_at\":1}"
+  },
+  {
+    "name": "lone surrogate in a value key",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":{\"\\ud800\":1},\"created_at\":1}"
+  },
+  {
+    "name": "lone surrogate in doc_id",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"\\udbff\",\"op\":\"set_field\",\"field\":\"t\",\"value\":1,\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1}",
+    "name": "lone surrogate in an unknown field value",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1,\"zz\":\"\\ud800\"}"
+  },
+  {
+    "name": "lone surrogate in an unknown field key",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1,\"\\ud800\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"\\u0000\",\"created_at\":1}",
+    "name": "escaped NUL",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"\\u0000\",\"created_at\":1}"
+  },
+  {
+    "name": "raw control character in string",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"a\nb\",\"created_at\":1}"
+  },
+  {
+    "name": "invalid escape",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"\\x\",\"created_at\":1}"
+  },
+  {
+    "name": "value 1e400 out of range",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":1e400,\"created_at\":1}"
+  },
+  {
+    "name": "value -1e400 out of range",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":[-1e400],\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":0.0,\"created_at\":1}",
+    "name": "value 1e-400 underflows to 0",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":1e-400,\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1}",
+    "name": "unknown field 1e400 ignored",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1,\"zz\":1e400}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":1.5,\"created_at\":1}",
+    "name": "value 1.5",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":1.5,\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":1.2345678901234568e+29,\"created_at\":1}",
+    "name": "value huge integer",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":123456789012345678901234567890,\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]],\"created_at\":1}",
+    "name": "value nesting 126 (total depth 127)",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]],\"created_at\":1}"
+  },
+  {
+    "name": "value nesting 127 (total depth 128)",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]],\"created_at\":1}"
+  },
+  {
+    "canonical": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1}",
+    "name": "unknown field nesting 300",
+    "ok": true,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1,\"zz\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}"
+  },
+  {
+    "canonical": "{\"op_id\":\"a\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"create\",\"field\":null,\"value\":{\"x\":1},\"created_at\":7}",
+    "name": "sequence form",
+    "ok": true,
+    "text": "[\"a\",\"d\",\"1700000000000-0000-d\",\"todo\",\"1\",\"create\",null,{\"x\":1},7]"
+  },
+  {
+    "name": "sequence form too short",
+    "ok": false,
+    "text": "[\"a\",\"d\",\"1700000000000-0000-d\",\"todo\",\"1\",\"create\",null,{\"x\":1}]"
+  },
+  {
+    "name": "sequence form too long",
+    "ok": false,
+    "text": "[\"a\",\"d\",\"1700000000000-0000-d\",\"todo\",\"1\",\"create\",null,{\"x\":1},7,8]"
+  },
+  {
+    "name": "trailing characters",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":\"x\",\"created_at\":1}x"
+  },
+  {
+    "name": "top-level null",
+    "ok": false,
+    "text": "null"
+  },
+  {
+    "name": "leading zero number",
+    "ok": false,
+    "text": "{\"op_id\":\"0190a0a0-0000-7000-8000-000000000001\",\"device_id\":\"d\",\"hlc\":\"1700000000000-0000-d\",\"namespace\":\"todo\",\"doc_id\":\"1\",\"op\":\"set_field\",\"field\":\"t\",\"value\":01,\"created_at\":1}"
+  },
+  {
+    "name": "empty object",
+    "ok": false,
+    "text": "{}"
+  }
+]

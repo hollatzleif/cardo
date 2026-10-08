@@ -4,9 +4,24 @@ import { widgetAccentStyle } from '@cardo/ui';
 import { useAppStore, type WidgetInstance } from '../state/appStore';
 import { liveTools } from '../host/tools';
 import { WidgetHelp } from './WidgetHelp';
-import { GRID_COLS, GRID_MARGIN } from './LayoutEngine';
+import { GRID_COLS } from './LayoutEngine';
+import { getGridGutter, useDesignChrome } from '../design/design';
 
 type GridPos = { x: number; y: number; w: number; h: number };
+
+/**
+ * Column/row pitch of the grid in px, derived from a rendered grid item:
+ * an item spanning `w` columns is `w` pitches wide minus one gutter.
+ */
+export function gridPitch(
+  itemWidth: number,
+  itemHeight: number,
+  w: number,
+  h: number,
+  gutter: number,
+): { x: number; y: number } {
+  return { x: (itemWidth + gutter) / w, y: (itemHeight + gutter) / h };
+}
 
 /**
  * Pointer-event drag for a widget's move and resize grips. We roll our own
@@ -34,8 +49,9 @@ function beginGridDrag(
 
   const startX = e.clientX;
   const startY = e.clientY;
-  const pitchX = (item.offsetWidth + GRID_MARGIN) / widget.w;
-  const pitchY = (item.offsetHeight + GRID_MARGIN) / widget.h;
+  const pitch = gridPitch(item.offsetWidth, item.offsetHeight, widget.w, widget.h, getGridGutter());
+  const pitchX = pitch.x;
+  const pitchY = pitch.y;
   let last: GridPos = { x: widget.x, y: widget.y, w: widget.w, h: widget.h };
 
   const onMove = (ev: PointerEvent): void => {
@@ -68,19 +84,32 @@ function beginGridDrag(
   window.addEventListener('pointerup', onUp);
 }
 
+/** Touch controls that replace drag/resize grips on the single-column phone board. */
+export interface MobileFrameControls {
+  /** Columns the widget is told it has (phones are ~4 desktop columns wide). */
+  cols: number;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMove(direction: -1 | 1): void;
+  onResize(delta: -1 | 1): void;
+}
+
 export function WidgetFrame({
   widget,
   editing,
   onRemove,
+  mobile,
 }: {
   widget: WidgetInstance;
   editing: boolean;
   onRemove(): void;
+  mobile?: MobileFrameControls;
 }) {
   const { t } = useTranslation();
   const setWidgetVariant = useAppStore((s) => s.setWidgetVariant);
   const updateWidgetPositions = useAppStore((s) => s.updateWidgetPositions);
   const [helpOpen, setHelpOpen] = useState(false);
+  const chrome = useDesignChrome();
   const tool = liveTools.get(widget.toolId);
   if (!tool) {
     return <div className="c-card widget-frame widget-frame--missing">?</div>;
@@ -115,20 +144,72 @@ export function WidgetFrame({
       style={widgetAccentStyle(widget.accentToken)}
       data-tour-anchor={`widget:${widget.toolId}:${widget.widgetId}`}
     >
-      {!editing && helpButton(true)}
+      {!editing && chrome === 'default' && !mobile && helpButton(true)}
+      {!editing && (chrome === 'terminal' || mobile) && (
+        // Terminal chrome and the phone list: a header bar with the widget's
+        // name (orientation in a long list) replaces the floating "?".
+        <div className="widget-frame__header">
+          <span className="widget-frame__header-title">{t(tool.manifest.nameKey)}</span>
+          {variants.length > 1 && activeVariant && (
+            <span className="widget-frame__header-variant">
+              {t(`tool.${widget.toolId}.variant.${activeVariant}`, { defaultValue: activeVariant })}
+            </span>
+          )}
+          {helpButton(false)}
+        </div>
+      )}
       {editing && (
         <div className="widget-frame__toolbar">
           {helpButton(false)}
           <span className="widget-frame__title">{t(tool.manifest.nameKey)}</span>
-          <span
-            className="widget-frame__drag"
-            role="button"
-            aria-label={t('canvas.moveWidget')}
-            title={t('canvas.moveWidget')}
-            onPointerDown={(e) => beginGridDrag(e, widget, 'move', min, commit)}
-          >
-            ⠿
-          </span>
+          {mobile ? (
+            <span className="widget-frame__mobile-controls">
+              <button
+                className="c-btn c-btn--ghost"
+                aria-label={t('canvas.moveUp')}
+                title={t('canvas.moveUp')}
+                disabled={!mobile.canMoveUp}
+                onClick={() => mobile.onMove(-1)}
+              >
+                ↑
+              </button>
+              <button
+                className="c-btn c-btn--ghost"
+                aria-label={t('canvas.moveDown')}
+                title={t('canvas.moveDown')}
+                disabled={!mobile.canMoveDown}
+                onClick={() => mobile.onMove(1)}
+              >
+                ↓
+              </button>
+              <button
+                className="c-btn c-btn--ghost"
+                aria-label={t('canvas.shrinkWidget')}
+                title={t('canvas.shrinkWidget')}
+                onClick={() => mobile.onResize(-1)}
+              >
+                −
+              </button>
+              <button
+                className="c-btn c-btn--ghost"
+                aria-label={t('canvas.growWidget')}
+                title={t('canvas.growWidget')}
+                onClick={() => mobile.onResize(1)}
+              >
+                +
+              </button>
+            </span>
+          ) : (
+            <span
+              className="widget-frame__drag"
+              role="button"
+              aria-label={t('canvas.moveWidget')}
+              title={t('canvas.moveWidget')}
+              onPointerDown={(e) => beginGridDrag(e, widget, 'move', min, commit)}
+            >
+              ⠿
+            </span>
+          )}
           {variants.length > 1 && (
             <select
               className="c-input widget-frame__variant"
@@ -157,11 +238,11 @@ export function WidgetFrame({
           instanceId={widget.instanceId}
           widgetId={widget.widgetId}
           variant={activeVariant}
-          size={{ w: widget.w, h: widget.h }}
+          size={{ w: mobile ? mobile.cols : widget.w, h: widget.h }}
           editing={editing}
         />
       </div>
-      {editing && (
+      {editing && !mobile && (
         <span
           className="widget-frame__resize"
           role="button"

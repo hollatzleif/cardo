@@ -1,0 +1,338 @@
+[
+  {
+    "created_at": 1791291405472,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-1",
+    "field": null,
+    "hlc": "1791291405470-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "create",
+    "op_id": "01a11149-b49e-73c0-8bb4-3b76140952e3",
+    "value": {
+      "done": false,
+      "due": null,
+      "prio": 2,
+      "tags": [
+        "einkauf",
+        "dringend"
+      ],
+      "title": "Milch kaufen",
+      "type": "task"
+    }
+  },
+  {
+    "created_at": 1791291405474,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-2",
+    "field": null,
+    "hlc": "1791291405474-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "create",
+    "op_id": "01a11149-b4a2-770a-86d9-099bf9cdd090",
+    "value": {
+      "done": false,
+      "prio": 1,
+      "title": "Steuer 2025",
+      "type": "task"
+    }
+  },
+  {
+    "created_at": 1791291405476,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "Jürgen Müller–Lüdenscheidt",
+    "field": null,
+    "hlc": "1791291405475-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "contacts",
+    "op": "create",
+    "op_id": "01a11149-b4a3-71c1-9b16-09924a448c4b",
+    "value": {
+      "address": {
+        "city": "Düsseldorf",
+        "geo": {
+          "lat": 51.2254,
+          "lng": 6.7763
+        },
+        "street": "Königsallee 1"
+      },
+      "balance": -1234,
+      "big": 9007199254740991,
+      "emoji": "👩‍💻🇩🇪",
+      "emptyArr": [],
+      "emptyObj": {},
+      "escapes": "tab\tquote\"backslash\\ newline\n",
+      "mixed": [
+        1,
+        "zwei",
+        null,
+        true,
+        {
+          "k": []
+        },
+        -0.5
+      ],
+      "name": "Jürgen Müller-Lüdenscheidt",
+      "neg": -42,
+      "nothing": null,
+      "phones": [
+        "+49 211 000000",
+        "+49 170 1234567"
+      ],
+      "ratio": 1,
+      "temp": -273.15,
+      "tiny": 1.5e-7,
+      "zero": 0
+    }
+  },
+  {
+    "created_at": 1791291405477,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "Grüße 🎉.md",
+    "field": null,
+    "hlc": "1791291405477-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "files.notes",
+    "op": "create",
+    "op_id": "01a11149-b4a5-74e8-837c-dcc9c3c91bc2",
+    "value": {
+      "content": "# Grüße 🎉\r\n\r\nErste Zeile.\r\n",
+      "hash": "78a8b61b3c770521a173848e823eb892cd95cdaafe09b7b9a66efd8a0400443a"
+    }
+  },
+  {
+    "created_at": 1791291405478,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "sync-devices",
+    "field": null,
+    "hlc": "1791291405477-0001-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "core",
+    "op": "create",
+    "op_id": "01a11149-b4a5-74e9-81f1-84ec693b9ca1",
+    "value": {
+      "devices": [
+        {
+          "deviceId": "6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+          "lastSeenMs": 1760000000000,
+          "name": "Heikes MacBook"
+        }
+      ]
+    }
+  },
+  {
+    "created_at": 1791291405478,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "join-policy",
+    "field": null,
+    "hlc": "1791291405478-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "core.sync-control",
+    "op": "create",
+    "op_id": "01a11149-b4a6-7172-adef-39b83f88165a",
+    "value": {
+      "open": true,
+      "type": "join-policy"
+    }
+  },
+  {
+    "created_at": 1791291405510,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-1",
+    "field": "done",
+    "hlc": "1791291405510-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "set_field",
+    "op_id": "01a11149-b4c6-7330-ae5b-e52f4ff9452d",
+    "value": true
+  },
+  {
+    "created_at": 1791291405511,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-1",
+    "field": "tags",
+    "hlc": "1791291405511-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "set_field",
+    "op_id": "01a11149-b4c7-76fb-8a5f-d777f668fcc3",
+    "value": [
+      "einkauf",
+      "dringend",
+      "rewe"
+    ]
+  },
+  {
+    "created_at": 1791291405511,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-1",
+    "field": "title",
+    "hlc": "1791291405511-0001-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "set_field",
+    "op_id": "01a11149-b4c7-76fc-a0d1-ba83ed56c0c1",
+    "value": "Milch & Brot kaufen"
+  },
+  {
+    "created_at": 1791291405511,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-1",
+    "field": "due",
+    "hlc": "1791291405511-0002-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "delete_field",
+    "op_id": "01a11149-b4c7-76fd-a000-34834b7a2d5f",
+    "value": null
+  },
+  {
+    "created_at": 1791291405513,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "Jürgen Müller–Lüdenscheidt",
+    "field": "address",
+    "hlc": "1791291405513-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "contacts",
+    "op": "set_field",
+    "op_id": "01a11149-b4c9-72ab-a954-dda714e2785a",
+    "value": {
+      "city": "Köln",
+      "geo": {
+        "lat": 51.2254,
+        "lng": 6.7763
+      },
+      "street": "Königsallee 1"
+    }
+  },
+  {
+    "created_at": 1791291405513,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "Jürgen Müller–Lüdenscheidt",
+    "field": "nothing",
+    "hlc": "1791291405513-0001-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "contacts",
+    "op": "set_field",
+    "op_id": "01a11149-b4c9-72ac-9f42-caf2f73747cd",
+    "value": "now something"
+  },
+  {
+    "created_at": 1791291405513,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "Jürgen Müller–Lüdenscheidt",
+    "field": "emptyArr",
+    "hlc": "1791291405513-0002-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "contacts",
+    "op": "delete_field",
+    "op_id": "01a11149-b4c9-72ad-a931-c0cd1617434b",
+    "value": null
+  },
+  {
+    "created_at": 1791291405515,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-2",
+    "field": null,
+    "hlc": "1791291405515-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "delete_doc",
+    "op_id": "01a11149-b4cb-74e1-9c7c-d2885f4eec89",
+    "value": null
+  },
+  {
+    "created_at": 1791291405515,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "Grüße 🎉.md",
+    "field": "content",
+    "hlc": "1791291405515-0001-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "files.notes",
+    "op": "set_field",
+    "op_id": "01a11149-b4cb-74e2-864d-00567697c8b7",
+    "value": "# Grüße 🎉\r\n\r\nErste Zeile.\r\nZweite Zeile – mit Ümlaut.\r\n"
+  },
+  {
+    "created_at": 1791291405516,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "Grüße 🎉.md",
+    "field": "hash",
+    "hlc": "1791291405516-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "files.notes",
+    "op": "set_field",
+    "op_id": "01a11149-b4cc-73a2-9c22-7b1229963d95",
+    "value": "faf09f795404d2ef2d88c1380d1213fe3903136d18ea7b4f852fff4833483d99"
+  },
+  {
+    "created_at": 1791291405516,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "sync-devices",
+    "field": "devices",
+    "hlc": "1791291405516-0001-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "core",
+    "op": "set_field",
+    "op_id": "01a11149-b4cc-73a3-87e7-43a986aa05e1",
+    "value": [
+      {
+        "deviceId": "6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+        "lastSeenMs": 1760000100000,
+        "name": "Heikes MacBook"
+      },
+      {
+        "deviceId": "0b8e1f2a-3c4d-4e5f-9a6b-7c8d9e0f1a2b",
+        "lastSeenMs": 1760000200000,
+        "name": "iPhone"
+      }
+    ]
+  },
+  {
+    "created_at": 1791291405517,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-3",
+    "field": null,
+    "hlc": "1791291405517-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "create",
+    "op_id": "01a11149-b4cd-71cc-969b-262a72890aaf",
+    "value": {
+      "title": "kurzlebig",
+      "type": "task"
+    }
+  },
+  {
+    "created_at": 1791291405522,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-3",
+    "field": null,
+    "hlc": "1791291405522-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "delete_doc",
+    "op_id": "01a11149-b4d2-71f9-aa28-40253a50f9e9",
+    "value": null
+  },
+  {
+    "created_at": 1791291405564,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-2",
+    "field": null,
+    "hlc": "1791291405564-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "create",
+    "op_id": "01a11149-b4fc-733c-b0ee-dca5521878b6",
+    "value": {
+      "done": false,
+      "title": "Steuer 2025 (neu)",
+      "type": "task"
+    }
+  },
+  {
+    "created_at": 1791291405565,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "task-1",
+    "field": "prio",
+    "hlc": "1791291405564-0001-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "todo",
+    "op": "set_field",
+    "op_id": "01a11149-b4fc-733d-b9e4-5777d5d49f61",
+    "value": 3.5
+  },
+  {
+    "created_at": 1791291405565,
+    "device_id": "dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "doc_id": "join-policy",
+    "field": "open",
+    "hlc": "1791291405565-0000-dbabb265-5060-4cdc-a38c-591a4f916e65",
+    "namespace": "core.sync-control",
+    "op": "set_field",
+    "op_id": "01a11149-b4fd-7574-8071-72758997f6b4",
+    "value": false
+  }
+]

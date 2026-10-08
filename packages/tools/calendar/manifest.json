@@ -4,14 +4,16 @@
   "descriptionKey": "tool.calendar.description",
   "version": "1.0.0",
   "minAppVersion": "0.1.0",
-  "permissions": [
-    "notifications",
-    "scheduler"
-  ],
+  "permissions": ["notifications", "scheduler", "network"],
   "privacy": {
-    "level": "green",
-    "network": [],
-    "summaryKey": "tool.calendar.privacy"
+    "level": "yellow",
+    "network": [
+      {
+        "host": "calendar.google.com",
+        "dataKey": "tool.calendar.privacy.google"
+      }
+    ],
+    "summaryKey": "tool.calendar.privacy.summary"
   },
   "widgets": [
     {
@@ -30,7 +32,8 @@
   "commands": [
     "calendar.create",
     "calendar.remind",
-    "calendar.query-today"
+    "calendar.query-today",
+    "calendar.sync-google"
   ],
   "selfTests": [
     {

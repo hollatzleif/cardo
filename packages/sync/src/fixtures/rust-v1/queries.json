@@ -1,0 +1,599 @@
+[
+ {
+  "ns": "todo",
+  "q": {
+   "direction": "desc",
+   "orderBy": "p",
+   "where": [
+    {
+     "field": "done",
+     "op": "=",
+     "value": false
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   },
+   {
+    "done": false,
+    "p": 2,
+    "title": "Plan more"
+   },
+   {
+    "done": false,
+    "tags": [
+     "a",
+     "b"
+    ],
+    "title": "no prio"
+   },
+   {
+    "done": false,
+    "p": null,
+    "title": "100%_done"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "p",
+     "op": "!=",
+     "value": 1
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   },
+   {
+    "done": false,
+    "p": 2,
+    "title": "Plan more"
+   },
+   {
+    "p": "high",
+    "title": "text prio"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "nope",
+     "op": "!=",
+     "value": "x"
+    }
+   ]
+  },
+  "rows": []
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "p",
+     "op": "=",
+     "value": null
+    }
+   ]
+  },
+  "rows": []
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "p",
+     "op": "<",
+     "value": "a"
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   },
+   {
+    "done": true,
+    "p": 1,
+    "title": "old task"
+   },
+   {
+    "done": false,
+    "p": 2,
+    "title": "Plan more"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "p",
+     "op": ">",
+     "value": 100
+    }
+   ]
+  },
+  "rows": [
+   {
+    "p": "high",
+    "title": "text prio"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "done",
+     "op": "=",
+     "value": 1
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": true,
+    "p": 1,
+    "title": "old task"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "tags",
+     "op": "=",
+     "value": [
+      "a",
+      "b"
+     ]
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "tags": [
+     "a",
+     "b"
+    ],
+    "title": "no prio"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "title",
+     "op": "like",
+     "value": "PLAN"
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   },
+   {
+    "done": false,
+    "p": 2,
+    "title": "Plan more"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "title",
+     "op": "like",
+     "value": "o_d"
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": true,
+    "p": 1,
+    "title": "old task"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "title",
+     "op": "like",
+     "value": "w%n"
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "title",
+     "op": "like",
+     "value": "0%d"
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": null,
+    "title": "100%_done"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "p",
+     "op": "like",
+     "value": 3
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   }
+  ]
+ },
+ {
+  "ns": "x",
+  "q": {
+   "where": [
+    {
+     "field": "t",
+     "op": "like",
+     "value": "ärger"
+    }
+   ]
+  },
+  "rows": []
+ },
+ {
+  "ns": "x",
+  "q": {
+   "where": [
+    {
+     "field": "t",
+     "op": "like",
+     "value": "Ärger"
+    }
+   ]
+  },
+  "rows": [
+   {
+    "t": "ÄRGER"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "p",
+     "op": "in",
+     "value": [
+      1,
+      3,
+      null,
+      "high"
+     ]
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   },
+   {
+    "done": true,
+    "p": 1,
+    "title": "old task"
+   },
+   {
+    "p": "high",
+    "title": "text prio"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "title",
+     "op": "in",
+     "value": "old task"
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": true,
+    "p": 1,
+    "title": "old task"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "done",
+     "op": "in",
+     "value": [
+      true
+     ]
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": true,
+    "p": 1,
+    "title": "old task"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "orderBy": "p"
+  },
+  "rows": [
+   {
+    "done": false,
+    "tags": [
+     "a",
+     "b"
+    ],
+    "title": "no prio"
+   },
+   {
+    "done": false,
+    "p": null,
+    "title": "100%_done"
+   },
+   {
+    "done": true,
+    "p": 1,
+    "title": "old task"
+   },
+   {
+    "done": false,
+    "p": 2,
+    "title": "Plan more"
+   },
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   },
+   {
+    "p": "high",
+    "title": "text prio"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "direction": "desc",
+   "limit": 2,
+   "orderBy": "p"
+  },
+  "rows": [
+   {
+    "p": "high",
+    "title": "text prio"
+   },
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "limit": 0
+  },
+  "rows": []
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "limit": -1
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   },
+   {
+    "done": true,
+    "p": 1,
+    "title": "old task"
+   },
+   {
+    "done": false,
+    "p": 2,
+    "title": "Plan more"
+   },
+   {
+    "done": false,
+    "tags": [
+     "a",
+     "b"
+    ],
+    "title": "no prio"
+   },
+   {
+    "done": false,
+    "p": null,
+    "title": "100%_done"
+   },
+   {
+    "p": "high",
+    "title": "text prio"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "done",
+     "op": "=",
+     "value": true
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": true,
+    "p": 1,
+    "title": "old task"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "done",
+     "op": "like",
+     "value": true
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": true,
+    "p": 1,
+    "title": "old task"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "tags",
+     "op": "like",
+     "value": "\"a\""
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "tags": [
+     "a",
+     "b"
+    ],
+    "title": "no prio"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "p",
+     "op": ">=",
+     "value": 2.5
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   },
+   {
+    "p": "high",
+    "title": "text prio"
+   }
+  ]
+ },
+ {
+  "ns": "todo",
+  "q": {
+   "where": [
+    {
+     "field": "p",
+     "op": "in",
+     "value": {
+      "k": 3
+     }
+    }
+   ]
+  },
+  "rows": [
+   {
+    "done": false,
+    "p": 3,
+    "title": "write plan"
+   }
+  ]
+ }
+]

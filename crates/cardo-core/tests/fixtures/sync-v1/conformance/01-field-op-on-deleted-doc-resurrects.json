@@ -1,0 +1,114 @@
+{
+  "name": "01-field-op-on-deleted-doc-resurrects",
+  "description": "A remote field op newer than a local delete_doc revives the tombstoned doc WITH its old data plus the field; an older one loses against the delete_doc.",
+  "steps": [
+    {
+      "kind": "set",
+      "namespace": "todo",
+      "id": "t1",
+      "value": {
+        "title": "alt",
+        "prio": 1
+      },
+      "expectOperation": "create",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "delete",
+      "namespace": "todo",
+      "id": "t1",
+      "expectOpsLogged": 1
+    },
+    {
+      "kind": "get",
+      "namespace": "todo",
+      "id": "t1",
+      "expectDoc": null
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "r-old",
+        "device_id": "remote-device",
+        "hlc": "0000000000001-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t1",
+        "op": "set_field",
+        "field": "title",
+        "value": "zu alt",
+        "created_at": 1760000000000
+      },
+      "expect": "skipped",
+      "note": "older than the local delete_doc"
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "r-new",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0000-remote",
+        "namespace": "todo",
+        "doc_id": "t1",
+        "op": "set_field",
+        "field": "done",
+        "value": true,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    },
+    {
+      "kind": "get",
+      "namespace": "todo",
+      "id": "t1",
+      "expectDoc": {
+        "title": "alt",
+        "prio": 1,
+        "done": true
+      }
+    },
+    {
+      "kind": "remote",
+      "op": {
+        "op_id": "r-del",
+        "device_id": "remote-device",
+        "hlc": "9999999999999-0001-remote",
+        "namespace": "todo",
+        "doc_id": "t1",
+        "op": "delete_field",
+        "field": "prio",
+        "value": null,
+        "created_at": 1760000000000
+      },
+      "expect": "applied",
+      "expectOperation": "update"
+    }
+  ],
+  "expectDocs": {
+    "todo": {
+      "t1": {
+        "title": "alt",
+        "done": true
+      }
+    }
+  },
+  "expectLocalOps": [
+    {
+      "namespace": "todo",
+      "docId": "t1",
+      "op": "create",
+      "field": null,
+      "value": {
+        "title": "alt",
+        "prio": 1
+      }
+    },
+    {
+      "namespace": "todo",
+      "docId": "t1",
+      "op": "delete_doc",
+      "field": null,
+      "value": null
+    }
+  ]
+}

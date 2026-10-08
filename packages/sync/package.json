@@ -1,0 +1,17 @@
+{
+  "name": "@cardo/sync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@cardo/core": "workspace:*",
+    "@cardo/plugin-api": "workspace:*",
+    "@noble/ciphers": "^2.0.0",
+    "@noble/hashes": "^2.0.0"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.0.0"
+  }
+}

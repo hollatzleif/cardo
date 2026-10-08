@@ -221,6 +221,12 @@ pub struct GoogleDriveTransport {
     client: reqwest::Client,
     /// Cached access token + its expiry.
     access: Mutex<Option<(String, Instant)>>,
+    /// Sorted `(name, fileId)` listing of the hub, fetched by the FIRST pull
+    /// of this transport and reused by the following pulls. A transport
+    /// lives for one sync round (`build_transport` per round), so a join
+    /// over N files costs one listing instead of N/50; files uploaded during
+    /// the round are picked up next round.
+    listing: Mutex<Option<Vec<(String, String)>>>,
 }
 
 pub fn build_transport() -> Result<Box<dyn SyncTransport>, String> {
@@ -233,6 +239,7 @@ pub fn build_transport() -> Result<Box<dyn SyncTransport>, String> {
             .build()
             .map_err(|e| e.to_string())?,
         access: Mutex::new(None),
+        listing: Mutex::new(None),
     }))
 }
 
@@ -317,12 +324,63 @@ impl SyncTransport for GoogleDriveTransport {
 
     async fn pull(&self, since: Cursor) -> cardo_core::Result<PullBatch> {
         let token = self.access_token().await.map_err(CoreError::Other)?;
-        // List batch files ordered by name; filenames sort chronologically.
+        let cached = self.listing.lock().expect("listing lock").clone();
+        let names = match cached {
+            Some(names) => names,
+            None => {
+                let names = self.list_batch_files(&token).await?;
+                *self.listing.lock().expect("listing lock") = Some(names.clone());
+                names
+            }
+        };
+
+        // Look-back cursor: files that sort below the last name read (lagging
+        // uploader clock, slow upload) are still read, exactly once.
+        let mut cursor = cardo_core::LookbackCursor::parse(&since);
+        let now = cardo_core::sync_cursor::now_ms();
+        let mut sorted: Vec<&str> = names.iter().map(|(name, _)| name.as_str()).collect();
+        sorted.dedup();
+        let due = cursor.select(&sorted, 50, now);
+        let mut ops = Vec::new();
+        let mut broken_files = 0;
+        for name in &due {
+            // Same name twice (two uploads racing) – take the first id.
+            let Some((_, file_id)) = names.iter().find(|(n, _)| n == name) else { continue };
+            let response = self
+                .client
+                .get(format!("{FILES_URL}/{file_id}?alt=media"))
+                .bearer_auth(&token)
+                .send()
+                .await
+                .map_err(|e| CoreError::Other(e.to_string()))?;
+            if !response.status().is_success() {
+                return Err(CoreError::Other(format!(
+                    "Drive download failed: HTTP {}",
+                    response.status()
+                )));
+            }
+            // A download error is retried next round; a file that downloads
+            // but does not parse is skipped and marked read (one broken file
+            // must not wedge this device forever).
+            let raw = response.bytes().await.map_err(|e| CoreError::Other(e.to_string()))?;
+            match cardo_core::sync_folder::decode_batch_file(&raw) {
+                Some(batch) => ops.extend(batch),
+                None => broken_files += 1,
+            }
+        }
+        cursor.advance(&due, now);
+        Ok(PullBatch { ops, next_cursor: cursor.render(), broken_files })
+    }
+}
+
+impl GoogleDriveTransport {
+    /// Every batch file of the hub, sorted by name (= chronologically).
+    async fn list_batch_files(&self, token: &str) -> cardo_core::Result<Vec<(String, String)>> {
         let mut names: Vec<(String, String)> = Vec::new(); // (name, fileId)
         let mut page_token: Option<String> = None;
         loop {
             let mut url = format!(
-                "{FILES_URL}?spaces=appDataFolder&orderBy=name&fields=nextPageToken,files(id,name)&pageSize=100"
+                "{FILES_URL}?spaces=appDataFolder&orderBy=name&fields=nextPageToken,files(id,name)&pageSize=1000"
             );
             if let Some(t) = &page_token {
                 url.push_str(&format!("&pageToken={t}"));
@@ -330,7 +388,7 @@ impl SyncTransport for GoogleDriveTransport {
             let response = self
                 .client
                 .get(&url)
-                .bearer_auth(&token)
+                .bearer_auth(token)
                 .send()
                 .await
                 .map_err(|e| CoreError::Other(e.to_string()))?;
@@ -345,7 +403,7 @@ impl SyncTransport for GoogleDriveTransport {
                 let (Some(name), Some(id)) = (file["name"].as_str(), file["id"].as_str()) else {
                     continue;
                 };
-                if name.ends_with(".cardo-ops") && name > since.as_str() {
+                if name.ends_with(".cardo-ops") {
                     names.push((name.to_string(), id.to_string()));
                 }
             }
@@ -355,35 +413,8 @@ impl SyncTransport for GoogleDriveTransport {
             }
         }
         names.sort();
-
-        let mut ops = Vec::new();
-        let mut cursor = since;
-        for (name, file_id) in names.into_iter().take(50) {
-            let response = self
-                .client
-                .get(format!("{FILES_URL}/{file_id}?alt=media"))
-                .bearer_auth(&token)
-                .send()
-                .await
-                .map_err(|e| CoreError::Other(e.to_string()))?;
-            if !response.status().is_success() {
-                return Err(CoreError::Other(format!(
-                    "Drive download failed: HTTP {}",
-                    response.status()
-                )));
-            }
-            let body: Value = response.json().await.map_err(|e| CoreError::Other(e.to_string()))?;
-            for op in body["ops"].as_array().into_iter().flatten() {
-                let (Some(op_id), Some(blob_b64)) = (op["op_id"].as_str(), op["blob_b64"].as_str())
-                else {
-                    continue;
-                };
-                let Some(blob) = crate::sync::b64_decode_public(blob_b64) else { continue };
-                ops.push(EncryptedOp { op_id: op_id.to_string(), blob });
-            }
-            cursor = name;
-        }
-        Ok(PullBatch { ops, next_cursor: cursor })
+        names.dedup();
+        Ok(names)
     }
 }
 

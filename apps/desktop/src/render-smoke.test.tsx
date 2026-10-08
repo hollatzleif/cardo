@@ -25,6 +25,8 @@ import { Inbox } from './inbox/Inbox';
 import { setInboxEnabled } from './inbox/feed';
 import { FocusMode } from './focus/FocusMode';
 import { CommandPalette } from './palette/CommandPalette';
+import { WidgetFrame } from './canvas/WidgetFrame';
+import { applyDesign } from './design/design';
 
 /* ── Environment stubs (jsdom lacks these browser APIs) ─────────────────── */
 
@@ -450,6 +452,35 @@ describe('the affordance exemption lists stay honest', () => {
 /* ── Surfaces ───────────────────────────────────────────────────────────── */
 
 describe('surfaces render and take basic interaction (network down)', () => {
+  it('WidgetFrame: terminal chrome renders a header bar with one help button, default does not', async () => {
+    const widget = {
+      instanceId: 'smoke-frame',
+      toolId: 'counter',
+      widgetId: 'main',
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 3,
+    } as Parameters<typeof WidgetFrame>[0]['widget'];
+    try {
+      applyDesign({ chrome: 'terminal' });
+      const terminal = await render(<WidgetFrame widget={widget} editing={false} onRemove={() => {}} />);
+      const header = terminal.container.querySelector('.widget-frame__header');
+      expect(header?.textContent).toContain(i18next.t('tool.counter.name'));
+      expect(terminal.container.querySelectorAll('.widget-frame__help')).toHaveLength(1);
+      expect(terminal.container.querySelector('.widget-frame__help--floating')).toBeNull();
+      await terminal.unmount();
+
+      applyDesign({});
+      const plain = await render(<WidgetFrame widget={widget} editing={false} onRemove={() => {}} />);
+      expect(plain.container.querySelector('.widget-frame__header')).toBeNull();
+      expect(plain.container.querySelectorAll('.widget-frame__help--floating')).toHaveLength(1);
+      await plain.unmount();
+    } finally {
+      applyDesign({});
+    }
+  });
+
   it('SettingsPage: renders and every sidebar section opens', async () => {
     const { container, unmount } = await render(<SettingsPage />);
     const items = [...container.querySelectorAll('.settings-page__nav-item')];

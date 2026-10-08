@@ -1,0 +1,338 @@
+/* Phone layout (iPhone home-screen web app). Active only when App sets
+   html[data-viewport='phone'] (width ≤ 700 px – the desktop window never gets
+   that narrow). Touch first: ≥ 44 px targets, 16 px inputs (no iOS zoom),
+   safe-area insets for the notch and home indicator. Tokens only. */
+
+html[data-viewport='phone'] body {
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+html[data-viewport='phone'] .app {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ── Top bar ── */
+html[data-viewport='phone'] .topbar--phone {
+  position: relative;
+  gap: var(--space-2);
+  padding: calc(var(--space-2) + env(safe-area-inset-top)) var(--space-3) var(--space-2);
+}
+html[data-viewport='phone'] .topbar__page-select {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+html[data-viewport='phone'] .topbar__back {
+  flex: 1;
+  justify-content: flex-start;
+}
+html[data-viewport='phone'] .topbar__menu-button {
+  position: relative;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* ── Menu sheet ── */
+.mobile-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: color-mix(in srgb, var(--bg-canvas) 60%, transparent);
+  display: flex;
+  align-items: flex-end;
+}
+.mobile-sheet {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom));
+  background: var(--bg-widget);
+  border-top: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-widget);
+}
+.mobile-sheet__item {
+  min-height: 48px;
+  justify-content: flex-start;
+  font-size: 16px;
+}
+
+/* ── Board ── */
+html[data-viewport='phone'] .canvas {
+  padding: var(--space-2) var(--space-2) calc(var(--space-6) + env(safe-area-inset-bottom));
+}
+.mobile-board {
+  display: flex;
+  flex-direction: column;
+}
+.mobile-board__item {
+  min-width: 0;
+}
+.widget-frame__mobile-controls {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+.widget-frame__mobile-controls .c-btn {
+  min-width: 36px;
+  min-height: 36px;
+  justify-content: center;
+  padding: 0;
+}
+html[data-viewport='phone'] .canvas__add-button {
+  right: var(--space-3);
+  bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+  min-height: 48px;
+}
+
+/* No hover on touch screens: keep the help button visible. */
+@media (hover: none) {
+  .widget-frame__help--floating {
+    opacity: 0.55;
+  }
+}
+
+/* ── Touch ergonomics ── */
+html[data-viewport='phone'] .c-btn {
+  min-height: 40px;
+  touch-action: manipulation;
+}
+html[data-viewport='phone'] .c-input,
+html[data-viewport='phone'] input,
+html[data-viewport='phone'] select,
+html[data-viewport='phone'] textarea {
+  font-size: 16px;
+}
+
+/* ── Dialogs become full-width sheets ── */
+html[data-viewport='phone'] .c-modal-backdrop {
+  padding-top: env(safe-area-inset-top);
+  align-items: stretch;
+}
+html[data-viewport='phone'] .c-modal {
+  width: 100vw;
+  max-height: none;
+  border-radius: 0;
+}
+html[data-viewport='phone'] .design-panel {
+  width: 100vw;
+  padding-top: calc(var(--space-4) + env(safe-area-inset-top));
+}
+
+/* Edit toolbar: keep the widget name readable next to the touch controls. */
+html[data-viewport='phone'] .widget-frame__toolbar {
+  flex-wrap: wrap;
+  row-gap: var(--space-1);
+}
+html[data-viewport='phone'] .widget-frame__variant {
+  flex-basis: 100%;
+  order: 10;
+}
+
+/* ── Web app: first-start join flow ── */
+.join-flow {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--space-4) + env(safe-area-inset-top)) var(--space-3)
+    calc(var(--space-4) + env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+.join-flow__card {
+  width: min(480px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  user-select: text;
+}
+.join-flow__title {
+  margin: 0;
+  font-size: 22px;
+}
+.join-flow__subtitle {
+  margin: 0;
+  font-size: 17px;
+}
+.join-flow__wide {
+  justify-content: center;
+  min-height: 48px;
+  font-size: 16px;
+}
+.join-flow__key {
+  min-height: 96px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  resize: vertical;
+}
+.join-flow__label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.join-flow__error {
+  color: var(--danger);
+  margin: 0;
+}
+.join-flow__progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+/* ── Web app: sync banner ── */
+.web-sync-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 14px;
+}
+.web-sync-banner__text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Full-screen dialogs need their own way out. */
+html[data-viewport='phone'] .c-modal__close {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0 0 0 auto;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--bg-widget);
+  color: var(--text-primary);
+  font-size: 18px;
+  cursor: pointer;
+}
+html[data-viewport='phone'] .c-modal {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Cards size to their content ── */
+html[data-viewport='phone'] .mobile-board__item {
+  display: flex;
+}
+html[data-viewport='phone'] .mobile-board__item > .widget-frame {
+  height: auto;
+  flex: 1;
+}
+html[data-viewport='phone'] .mobile-board__item .widget-body {
+  overflow: visible;
+}
+
+/* Card title bar on the phone (the terminal chrome styles its own). */
+html[data-viewport='phone']:not([data-design-chrome='terminal']) .widget-frame__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-1) 0 var(--space-3);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+html[data-viewport='phone'] .widget-frame__header-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html[data-viewport='phone'] .widget-frame__header-variant {
+  display: none;
+}
+html[data-viewport='phone'] .widget-frame__header .widget-frame__help {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+
+/* ── Rows of fields wrap instead of squeezing inputs to slivers ── */
+html[data-viewport='phone'] .widget-body div[style*='display: flex'] {
+  flex-wrap: wrap;
+}
+html[data-viewport='phone'] .widget-body input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']) {
+  min-width: 7.5em;
+}
+/* iOS zooms into inputs below 16 px; tools set smaller sizes inline. */
+html[data-viewport='phone'] input,
+html[data-viewport='phone'] select,
+html[data-viewport='phone'] textarea {
+  font-size: 16px !important;
+}
+
+/* ── Touch feel ── */
+html[data-viewport='phone'] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Edit toolbar: the view picker gets its own full-width row. */
+html[data-viewport='phone'] .widget-frame__toolbar .widget-frame__variant {
+  flex: 1 0 100%;
+  max-width: none;
+  font-size: 16px !important;
+}
+/* Room for the floating "+ Widget hinzufügen" button while arranging. */
+html[data-viewport='phone'] .canvas:has(.canvas__add-button) {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+}
+
+/* Command palette: plain names, no technical ids. */
+html[data-viewport='phone'] .palette__id {
+  display: none;
+}
+html[data-viewport='phone'] .palette__item {
+  min-height: 44px;
+  align-items: center;
+}
+
+/* Settings: the sidebar becomes a scrollable row of tabs at the top. */
+html[data-viewport='phone'] .settings-page {
+  flex-direction: column;
+}
+html[data-viewport='phone'] .settings-page__nav {
+  position: static;
+  width: auto;
+  height: auto;
+  flex-direction: row;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-right: none;
+  border-bottom: 1px solid var(--border-subtle);
+  scrollbar-width: none;
+}
+html[data-viewport='phone'] .settings-page__nav-head {
+  display: none;
+}
+html[data-viewport='phone'] .settings-page__nav-item {
+  flex: none;
+  width: auto;
+  white-space: nowrap;
+  min-height: 40px;
+  padding: 0 var(--space-3);
+}
+html[data-viewport='phone'] .settings-page__nav-label {
+  display: inline;
+}
+html[data-viewport='phone'] .settings-page__content {
+  overflow-y: visible;
+  padding: var(--space-3);
+}

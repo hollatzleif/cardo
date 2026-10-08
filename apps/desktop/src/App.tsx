@@ -14,6 +14,10 @@ import { FocusMode } from './focus/FocusMode';
 import { Inbox } from './inbox/Inbox';
 import { getInboxState, onInboxChange } from './inbox/feed';
 import { setPaletteEditHandler } from './assistant';
+import { MobileTopbar } from './mobile/MobileTopbar';
+import { syncViewportAttribute, useIsPhone } from './mobile/viewport';
+import { isWebApp } from './host/platform';
+import { WebSyncBanner } from './sync/web/WebSyncBanner';
 
 function greetingKey(hour: number): string {
   if (hour < 11) return 'profile.greetingMorning';
@@ -59,6 +63,9 @@ export function App() {
   const [inboxOpen, setInboxOpen] = useState(false);
   const [inboxUnread, setInboxUnread] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
+  const isPhone = useIsPhone();
+
+  useEffect(() => syncViewportAttribute(isPhone), [isPhone]);
 
   useEffect(() => {
     setInboxUnread(getInboxState().unread);
@@ -92,7 +99,14 @@ export function App() {
   // First start: profile → template picker → tour. If the app was closed
   // mid-onboarding, resume the tour on the next start (still skippable).
   useEffect(() => {
-    if (profile && !onboardingDone && !tourActive && !showTemplates) startTour();
+    // The guided tour points at desktop toolbar buttons the phone layout does
+    // not have, so on a phone onboarding ends after the template choice.
+    if (profile && !onboardingDone && !tourActive && !showTemplates) {
+      // Phone: offer the starter layouts (again, if the app was closed
+      // before choosing); picking one ends onboarding.
+      if (isPhone) setShowTemplates(true);
+      else startTour();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile, showTemplates]);
 
@@ -123,137 +137,144 @@ export function App() {
 
   return (
     <div className={`app${fullscreen ? ' app--fullscreen' : ''}`}>
-      <header className="topbar">
-        <span className="topbar__brand">{t('app.name')}</span>
-        <button
-          className="c-btn c-btn--ghost topbar__inbox"
-          title={t('inbox.title')}
-          data-tour-anchor="ui:inbox-button"
-          onClick={() => setInboxOpen(!inboxOpen)}
-        >
-          ✉
-          {inboxUnread > 0 && <span className="topbar__inbox-badge">{inboxUnread}</span>}
-        </button>
-        <button
-          className="c-btn c-btn--ghost topbar__reveal"
-          title={t('canvas.openFolder')}
-          aria-label={t('canvas.openFolder')}
-          onClick={() => void getHost().services.files?.reveal().catch(() => {})}
-        >
-          📂
-        </button>
-        {profile && (
-          <span className="c-muted topbar__greeting">
-            {t(greetingKey(new Date().getHours()), { name: profile.name })}
-          </span>
-        )}
-        <nav className="topbar__pages">
-          {pages.map((page) =>
-            renaming === page.id ? (
-              <input
-                key={page.id}
-                className="c-input topbar__rename"
-                value={renameValue}
-                autoFocus
-                onChange={(e) => setRenameValue(e.target.value)}
-                onBlur={() => {
-                  if (renameValue.trim()) void renamePage(page.id, renameValue.trim());
-                  setRenaming(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                  if (e.key === 'Escape') setRenaming(null);
-                }}
-              />
-            ) : (
-              <button
-                key={page.id}
-                className={`c-btn c-btn--ghost topbar__page${page.id === currentPageId ? ' topbar__page--active' : ''}`}
-                onClick={() => selectPage(page.id)}
-                onDoubleClick={() => {
-                  setRenaming(page.id);
-                  setRenameValue(page.name);
-                }}
-              >
-                {page.name}
-                {editing && pages.length > 1 && page.id === currentPageId && (
-                  <span
-                    className="topbar__page-delete"
-                    title={t('canvas.deletePage')}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm(t('canvas.deletePageConfirm'))) void removePage(page.id);
-                    }}
-                  >
-                    ✕
-                  </span>
-                )}
-              </button>
-            ),
+      {isPhone ? (
+        <MobileTopbar inboxUnread={inboxUnread} onOpenInbox={() => setInboxOpen(true)} />
+      ) : (
+        <header className="topbar">
+          <span className="topbar__brand">{t('app.name')}</span>
+          <button
+            className="c-btn c-btn--ghost topbar__inbox"
+            title={t('inbox.title')}
+            data-tour-anchor="ui:inbox-button"
+            onClick={() => setInboxOpen(!inboxOpen)}
+          >
+            ✉{inboxUnread > 0 && <span className="topbar__inbox-badge">{inboxUnread}</span>}
+          </button>
+          <button
+            className="c-btn c-btn--ghost topbar__reveal"
+            title={t('canvas.openFolder')}
+            aria-label={t('canvas.openFolder')}
+            onClick={() =>
+              void getHost()
+                .services.files?.reveal()
+                .catch(() => {})
+            }
+          >
+            📂
+          </button>
+          {profile && (
+            <span className="c-muted topbar__greeting">
+              {t(greetingKey(new Date().getHours()), { name: profile.name })}
+            </span>
           )}
-          {editing && (
+          <nav className="topbar__pages">
+            {pages.map((page) =>
+              renaming === page.id ? (
+                <input
+                  key={page.id}
+                  className="c-input topbar__rename"
+                  value={renameValue}
+                  autoFocus
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={() => {
+                    if (renameValue.trim()) void renamePage(page.id, renameValue.trim());
+                    setRenaming(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    if (e.key === 'Escape') setRenaming(null);
+                  }}
+                />
+              ) : (
+                <button
+                  key={page.id}
+                  className={`c-btn c-btn--ghost topbar__page${page.id === currentPageId ? ' topbar__page--active' : ''}`}
+                  onClick={() => selectPage(page.id)}
+                  onDoubleClick={() => {
+                    setRenaming(page.id);
+                    setRenameValue(page.name);
+                  }}
+                >
+                  {page.name}
+                  {editing && pages.length > 1 && page.id === currentPageId && (
+                    <span
+                      className="topbar__page-delete"
+                      title={t('canvas.deletePage')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(t('canvas.deletePageConfirm'))) void removePage(page.id);
+                      }}
+                    >
+                      ✕
+                    </span>
+                  )}
+                </button>
+              ),
+            )}
+            {editing && (
+              <button
+                className="c-btn c-btn--ghost"
+                title={t('canvas.addPage')}
+                onClick={() => void addPage()}
+              >
+                +
+              </button>
+            )}
+          </nav>
+          <div className="topbar__actions">
+            <button
+              className={`c-btn${editing ? ' c-btn--primary' : ''}`}
+              title={`${t('canvas.toggleEdit')} (⌘/Ctrl+E)`}
+              data-tour-anchor="ui:edit-toggle"
+              onClick={() => setEditing(!editing)}
+            >
+              {editing ? t('canvas.editMode') : t('canvas.viewMode')}
+            </button>
+            {editing && (
+              <button
+                className={`c-btn c-btn--ghost${designOpen ? ' topbar__page--active' : ''}`}
+                title={t('design.title')}
+                data-tour-anchor="ui:design-button"
+                onClick={() => setDesignOpen(!designOpen)}
+              >
+                🎨 {t('design.title')}
+              </button>
+            )}
             <button
               className="c-btn c-btn--ghost"
-              title={t('canvas.addPage')}
-              onClick={() => void addPage()}
+              title={t('focus.title')}
+              data-tour-anchor="ui:focus-button"
+              onClick={() => setFocusOpen(true)}
             >
-              +
+              ◎ {t('focus.title')}
             </button>
-          )}
-        </nav>
-        <div className="topbar__actions">
-          <button
-            className={`c-btn${editing ? ' c-btn--primary' : ''}`}
-            title={`${t('canvas.toggleEdit')} (⌘/Ctrl+E)`}
-            data-tour-anchor="ui:edit-toggle"
-            onClick={() => setEditing(!editing)}
-          >
-            {editing ? t('canvas.editMode') : t('canvas.viewMode')}
-          </button>
-          {editing && (
             <button
-              className={`c-btn c-btn--ghost${designOpen ? ' topbar__page--active' : ''}`}
-              title={t('design.title')}
-              data-tour-anchor="ui:design-button"
-              onClick={() => setDesignOpen(!designOpen)}
+              className={`c-btn c-btn--ghost${marketOpen ? ' topbar__page--active' : ''}`}
+              title={t('market.title')}
+              data-tour-anchor="ui:market-button"
+              onClick={() => setMarketOpen(!marketOpen)}
             >
-              🎨 {t('design.title')}
+              ⊞ {t('market.title')}
             </button>
-          )}
-          <button
-            className="c-btn c-btn--ghost"
-            title={t('focus.title')}
-            data-tour-anchor="ui:focus-button"
-            onClick={() => setFocusOpen(true)}
-          >
-            ◎ {t('focus.title')}
-          </button>
-          <button
-            className={`c-btn c-btn--ghost${marketOpen ? ' topbar__page--active' : ''}`}
-            title={t('market.title')}
-            data-tour-anchor="ui:market-button"
-            onClick={() => setMarketOpen(!marketOpen)}
-          >
-            ⊞ {t('market.title')}
-          </button>
-          <button
-            className="c-btn c-btn--ghost"
-            title={t('canvas.enterFullscreen')}
-            aria-label={t('canvas.enterFullscreen')}
-            onClick={() => setFullscreen(true)}
-          >
-            ⛶
-          </button>
-          <button
-            className={`c-btn c-btn--ghost${settingsOpen ? ' topbar__page--active' : ''}`}
-            title={t('settings.title')}
-            data-tour-anchor="ui:settings-button"
-            onClick={() => setSettingsOpen(!settingsOpen)}
-          >
-            ⚙
-          </button>
-        </div>
-      </header>
+            <button
+              className="c-btn c-btn--ghost"
+              title={t('canvas.enterFullscreen')}
+              aria-label={t('canvas.enterFullscreen')}
+              onClick={() => setFullscreen(true)}
+            >
+              ⛶
+            </button>
+            <button
+              className={`c-btn c-btn--ghost${settingsOpen ? ' topbar__page--active' : ''}`}
+              title={t('settings.title')}
+              data-tour-anchor="ui:settings-button"
+              onClick={() => setSettingsOpen(!settingsOpen)}
+            >
+              ⚙
+            </button>
+          </div>
+        </header>
+      )}
 
       {fullscreen && (
         <button
@@ -265,6 +286,8 @@ export function App() {
           ⛶ {t('canvas.exitFullscreen')}
         </button>
       )}
+
+      {isWebApp() && <WebSyncBanner />}
 
       <main className="app__canvas">
         {settingsOpen ? <SettingsPage /> : marketOpen ? <ToolMarket /> : <Canvas />}
@@ -285,7 +308,8 @@ export function App() {
         <TemplatePicker
           onDone={() => {
             setShowTemplates(false);
-            startTour();
+            if (isPhone) void useAppStore.getState().endTour();
+            else startTour();
           }}
         />
       )}

@@ -1,0 +1,131 @@
+/* Terminal widget chrome ("Börsen-Terminal" / "Market Terminal" style).
+   Everything is scoped to html[data-design-chrome='terminal'], set by the
+   design engine (design.ts). Dense, square panels with a header bar, hairline
+   dividers and tabular figures – the look of a market terminal. Colors only
+   via semantic tokens / color-mix, never literals (token-lint). */
+
+html[data-design-chrome='terminal'] {
+  --terminal-header-height: 22px;
+  --terminal-label-size: 10.5px;
+}
+
+/* ── Canvas & top bar ── */
+html[data-design-chrome='terminal'] .topbar {
+  border-bottom: none;
+  background: var(--bg-canvas);
+}
+/* The frame around the panels is as thin as the gaps between them. */
+html[data-design-chrome='terminal'] .canvas {
+  padding: var(--grid-gutter, var(--space-3));
+}
+html[data-design-chrome='terminal'] .topbar .c-muted {
+  color: color-mix(in srgb, var(--text-primary) 65%, var(--bg-canvas));
+}
+html[data-design-chrome='terminal'] .topbar__page,
+html[data-design-chrome='terminal'] .topbar__brand {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8em;
+}
+html[data-design-chrome='terminal'] .topbar__page--active {
+  background: var(--bg-widget);
+  border-color: var(--bg-widget);
+  color: var(--text-primary);
+}
+
+/* ── Panels ── */
+html[data-design-chrome='terminal'] .widget-frame {
+  border-radius: 0;
+  box-shadow: none;
+  border: 1px solid var(--border-subtle);
+}
+html[data-design-chrome='terminal'] .widget-frame__header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--terminal-header-height);
+  padding: 0 var(--space-1) 0 var(--space-2);
+  background: var(--bg-widget);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--terminal-label-size);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  user-select: none;
+}
+html[data-design-chrome='terminal'] .widget-frame__header-title {
+  color: color-mix(in srgb, var(--text-primary) 78%, var(--text-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+html[data-design-chrome='terminal'] .widget-frame__header-variant {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-design-chrome='terminal'] .widget-frame__header .widget-frame__help {
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 0;
+  font-size: 10px;
+}
+html[data-design-chrome='terminal'] .widget-frame__toolbar {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--terminal-label-size);
+  background: var(--bg-raised);
+}
+html[data-design-chrome='terminal'] .widget-body {
+  font-variant-numeric: tabular-nums;
+}
+html[data-design-chrome='terminal'] .react-grid-item.react-grid-placeholder {
+  border-radius: 0;
+}
+
+/* ── Shared controls inside panels and dialogs ── */
+html[data-design-chrome='terminal'] .c-btn {
+  border-radius: 0;
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+/* Primary/active controls: light cyan with dark text, like terminal tabs. */
+html[data-design-chrome='terminal'] .c-btn--primary {
+  color: var(--palette-surface-0);
+}
+html[data-design-chrome='terminal'] .c-btn--ghost {
+  text-transform: none;
+  letter-spacing: normal;
+}
+html[data-design-chrome='terminal'] .c-input {
+  border-radius: 0;
+  background: color-mix(in srgb, var(--bg-widget) 80%, black);
+  padding: var(--space-1) var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+html[data-design-chrome='terminal'] .c-badge {
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+html[data-design-chrome='terminal'] .c-modal,
+html[data-design-chrome='terminal'] .c-card {
+  border-radius: 0;
+}
+html[data-design-chrome='terminal'] :focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ── Thin scrollbars ── */
+html[data-design-chrome='terminal'] .widget-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-subtle) transparent;
+}

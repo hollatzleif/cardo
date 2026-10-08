@@ -12,7 +12,7 @@ import {
   type HostServices,
   type StorageBackend,
 } from '@cardo/core';
-import type { SchedulerApi } from '@cardo/plugin-api';
+import type { FilesApi, SchedulerApi } from '@cardo/plugin-api';
 import { invoke } from '@tauri-apps/api/core';
 import { createBackend, isTauri } from './backend';
 import { createFilesApi } from './files';
@@ -128,8 +128,14 @@ export interface Host {
   search: SearchRegistry;
 }
 
-export function createHost(): Host {
-  const backend = createBackend();
+export interface HostOverrides {
+  /** Storage to use instead of the platform default (web app: IndexedDB). */
+  backend?: StorageBackend;
+  files?: FilesApi;
+}
+
+export function createHost(overrides: HostOverrides = {}): Host {
+  const backend = overrides.backend ?? createBackend();
   const events = createEventBus();
   const commands = new CommandRegistry();
   const search = new SearchRegistry();
@@ -147,9 +153,12 @@ export function createHost(): Host {
         await sendOsNotification(title, body);
       },
     },
-    files: createFilesApi(),
+    files: overrides.files ?? createFilesApi(),
     // Legal adapters live in Rust; only the Tauri host can reach them.
     legal: isTauri() ? createLegalApi() : undefined,
+    calendarFeed: isTauri()
+      ? { fetchIcs: (url: string) => invoke<string>('calendar_fetch_ics', { url }) }
+      : undefined,
     anki: isTauri() ? createAnkiApi() : undefined,
     search,
     scheduler: createScheduler(commands),

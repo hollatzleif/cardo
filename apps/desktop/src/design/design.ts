@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { getHost } from '../host';
 
 /**
@@ -24,6 +25,17 @@ export type Density = (typeof DENSITIES)[number];
 /** Card elevation styles: flat (border only), soft (default shadow), paper (raised). */
 export const CARD_STYLES = ['soft', 'flat', 'paper'] as const;
 export type CardStyle = (typeof CARD_STYLES)[number];
+
+/**
+ * Widget chrome: 'default' is Cardo's soft card; 'terminal' is a dense,
+ * square market-terminal frame with a header bar (see terminal-chrome.css).
+ */
+export const CHROMES = ['default', 'terminal'] as const;
+export type Chrome = (typeof CHROMES)[number];
+
+/** Grid gap between widgets in px when no override is set (LayoutEngine). */
+export const DEFAULT_GUTTER = 12;
+export const MAX_GUTTER = 24;
 
 export interface DesignOverrides {
   /* Typography */
@@ -63,6 +75,54 @@ export interface DesignOverrides {
   density?: Density;
   /** Card elevation style – default 'soft'. */
   cardStyle?: CardStyle;
+  /** Widget frame chrome – default 'default'. */
+  chrome?: Chrome;
+  /** Gap between widgets in px, 0–24 – default 12. */
+  gutter?: number;
+}
+
+/* ── Runtime layout store ──────────────────────────────────────────────
+   The grid gap and the widget chrome change React output (react-grid-layout
+   margins, WidgetFrame header), not just CSS, so the design engine publishes
+   them here and the canvas subscribes. A tiny external store instead of app
+   state: it follows whatever applyDesign last applied, like the CSS does. */
+let currentGutter = DEFAULT_GUTTER;
+let currentChrome: Chrome = 'default';
+const layoutListeners = new Set<() => void>();
+
+export function clampGutter(value: number | undefined): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return DEFAULT_GUTTER;
+  return Math.max(0, Math.min(MAX_GUTTER, Math.round(value)));
+}
+
+export function getGridGutter(): number {
+  return currentGutter;
+}
+
+export function getDesignChrome(): Chrome {
+  return currentChrome;
+}
+
+function publishLayout(gutter: number, chrome: Chrome): void {
+  if (gutter === currentGutter && chrome === currentChrome) return;
+  currentGutter = gutter;
+  currentChrome = chrome;
+  for (const listener of layoutListeners) listener();
+}
+
+function subscribeLayout(listener: () => void): () => void {
+  layoutListeners.add(listener);
+  return () => layoutListeners.delete(listener);
+}
+
+/** Current grid gap in px; re-renders when a design with another gutter is applied. */
+export function useGridGutter(): number {
+  return useSyncExternalStore(subscribeLayout, getGridGutter, getGridGutter);
+}
+
+/** Current widget chrome; re-renders when it changes. */
+export function useDesignChrome(): Chrome {
+  return useSyncExternalStore(subscribeLayout, getDesignChrome, getDesignChrome);
 }
 
 /** Storage location: namespace + document id. */
@@ -147,6 +207,13 @@ export function applyDesign(d: DesignOverrides): void {
   if (d.shadow === false) props.set('--shadow-widget', 'none');
   if (d.border === false) data.set('designWidgetBorder', 'off');
   if (d.cardStyle && d.cardStyle !== 'soft') data.set('cardStyle', d.cardStyle);
+  const chrome: Chrome = d.chrome && CHROMES.includes(d.chrome) ? d.chrome : 'default';
+  if (chrome !== 'default') data.set('designChrome', chrome);
+
+  /* Grid gap: published to the layout engine and as a CSS variable. */
+  const gutter = clampGutter(d.gutter);
+  if (gutter !== DEFAULT_GUTTER) props.set('--grid-gutter', `${gutter}px`);
+  publishLayout(gutter, chrome);
 
   /* Layout density */
   if (d.density && d.density !== 'normal') {

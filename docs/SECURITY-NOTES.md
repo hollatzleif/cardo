@@ -73,3 +73,26 @@ abgesichert:
    niemals einen echten Schlüsselwert.
 3. Änderungen an Auth, Validierung oder Download-Allowlist immer mit einem
    adversarialen Test begleiten (siehe oben).
+
+## iPhone-Web-App (apps/desktop, `vite build --mode web`)
+
+- **Wo Geheimnisse liegen:** Der Sync-Schlüssel (CRD1) steht in der
+  IndexedDB der App (Bereich `local`, wird nie synchronisiert), das
+  Google-Zugriffstoken im localStorage. Beides kann jedes Skript lesen, das
+  auf demselben Origin läuft.
+- **Geteilter Origin:** Die App liegt auf `hollatzleif.github.io`. Jede andere
+  GitHub-Pages-Seite dieses Kontos teilt den Origin und könnte diesen Speicher
+  lesen. Dort also keine weiteren Pages-Seiten betreiben – oder die App auf
+  eine eigene Domain umziehen.
+- **CSP:** nur im Web-Build als Meta-Tag: `script-src 'self'`, kein
+  `unsafe-eval`, keine Fremdskripte, `connect-src` nur Googles APIs plus die
+  Hosts, die die Werkzeuge ohnehin nutzen. `frame-ancestors` lässt sich per
+  Meta-Tag nicht setzen.
+- **OAuth:** Token-Flow im Popup mit zufälligem `state`, der gegen den
+  gespeicherten Wert geprüft wird; der gewährte Scope muss `drive.appdata`
+  enthalten. Kein Client-Secret und kein Refresh-Token auf dem Telefon; Tokens
+  laufen nach ca. 1 Stunde ab.
+- **Beitritt:** Ein iPhone, das einer Gruppe beitritt, wird geleert und lädt
+  alles herunter, bevor es ein einziges synchronisiertes Dokument schreibt –
+  seine Standardwerte können die des Desktops so nie per Last-Writer-Wins
+  überschreiben.

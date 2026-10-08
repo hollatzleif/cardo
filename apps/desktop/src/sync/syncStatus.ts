@@ -84,3 +84,26 @@ export function initSyncStatus(): void {
     update({ health: 'join-denied', message: 'join request denied' });
   });
 }
+
+/**
+ * Entry point for sync lanes that are not Rust (the iPhone web app reports
+ * its rounds here, so settings, diagnose and the assistant see one status).
+ */
+export function reportSyncEvent(
+  event: { type: 'done' } | { type: 'error'; message: string } | { type: 'revoked'; all: boolean } | { type: 'join-denied' },
+): void {
+  switch (event.type) {
+    case 'done':
+      update({ health: 'ok', message: undefined, lastSuccessMs: Date.now(), consecutiveErrors: 0 });
+      break;
+    case 'error':
+      update({ health: 'error', message: event.message, consecutiveErrors: status.consecutiveErrors + 1 });
+      break;
+    case 'revoked':
+      update({ health: 'revoked', message: event.all ? 'group dissolved' : 'device removed' });
+      break;
+    case 'join-denied':
+      update({ health: 'join-denied', message: 'join denied' });
+      break;
+  }
+}

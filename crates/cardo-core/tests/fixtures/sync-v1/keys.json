@@ -1,0 +1,112 @@
+{
+  "comment": "SyncKey::parse vectors. reason → Rust error text: missing_prefix='missing CRD1', invalid_chars='invalid characters', wrong_length='wrong length', unsupported_version='unsupported sync key version', checksum_mismatch='checksum mismatch'. Checks run in that order.",
+  "invalid": [
+    {
+      "input": "",
+      "reason": "missing_prefix"
+    },
+    {
+      "input": "HELLO-WORLD",
+      "reason": "missing_prefix"
+    },
+    {
+      "input": "AEZRZ3VEWVSHQAMEKPYFOBPPFN3CDNE4IU6EBKQIDN5YQ4GLEIVGA",
+      "note": "payload without CRD1",
+      "reason": "missing_prefix"
+    },
+    {
+      "input": "CRD2-AEZR-Z3VE-WVSH-QAME-KPYF-OBPP-FN3C-DNE4-IU6E-BKQI-DN5Y-Q4GL-EIVG-A",
+      "reason": "missing_prefix"
+    },
+    {
+      "input": "CRD1-AEZR-03VE-WVSH-QAME-KPYF-OBPP-FN3C-DNE4-IU6E-BKQI-DN5Y-Q4GL-EIVG-A",
+      "reason": "invalid_chars"
+    },
+    {
+      "input": "CRD1-AEZR-Z9VE-WVSH-QAME-KPYF-OBPP-FN3C-DNE4-IU6E-BKQI-DN5Y-Q4GL-EIVG-A",
+      "reason": "invalid_chars"
+    },
+    {
+      "input": "CRD1",
+      "reason": "wrong_length"
+    },
+    {
+      "input": "CRD1-TOO-SHORT",
+      "reason": "wrong_length"
+    },
+    {
+      "input": "CRD1-AEZR-Z3VE-WVSH-QAME-KPYF-OBPP-FN3C-DNE4-IU6E-BKQI-DN5Y-Q4GL-EIVG",
+      "reason": "wrong_length"
+    },
+    {
+      "input": "CRD1-AEZR-Z3VE-WVSH-QAME-KPYF-OBPP-FN3C-DNE4-IU6E-BKQI-DN5Y-Q4GL-EIVG-AAA",
+      "reason": "wrong_length"
+    },
+    {
+      "input": "CRD1-AIZR-Z3VE-WVSH-QAME-KPYF-OBPP-FN3C-DNE4-IU6E-BKQI-DN5Y-Q4HS-MFOG-2",
+      "note": "version 0x02 with a valid checksum",
+      "reason": "unsupported_version"
+    },
+    {
+      "input": "CRD1-AEZR-A3VE-WVSH-QAME-KPYF-OBPP-FN3C-DNE4-IU6E-BKQI-DN5Y-Q4GL-EIVG-A",
+      "note": "single-character typo",
+      "reason": "checksum_mismatch"
+    }
+  ],
+  "valid": [
+    {
+      "authToken": "a6166abea3a8037f9ae31b2179a0dec6b785323ba39dcd52240e2959d636be68",
+      "input": "CRD1-AEZR-Z3VE-WVSH-QAME-KPYF-OBPP-FN3C-DNE4-IU6E-BKQI-DN5Y-Q4GL-EIVG-A",
+      "licenseId": "331ceea4b5647801",
+      "note": "canonical display form"
+    },
+    {
+      "authToken": "a6166abea3a8037f9ae31b2179a0dec6b785323ba39dcd52240e2959d636be68",
+      "input": "crd1-aezr-z3ve-wvsh-qame-kpyf-obpp-fn3c-dne4-iu6e-bkqi-dn5y-q4gl-eivg-a",
+      "licenseId": "331ceea4b5647801",
+      "note": "lowercase"
+    },
+    {
+      "authToken": "a6166abea3a8037f9ae31b2179a0dec6b785323ba39dcd52240e2959d636be68",
+      "input": "CRD1 AEZR Z3VE WVSH QAME KPYF OBPP FN3C DNE4 IU6E BKQI DN5Y Q4GL EIVG A",
+      "licenseId": "331ceea4b5647801",
+      "note": "spaces instead of dashes"
+    },
+    {
+      "authToken": "a6166abea3a8037f9ae31b2179a0dec6b785323ba39dcd52240e2959d636be68",
+      "input": "  \tCRD1-AEZR-Z3VE-WVSH-QAME-KPYF-OBPP-FN3C-DNE4-IU6E-BKQI-DN5Y-Q4GL-EIVG-A\n ",
+      "licenseId": "331ceea4b5647801",
+      "note": "surrounding whitespace"
+    },
+    {
+      "authToken": "a6166abea3a8037f9ae31b2179a0dec6b785323ba39dcd52240e2959d636be68",
+      "input": "CRD1AEZRZ3VEWVSHQAMEKPYFOBPPFN3CDNE4IU6EBKQIDN5YQ4GLEIVGA",
+      "licenseId": "331ceea4b5647801",
+      "note": "no separators at all"
+    },
+    {
+      "authToken": "a6166abea3a8037f9ae31b2179a0dec6b785323ba39dcd52240e2959d636be68",
+      "input": "CRD1–AEZR–Z3VE–WVSH–QAME–KPYF–OBPP–FN3C–DNE4–IU6E–BKQI–DN5Y–Q4GL–EIVG–A",
+      "licenseId": "331ceea4b5647801",
+      "note": "en dash separators (any non [A-Za-z0-9] char is dropped)"
+    },
+    {
+      "authToken": "a6166abea3a8037f9ae31b2179a0dec6b785323ba39dcd52240e2959d636be68",
+      "input": " crd1  aezr  z3ve  wvsh  qame  kpyf  obpp  fn3c  dne4  iu6e  bkqi  dn5y  q4gl  eivg  a ",
+      "licenseId": "331ceea4b5647801",
+      "note": "lowercase + double spaces + surrounding whitespace"
+    },
+    {
+      "authToken": "a6166abea3a8037f9ae31b2179a0dec6b785323ba39dcd52240e2959d636be68",
+      "input": "cRd1-AeZr-z3vE-WvSh-qAmE-KpYf-oBpP-Fn3c-dNe4-Iu6e-bKqI-Dn5y-q4gL-EiVg-a",
+      "licenseId": "331ceea4b5647801",
+      "note": "mixed case"
+    },
+    {
+      "authToken": "339f96dc79845fb9ca002376fc30901872cfb6d7ee99c0f3477358d767437ec7",
+      "input": "CRD1-AEL7-TM2N-N3LC-54SR-LEN3-XPXG-VGJ5-6P4G-GY77-IFE3-ZBQK-HM4U-RMK2-Y",
+      "licenseId": "17f9b34d6ed62ef2",
+      "note": "second independent key"
+    }
+  ]
+}

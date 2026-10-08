@@ -19,7 +19,15 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
   },
 );
 
-export function Card({ children, className = '', style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) {
+export function Card({
+  children,
+  className = '',
+  style,
+}: {
+  children: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <div className={`c-card ${className}`} style={style}>
       {children}
@@ -27,7 +35,16 @@ export function Card({ children, className = '', style }: { children: ReactNode;
   );
 }
 
-export function Modal({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+export function Modal({
+  children,
+  onClose,
+  closeLabel = 'Close',
+}: {
+  children: ReactNode;
+  onClose: () => void;
+  /** Accessible name of the close button (shown on phones, where a full-screen sheet has no backdrop to tap). */
+  closeLabel?: string;
+}) {
   const modal = (
     <div
       className="c-modal-backdrop"
@@ -36,6 +53,15 @@ export function Modal({ children, onClose }: { children: ReactNode; onClose: () 
       }}
     >
       <div className="c-modal" role="dialog" aria-modal="true">
+        <button
+          type="button"
+          className="c-modal__close"
+          aria-label={closeLabel}
+          title={closeLabel}
+          onClick={onClose}
+        >
+          ✕
+        </button>
         {children}
       </div>
     </div>
@@ -47,7 +73,11 @@ export function Modal({ children, onClose }: { children: ReactNode; onClose: () 
 }
 
 export function PrivacyBadge({ level, label }: { level: 'green' | 'yellow'; label: string }) {
-  return <span className={`c-badge c-badge--${level}`}>{level === 'green' ? '●' : '●'} {label}</span>;
+  return (
+    <span className={`c-badge c-badge--${level}`}>
+      {level === 'green' ? '●' : '●'} {label}
+    </span>
+  );
 }
 
 /**
