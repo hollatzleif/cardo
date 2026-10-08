@@ -286,6 +286,16 @@ export interface AnkiApi {
   exportFile(collection: AnkiCollection): Promise<boolean>;
 }
 
+/**
+ * Subscribed calendars (calendar tool): fetches a Google Calendar secret
+ * iCal address through the host, which enforces the allow-list. Undefined
+ * outside the desktop host – the web app gets the imported appointments via
+ * sync instead.
+ */
+export interface CalendarFeedApi {
+  fetchIcs(url: string): Promise<string>;
+}
+
 export interface ToolContext {
   storage: ToolStorage;
   events: EventBus;
@@ -312,6 +322,8 @@ export interface ToolContext {
   legal?: LegalApi;
   /** Anki .apkg import/export (flashcards tool); undefined outside the host. */
   anki?: AnkiApi;
+  /** Calendar subscriptions (calendar tool); undefined outside the desktop host. */
+  calendarFeed?: CalendarFeedApi;
 }
 
 /* ── Self-tests ───────────────────────────────────────────────────────── */

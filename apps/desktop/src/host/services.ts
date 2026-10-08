@@ -156,6 +156,9 @@ export function createHost(overrides: HostOverrides = {}): Host {
     files: overrides.files ?? createFilesApi(),
     // Legal adapters live in Rust; only the Tauri host can reach them.
     legal: isTauri() ? createLegalApi() : undefined,
+    calendarFeed: isTauri()
+      ? { fetchIcs: (url: string) => invoke<string>('calendar_fetch_ics', { url }) }
+      : undefined,
     anki: isTauri() ? createAnkiApi() : undefined,
     search,
     scheduler: createScheduler(commands),

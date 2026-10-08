@@ -59,7 +59,11 @@ async function ensureInbox(storage: ToolStorage, name: string): Promise<ListDoc>
 }
 
 /** Resolve a list reference (doc id, bare key or display name) to a list doc id, creating the list if needed. */
-async function resolveListId(storage: ToolStorage, ref: string, inboxName: string): Promise<string> {
+async function resolveListId(
+  storage: ToolStorage,
+  ref: string,
+  inboxName: string,
+): Promise<string> {
   if (ref === 'inbox' || ref === INBOX_ID) return (await ensureInbox(storage, inboxName)).id;
   const direct = await storage.get<ListDoc>(ref);
   if (direct) return direct.id;
@@ -68,7 +72,12 @@ async function resolveListId(storage: ToolStorage, ref: string, inboxName: strin
   const all = await storage.query<ListDoc>({ where: [{ field: 'type', op: '=', value: 'list' }] });
   const byName = all.find((l) => l.name.toLowerCase() === ref.toLowerCase());
   if (byName) return byName.id;
-  const created: ListDoc = { id: makeId('list'), type: 'list', name: ref, createdAt: new Date().toISOString() };
+  const created: ListDoc = {
+    id: makeId('list'),
+    type: 'list',
+    name: ref,
+    createdAt: new Date().toISOString(),
+  };
   await storage.set(created.id, created);
   return created.id;
 }
@@ -76,14 +85,42 @@ async function resolveListId(storage: ToolStorage, ref: string, inboxName: strin
 async function createTaskIn(
   storage: ToolStorage,
   inboxName: string,
-  input: { title: string; list?: string; priority?: Priority; category?: string; due?: string },
+  input: {
+    title: string;
+    list?: string;
+    priority?: Priority;
+    category?: string;
+    due?: string;
+    /** Caller-chosen stable id (e.g. one per calendar appointment): idempotent create. */
+    id?: string;
+  },
 ): Promise<TaskDoc> {
+  if (input.id) {
+    const existing = await storage.get<TaskDoc>(input.id);
+    if (existing) return existing;
+  }
   const listId = input.list
     ? await resolveListId(storage, input.list, inboxName)
     : (await ensureInbox(storage, inboxName)).id;
   const task = makeTask({ ...input, list: listId });
+  if (input.id) task.id = input.id;
   await storage.set(task.id, task);
   return task;
+}
+
+/** Changes title/due of an OPEN task; finished tasks are left alone. */
+async function updateOpenTaskIn(
+  storage: ToolStorage,
+  id: string,
+  patch: { title?: string; due?: string },
+): Promise<TaskDoc | null> {
+  const task = await storage.get<TaskDoc>(id);
+  if (!task || task.done) return task;
+  const next: TaskDoc = { ...task };
+  if (patch.title?.trim()) next.title = patch.title.trim();
+  if (patch.due) next.due = patch.due;
+  if (next.title !== task.title || next.due !== task.due) await storage.set(id, next);
+  return next;
 }
 
 /**
@@ -156,7 +193,9 @@ export function createTool(): CardoTool {
     const [activeList, setActiveList] = useState<string>(INBOX_ID);
     const [newTitle, setNewTitle] = useState('');
     const [newPriority, setNewPriority] = useState<Priority>('medium');
-    const [listDraft, setListDraft] = useState<{ mode: 'add' | 'rename'; value: string } | null>(null);
+    const [listDraft, setListDraft] = useState<{ mode: 'add' | 'rename'; value: string } | null>(
+      null,
+    );
     const [focusTask, setFocusTask] = useState<string | null>(null);
     const rowRefs = useRef(new Map<string, HTMLDivElement>());
 
@@ -230,7 +269,11 @@ export function createTool(): CardoTool {
     async function addTask() {
       const title = newTitle.trim();
       if (!title || !ctx) return;
-      await createTaskIn(ctx.storage, inboxName(), { title, list: activeList, priority: newPriority });
+      await createTaskIn(ctx.storage, inboxName(), {
+        title,
+        list: activeList,
+        priority: newPriority,
+      });
       setNewTitle('');
     }
 
@@ -260,7 +303,12 @@ export function createTool(): CardoTool {
         return;
       }
       if (listDraft.mode === 'add') {
-        const created: ListDoc = { id: makeId('list'), type: 'list', name, createdAt: new Date().toISOString() };
+        const created: ListDoc = {
+          id: makeId('list'),
+          type: 'list',
+          name,
+          createdAt: new Date().toISOString(),
+        };
         await ctx.storage.set(created.id, created);
         setActiveList(created.id);
       } else {
@@ -357,7 +405,13 @@ export function createTool(): CardoTool {
         {/* List switcher */}
         <div
           role="tablist"
-          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', overflowX: 'auto', flexShrink: 0 }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-1)',
+            overflowX: 'auto',
+            flexShrink: 0,
+          }}
         >
           {lists.map((list) => {
             const active = list.id === activeList;
@@ -372,7 +426,10 @@ export function createTool(): CardoTool {
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   ...(active
-                    ? { background: 'var(--bg-widget-hover)', boxShadow: 'inset 0 -2px 0 0 var(--accent)' }
+                    ? {
+                        background: 'var(--bg-widget-hover)',
+                        boxShadow: 'inset 0 -2px 0 0 var(--accent)',
+                      }
                     : { color: 'var(--text-muted)' }),
                 }}
                 onClick={() => setActiveList(list.id)}
@@ -392,7 +449,12 @@ export function createTool(): CardoTool {
           </button>
           <button
             className="c-btn c-btn--ghost"
-            style={{ padding: 'var(--space-1) var(--space-2)', fontSize: 12, flexShrink: 0, color: 'var(--text-muted)' }}
+            style={{
+              padding: 'var(--space-1) var(--space-2)',
+              fontSize: 12,
+              flexShrink: 0,
+              color: 'var(--text-muted)',
+            }}
             onClick={() => setListDraft({ mode: 'rename', value: activeListName })}
           >
             {t('tool.todo.list.rename')}
@@ -406,9 +468,13 @@ export function createTool(): CardoTool {
             autoFocus
             value={listDraft.value}
             placeholder={t(
-              listDraft.mode === 'add' ? 'tool.todo.list.namePlaceholder' : 'tool.todo.list.renamePlaceholder',
+              listDraft.mode === 'add'
+                ? 'tool.todo.list.namePlaceholder'
+                : 'tool.todo.list.renamePlaceholder',
             )}
-            aria-label={t(listDraft.mode === 'add' ? 'tool.todo.list.add' : 'tool.todo.list.rename')}
+            aria-label={t(
+              listDraft.mode === 'add' ? 'tool.todo.list.add' : 'tool.todo.list.rename',
+            )}
             onChange={(e) => setListDraft({ ...listDraft, value: e.target.value })}
             onKeyDown={(e) => {
               if (e.key === 'Enter') void submitListDraft();
@@ -577,10 +643,21 @@ export function createTool(): CardoTool {
             overflowWrap: 'break-word',
           }}
         >
-          <div style={isDone ? { textDecoration: 'line-through', color: 'var(--text-muted)' } : undefined}>
+          <div
+            style={
+              isDone ? { textDecoration: 'line-through', color: 'var(--text-muted)' } : undefined
+            }
+          >
             {task.title}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginTop: 'var(--space-1)' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-2)',
+              marginTop: 'var(--space-1)',
+            }}
+          >
             <span
               aria-hidden
               title={t(`tool.todo.priority.${task.priority}`)}
@@ -634,7 +711,9 @@ export function createTool(): CardoTool {
         }}
       >
         {/* Column header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}
+        >
           <span
             style={{
               fontSize: 12,
@@ -655,7 +734,12 @@ export function createTool(): CardoTool {
           {status === 'done' && columns.done.length > 0 ? (
             <button
               className="c-btn c-btn--ghost"
-              style={{ fontSize: 12, padding: '0 var(--space-1)', marginLeft: 'auto', color: 'var(--text-muted)' }}
+              style={{
+                fontSize: 12,
+                padding: '0 var(--space-1)',
+                marginLeft: 'auto',
+                color: 'var(--text-muted)',
+              }}
               onClick={() => void clearDone()}
             >
               {t('tool.todo.clearCompleted')}
@@ -754,6 +838,10 @@ export function createTool(): CardoTool {
             .regex(/^\d{4}-\d{2}-\d{2}$/)
             .optional(),
           category: z.string().optional(),
+          id: z
+            .string()
+            .regex(/^task:[A-Za-z0-9._-]{1,100}$/)
+            .optional(),
         }),
         selfTestParams: { title: 'Cardo self-test task', priority: 'low' },
         async run(params) {
@@ -790,12 +878,43 @@ export function createTool(): CardoTool {
         titleKey: 'tool.todo.command.delete',
         icon: 'trash',
         palette: false,
-        params: z.object({ id: z.string().min(1) }),
+        params: z.object({
+          id: z.string().min(1),
+          /** Leave finished tasks in place (automations that clean up after themselves). */
+          onlyIfOpen: z.boolean().optional(),
+        }),
         selfTestParams: { id: 'task:selftest-nonexistent' },
-        async run({ id }) {
+        async run({ id, onlyIfOpen }) {
+          if (onlyIfOpen) {
+            const existing = await context.storage.get<TaskDoc>(id);
+            if (existing?.done)
+              return { ok: true, data: existing, messageKey: 'tool.todo.msg.keptDone' };
+          }
           const task = await deleteTaskIn(context.storage, id);
           if (!task) return { ok: true, messageKey: 'tool.todo.msg.notFound' };
           return { ok: true, data: task, messageKey: 'tool.todo.msg.deleted' };
+        },
+      });
+
+      context.commands.register({
+        id: 'todo.update',
+        titleKey: 'tool.todo.command.update',
+        icon: 'pencil',
+        palette: false,
+        params: z.object({
+          id: z.string().min(1),
+          title: z.string().min(1).optional(),
+          due: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
+        }),
+        selfTestParams: { id: 'task:selftest-nonexistent', title: 'probe' },
+        async run({ id, title, due }) {
+          if (due && !isValidDue(due)) return { ok: false, messageKey: 'tool.todo.msg.invalidDue' };
+          const task = await updateOpenTaskIn(context.storage, id, { title, due });
+          if (!task) return { ok: true, messageKey: 'tool.todo.msg.notFound' };
+          return { ok: true, data: task, messageKey: 'tool.todo.msg.updated' };
         },
       });
 
@@ -887,7 +1006,10 @@ export function createTool(): CardoTool {
           const back = await testCtx.storage.get<TaskDoc>(task.id);
           await testCtx.storage.delete(task.id);
           if (!back || back.done !== true || !back.completedAt) {
-            return { status: 'fail', detail: `expected done+completedAt, got ${JSON.stringify(back)}` };
+            return {
+              status: 'fail',
+              detail: `expected done+completedAt, got ${JSON.stringify(back)}`,
+            };
           }
           return { status: 'pass', detail: `completedAt=${back.completedAt}` };
         }
@@ -904,7 +1026,10 @@ export function createTool(): CardoTool {
           const hasA = got.some((task) => task.id === a.id);
           const onlyA = got.every((task) => task.list === 'list:selftest-a');
           if (!hasA || !onlyA) {
-            return { status: 'fail', detail: `filter returned ${got.length} docs, hasA=${hasA}, onlyA=${onlyA}` };
+            return {
+              status: 'fail',
+              detail: `filter returned ${got.length} docs, hasA=${hasA}, onlyA=${onlyA}`,
+            };
           }
           return { status: 'pass', detail: 'list filter returns exactly the matching tasks' };
         }
@@ -912,10 +1037,16 @@ export function createTool(): CardoTool {
           // Legacy derivation: docs without a status field.
           const probe = makeTask({ title: 'selftest board', list: 'list:selftest-board' });
           if (deriveStatus(probe) !== 'todo') {
-            return { status: 'fail', detail: `fresh task derived as "${deriveStatus(probe)}", expected "todo"` };
+            return {
+              status: 'fail',
+              detail: `fresh task derived as "${deriveStatus(probe)}", expected "todo"`,
+            };
           }
           if (deriveStatus({ done: true }) !== 'done') {
-            return { status: 'fail', detail: 'legacy done doc (no status field) must derive as "done"' };
+            return {
+              status: 'fail',
+              detail: 'legacy done doc (no status field) must derive as "done"',
+            };
           }
           await testCtx.storage.set(probe.id, probe);
           const doing = await setTaskStatusIn(testCtx.storage, testCtx.events, probe.id, 'doing');
@@ -927,15 +1058,32 @@ export function createTool(): CardoTool {
             return { status: 'fail', detail: `move to doing produced ${JSON.stringify(doing)}` };
           }
           if (!done || !done.done || done.status !== 'done' || !done.completedAt) {
-            return { status: 'fail', detail: `move to done must sync done+completedAt, got ${JSON.stringify(done)}` };
+            return {
+              status: 'fail',
+              detail: `move to done must sync done+completedAt, got ${JSON.stringify(done)}`,
+            };
           }
-          if (!reopened || reopened.done || reopened.status !== 'todo' || reopened.completedAt !== null) {
-            return { status: 'fail', detail: `reopen must clear done+completedAt, got ${JSON.stringify(reopened)}` };
+          if (
+            !reopened ||
+            reopened.done ||
+            reopened.status !== 'todo' ||
+            reopened.completedAt !== null
+          ) {
+            return {
+              status: 'fail',
+              detail: `reopen must clear done+completedAt, got ${JSON.stringify(reopened)}`,
+            };
           }
           if (!back || deriveStatus(back) !== 'todo') {
-            return { status: 'fail', detail: `persisted doc derived as "${back ? deriveStatus(back) : 'missing'}"` };
+            return {
+              status: 'fail',
+              detail: `persisted doc derived as "${back ? deriveStatus(back) : 'missing'}"`,
+            };
           }
-          return { status: 'pass', detail: 'status ⇄ done stay in sync across todo → doing → done → todo' };
+          return {
+            status: 'pass',
+            detail: 'status ⇄ done stay in sync across todo → doing → done → todo',
+          };
         }
         case 'query-today': {
           const listId = 'list:selftest-today';
@@ -991,14 +1139,21 @@ export function createTool(): CardoTool {
               detail: `counts overdue=${data.overdue}, dueToday=${data.dueToday}, completedToday=${data.completedToday} – expected 1/1/1`,
             };
           }
-          if (data.open.length !== 2 || data.open[0]?.id !== overdueTask.id || data.open[1]?.id !== todayTask.id) {
+          if (
+            data.open.length !== 2 ||
+            data.open[0]?.id !== overdueTask.id ||
+            data.open[1]?.id !== todayTask.id
+          ) {
             return {
               status: 'fail',
               detail: `open should be [overdue, dueToday], got ${JSON.stringify(data.open.map((i) => i.title))}`,
             };
           }
           if (data.open[0]?.overdue !== true || data.open[0]?.list !== 'Selftest Today') {
-            return { status: 'fail', detail: `first item malformed: ${JSON.stringify(data.open[0])}` };
+            return {
+              status: 'fail',
+              detail: `first item malformed: ${JSON.stringify(data.open[0])}`,
+            };
           }
           return { status: 'pass', detail: 'query-today counts and ordering match the probe set' };
         }

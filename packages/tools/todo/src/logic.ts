@@ -184,7 +184,11 @@ export function computeTodayData(
  * blindly re-creating them. Open tasks first (priority/due order), then the
  * most recently completed ones (with a "today" marker). Capped for prompt size.
  */
-export function buildTodoContext(tasks: TaskDoc[], language: string, now: Date = new Date()): string {
+export function buildTodoContext(
+  tasks: TaskDoc[],
+  language: string,
+  now: Date = new Date(),
+): string {
   const de = language === 'de';
   const today = todayIso(now);
   const open = tasks
@@ -210,7 +214,11 @@ export function buildTodoContext(tasks: TaskDoc[], language: string, now: Date =
   });
   const doneLabels = done.slice(0, 12).map((task) => {
     const onToday =
-      task.completedAt && localDateOf(task.completedAt) === today ? (de ? ' (heute)' : ' (today)') : '';
+      task.completedAt && localDateOf(task.completedAt) === today
+        ? de
+          ? ' (heute)'
+          : ' (today)'
+        : '';
     return `«${task.title}»${onToday}`;
   });
 
@@ -232,9 +240,7 @@ export function buildTodoContext(tasks: TaskDoc[], language: string, now: Date =
 export function matchesQuery(task: Pick<TaskDoc, 'title' | 'category'>, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return false;
-  return (
-    task.title.toLowerCase().includes(q) || (task.category ?? '').toLowerCase().includes(q)
-  );
+  return task.title.toLowerCase().includes(q) || (task.category ?? '').toLowerCase().includes(q);
 }
 
 /** Semantic color token for the priority indicator dot. */

@@ -535,8 +535,11 @@
     },
     "calendar": {
       "name": "Kalender",
-      "description": "Deine eigenen Termine mit Erinnerungen – komplett lokal, auf einen Blick.",
-      "privacy": "Funktioniert komplett offline. Deine Termine verlassen dieses Gerät nie.",
+      "description": "Deine Termine mit Erinnerungen auf einen Blick – auf Wunsch mit deinem Google Kalender.",
+      "privacy": {
+        "summary": "Eigene Termine bleiben lokal (und in deinem Sync). Nur wenn du deinen Google Kalender abonnierst, holt der Computer alle 15 Minuten deine geheime iCal-Adresse von calendar.google.com ab – es wird nichts zu Google hochgeladen.",
+        "google": "Nur der Abruf deiner geheimen iCal-Adresse – Cardo schickt keine Termine oder sonstigen Daten an Google."
+      },
       "prevMonth": "Vorheriger Monat",
       "nextMonth": "Nächster Monat",
       "today": "Heute",
@@ -553,12 +556,16 @@
       "command": {
         "create": "Termin anlegen",
         "remind": "Termin-Erinnerung anzeigen",
-        "queryToday": "Heutige Termine (Daten)"
+        "queryToday": "Heutige Termine (Daten)",
+        "syncGoogle": "Google Kalender jetzt abgleichen"
       },
       "msg": {
         "created": "Termin angelegt",
         "notFound": "Termin nicht gefunden",
-        "failed": "Das hat nicht geklappt"
+        "failed": "Das hat nicht geklappt",
+        "googleSynced": "Google Kalender abgeglichen",
+        "googleFailed": "Google Kalender konnte nicht abgeglichen werden",
+        "googleNotConfigured": "Kein Google Kalender abonniert"
       },
       "test": {
         "eventRoundtrip": "Termine werden gespeichert und sauber gelöscht",
@@ -571,9 +578,30 @@
         "body": "Klicke auf einen Tag, um seine Termine zu sehen und neue anzulegen. Termine mit Uhrzeit erinnern dich kurz vor Beginn."
       },
       "help": {
-        "how": "Ein komplett lokaler Kalender für deine eigenen Termine: Tag in der Monatsansicht anklicken, Eintrag mit Uhrzeit oder ganztägig anlegen und wieder löschen, wenn er vorbei ist. An anstehende Termine kann dich eine Systembenachrichtigung erinnern.",
-        "setup": "Keine Einrichtung nötig. Erlaube Cardo Benachrichtigungen in den Systemeinstellungen, wenn du Terminerinnerungen willst.",
-        "bestFor": "Private Termine und Erinnerungen, die du lieber aus jedem Cloud-Kalender heraushältst."
+        "how": "Tag in der Monatsansicht anklicken, Eintrag mit Uhrzeit oder ganztägig anlegen und wieder löschen. Über das Zahnrad kannst du deinen Google Kalender abonnieren: Die Termine erscheinen dann automatisch (nur lesend), und Termine, die mit ⏰ beginnen, landen als To-do in deiner Liste – verschwindet der Termin, verschwindet auch das offene To-do.",
+        "setup": "Für Erinnerungen: Benachrichtigungen für Cardo erlauben. Für Google: Zahnrad im Kalender → Anleitung folgen. Der Abruf läuft am Mac/Windows-PC, das iPhone bekommt die Termine über den Sync.",
+        "bestFor": "Eigene Termine und Erinnerungen – plus dein Google Kalender und ⏰-Aufgaben an einem Ort."
+      },
+      "google": {
+        "open": "Google Kalender verbinden",
+        "title": "Google Kalender abonnieren",
+        "close": "Schließen",
+        "step1": "Öffne den Google Kalender am Computer im Browser und klicke oben rechts aufs Zahnrad → „Einstellungen“.",
+        "step2": "Wähle links unter „Einstellungen für meine Kalender“ deinen Kalender aus.",
+        "step3": "Scrolle zu „Kalender integrieren“ und kopiere die „Privatadresse im iCal-Format“.",
+        "step4": "Füge die Adresse hier ein und klicke auf „Abonnieren“. Gib sie sonst niemandem – wer sie hat, sieht deine Termine.",
+        "invalid": "Das ist keine Google-iCal-Adresse. Sie beginnt mit https://calendar.google.com/calendar/ical/ und endet auf .ics.",
+        "alarmTodos": "Termine, die mit ⏰ beginnen, automatisch in die To-do-Liste übernehmen",
+        "subscribe": "Abonnieren",
+        "saveAndSync": "Speichern & jetzt abgleichen",
+        "remove": "Abo beenden",
+        "removeConfirm": "Google Kalender abbestellen? Die übernommenen Termine verschwinden aus Cardo, deine To-dos bleiben.",
+        "synced": "{{count}} Termine übernommen, {{todos}} neue To-dos.",
+        "failed": "Abgleich fehlgeschlagen: {{message}}",
+        "viaComputer": "Der Abgleich läuft über deinen Computer (Mac oder Windows). Hier erscheinen die Termine über den Sync.",
+        "lastSync": "Zuletzt abgeglichen: {{when}} · {{count}} Termine",
+        "privacy": "Nur Lesen: Änderungen machst du weiter in Google. Termine aus Google sind mit „G“ markiert.",
+        "badge": "Aus deinem Google Kalender – bearbeiten in Google"
       }
     },
     "notes": {
@@ -861,14 +889,17 @@
         "complete": "Aufgabe erledigen",
         "delete": "Aufgabe löschen",
         "queryToday": "Heutige Aufgaben abfragen",
-        "context": "Aktuelle Aufgaben (für den Assistenten)"
+        "context": "Aktuelle Aufgaben (für den Assistenten)",
+        "update": "Aufgabe ändern"
       },
       "msg": {
         "created": "Aufgabe erstellt",
         "completed": "Aufgabe erledigt",
         "deleted": "Aufgabe gelöscht",
         "notFound": "Diese Aufgabe existiert nicht mehr",
-        "invalidDue": "Ungültiges Fälligkeitsdatum – nutze jjjj-mm-tt"
+        "invalidDue": "Ungültiges Fälligkeitsdatum – nutze jjjj-mm-tt",
+        "updated": "Aufgabe aktualisiert.",
+        "keptDone": "Erledigte Aufgabe bleibt bestehen."
       },
       "test": {
         "createRoundtrip": "Aufgaben lassen sich erstellen, zurücklesen und löschen",

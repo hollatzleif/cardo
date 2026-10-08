@@ -10,6 +10,18 @@ import {
   reminderFireTime,
   weekdayLabels,
 } from './calendar';
+import { isGoogleIcsUrl } from './ics';
+import {
+  FEED_DOC,
+  isGoogleEvent,
+  removeGoogleFeed,
+  syncGoogleFeed,
+  type FeedDoc,
+  type FeedOutcome,
+} from './subscription';
+
+/** How often a desktop re-reads the subscribed Google calendar. */
+const FEED_INTERVAL_MS = 15 * 60_000;
 
 const DEFAULT_REMINDER_MINUTES = 10;
 
@@ -28,6 +40,8 @@ type EventDoc = {
   /** Scheduler handle of the pending reminder, if armed. */
   scheduleId?: string;
   createdAt: string;
+  /** 'google' = mirrored from the subscribed Google calendar (read-only). */
+  source?: 'google';
 };
 
 function makeId(): string {
@@ -75,9 +89,25 @@ async function queryTodayIn(
 /** Calendar – own appointments with local reminders. Fully offline. */
 export function createTool(): CardoTool {
   let ctx: ToolContext | null = null;
+  let feedTimer: ReturnType<typeof setInterval> | null = null;
+  let feedUnsub: (() => void) | null = null;
+  let feedRunning: Promise<FeedOutcome> | null = null;
 
-  const t = (key: string, vars?: Record<string, unknown>): string =>
-    ctx?.i18n.t(key, vars) ?? key;
+  /** One subscription round (never two at once). */
+  function runFeed(c: ToolContext): Promise<FeedOutcome> {
+    feedRunning ??= syncGoogleFeed({
+      storage: c.storage,
+      fetchIcs: c.calendarFeed ? (url) => c.calendarFeed!.fetchIcs(url) : undefined,
+      execute: (id, params) => c.commands.execute(id, params),
+      hasCommand: (id) => c.commands.has(id),
+      now: () => Date.now(),
+    }).finally(() => {
+      feedRunning = null;
+    });
+    return feedRunning;
+  }
+
+  const t = (key: string, vars?: Record<string, unknown>): string => ctx?.i18n.t(key, vars) ?? key;
 
   async function listEvents(): Promise<EventDoc[]> {
     const docs =
@@ -140,6 +170,167 @@ export function createTool(): CardoTool {
     await c.storage.delete(event.id);
   }
 
+  /** ⚙ panel: subscribe to a Google calendar via its secret iCal address. */
+  function GoogleFeedPanel({ onClose }: { onClose(): void }) {
+    const c = ctx;
+    const [feed, setFeed] = useState<FeedDoc | null | undefined>(undefined);
+    const [url, setUrl] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
+
+    useEffect(() => {
+      if (!c) return;
+      const load = () =>
+        void c.storage.get<FeedDoc>(FEED_DOC).then((f) => {
+          setFeed(f);
+          if (f?.url) setUrl((current) => current || f.url);
+        });
+      load();
+      return c.storage.subscribe((ev) => {
+        if (ev.docId === FEED_DOC) load();
+      });
+    }, [c]);
+
+    if (!c) return null;
+    const canFetch = !!c.calendarFeed;
+    const valid = isGoogleIcsUrl(url);
+    const locale = c.i18n.language;
+    const last = feed?.lastSyncMs
+      ? new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' }).format(
+          new Date(feed.lastSyncMs),
+        )
+      : null;
+
+    const save = async () => {
+      if (!valid) return;
+      setBusy(true);
+      setMessage(null);
+      await c.storage.set<FeedDoc>(FEED_DOC, {
+        ...(feed ?? {}),
+        url: url.trim(),
+        alarmTodos: feed?.alarmTodos ?? true,
+      });
+      if (canFetch) {
+        const out = await runFeed(c);
+        setMessage(
+          out.kind === 'ok'
+            ? t('tool.calendar.google.synced', { count: out.events, todos: out.todosCreated })
+            : out.kind === 'error'
+              ? t('tool.calendar.google.failed', { message: out.message })
+              : null,
+        );
+      }
+      setBusy(false);
+    };
+
+    const step = (key: string, n: number) => (
+      <li key={key} style={{ marginBottom: 'var(--space-1)' }}>
+        <span className="c-muted">{n}. </span>
+        {t(`tool.calendar.google.step${n}`)}
+      </li>
+    );
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--space-2)',
+          overflowY: 'auto',
+          minHeight: 0,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <strong style={{ flex: 1 }}>{t('tool.calendar.google.title')}</strong>
+          <button
+            className="c-btn c-btn--ghost"
+            onClick={onClose}
+            aria-label={t('tool.calendar.google.close')}
+          >
+            ✕
+          </button>
+        </div>
+        <ol style={{ margin: 0, paddingLeft: 0, listStyle: 'none', fontSize: '0.9em' }}>
+          {[1, 2, 3, 4].map((n) => step(`s${n}`, n))}
+        </ol>
+        <input
+          className="c-input"
+          placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+        {url && !valid && (
+          <div style={{ color: 'var(--danger)', fontSize: '0.85em' }}>
+            {t('tool.calendar.google.invalid')}
+          </div>
+        )}
+        <label
+          style={{
+            display: 'flex',
+            gap: 'var(--space-2)',
+            alignItems: 'center',
+            fontSize: '0.9em',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={feed?.alarmTodos ?? true}
+            onChange={(e) => {
+              if (feed)
+                void c.storage.set<FeedDoc>(FEED_DOC, { ...feed, alarmTodos: e.target.checked });
+              else setFeed({ url: '', alarmTodos: e.target.checked });
+            }}
+          />
+          {t('tool.calendar.google.alarmTodos')}
+        </label>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+          <button
+            className="c-btn c-btn--primary"
+            disabled={!valid || busy}
+            onClick={() => void save()}
+          >
+            {feed?.url
+              ? t('tool.calendar.google.saveAndSync')
+              : t('tool.calendar.google.subscribe')}
+          </button>
+          {feed?.url && (
+            <button
+              className="c-btn c-btn--ghost"
+              style={{ color: 'var(--danger)' }}
+              onClick={() => {
+                if (!window.confirm(t('tool.calendar.google.removeConfirm'))) return;
+                void removeGoogleFeed(c.storage).then(() => {
+                  setUrl('');
+                  setMessage(null);
+                });
+              }}
+            >
+              {t('tool.calendar.google.remove')}
+            </button>
+          )}
+        </div>
+        {message && <div style={{ fontSize: '0.85em' }}>{message}</div>}
+        {feed?.url && (
+          <div className="c-muted" style={{ fontSize: '0.85em' }}>
+            {!canFetch
+              ? t('tool.calendar.google.viaComputer')
+              : feed.lastError
+                ? t('tool.calendar.google.failed', { message: feed.lastError })
+                : last
+                  ? t('tool.calendar.google.lastSync', { when: last, count: feed.lastCount ?? 0 })
+                  : null}
+          </div>
+        )}
+        <div className="c-muted" style={{ fontSize: '0.8em' }}>
+          {t('tool.calendar.google.privacy')}
+        </div>
+      </div>
+    );
+  }
+
   function CalendarWidget(_props: WidgetProps) {
     const locale = ctx?.i18n.language ?? 'en';
     const todayKey = dateKey(new Date());
@@ -151,6 +342,7 @@ export function createTool(): CardoTool {
     const [selected, setSelected] = useState(todayKey);
     const [title, setTitle] = useState('');
     const [time, setTime] = useState('');
+    const [showFeed, setShowFeed] = useState(false);
 
     useEffect(() => {
       let mounted = true;
@@ -257,156 +449,183 @@ export function createTool(): CardoTool {
           >
             ›
           </button>
+          <button
+            className="c-btn c-btn--ghost"
+            style={{ padding: 'var(--space-1) var(--space-2)' }}
+            onClick={() => setShowFeed((v) => !v)}
+            aria-label={t('tool.calendar.google.open')}
+            title={t('tool.calendar.google.open')}
+          >
+            ⚙
+          </button>
         </div>
+        {showFeed && <GoogleFeedPanel onClose={() => setShowFeed(false)} />}
 
         {/* Weekday header + month grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(7, 1fr)',
-            gap: 'var(--space-1)',
-          }}
-        >
-          {headers.map((label) => (
+        {!showFeed && (
+          <>
             <div
-              key={label}
-              className="c-muted"
-              style={{ textAlign: 'center', fontSize: '0.75em' }}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gap: 'var(--space-1)',
+              }}
             >
-              {label}
-            </div>
-          ))}
-          {grid.flat().map((day) => {
-            const key = dateKey(day);
-            const inMonth = day.getMonth() === view.month;
-            const isToday = key === todayKey;
-            const isSelected = key === selected;
-            const hasEvents = byDate.has(key);
-            return (
-              <button
-                key={key}
-                onClick={() => pickDay(day)}
-                aria-label={key}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 1,
-                  padding: 'var(--space-1)',
-                  border: 'none',
-                  borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer',
-                  fontVariantNumeric: 'tabular-nums',
-                  background: isSelected ? 'var(--bg-widget-hover)' : 'transparent',
-                  color: inMonth ? 'var(--text-primary)' : 'var(--text-muted)',
-                  boxShadow: isToday ? 'inset 0 0 0 1.5px var(--accent)' : 'none',
-                  fontWeight: isToday ? 700 : 400,
-                }}
-              >
-                <span>{day.getDate()}</span>
-                <span
-                  style={{
-                    width: 4,
-                    height: 4,
-                    borderRadius: '50%',
-                    background: hasEvents ? 'var(--accent)' : 'transparent',
-                  }}
-                />
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Day panel */}
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-2)',
-            borderTop: '1px solid var(--border-subtle)',
-            paddingTop: 'var(--space-2)',
-          }}
-        >
-          <div className="c-muted" style={{ fontSize: '0.85em' }}>
-            {selectedLabel}
-          </div>
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--space-1)',
-            }}
-          >
-            {events === null ? (
-              <div className="c-muted">…</div>
-            ) : dayEvents.length === 0 ? (
-              <div className="c-muted">{t('tool.calendar.empty')}</div>
-            ) : (
-              dayEvents.map((event) => (
+              {headers.map((label) => (
                 <div
-                  key={event.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
+                  key={label}
+                  className="c-muted"
+                  style={{ textAlign: 'center', fontSize: '0.75em' }}
                 >
-                  <span
-                    className={event.time ? undefined : 'c-muted'}
-                    style={{ fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}
-                  >
-                    {event.time ?? t('tool.calendar.allDay')}
-                  </span>
-                  <span
+                  {label}
+                </div>
+              ))}
+              {grid.flat().map((day) => {
+                const key = dateKey(day);
+                const inMonth = day.getMonth() === view.month;
+                const isToday = key === todayKey;
+                const isSelected = key === selected;
+                const hasEvents = byDate.has(key);
+                return (
+                  <button
+                    key={key}
+                    onClick={() => pickDay(day)}
+                    aria-label={key}
                     style={{
-                      flex: 1,
-                      minWidth: 0,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 1,
+                      padding: 'var(--space-1)',
+                      border: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: 'pointer',
+                      fontVariantNumeric: 'tabular-nums',
+                      background: isSelected ? 'var(--bg-widget-hover)' : 'transparent',
+                      color: inMonth ? 'var(--text-primary)' : 'var(--text-muted)',
+                      boxShadow: isToday ? 'inset 0 0 0 1.5px var(--accent)' : 'none',
+                      fontWeight: isToday ? 700 : 400,
                     }}
                   >
-                    {event.title}
-                  </span>
-                  <button
-                    className="c-btn c-btn--ghost"
-                    style={{ color: 'var(--danger)', padding: 'var(--space-1) var(--space-2)' }}
-                    onClick={() => void removeEvent(event)}
-                    aria-label={t('tool.calendar.delete')}
-                    title={t('tool.calendar.delete')}
-                  >
-                    ✕
+                    <span>{day.getDate()}</span>
+                    <span
+                      style={{
+                        width: 4,
+                        height: 4,
+                        borderRadius: '50%',
+                        background: hasEvents ? 'var(--accent)' : 'transparent',
+                      }}
+                    />
                   </button>
-                </div>
-              ))
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-            <input
-              className="c-input"
-              style={{ flex: 1, minWidth: 0 }}
-              placeholder={t('tool.calendar.titlePlaceholder')}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void add();
+                );
+              })}
+            </div>
+
+            {/* Day panel */}
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--space-2)',
+                borderTop: '1px solid var(--border-subtle)',
+                paddingTop: 'var(--space-2)',
               }}
-            />
-            <input
-              type="time"
-              className="c-input"
-              style={{ width: 'auto', flexShrink: 0 }}
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              aria-label={t('tool.calendar.time')}
-              title={t('tool.calendar.time')}
-            />
-            <button className="c-btn c-btn--primary" onClick={() => void add()}>
-              {t('tool.calendar.add')}
-            </button>
-          </div>
-        </div>
+            >
+              <div className="c-muted" style={{ fontSize: '0.85em' }}>
+                {selectedLabel}
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--space-1)',
+                }}
+              >
+                {events === null ? (
+                  <div className="c-muted">…</div>
+                ) : dayEvents.length === 0 ? (
+                  <div className="c-muted">{t('tool.calendar.empty')}</div>
+                ) : (
+                  dayEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
+                    >
+                      <span
+                        className={event.time ? undefined : 'c-muted'}
+                        style={{ fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}
+                      >
+                        {event.time ?? t('tool.calendar.allDay')}
+                      </span>
+                      <span
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {event.title}
+                      </span>
+                      {isGoogleEvent(event) ? (
+                        <span
+                          className="c-badge"
+                          title={t('tool.calendar.google.badge')}
+                          style={{ flexShrink: 0, fontSize: '0.7em' }}
+                        >
+                          G
+                        </span>
+                      ) : (
+                        <button
+                          className="c-btn c-btn--ghost"
+                          style={{
+                            color: 'var(--danger)',
+                            padding: 'var(--space-1) var(--space-2)',
+                          }}
+                          onClick={() => void removeEvent(event)}
+                          aria-label={t('tool.calendar.delete')}
+                          title={t('tool.calendar.delete')}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <input
+                  className="c-input"
+                  style={{ flex: 1, minWidth: 0 }}
+                  placeholder={t('tool.calendar.titlePlaceholder')}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void add();
+                  }}
+                />
+                <input
+                  type="time"
+                  className="c-input"
+                  style={{ width: 'auto', flexShrink: 0 }}
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  aria-label={t('tool.calendar.time')}
+                  title={t('tool.calendar.time')}
+                />
+                <button className="c-btn c-btn--primary" onClick={() => void add()}>
+                  {t('tool.calendar.add')}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -475,6 +694,49 @@ export function createTool(): CardoTool {
         },
       });
 
+      context.commands.register({
+        id: 'calendar.sync-google',
+        titleKey: 'tool.calendar.command.syncGoogle',
+        params: z.object({}),
+        selfTestParams: {},
+        async run() {
+          const out = await runFeed(context);
+          switch (out.kind) {
+            case 'ok':
+              return { ok: true, data: out, messageKey: 'tool.calendar.msg.googleSynced' };
+            case 'error':
+              return { ok: false, messageKey: 'tool.calendar.msg.googleFailed' };
+            default:
+              // Nothing to do (no address yet / phone): not a failure.
+              return { ok: true, data: out, messageKey: 'tool.calendar.msg.googleNotConfigured' };
+          }
+        },
+      });
+
+      // Desktops re-read the subscribed calendar every 15 minutes and right
+      // after the address or the ⏰ switch changed. The phone only displays
+      // what arrives through sync.
+      if (context.calendarFeed) {
+        let lastConfig = '';
+        const configOf = (feed: FeedDoc | null) =>
+          feed ? `${feed.url}|${feed.alarmTodos !== false}` : '';
+        void context.storage.get<FeedDoc>(FEED_DOC).then((feed) => {
+          lastConfig = configOf(feed);
+          if (feed) setTimeout(() => void runFeed(context), 5_000);
+        });
+        feedTimer = setInterval(() => void runFeed(context), FEED_INTERVAL_MS);
+        feedUnsub = context.storage.subscribe((ev) => {
+          if (ev.docId !== FEED_DOC) return;
+          void context.storage.get<FeedDoc>(FEED_DOC).then((feed) => {
+            const next = configOf(feed);
+            if (next !== lastConfig) {
+              lastConfig = next;
+              if (feed) void runFeed(context);
+            }
+          });
+        });
+      }
+
       // Global search: events by title (upcoming or up to 30 days back).
       // Picking a result asks the widget (via the 'ui' doc) to focus the day.
       context.search.register(async (query) => {
@@ -512,7 +774,7 @@ export function createTool(): CardoTool {
       void (async () => {
         const docs = await context.storage.query<Record<string, unknown>>();
         for (const event of docs.filter(isEventDoc)) {
-          if (!event.time) continue;
+          if (!event.time || event.source === 'google') continue;
           await cancelReminder(context, event);
           await armReminder(context, event);
         }
@@ -521,6 +783,10 @@ export function createTool(): CardoTool {
       });
     },
     deactivate() {
+      if (feedTimer) clearInterval(feedTimer);
+      feedTimer = null;
+      feedUnsub?.();
+      feedUnsub = null;
       ctx = null;
     },
     Widget: CalendarWidget,
@@ -596,13 +862,18 @@ export function createTool(): CardoTool {
           const result = await queryTodayIn(testCtx.storage);
           for (const probe of probes) await testCtx.storage.delete(probe.id);
           const ids = result.events.map((e) => e.id);
-          if (!ids.includes('event:selftest-today-timed') || !ids.includes('event:selftest-today-allday')) {
+          if (
+            !ids.includes('event:selftest-today-timed') ||
+            !ids.includes('event:selftest-today-allday')
+          ) {
             return { status: 'fail', detail: `today's probes missing: ${JSON.stringify(ids)}` };
           }
           if (ids.includes('event:selftest-tomorrow')) {
             return { status: 'fail', detail: "tomorrow's probe leaked into today's list" };
           }
-          if (ids.indexOf('event:selftest-today-allday') > ids.indexOf('event:selftest-today-timed')) {
+          if (
+            ids.indexOf('event:selftest-today-allday') > ids.indexOf('event:selftest-today-timed')
+          ) {
             return { status: 'fail', detail: 'all-day event must sort before timed events' };
           }
           if (result.count !== result.events.length) {
@@ -611,11 +882,18 @@ export function createTool(): CardoTool {
               detail: `count ${result.count} ≠ events.length ${result.events.length}`,
             };
           }
-          return { status: 'pass', detail: `today has ${result.count} event(s), tomorrow excluded` };
+          return {
+            status: 'pass',
+            detail: `today has ${result.count} event(s), tomorrow excluded`,
+          };
         }
         case 'reminder-time': {
           const fire = reminderFireTime('2030-01-01', '12:00', 10);
-          if (dateKey(fire) !== '2030-01-01' || fire.getHours() !== 11 || fire.getMinutes() !== 50) {
+          if (
+            dateKey(fire) !== '2030-01-01' ||
+            fire.getHours() !== 11 ||
+            fire.getMinutes() !== 50
+          ) {
             return {
               status: 'fail',
               detail: `expected 2030-01-01 11:50 local, got ${fire.toString()}`,
